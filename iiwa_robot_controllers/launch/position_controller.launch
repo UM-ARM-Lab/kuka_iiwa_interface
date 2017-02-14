@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <launch>
 
-    <arg name="arm" />
     <arg name="controller_name" default="iiwa_position_controller" />
 
     <arg name="position_command_topic" default="joint_command_position" />

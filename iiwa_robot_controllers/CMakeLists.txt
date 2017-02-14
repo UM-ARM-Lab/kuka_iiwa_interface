@@ -15,6 +15,7 @@ find_package(catkin REQUIRED COMPONENTS
   kdl_parser
   message_generation
   linux_fri_client
+  iiwa_msgs
 )
 find_package(cmake_modules REQUIRED)
 find_package(Eigen REQUIRED)
@@ -83,7 +84,7 @@ generate_messages(DEPENDENCIES std_msgs)
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(INCLUDE_DIRS include
 #  LIBRARIES baxter_robot_controllers
-CATKIN_DEPENDS arc_utilities geometry_msgs trajectory_msgs control_msgs roscpp sensor_msgs std_msgs kdl_parser message_runtime linux_fri_client DEPENDS system_lib Eigen)
+CATKIN_DEPENDS arc_utilities geometry_msgs trajectory_msgs control_msgs roscpp sensor_msgs std_msgs kdl_parser message_runtime linux_fri_client iiwa_msgs DEPENDS system_lib Eigen)
 
 ###########
 ## Build ##
@@ -101,6 +102,10 @@ set(CMAKE_CXX_FLAGS "-std=c++0x ${CMAKE_CXX_FLAGS} -Wall -Wextra -Wconversion -O
 add_executable(iiwa_position_controller include/${PROJECT_NAME}/iiwa_robot_config.hpp include/${PROJECT_NAME}/iiwa_robot_position_controller.hpp src/iiwa_position_controller.cpp)
 add_dependencies(iiwa_position_controller ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 target_link_libraries(iiwa_position_controller ${catkin_LIBRARIES})
+
+add_executable(iiwa_stack_velocity_shim src/iiwa_stack_velocity_shim.cpp)
+add_dependencies(iiwa_stack_velocity_shim ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+target_link_libraries(iiwa_stack_velocity_shim ${catkin_LIBRARIES})
 
 add_executable(iiwa_velocity_torque_controller include/${PROJECT_NAME}/iiwa_robot_config.hpp include/${PROJECT_NAME}/iiwa_robot_velocity_torque_controller.hpp src/iiwa_velocity_torque_controller.cpp)
 add_dependencies(iiwa_velocity_torque_controller ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})

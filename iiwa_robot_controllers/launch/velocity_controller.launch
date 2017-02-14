@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <launch>
 
-    <arg name="arm" />
     <arg name="controller_name" default="iiwa_velocity_torque_controller" />
 
     <arg name="torque_command_topic" default="joint_command_torque" />

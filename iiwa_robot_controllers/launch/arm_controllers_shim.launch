@@ -9,7 +9,7 @@
         <arg name="remapped_clock_topic" value="$(arg remapped_clock_topic)" />
     </include>
 
-    <include file="$(find iiwa_robot_controllers)/launch/velocity_controller.launch">
+    <include file="$(find iiwa_robot_controllers)/launch/velocity_shim.launch">
         <arg name="output" value="$(arg output)" />
         <arg name="remapped_clock_topic" value="$(arg remapped_clock_topic)" />
     </include>
