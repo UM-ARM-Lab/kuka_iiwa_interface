@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<launch>
+
+    <arg name="output" default="screen" />
+    <arg name="remapped_clock_topic" default="/clock" />
+
+    <include file="$(find iiwa_robot_controllers)/launch/position_controller.launch">
+        <arg name="arm" value="right" />
+        <arg name="output" value="$(arg output)" />
+        <arg name="remapped_clock_topic" value="$(arg remapped_clock_topic)" />
+    </include>
+
+    <include file="$(find iiwa_robot_controllers)/launch/velocity_controller.launch">
+        <arg name="arm" value="right" />
+        <arg name="output" value="$(arg output)" />
+        <arg name="remapped_clock_topic" value="$(arg remapped_clock_topic)" />
+    </include>
+
+</launch>
