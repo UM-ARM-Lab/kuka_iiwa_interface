@@ -167,13 +167,13 @@ namespace iiwa_robot_controllers
     {
         const std::vector<std::string> joint_names = GetJointNames(joint_name_prefix);
         std::map<std::string, iiwa_robot_controllers::PIDParams> joint_controller_params;
-        joint_controller_params[joint_names[0]] = iiwa_robot_controllers::PIDParams(5.0, 0.0, 0.1, 0.0);
-        joint_controller_params[joint_names[1]] = iiwa_robot_controllers::PIDParams(5.0, 0.0, 0.1, 0.0);
-        joint_controller_params[joint_names[2]] = iiwa_robot_controllers::PIDParams(5.0, 0.0, 0.1, 0.0);
-        joint_controller_params[joint_names[3]] = iiwa_robot_controllers::PIDParams(5.0, 0.0, 0.1, 0.0);
-        joint_controller_params[joint_names[4]] = iiwa_robot_controllers::PIDParams(5.0, 0.0, 0.1, 0.0);
-        joint_controller_params[joint_names[5]] = iiwa_robot_controllers::PIDParams(5.0, 0.0, 0.1, 0.0);
-        joint_controller_params[joint_names[6]] = iiwa_robot_controllers::PIDParams(5.0, 0.0, 0.1, 0.0);
+        joint_controller_params[joint_names[0]] = iiwa_robot_controllers::PIDParams(20.0, 0.0, 1.0, 0.0);
+        joint_controller_params[joint_names[1]] = iiwa_robot_controllers::PIDParams(20.0, 0.0, 1.0, 0.0);
+        joint_controller_params[joint_names[2]] = iiwa_robot_controllers::PIDParams(20.0, 0.0, 1.0, 0.0);
+        joint_controller_params[joint_names[3]] = iiwa_robot_controllers::PIDParams(20.0, 0.0, 1.0, 0.0);
+        joint_controller_params[joint_names[4]] = iiwa_robot_controllers::PIDParams(20.0, 0.0, 1.0, 0.0);
+        joint_controller_params[joint_names[5]] = iiwa_robot_controllers::PIDParams(20.0, 0.0, 1.0, 0.0);
+        joint_controller_params[joint_names[6]] = iiwa_robot_controllers::PIDParams(20.0, 0.0, 1.0, 0.0);
         return joint_controller_params;
     }
 
