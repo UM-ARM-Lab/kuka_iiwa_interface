@@ -14,6 +14,9 @@
     <arg name="use_sim_time" default="false" />
     <arg name="remapped_clock_topic" default="/clock" />
 
+    <!-- Load universal robotic description format (URDF) -->
+    <param name="robot_description" command="$(find xacro)/xacro '$(find iiwa_description)/urdf/iiwa7.urdf.xacro'" />
+
     <!-- Start the velocity controller -->
     <node pkg="iiwa_robot_controllers" type="$(arg controller_name)" name="$(arg controller_name)" output="$(arg output)">
         <param name="torque_command_topic" type="string" value="$(arg torque_command_topic)" />
