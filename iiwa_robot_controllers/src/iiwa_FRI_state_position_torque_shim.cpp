@@ -73,7 +73,7 @@ public:
                 int size = robot_connection.receive(robot_data.receiveBuffer, KUKA::FRI::FRI_MONITOR_MSG_MAX_SIZE);
                 if (size <= 0)
                 {
-                    ROS_ERROR("Failure receiving FRI message");
+                    ROS_ERROR("Failure receiving FRI message, got %d", size);
                     break;
                 }
                 if (!robot_data.decoder.decode(robot_data.receiveBuffer, size))
