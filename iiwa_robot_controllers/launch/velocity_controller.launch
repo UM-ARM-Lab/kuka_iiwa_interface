@@ -3,7 +3,7 @@
 
     <arg name="controller_name" default="iiwa_velocity_torque_controller" />
 
-    <arg name="torque_command_topic" default="joint_command_torque" />
+    <arg name="torque_command_topic" default="iiwa_FRI_command" />
     <arg name="config_feedback_topic" default="joint_states" />
     <arg name="velocity_command_topic" default="joint_command_velocity" />
     <arg name="abort_service" default="$(arg controller_name)/abort" />
