@@ -24,7 +24,7 @@ int main(int argc, char** argv)
     const std::string DEFAULT_ABORT_SERVICE = "arm_velocity_torque_controller/abort";
     const std::string DEFAULT_JOINT_NAME_PREFIX = "iiwa";
     const double DEFAULT_CONTROL_RATE = 1000.0; //25.0;
-    const bool DEFAULT_MODEL_GRAVITY = true;
+    const bool DEFAULT_MODEL_GRAVITY = false;
     const int32_t DEFAULT_VELOCITY_FILTER_WINDOW_SIZE = 1;
     std::string torque_command_topic;
     std::string velocity_command_topic;
