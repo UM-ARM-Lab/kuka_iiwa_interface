@@ -54,7 +54,7 @@ find_package(Eigen REQUIRED)
 ##   * add every package in MSG_DEP_SET to generate_messages(DEPENDENCIES ...)
 
 ## Generate messages in the 'msg' folder
-add_message_files(DIRECTORY msg FILES PositionCommand.msg VelocityCommand.msg TorqueCommand.msg)
+add_message_files(DIRECTORY msg FILES PositionCommand.msg VelocityCommand.msg TorqueCommand.msg FRIState.msg FRICommand.msg)
 
 ## Generate services in the 'srv' folder
 # add_service_files(
@@ -106,6 +106,14 @@ target_link_libraries(iiwa_position_controller ${catkin_LIBRARIES})
 add_executable(iiwa_stack_velocity_shim src/iiwa_stack_velocity_shim.cpp)
 add_dependencies(iiwa_stack_velocity_shim ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 target_link_libraries(iiwa_stack_velocity_shim ${catkin_LIBRARIES})
+
+add_executable(iiwa_FRI_state_position_torque_shim src/iiwa_FRI_state_position_torque_shim.cpp)
+add_dependencies(iiwa_FRI_state_position_torque_shim ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+target_link_libraries(iiwa_FRI_state_position_torque_shim ${catkin_LIBRARIES})
+
+add_executable(iiwa_joint_state_publisher src/iiwa_joint_state_publisher.cpp)
+add_dependencies(iiwa_joint_state_publisher ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+target_link_libraries(iiwa_joint_state_publisher ${catkin_LIBRARIES})
 
 add_executable(iiwa_velocity_torque_controller include/${PROJECT_NAME}/iiwa_robot_config.hpp include/${PROJECT_NAME}/iiwa_robot_velocity_torque_controller.hpp src/iiwa_velocity_torque_controller.cpp)
 add_dependencies(iiwa_velocity_torque_controller ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})

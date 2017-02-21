@@ -13,7 +13,7 @@
 #include <std_srvs/Empty.h>
 #include <sensor_msgs/JointState.h>
 #include <iiwa_robot_controllers/VelocityCommand.h>
-#include <iiwa_robot_controllers/TorqueCommand.h>
+#include <iiwa_robot_controllers/FRICommand.h>
 #include <iiwa_robot_controllers/iiwa_robot_config.hpp>
 #include <arc_utilities/pretty_print.hpp>
 #include <arc_utilities/eigen_helpers.hpp>
@@ -101,7 +101,7 @@ namespace iiwa_robot_controllers
             const KDL::Vector gravity = model_gravity ? KDL::Vector(0.0, 0.0, -9.81) : KDL::Vector(0.0, 0.0, 0.0);
             id_solver_ = std::shared_ptr<KDL::ChainIdSolver_RNE>(new KDL::ChainIdSolver_RNE(chain_, gravity));
             // Setup publishers and subscribers
-            command_pub_ = nh_.advertise<iiwa_robot_controllers::TorqueCommand>(torque_command_topic, 1, false);
+            command_pub_ = nh_.advertise<iiwa_robot_controllers::FRICommand>(torque_command_topic, 1, false);
             feedback_sub_ = nh_.subscribe(config_feedback_topic, 1, &IIWARobotVelocityTorqueController::ConfigFeedbackCallback, this);
             velocity_target_sub_ = nh_.subscribe(velocity_command_topic, 1, &IIWARobotVelocityTorqueController::VelocityTargetCallback, this);
             abort_server_ = nh_.advertiseService(abort_service, &IIWARobotVelocityTorqueController::AbortCB, this);
@@ -321,9 +321,10 @@ namespace iiwa_robot_controllers
         {
             if (torques.size() == joint_names_.size())
             {
-                iiwa_robot_controllers::TorqueCommand command_msg;
-                command_msg.name = joint_names_;
-                command_msg.command = torques;
+                iiwa_robot_controllers::FRICommand command_msg;
+                command_msg.mode = iiwa_robot_controllers::FRICommand::TORQUE;
+                command_msg.joint_name = joint_names_;
+                command_msg.joint_command = torques;
                 command_pub_.publish(command_msg);
             }
         }

@@ -121,15 +121,18 @@ int main(int argc, char** argv)
     ros::NodeHandle nhp("~");
     const std::string DEFAULT_VELOCITY_TARGET_TOPIC = "joint_command_velocity";
     const std::string DEFAULT_VELOCITY_COMMAND_TOPIC = "/iiwa/command/JointVelocity";
+    const std::string DEFAULT_JOINT_NAME_PREFIX = "iiwa";
     const double DEFAULT_CYCLE_RATE = 500.0; //25.0;
     std::string velocity_target_topic;
     std::string velocity_command_topic;
+    std::string joint_name_prefix;
     double cycle_rate = DEFAULT_CYCLE_RATE;
     nhp.param(std::string("velocity_command_topic"), velocity_command_topic, DEFAULT_VELOCITY_COMMAND_TOPIC);
     nhp.param(std::string("velocity_target_topic"), velocity_target_topic, DEFAULT_VELOCITY_TARGET_TOPIC);
+    nhp.param(std::string("joint_name_prefix"), joint_name_prefix, DEFAULT_JOINT_NAME_PREFIX);
     nhp.param(std::string("cycle_rate"), cycle_rate, DEFAULT_CYCLE_RATE);
     // Joint limits
-    const std::map<std::string, iiwa_robot_controllers::JointLimits> joint_limits = iiwa_robot_controllers::GetArmLimits();
+    const std::map<std::string, iiwa_robot_controllers::JointLimits> joint_limits = iiwa_robot_controllers::GetArmLimits(joint_name_prefix);
     // Assemble the controller
     VelocityShim shim(nh, velocity_target_topic, velocity_command_topic, joint_limits);
     ROS_INFO("...startup complete");
