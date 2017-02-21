@@ -221,10 +221,22 @@ int UdpConnection::receive(char *buffer, int maxSize)
               return -1;
           }
       }
-
-      return (int)recvfrom(_udpSock, buffer, maxSize, 0, (struct sockaddr *)&_controllerAddr, (socklen_t *)&sockAddrSize);
+      const int recv_res = (int)recvfrom(_udpSock, buffer, maxSize, 0, (struct sockaddr *)&_controllerAddr, (socklen_t *)&sockAddrSize);
+      if (recv_res > 0)
+      {
+          return recv_res;
+      }
+      else
+      {
+          printf("recvfrom returned error %d\n", recv_res);
+          return recv_res;
+      }
    }
-   return -1;
+   else
+   {
+      printf("Receive failed as connection is not open\n");
+      return -1;
+   }
 }
 
 //******************************************************************************
