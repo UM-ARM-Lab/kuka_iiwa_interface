@@ -428,6 +428,7 @@ public:
                 }
                 // Extract the joint commands in order
                 iiwa_robot_controllers::FRICommand ordered_command;
+                ordered_command.mode = command.mode;
                 ordered_command.joint_name = joint_names_;
                 ordered_command.joint_command.resize(joint_names_.size(), 0.0);
                 bool command_valid = true;
