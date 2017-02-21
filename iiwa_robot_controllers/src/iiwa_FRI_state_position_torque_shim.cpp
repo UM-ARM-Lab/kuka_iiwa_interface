@@ -372,9 +372,14 @@ public:
                 std::cout << "POSITION MODE - ACTIVE FRI COMMAND MODE" << std::endl;
                 SetJointPosition(active_command_.joint_command, command_msg);
             }
+            else if (has_active_command_ && (active_command_.mode == iiwa_robot_controllers::FRICommand::TORQUE))
+            {
+                std::cout << "POSITION MODE - INVALID FRI COMMAND MODE" << std::endl;
+                SetJointPosition(current_measured_joint_positions, command_msg);
+            }
             else
             {
-                std::cout << "POSITION MODE - INACTIVE/INVALID FRI COMMAND MODE" << std::endl;
+                std::cout << "POSITION MODE - INACTIVE FRI COMMAND MODE" << std::endl;
                 SetJointPosition(current_measured_joint_positions, command_msg);
             }
         }
@@ -395,7 +400,7 @@ public:
             }
             else
             {
-                std::cout << "TORQUE MODE - INACTIVE/INVALID FRI COMMAND MODE" << std::endl;
+                std::cout << "TORQUE MODE - INACTIVE FRI COMMAND MODE" << std::endl;
                 SetJointPosition(current_measured_joint_positions, command_msg);
                 const std::vector<double> zero_torque(7, 0.0);
                 SetTorque(zero_torque, command_msg);
@@ -459,6 +464,7 @@ public:
                 }
                 if (command_valid == true)
                 {
+                    ROS_INFO("Received valid FRI command");
                     has_active_command_ = true;
                     active_command_ = ordered_command;
                 }
