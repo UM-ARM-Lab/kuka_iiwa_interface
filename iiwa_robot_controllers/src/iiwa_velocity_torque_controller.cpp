@@ -46,7 +46,7 @@ int main(int argc, char** argv)
     std::string xml_model_string;
     nh.param(std::string("robot_description"), xml_model_string, std::string(""));
     // Joint limits
-    const std::map<std::string, iiwa_robot_controllers::JointLimits> joint_limits = iiwa_robot_controllers::GetArmLimits(joint_name_prefix);
+    const std::map<std::string, iiwa_robot_controllers::JointLimits> joint_limits = iiwa_robot_controllers::GetArmLimits(joint_name_prefix, 0.95, 0.10, 0.10);
     // Joint PID params
     const std::map<std::string, iiwa_robot_controllers::PIDParams> joint_controller_params = iiwa_robot_controllers::GetArmDefaultVelocityControllerParams(joint_name_prefix);
     // Assemble the controller
