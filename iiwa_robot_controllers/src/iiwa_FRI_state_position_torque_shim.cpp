@@ -48,6 +48,34 @@ public:
         command_sub_ = nh_.subscribe(command_topic, 1, &FRIStatePositionTorqueShim::CommandCallback, this);
     }
 
+    std::string PrintSessionState(const KUKA::FRI::ESessionState& state) const
+    {
+        if (state == KUKA::FRI::IDLE)
+        {
+            return "IDLE";
+        }
+        else if (state == KUKA::FRI::MONITORING_WAIT)
+        {
+            return "MONITORING_WAIT";
+        }
+        else if (state == KUKA::FRI::MONITORING_READY)
+        {
+            return "MONITORING_READY";
+        }
+        else if (state == KUKA::FRI::COMMANDING_WAIT)
+        {
+            return "COMMANDING_WAIT";
+        }
+        else if (state == KUKA::FRI::COMMANDING_ACTIVE)
+        {
+            return "COMMANDING_ACTIVE";
+        }
+        else
+        {
+            return "UNKNOWN";
+        }
+    }
+
     void Loop(const std::string& fri_address, const int fri_port)
     {
         KUKA::FRI::UdpConnection robot_connection;
@@ -93,7 +121,9 @@ public:
                 const KUKA::FRI::ESessionState current_state = (KUKA::FRI::ESessionState)robot_data.monitoringMsg.connectionInfo.sessionState;
                 if (robot_data.lastState != current_state)
                 {
-                    ROS_INFO("Switched from state %i to state %i", robot_data.lastState, current_state);
+                    const std::string last_mode_str = PrintSessionState(robot_data.lastState);
+                    const std::string new_mode_str = PrintSessionState(current_state);
+                    ROS_INFO("Switched from state %s to state %s", last_mode_str.c_str(), new_mode_str.c_str());
                     robot_data.lastState = current_state;
                 }
                 // Main mode switch
@@ -337,30 +367,35 @@ public:
         const std::vector<double> current_measured_joint_positions = GetMeasuredJointPosition(monitor_msg);
         if (control_mode == KUKA::FRI::POSITION)
         {
-            if (has_active_command_ && active_command_.mode == iiwa_robot_controllers::FRICommand::POSITION)
+            if (has_active_command_ && (active_command_.mode == iiwa_robot_controllers::FRICommand::POSITION))
             {
+                std::cout << "POSITION MODE - ACTIVE FRI COMMAND MODE" << std::endl;
                 SetJointPosition(active_command_.joint_command, command_msg);
             }
             else
             {
+                std::cout << "POSITION MODE - INACTIVE/INVALID FRI COMMAND MODE" << std::endl;
                 SetJointPosition(current_measured_joint_positions, command_msg);
             }
         }
         else if (control_mode == KUKA::FRI::TORQUE)
         {
-            if (has_active_command_ && active_command_.mode == iiwa_robot_controllers::FRICommand::TORQUE)
+            if (has_active_command_ && (active_command_.mode == iiwa_robot_controllers::FRICommand::TORQUE))
             {
+                std::cout << "TORQUE MODE - ACTIVE FRI COMMAND MODE" << std::endl;
                 SetJointPosition(current_measured_joint_positions, command_msg);
                 SetTorque(active_command_.joint_command, command_msg);
             }
-            else if (has_active_command_ && active_command_.mode == iiwa_robot_controllers::FRICommand::POSITION)
+            else if (has_active_command_ && (active_command_.mode == iiwa_robot_controllers::FRICommand::POSITION))
             {
+                std::cout << "TORQUE MODE - FAKE POSITION FRI COMMAND MODE" << std::endl;
                 SetJointPosition(active_command_.joint_command, command_msg);
                 const std::vector<double> zero_torque(7, 0.0);
                 SetTorque(zero_torque, command_msg);
             }
             else
             {
+                std::cout << "TORQUE MODE - INACTIVE/INVALID FRI COMMAND MODE" << std::endl;
                 SetJointPosition(current_measured_joint_positions, command_msg);
                 const std::vector<double> zero_torque(7, 0.0);
                 SetTorque(zero_torque, command_msg);
@@ -427,17 +462,21 @@ public:
                     has_active_command_ = true;
                     active_command_ = ordered_command;
                 }
+                else
+                {
+                    has_active_command_ = false;
+                }
             }
             else
             {
                 ROS_ERROR("Invalid FRI command: %zu names, %zu commands", command.joint_name.size(), command.joint_command.size());
-                has_active_command_ = true;
+                has_active_command_ = false;
             }
         }
         else
         {
             ROS_ERROR("Invalid FRI command mode");
-            has_active_command_ = true;
+            has_active_command_ = false;
         }
     }
 };
