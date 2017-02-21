@@ -78,100 +78,110 @@ public:
 
     void Loop(const std::string& fri_address, const int fri_port)
     {
-        KUKA::FRI::UdpConnection robot_connection;
-        const bool fri_connected = robot_connection.open(fri_port, fri_address.c_str());
-        if (fri_connected)
+        while (ros::ok())
         {
-            KUKA::FRI::ClientData robot_data(7);
-            robot_data.expectedMonitorMsgID = 0x245142;
-            robot_data.commandMsg.header.messageIdentifier = 0x34001;
-            while (ros::ok())
+            ROS_INFO("Initializing FRI connection...");
+            KUKA::FRI::UdpConnection robot_connection;
+            const bool fri_connected = robot_connection.open(fri_port, fri_address.c_str());
+            if (fri_connected)
             {
-                // Process callbacks
-                ros::spinOnce();
-                // Handle FRI
-                if (!robot_connection.isOpen())
+                ROS_INFO("FRI connection established");
+                KUKA::FRI::ClientData robot_data(7);
+                robot_data.expectedMonitorMsgID = 0x245142;
+                robot_data.commandMsg.header.messageIdentifier = 0x34001;
+                while (ros::ok())
                 {
-                    ROS_ERROR("FRI connection is not open!");
-                    break;
-                }
-                // **************************************************************************
-                // Receive and decode new monitoring message
-                // **************************************************************************
-                int size = robot_connection.receive(robot_data.receiveBuffer, KUKA::FRI::FRI_MONITOR_MSG_MAX_SIZE);
-                if (size <= 0)
-                {
-                    ROS_ERROR("Failure receiving FRI message, got %d", size);
-                    break;
-                }
-                if (!robot_data.decoder.decode(robot_data.receiveBuffer, size))
-                {
-                    ROS_ERROR("Failure decoding FRI message");
-                    break;
-                }
-                // Check message type (so that our wrappers match)
-                if (robot_data.expectedMonitorMsgID != robot_data.monitoringMsg.header.messageIdentifier)
-                {
-                    ROS_ERROR("Error: incompatible IDs for received message (got: %d expected %d)!", (int)robot_data.monitoringMsg.header.messageIdentifier, (int)robot_data.expectedMonitorMsgID);
-                    break;
-                }
-                // Reset commmand message before callbacks
-                robot_data.resetCommandMessage();
-                // Handle FRI tasks
-                const KUKA::FRI::ESessionState current_state = (KUKA::FRI::ESessionState)robot_data.monitoringMsg.connectionInfo.sessionState;
-                if (robot_data.lastState != current_state)
-                {
-                    const std::string last_mode_str = PrintSessionState(robot_data.lastState);
-                    const std::string new_mode_str = PrintSessionState(current_state);
-                    ROS_INFO("Switched from state %s to state %s", last_mode_str.c_str(), new_mode_str.c_str());
-                    robot_data.lastState = current_state;
-                }
-                // Main mode switch
-                if (current_state == KUKA::FRI::MONITORING_WAIT || current_state == KUKA::FRI::MONITORING_READY)
-                {
-                    PublishFRIState(robot_data.monitoringMsg);
-                }
-                else if (current_state == KUKA::FRI::COMMANDING_WAIT)
-                {
-                    PublishFRIState(robot_data.monitoringMsg);
-                    ApplyFRICommand(robot_data.monitoringMsg, robot_data.commandMsg);
-                }
-                else if (current_state == KUKA::FRI::COMMANDING_ACTIVE)
-                {
-                    PublishFRIState(robot_data.monitoringMsg);
-                    ApplyFRICommand(robot_data.monitoringMsg, robot_data.commandMsg);
-                }
-                // **************************************************************************
-                // Encode and send command message
-                // **************************************************************************
-                robot_data.lastSendCounter++;
-                // check if its time to send an answer
-                if (robot_data.lastSendCounter >= robot_data.monitoringMsg.connectionInfo.receiveMultiplier)
-                {
-                    robot_data.lastSendCounter = 0;
-
-                    // set sequence counters
-                    robot_data.commandMsg.header.sequenceCounter = robot_data.sequenceCounter++;
-                    robot_data.commandMsg.header.reflectedSequenceCounter = robot_data.monitoringMsg.header.sequenceCounter;
-
-                    if (!robot_data.encoder.encode(robot_data.sendBuffer, size))
+                    // Process callbacks
+                    ros::spinOnce();
+                    // Handle FRI
+                    if (!robot_connection.isOpen())
                     {
-                        ROS_ERROR("Failed to encode FRI message");
+                        ROS_ERROR("FRI connection is not open!");
                         break;
                     }
-
-                    if (!robot_connection.send(robot_data.sendBuffer, size))
+                    // **************************************************************************
+                    // Receive and decode new monitoring message
+                    // **************************************************************************
+                    int size = robot_connection.receive(robot_data.receiveBuffer, KUKA::FRI::FRI_MONITOR_MSG_MAX_SIZE);
+                    if (size <= 0)
                     {
-                        ROS_ERROR("Failed sending FRI message");
+                        ROS_ERROR("Failure receiving FRI message, got %d", size);
                         break;
                     }
+                    if (!robot_data.decoder.decode(robot_data.receiveBuffer, size))
+                    {
+                        ROS_ERROR("Failure decoding FRI message");
+                        break;
+                    }
+                    // Check message type (so that our wrappers match)
+                    if (robot_data.expectedMonitorMsgID != robot_data.monitoringMsg.header.messageIdentifier)
+                    {
+                        ROS_ERROR("Error: incompatible IDs for received message (got: %d expected %d)!", (int)robot_data.monitoringMsg.header.messageIdentifier, (int)robot_data.expectedMonitorMsgID);
+                        break;
+                    }
+                    // Reset commmand message before callbacks
+                    robot_data.resetCommandMessage();
+                    // Handle FRI tasks
+                    const KUKA::FRI::ESessionState current_state = (KUKA::FRI::ESessionState)robot_data.monitoringMsg.connectionInfo.sessionState;
+                    if (robot_data.lastState != current_state)
+                    {
+                        const std::string last_mode_str = PrintSessionState(robot_data.lastState);
+                        const std::string new_mode_str = PrintSessionState(current_state);
+                        ROS_INFO("Switched from state %s to state %s", last_mode_str.c_str(), new_mode_str.c_str());
+                        robot_data.lastState = current_state;
+                    }
+                    // Main mode switch
+                    if (current_state == KUKA::FRI::MONITORING_WAIT || current_state == KUKA::FRI::MONITORING_READY)
+                    {
+                        PublishFRIState(robot_data.monitoringMsg);
+                    }
+                    else if (current_state == KUKA::FRI::COMMANDING_WAIT)
+                    {
+                        PublishFRIState(robot_data.monitoringMsg);
+                        ApplyFRICommand(robot_data.monitoringMsg, robot_data.commandMsg);
+                    }
+                    else if (current_state == KUKA::FRI::COMMANDING_ACTIVE)
+                    {
+                        PublishFRIState(robot_data.monitoringMsg);
+                        ApplyFRICommand(robot_data.monitoringMsg, robot_data.commandMsg);
+                    }
+                    // **************************************************************************
+                    // Encode and send command message
+                    // **************************************************************************
+                    robot_data.lastSendCounter++;
+                    // check if its time to send an answer
+                    if (robot_data.lastSendCounter >= robot_data.monitoringMsg.connectionInfo.receiveMultiplier)
+                    {
+                        robot_data.lastSendCounter = 0;
+
+                        // set sequence counters
+                        robot_data.commandMsg.header.sequenceCounter = robot_data.sequenceCounter++;
+                        robot_data.commandMsg.header.reflectedSequenceCounter = robot_data.monitoringMsg.header.sequenceCounter;
+
+                        if (!robot_data.encoder.encode(robot_data.sendBuffer, size))
+                        {
+                            ROS_ERROR("Failed to encode FRI message");
+                            break;
+                        }
+
+                        if (!robot_connection.send(robot_data.sendBuffer, size))
+                        {
+                            ROS_ERROR("Failed sending FRI message");
+                            break;
+                        }
+                    }
                 }
+                ROS_INFO("Closing FRI session...");
+                if (robot_connection.isOpen())
+                {
+                    robot_connection.close();
+                }
+                ROS_INFO("FRI session closed");
             }
-            robot_connection.close();
-        }
-        else
-        {
-            ROS_ERROR("Failed to connect FRI interface");
+            else
+            {
+                ROS_ERROR("Failed to connect FRI interface");
+            }
         }
     }
 
@@ -465,7 +475,7 @@ public:
                 }
                 if (command_valid == true)
                 {
-                    ROS_INFO("Received valid FRI command");
+                    ROS_DEBUG("Received valid FRI command");
                     has_active_command_ = true;
                     active_command_ = ordered_command;
                 }
