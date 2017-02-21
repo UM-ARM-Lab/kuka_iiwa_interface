@@ -98,7 +98,8 @@ namespace iiwa_robot_controllers
                 assert(false);
             }
             // Setup ID solver
-            const KDL::Vector gravity = model_gravity ? KDL::Vector(0.0, 0.0, -9.81) : KDL::Vector(0.0, 0.0, 0.0);
+            //const KDL::Vector gravity = model_gravity ? KDL::Vector(0.0, 0.0, -9.81) : KDL::Vector(0.0, 0.0, 0.0);
+            const KDL::Vector gravity = model_gravity ? KDL::Vector(0.0, -9.81, 0.0) : KDL::Vector(0.0, 0.0, 0.0);
             id_solver_ = std::shared_ptr<KDL::ChainIdSolver_RNE>(new KDL::ChainIdSolver_RNE(chain_, gravity));
             // Setup publishers and subscribers
             command_pub_ = nh_.advertise<iiwa_robot_controllers::FRICommand>(torque_command_topic, 1, false);
