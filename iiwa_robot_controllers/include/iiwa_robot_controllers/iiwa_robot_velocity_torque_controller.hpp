@@ -90,8 +90,8 @@ namespace iiwa_robot_controllers
                 ROS_ERROR("Could not initialize tree object");
                 assert(false);
             }
-            const std::string root_name = "link_0";
-            const std::string tip_name = "link_ee";
+            const std::string root_name = "iiwa_link_0";
+            const std::string tip_name = "iiwa_link_ee";
             if (!tree.getChain(root_name, tip_name, chain_))
             {
                 ROS_ERROR("Could not initialize chain object for root_name %s and tip_name %s", root_name.c_str(), tip_name.c_str());
