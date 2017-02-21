@@ -63,6 +63,9 @@ cost of any service and repair.
 #include <unistd.h>
 #endif
 
+#include <errno.h>
+#include <string.h>
+
 #include <linux_fri_client/friUdpConnection.h>
 
 
@@ -228,7 +231,7 @@ int UdpConnection::receive(char *buffer, int maxSize)
       }
       else
       {
-          printf("recvfrom returned error %d\n", recv_res);
+          printf("recvfrom returned error %d, message %s\n", recv_res, strerror(errno));
           return recv_res;
       }
    }
