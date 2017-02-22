@@ -80,6 +80,8 @@ public:
     {
         while (ros::ok())
         {
+            ROS_INFO("Resetting has_active_command_ to false, as FRI connection is being rebuilt");
+            has_active_command_ = false;
             ROS_INFO("Initializing FRI connection...");
             KUKA::FRI::UdpConnection robot_connection;
             const bool fri_connected = robot_connection.open(fri_port, fri_address.c_str());
