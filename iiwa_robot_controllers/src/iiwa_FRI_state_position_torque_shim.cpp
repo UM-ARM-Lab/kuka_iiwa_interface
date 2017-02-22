@@ -22,6 +22,9 @@ class FRIStatePositionTorqueShim
 {
 protected:
 
+    enum ARM_CONTROL_MODE {POSITION, TORQUE_POSITION, UNKNOWN};
+
+    ARM_CONTROL_MODE arm_mode_;
     std::vector<std::string> joint_names_;
     std::map<std::string, iiwa_robot_controllers::JointLimits> joint_limits_;
 
@@ -35,14 +38,15 @@ protected:
 public:
 
     FRIStatePositionTorqueShim(ros::NodeHandle& nh,
-                                        const std::string& feedback_topic,
-                                        const std::string& command_topic,
-                                        const std::map<std::string, iiwa_robot_controllers::JointLimits>& joint_limits) : nh_(nh)
+                               const std::string& feedback_topic,
+                               const std::string& command_topic,
+                               const std::map<std::string, iiwa_robot_controllers::JointLimits>& joint_limits) : nh_(nh)
     {
         assert(joint_limits.size() == 7);
         joint_names_ = arc_helpers::GetKeys(joint_limits);
         joint_limits_ = joint_limits;
         has_active_command_ = false;
+        arm_mode_ = UNKNOWN;
         // Setup publishers and subscribers
         feedback_pub_ = nh_.advertise<iiwa_robot_controllers::FRIState>(feedback_topic, 1, false);
         command_sub_ = nh_.subscribe(command_topic, 1, &FRIStatePositionTorqueShim::CommandCallback, this);
@@ -93,8 +97,6 @@ public:
                 robot_data.commandMsg.header.messageIdentifier = 0x34001;
                 while (ros::ok())
                 {
-                    // Process callbacks
-                    ros::spinOnce();
                     // Handle FRI
                     if (!robot_connection.isOpen())
                     {
@@ -131,6 +133,20 @@ public:
                         const std::string new_mode_str = PrintSessionState(current_state);
                         ROS_INFO("Switched from state %s to state %s", last_mode_str.c_str(), new_mode_str.c_str());
                         robot_data.lastState = current_state;
+                    }
+                    // Set the expected control mode
+                    const KUKA::FRI::EClientCommandMode current_client_command_mode = GetClientCommandMode(robot_data.monitoringMsg);
+                    if (current_client_command_mode == KUKA::FRI::POSITION)
+                    {
+                        arm_mode_ = POSITION;
+                    }
+                    else if (current_client_command_mode == KUKA::FRI::TORQUE)
+                    {
+                        arm_mode_ = TORQUE_POSITION;
+                    }
+                    else
+                    {
+                        arm_mode_ = UNKNOWN;
                     }
                     // Main mode switch
                     if (current_state == KUKA::FRI::MONITORING_WAIT || current_state == KUKA::FRI::MONITORING_READY)
@@ -172,6 +188,8 @@ public:
                             break;
                         }
                     }
+                    // Process callbacks
+                    ros::spinOnce();
                 }
                 ROS_INFO("Closing FRI session...");
                 if (robot_connection.isOpen())
@@ -233,7 +251,6 @@ public:
         return (KUKA::FRI::EDriveState)firstState;
     }
 
-
     //********************************************************************************
     KUKA::FRI::EOverlayType GetOverlayType(const FRIMonitoringMessage& monitor_msg) const
     {
@@ -245,7 +262,6 @@ public:
     {
         return (KUKA::FRI::EClientCommandMode)monitor_msg.ipoData.clientCommandMode;
     }
-
 
     //******************************************************************************
     KUKA::FRI::EControlMode GetControlMode(const FRIMonitoringMessage& monitor_msg) const
@@ -377,6 +393,7 @@ public:
     {
         const KUKA::FRI::EClientCommandMode control_mode = GetClientCommandMode(monitor_msg);
         const std::vector<double> current_measured_joint_positions = GetMeasuredJointPosition(monitor_msg);
+        const std::vector<double> current_target_joint_positions = GetCommandedJointPosition(monitor_msg);
         if (control_mode == KUKA::FRI::POSITION)
         {
             if (has_active_command_ && (active_command_.mode == iiwa_robot_controllers::FRICommand::POSITION))
@@ -387,12 +404,12 @@ public:
             else if (has_active_command_ && (active_command_.mode == iiwa_robot_controllers::FRICommand::TORQUE))
             {
                 std::cout << "POSITION MODE - INVALID FRI COMMAND MODE" << std::endl;
-                SetJointPosition(current_measured_joint_positions, command_msg);
+                SetJointPosition(current_target_joint_positions, command_msg);
             }
             else
             {
                 std::cout << "POSITION MODE - INACTIVE FRI COMMAND MODE" << std::endl;
-                SetJointPosition(current_measured_joint_positions, command_msg);
+                SetJointPosition(current_target_joint_positions, command_msg);
             }
         }
         else if (control_mode == KUKA::FRI::TORQUE)
@@ -413,7 +430,7 @@ public:
             else
             {
                 std::cout << "TORQUE MODE - INACTIVE FRI COMMAND MODE" << std::endl;
-                SetJointPosition(current_measured_joint_positions, command_msg);
+                SetJointPosition(current_target_joint_positions, command_msg);
                 const std::vector<double> zero_torque(7, 0.0);
                 SetTorque(zero_torque, command_msg);
             }
@@ -477,25 +494,38 @@ public:
                 }
                 if (command_valid == true)
                 {
-                    ROS_DEBUG("Received valid FRI command");
-                    has_active_command_ = true;
-                    active_command_ = ordered_command;
-                }
-                else
-                {
-                    has_active_command_ = false;
+                    if ((arm_mode_ == POSITION) && (ordered_command.mode == iiwa_robot_controllers::FRICommand::POSITION))
+                    {
+                        ROS_DEBUG("Received valid FRI position command");
+                        has_active_command_ = true;
+                        active_command_ = ordered_command;
+                    }
+                    else if ((arm_mode_ == TORQUE_POSITION) && (ordered_command.mode == iiwa_robot_controllers::FRICommand::POSITION))
+                    {
+                        ROS_DEBUG("Received valid FRI position (in torque mode) command");
+                        has_active_command_ = true;
+                        active_command_ = ordered_command;
+                    }
+                    else if ((arm_mode_ == TORQUE_POSITION) && (ordered_command.mode == iiwa_robot_controllers::FRICommand::TORQUE))
+                    {
+                        ROS_DEBUG("Received valid FRI torque command");
+                        has_active_command_ = true;
+                        active_command_ = ordered_command;
+                    }
+                    else
+                    {
+                        ROS_WARN("Ignored valid FRI command, does not match arm mode");
+                    }
                 }
             }
             else
             {
                 ROS_ERROR("Invalid FRI command: %zu names, %zu commands", command.joint_name.size(), command.joint_command.size());
-                has_active_command_ = false;
             }
         }
         else
         {
             ROS_ERROR("Invalid FRI command mode");
-            has_active_command_ = false;
         }
     }
 };
