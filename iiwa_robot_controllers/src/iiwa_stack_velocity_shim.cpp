@@ -32,7 +32,7 @@ public:
     VelocityShim(ros::NodeHandle& nh,
                                         const std::string& velocity_target_topic,
                                         const std::string& velocity_command_topic,
-                                        const std::map<std::string, iiwa_robot_controllers::JointLimits> joint_limits) : nh_(nh)
+                                        const std::map<std::string, iiwa_robot_controllers::JointLimits>& joint_limits) : nh_(nh)
     {
         assert(joint_limits.size() == 7);
         joint_names_ = arc_helpers::GetKeys(joint_limits);

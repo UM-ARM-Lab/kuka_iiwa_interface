@@ -54,7 +54,7 @@ namespace iiwa_robot_controllers
                                       const std::string& status_topic,
                                       const std::string& abort_service,
                                       const std::map<std::string, JointLimits>& joint_limits,
-                                      const std::map<std::string, PIDParams> joint_controller_params) : nh_(nh)
+                                      const std::map<std::string, PIDParams>& joint_controller_params) : nh_(nh)
         {
             target_config_valid_ = false;
             current_config_valid_ = false;

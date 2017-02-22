@@ -57,11 +57,7 @@ find_package(Eigen REQUIRED)
 add_message_files(DIRECTORY msg FILES PositionCommand.msg VelocityCommand.msg TorqueCommand.msg FRIState.msg FRICommand.msg)
 
 ## Generate services in the 'srv' folder
-# add_service_files(
-#   FILES
-#   Service1.srv
-#   Service2.srv
-# )
+add_service_files(DIRECTORY srv FILES SetInjectedError.srv)
 
 ## Generate actions in the 'action' folder
 # add_action_files(
@@ -110,6 +106,10 @@ target_link_libraries(iiwa_stack_velocity_shim ${catkin_LIBRARIES})
 add_executable(iiwa_FRI_state_position_torque_shim src/iiwa_FRI_state_position_torque_shim.cpp)
 add_dependencies(iiwa_FRI_state_position_torque_shim ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 target_link_libraries(iiwa_FRI_state_position_torque_shim ${catkin_LIBRARIES})
+
+add_executable(iiwa_FRI_position_interface src/iiwa_FRI_position_interface.cpp)
+add_dependencies(iiwa_FRI_position_interface ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+target_link_libraries(iiwa_FRI_position_interface ${catkin_LIBRARIES})
 
 add_executable(iiwa_joint_state_publisher src/iiwa_joint_state_publisher.cpp)
 add_dependencies(iiwa_joint_state_publisher ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})

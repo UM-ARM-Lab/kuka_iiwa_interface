@@ -20,7 +20,6 @@ class IiwaJointStatePublisher
 protected:
 
     std::vector<std::string> joint_names_;
-    std::map<std::string, iiwa_robot_controllers::JointLimits> joint_limits_;
 
     uint32_t velocity_filter_depth_;
     std::vector<iiwa_robot_controllers::FRIState> state_msg_queue_;
@@ -35,11 +34,10 @@ public:
                                         const std::string& fri_state_topic,
                                         const std::string& joint_state_topic,
                                         const uint32_t velocity_filter_depth,
-                                        const std::map<std::string, iiwa_robot_controllers::JointLimits> joint_limits) : nh_(nh)
+                                        const std::vector<std::string>& joint_names) : nh_(nh)
     {
-        assert(joint_limits.size() == 7);
-        joint_names_ = arc_helpers::GetKeys(joint_limits);
-        joint_limits_ = joint_limits;
+        assert(joint_names.size() == 7);
+        joint_names_ = joint_names;
         velocity_filter_depth_ = velocity_filter_depth;
         state_msg_queue_.clear();
         // Setup publishers and subscribers
@@ -54,15 +52,6 @@ public:
         {
             // Process callbacks
             ros::spinOnce();
-            // Publish joint_states
-            if (state_msg_queue_.size() < velocity_filter_depth_)
-            {
-                ROS_INFO("Waiting to fill state message queue to publish joint states");
-            }
-            else
-            {
-                PublishJointStates(state_msg_queue_);
-            }
             // Spin
             spin_rate.sleep();
         }
@@ -79,9 +68,18 @@ public:
             state_msg_queue_.erase(state_msg_queue_.begin(), state_msg_queue_.begin() + 1);
             state_msg_queue_.push_back(fri_state);
         }
+        // Publish joint_states
+        if (state_msg_queue_.size() < velocity_filter_depth_)
+        {
+            ROS_INFO("Waiting to fill state message queue to publish joint states");
+        }
+        else
+        {
+            PublishJointStates(state_msg_queue_);
+        }
     }
 
-    void PublishJointStates(const std::vector<iiwa_robot_controllers::FRIState>& state_msgs) const
+    void PublishJointStates(const std::vector<iiwa_robot_controllers::FRIState>& state_msgs)
     {
         const iiwa_robot_controllers::FRIState& oldest_state = state_msgs.front();
         const std::vector<double>& oldest_positions = oldest_state.joint_position_measured;
@@ -132,9 +130,9 @@ int main(int argc, char** argv)
         ROS_INFO("Velocity filter depth set to %u", real_velocity_filter_depth);
     }
     // Joint limits
-    const std::map<std::string, iiwa_robot_controllers::JointLimits> joint_limits = iiwa_robot_controllers::GetArmLimits(joint_name_prefix);
+    const std::vector<std::string> joint_names = iiwa_robot_controllers::GetJointNames(joint_name_prefix);
     // Assemble the controller
-    IiwaJointStatePublisher JSP(nh, fri_state_topic, joint_state_topic, real_velocity_filter_depth, joint_limits);
+    IiwaJointStatePublisher JSP(nh, fri_state_topic, joint_state_topic, real_velocity_filter_depth, joint_names);
     ROS_INFO("...startup complete");
     JSP.Loop(cycle_rate);
     return 0;

@@ -65,8 +65,8 @@ namespace iiwa_robot_controllers
                                             const std::string& xml_model_string,
                                             const bool model_gravity,
                                             const uint32_t velocity_filter_window_size,
-                                            const std::map<std::string, JointLimits> joint_limits,
-                                            const std::map<std::string, PIDParams> joint_controller_params) : nh_(nh)
+                                            const std::map<std::string, JointLimits>& joint_limits,
+                                            const std::map<std::string, PIDParams>& joint_controller_params) : nh_(nh)
         {
             target_velocities_valid_ = false;
             current_config_valid_ = false;
