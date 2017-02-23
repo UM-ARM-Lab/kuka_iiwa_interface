@@ -446,6 +446,7 @@ public:
 
     std::vector<double> InterpolatePositionTarget(const std::vector<double>& current_joint_positions, const std::vector<double>& target_joint_positions, const double time_delta) const
     {
+        ROS_ASSERT_MSG(time_delta <= 0.01, "Time delta exceeded safe threshold");
         // Compute delta
         const std::vector<double> delta = EigenHelpers::Sub(target_joint_positions, current_joint_positions);
         // Convert delta to necessary velocity/step
