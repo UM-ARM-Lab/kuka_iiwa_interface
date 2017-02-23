@@ -445,9 +445,9 @@ int main(int argc, char** argv)
     const std::string DEFAULT_ABORT_SERVICE = "arm_position_controller/abort";
     const std::string DEFAULT_UNCERTAINTY_UPDATE_SERVICE = "arm_position_controller/set_error";
     const std::string DEFAULT_JOINT_NAME_PREFIX = "iiwa";
-    const double DEFAULT_CONTROL_RATE = 100.0; //25.0;
+    const double DEFAULT_CONTROL_RATE = 500.0; //25.0;
     const double DEFAULT_POSITION_LIMIT_SCALING = 0.95;
-    const double DEFAULT_VELOCITY_LIMIT_SCALING = 0.1;
+    const double DEFAULT_VELOCITY_LIMIT_SCALING = 0.05;
     std::string position_command_topic;
     std::string fri_command_topic;
     std::string config_feedback_topic;

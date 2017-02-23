@@ -393,23 +393,25 @@ public:
     {
         const KUKA::FRI::EClientCommandMode control_mode = GetClientCommandMode(monitor_msg);
         const std::vector<double> current_measured_joint_positions = GetMeasuredJointPosition(monitor_msg);
-        const std::vector<double> current_target_joint_positions = GetCommandedJointPosition(monitor_msg);
+        const std::vector<double> current_commanded_joint_positions = GetCommandedJointPosition(monitor_msg);
+        const double time_delta = GetSampleTime(monitor_msg);
         if (control_mode == KUKA::FRI::POSITION)
         {
             if (has_active_command_ && (active_command_.mode == iiwa_robot_controllers::FRICommand::POSITION))
             {
                 std::cout << "POSITION MODE - ACTIVE FRI COMMAND MODE" << std::endl;
-                SetJointPosition(active_command_.joint_command, command_msg);
+                const std::vector<double> interpolated_joint_target = InterpolatePositionTarget(current_measured_joint_positions, active_command_.joint_command, time_delta);
+                SetJointPosition(interpolated_joint_target, command_msg);
             }
             else if (has_active_command_ && (active_command_.mode == iiwa_robot_controllers::FRICommand::TORQUE))
             {
                 std::cout << "POSITION MODE - INVALID FRI COMMAND MODE" << std::endl;
-                SetJointPosition(current_target_joint_positions, command_msg);
+                SetJointPosition(current_commanded_joint_positions, command_msg);
             }
             else
             {
                 std::cout << "POSITION MODE - INACTIVE FRI COMMAND MODE" << std::endl;
-                SetJointPosition(current_target_joint_positions, command_msg);
+                SetJointPosition(current_commanded_joint_positions, command_msg);
             }
         }
         else if (control_mode == KUKA::FRI::TORQUE)
@@ -423,14 +425,15 @@ public:
             else if (has_active_command_ && (active_command_.mode == iiwa_robot_controllers::FRICommand::POSITION))
             {
                 std::cout << "TORQUE MODE - FAKE POSITION FRI COMMAND MODE" << std::endl;
-                SetJointPosition(active_command_.joint_command, command_msg);
+                const std::vector<double> interpolated_joint_target = InterpolatePositionTarget(current_measured_joint_positions, active_command_.joint_command, time_delta);
+                SetJointPosition(interpolated_joint_target, command_msg);
                 const std::vector<double> zero_torque(7, 0.0);
                 SetTorque(zero_torque, command_msg);
             }
             else
             {
                 std::cout << "TORQUE MODE - INACTIVE FRI COMMAND MODE" << std::endl;
-                SetJointPosition(current_target_joint_positions, command_msg);
+                SetJointPosition(current_commanded_joint_positions, command_msg);
                 const std::vector<double> zero_torque(7, 0.0);
                 SetTorque(zero_torque, command_msg);
             }
@@ -439,6 +442,34 @@ public:
         {
             assert(false);
         }
+    }
+
+    std::vector<double> InterpolatePositionTarget(const std::vector<double>& current_joint_positions, const std::vector<double>& target_joint_positions, const double time_delta) const
+    {
+        // Compute delta
+        const std::vector<double> delta = EigenHelpers::Sub(target_joint_positions, current_joint_positions);
+        // Convert delta to necessary velocity/step
+        const std::vector<double> velocity_per_step = EigenHelpers::Divide(delta, time_delta);
+        // Limit velocity to limits
+        std::vector<double> limited_velocity_per_step(velocity_per_step.size(), 0.0);
+        for (size_t idx = 0; idx < joint_names_.size(); idx++)
+        {
+            // Get the name of the joint
+            const std::string& joint_name = joint_names_[idx];
+            const double velocity_val = velocity_per_step[idx];
+            // Get the limit for the joint
+            const auto limit_found_itr = joint_limits_.find(joint_name);
+            // Limit the joint command
+            assert(limit_found_itr != joint_limits_.end());
+            const double max_velocity = limit_found_itr->second.MaxVelocity();
+            const double limited_velocity = arc_helpers::ClampValue(velocity_val, -max_velocity, max_velocity);
+            limited_velocity_per_step[idx] = limited_velocity;
+        }
+        // Convert into limited delta
+        const std::vector<double> limited_delta = EigenHelpers::Multiply(limited_velocity_per_step, time_delta);
+        // Get interpolated target
+        const std::vector<double> interpolated_target = EigenHelpers::Add(current_joint_positions, limited_delta);
+        return interpolated_target;
     }
 
     void CommandCallback(iiwa_robot_controllers::FRICommand command)
@@ -540,22 +571,31 @@ int main(int argc, char** argv)
     const std::string DEFAULT_COMMAND_TOPIC = "iiwa_FRI_command";
     const std::string DEFAULT_JOINT_NAME_PREFIX = "iiwa";
     const std::string DEFAULT_FRI_ADDRESS = "10.68.1.1";
-    const double DEFAULT_CYCLE_RATE = 1000.0;
     const int DEFAULT_FRI_PORT = 30200;
+    const double DEFAULT_POSITION_LIMIT_SCALING = 0.95;
+    const double DEFAULT_VELOCITY_LIMIT_SCALING = 0.1;
+    const double DEFAULT_TORQUE_LIMIT_SCALING = 0.1;
     std::string feedback_topic;
     std::string command_topic;
     std::string joint_name_prefix;
     std::string fri_address;
-    double cycle_rate = DEFAULT_CYCLE_RATE;
     int fri_port = DEFAULT_FRI_PORT;
+    double position_limit_scaling = DEFAULT_POSITION_LIMIT_SCALING;
+    double velocity_limit_scaling = DEFAULT_VELOCITY_LIMIT_SCALING;
+    double torque_limit_scaling = DEFAULT_TORQUE_LIMIT_SCALING;
     nhp.param(std::string("command_topic"), command_topic, DEFAULT_COMMAND_TOPIC);
     nhp.param(std::string("feedback_topic"), feedback_topic, DEFAULT_FEEDBACK_TOPIC);
     nhp.param(std::string("joint_name_prefix"), joint_name_prefix, DEFAULT_JOINT_NAME_PREFIX);
-    nhp.param(std::string("cycle_rate"), cycle_rate, DEFAULT_CYCLE_RATE);
     nhp.param(std::string("fri_address"), fri_address, DEFAULT_FRI_ADDRESS);
     nhp.param(std::string("fri_port"), fri_port, DEFAULT_FRI_PORT);
+    nhp.param(std::string("position_limit_scaling"), position_limit_scaling, DEFAULT_POSITION_LIMIT_SCALING);
+    nhp.param(std::string("velocity_limit_scaling"), velocity_limit_scaling, DEFAULT_VELOCITY_LIMIT_SCALING);
+    nhp.param(std::string("torque_limit_scaling"), torque_limit_scaling, DEFAULT_TORQUE_LIMIT_SCALING);
+    const double real_position_limit_scaling = arc_helpers::ClampValueAndWarn(position_limit_scaling, 0.0, 1.0);
+    const double real_velocity_limit_scaling = arc_helpers::ClampValueAndWarn(velocity_limit_scaling, 0.0, 1.0);
+    const double real_torque_limit_scaling = arc_helpers::ClampValueAndWarn(torque_limit_scaling, 0.0, 1.0);
     // Joint limits
-    const std::map<std::string, iiwa_robot_controllers::JointLimits> joint_limits = iiwa_robot_controllers::GetArmLimits(joint_name_prefix);
+    const std::map<std::string, iiwa_robot_controllers::JointLimits> joint_limits = iiwa_robot_controllers::GetArmLimits(joint_name_prefix, real_position_limit_scaling, real_velocity_limit_scaling, real_torque_limit_scaling);
     // Assemble the controller
     FRIStatePositionTorqueShim shim(nh, feedback_topic, command_topic, joint_limits);
     ROS_INFO("...startup complete");
