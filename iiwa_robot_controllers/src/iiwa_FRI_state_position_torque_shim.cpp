@@ -22,7 +22,7 @@ class FRIStatePositionTorqueShim
 {
 protected:
 
-    enum ARM_CONTROL_MODE {POSITION, TORQUE_POSITION, UNKNOWN};
+    enum ARM_CONTROL_MODE {POSITION=1, TORQUE_POSITION=2, UNKNOWN=0};
 
     ARM_CONTROL_MODE arm_mode_;
     std::vector<std::string> joint_names_;
@@ -86,12 +86,12 @@ public:
         {
             ROS_INFO("Resetting has_active_command_ to false, as FRI connection is being rebuilt");
             has_active_command_ = false;
-            ROS_INFO("Initializing FRI connection...");
+            ROS_INFO("Initializing FRI connection to %s on port %i...", fri_address.c_str(), fri_port);
             KUKA::FRI::UdpConnection robot_connection;
             const bool fri_connected = robot_connection.open(fri_port, fri_address.c_str());
             if (fri_connected)
             {
-                ROS_INFO("FRI connection established");
+                ROS_INFO("FRI connection started");
                 KUKA::FRI::ClientData robot_data(7);
                 robot_data.expectedMonitorMsgID = 0x245142;
                 robot_data.commandMsg.header.messageIdentifier = 0x34001;
@@ -399,18 +399,18 @@ public:
         {
             if (has_active_command_ && (active_command_.mode == iiwa_robot_controllers::FRICommand::POSITION))
             {
-                std::cout << "POSITION MODE - ACTIVE FRI COMMAND MODE" << std::endl;
+                //std::cout << "POSITION MODE - ACTIVE FRI COMMAND MODE" << std::endl;
                 const std::vector<double> interpolated_joint_target = InterpolatePositionTarget(current_measured_joint_positions, active_command_.joint_command, time_delta);
                 SetJointPosition(interpolated_joint_target, command_msg);
             }
             else if (has_active_command_ && (active_command_.mode == iiwa_robot_controllers::FRICommand::TORQUE))
             {
-                std::cout << "POSITION MODE - INVALID FRI COMMAND MODE" << std::endl;
+                //std::cout << "POSITION MODE - INVALID FRI COMMAND MODE" << std::endl;
                 SetJointPosition(current_commanded_joint_positions, command_msg);
             }
             else
             {
-                std::cout << "POSITION MODE - INACTIVE FRI COMMAND MODE" << std::endl;
+                //std::cout << "POSITION MODE - INACTIVE FRI COMMAND MODE" << std::endl;
                 SetJointPosition(current_commanded_joint_positions, command_msg);
             }
         }
@@ -418,13 +418,13 @@ public:
         {
             if (has_active_command_ && (active_command_.mode == iiwa_robot_controllers::FRICommand::TORQUE))
             {
-                std::cout << "TORQUE MODE - ACTIVE FRI COMMAND MODE" << std::endl;
+                //std::cout << "TORQUE MODE - ACTIVE FRI COMMAND MODE" << std::endl;
                 SetJointPosition(current_measured_joint_positions, command_msg);
                 SetTorque(active_command_.joint_command, command_msg);
             }
             else if (has_active_command_ && (active_command_.mode == iiwa_robot_controllers::FRICommand::POSITION))
             {
-                std::cout << "TORQUE MODE - FAKE POSITION FRI COMMAND MODE" << std::endl;
+                //std::cout << "TORQUE MODE - FAKE POSITION FRI COMMAND MODE" << std::endl;
                 const std::vector<double> interpolated_joint_target = InterpolatePositionTarget(current_measured_joint_positions, active_command_.joint_command, time_delta);
                 SetJointPosition(interpolated_joint_target, command_msg);
                 const std::vector<double> zero_torque(7, 0.0);
@@ -432,7 +432,7 @@ public:
             }
             else
             {
-                std::cout << "TORQUE MODE - INACTIVE FRI COMMAND MODE" << std::endl;
+                //std::cout << "TORQUE MODE - INACTIVE FRI COMMAND MODE" << std::endl;
                 SetJointPosition(current_commanded_joint_positions, command_msg);
                 const std::vector<double> zero_torque(7, 0.0);
                 SetTorque(zero_torque, command_msg);
@@ -528,26 +528,26 @@ public:
                 {
                     if ((arm_mode_ == POSITION) && (ordered_command.mode == iiwa_robot_controllers::FRICommand::POSITION))
                     {
-                        ROS_DEBUG("Received valid FRI position command");
+                        //ROS_DEBUG("Received valid FRI position command");
                         has_active_command_ = true;
                         active_command_ = ordered_command;
                     }
                     else if ((arm_mode_ == TORQUE_POSITION) && (ordered_command.mode == iiwa_robot_controllers::FRICommand::POSITION))
                     {
-                        ROS_DEBUG("Received valid FRI position (in torque mode) command");
+                        //ROS_DEBUG("Received valid FRI position (in torque mode) command");
                         has_active_command_ = true;
                         active_command_ = ordered_command;
                     }
                     else if ((arm_mode_ == TORQUE_POSITION) && (ordered_command.mode == iiwa_robot_controllers::FRICommand::TORQUE))
                     {
-                        ROS_DEBUG("Received valid FRI torque command");
+                        //ROS_DEBUG("Received valid FRI torque command");
                         has_active_command_ = true;
                         active_command_ = ordered_command;
                     }
-                    else
-                    {
-                        ROS_WARN("Ignored valid FRI command, does not match arm mode");
-                    }
+//                    else
+//                    {
+//                        ROS_WARN("Ignored valid FRI command mode %i, does not match arm mode %i", ordered_command.mode, arm_mode_);
+//                    }
                 }
             }
             else
@@ -574,7 +574,7 @@ int main(int argc, char** argv)
     const std::string DEFAULT_FRI_ADDRESS = "192.170.10.2";
     const int DEFAULT_FRI_PORT = 30200;
     const double DEFAULT_POSITION_LIMIT_SCALING = 0.95;
-    const double DEFAULT_VELOCITY_LIMIT_SCALING = 0.1;
+    const double DEFAULT_VELOCITY_LIMIT_SCALING = 0.025;
     const double DEFAULT_TORQUE_LIMIT_SCALING = 0.1;
     std::string feedback_topic;
     std::string command_topic;
