@@ -571,7 +571,7 @@ int main(int argc, char** argv)
     const std::string DEFAULT_FEEDBACK_TOPIC = "iiwa_FRI_state";
     const std::string DEFAULT_COMMAND_TOPIC = "iiwa_FRI_command";
     const std::string DEFAULT_JOINT_NAME_PREFIX = "iiwa";
-    const std::string DEFAULT_FRI_ADDRESS = "10.68.1.1";
+    const std::string DEFAULT_FRI_ADDRESS = "192.170.10.2";
     const int DEFAULT_FRI_PORT = 30200;
     const double DEFAULT_POSITION_LIMIT_SCALING = 0.95;
     const double DEFAULT_VELOCITY_LIMIT_SCALING = 0.1;
