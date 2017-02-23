@@ -395,6 +395,7 @@ public:
         const std::vector<double> current_measured_joint_positions = GetMeasuredJointPosition(monitor_msg);
         const std::vector<double> current_commanded_joint_positions = GetCommandedJointPosition(monitor_msg);
         const double time_delta = GetSampleTime(monitor_msg);
+        std::cout << time_delta << "\n";
         if (control_mode == KUKA::FRI::POSITION)
         {
             if (has_active_command_ && (active_command_.mode == iiwa_robot_controllers::FRICommand::POSITION))
