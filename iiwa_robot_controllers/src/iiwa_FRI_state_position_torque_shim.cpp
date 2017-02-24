@@ -120,7 +120,7 @@ public:
             ROS_INFO("Initializing FRI connection to %s on port %i...", fri_address.c_str(), fri_port);
             KUKA::FRI::UdpConnection robot_connection;
             const bool fri_connected = robot_connection.open(fri_port, fri_address.c_str());
-            std::chrono::time_point<std::chrono::high_resolution_clock> previous_cycle_end_time = std::chrono::high_resolution_clock::now();
+//            std::chrono::time_point<std::chrono::high_resolution_clock> previous_cycle_end_time = std::chrono::high_resolution_clock::now();
             if (fri_connected)
             {
                 ROS_INFO("FRI connection started");
@@ -220,10 +220,10 @@ public:
                             break;
                         }
                     }
-                    std::chrono::time_point<std::chrono::high_resolution_clock> cycle_end_time = std::chrono::high_resolution_clock::now();
-                    std::chrono::duration<double> cycle_time(cycle_end_time - previous_cycle_end_time);
-                    previous_cycle_end_time = cycle_end_time;
-                    printf("Actual cycle time %5.4f\n", cycle_time.count());
+//                    std::chrono::time_point<std::chrono::high_resolution_clock> cycle_end_time = std::chrono::high_resolution_clock::now();
+//                    std::chrono::duration<double> cycle_time(cycle_end_time - previous_cycle_end_time);
+//                    previous_cycle_end_time = cycle_end_time;
+//                    printf("Actual cycle time %5.4f\n", cycle_time.count());
                     // Process callbacks
                     ros::spinOnce();
                 }
