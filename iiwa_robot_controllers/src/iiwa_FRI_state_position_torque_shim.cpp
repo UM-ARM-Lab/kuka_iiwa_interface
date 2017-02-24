@@ -395,6 +395,10 @@ public:
         const std::vector<double> current_measured_joint_positions = GetMeasuredJointPosition(monitor_msg);
         const std::vector<double> current_commanded_joint_positions = GetCommandedJointPosition(monitor_msg);
         const double time_delta = GetSampleTime(monitor_msg);
+
+
+
+
         std::cout << time_delta << "\n";
         if (control_mode == KUKA::FRI::POSITION)
         {
@@ -471,6 +475,7 @@ public:
         const std::vector<double> limited_delta = EigenHelpers::Multiply(limited_velocity_per_step, time_delta);
         // Get interpolated target
         const std::vector<double> interpolated_target = EigenHelpers::Add(current_joint_positions, limited_delta);
+        printf("FRI COMMAND MODE CYCLE TIME: %+4.3f CURRENT %+4.3f, %+4.3f, %+4.3f, %+4.3f, %+4.3f, %+4.3f, %+4.3f TARGET %+4.3f, %+4.3f, %+4.3f, %+4.3f, %+4.3f, %+4.3f, %+4.3f\n", time_delta, current_joint_positions[0], current_joint_positions[1], current_joint_positions[2], current_joint_positions[3], current_joint_positions[4], current_joint_positions[5], current_joint_positions[6], interpolated_target[0], interpolated_target[1], interpolated_target[2], interpolated_target[3], interpolated_target[4], interpolated_target[5], interpolated_target[6]);
         return interpolated_target;
     }
 
