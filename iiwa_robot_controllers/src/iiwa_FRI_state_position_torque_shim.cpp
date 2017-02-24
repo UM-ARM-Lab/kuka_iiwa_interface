@@ -572,9 +572,10 @@ public:
                 }
                 if (command_valid == true)
                 {
+                    std::cout << "Received new command: " << ordered_command << std::endl;
                     if ((arm_mode_ == POSITION) && (ordered_command.mode == iiwa_robot_controllers::FRICommand::POSITION))
                     {
-                        //ROS_DEBUG("Received valid FRI position command");
+                        //"Received valid FRI position command");
                         command_setting_lock_.lock();
                         has_active_command_ = true;
                         std::swap(active_command_, ordered_command);
