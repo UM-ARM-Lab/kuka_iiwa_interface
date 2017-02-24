@@ -34,12 +34,16 @@ protected:
     bool has_active_command_;
     iiwa_robot_controllers::FRICommand active_command_;
 
+    bool has_current_feedback_;
+    iiwa_robot_controllers::FRIState current_feedback_;
+
     ros::NodeHandle nh_;
     ros::Publisher feedback_pub_;
     ros::Subscriber command_sub_;
     ros::CallbackQueue ros_callback_queue_;
     std::thread ros_callback_thread_;
     std::mutex command_setting_lock_;
+    std::mutex feedback_setting_lock_;
 
 public:
 
@@ -53,6 +57,7 @@ public:
         joint_names_ = arc_helpers::GetKeys(joint_limits);
         joint_limits_ = joint_limits;
         has_active_command_ = false;
+        has_current_feedback_ = false;
         arm_mode_ = UNKNOWN;
         // Setup publishers and subscribers
         feedback_pub_ = nh_.advertise<iiwa_robot_controllers::FRIState>(feedback_topic, 1, false);
@@ -67,6 +72,14 @@ public:
         while (nh_.ok())
         {
             ros_callback_queue_.callAvailable(ros::WallDuration(timeout));
+            feedback_setting_lock_.lock();
+            const bool has_current_feedback = has_current_feedback_;
+            iiwa_robot_controllers::FRIState current_feedback = current_feedback_;
+            feedback_setting_lock_.unlock();
+            if (has_current_feedback)
+            {
+                feedback_pub_.publish(current_feedback);
+            }
         }
     }
 
@@ -410,7 +423,10 @@ public:
         feedback_msg.safety_state = (uint8_t)GetSafetyState(monitor_msg);
         feedback_msg.connection_quality = (uint8_t)GetConnectionQuality(monitor_msg);
         feedback_msg.fri_connection_state = (uint8_t)GetSessionState(monitor_msg);
-        feedback_pub_.publish(feedback_msg);
+        feedback_setting_lock_.lock();
+        has_current_feedback_ = true;
+        std::swap(current_feedback_, feedback_msg);
+        feedback_setting_lock_.unlock();
     }
 
     void ApplyFRICommand(const FRIMonitoringMessage& monitor_msg, FRICommandMessage& command_msg)
