@@ -512,7 +512,9 @@ public:
             limited_velocity_per_step[idx] = limited_velocity;
         }
         // Convert into limited delta
-        const std::vector<double> limited_delta = EigenHelpers::Multiply(limited_velocity_per_step, time_delta);
+        std::vector<double> limited_delta = EigenHelpers::Multiply(limited_velocity_per_step, time_delta);
+        limited_delta[0] = -limited_delta[0];
+        limited_delta[1] = -limited_delta[1];
         // Get interpolated target
         const std::vector<double> interpolated_target = EigenHelpers::Add(current_joint_positions, limited_delta);
         printf("CURRENT AT %+4.3f, %+4.3f, %+4.3f, %+4.3f, %+4.3f, %+4.3f, %+4.3f\nCURRENT GOTO %+4.3f, %+4.3f, %+4.3f, %+4.3f, %+4.3f, %+4.3f, %+4.3f\n", current_joint_positions[0], current_joint_positions[1], current_joint_positions[2], current_joint_positions[3], current_joint_positions[4], current_joint_positions[5], current_joint_positions[6], interpolated_target[0], interpolated_target[1], interpolated_target[2], interpolated_target[3], interpolated_target[4], interpolated_target[5], interpolated_target[6]);
