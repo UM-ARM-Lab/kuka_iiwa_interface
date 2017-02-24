@@ -14,16 +14,16 @@ code, libraries, binaries, manuals and technical documentation.
 COPYRIGHT
 
 All Rights Reserved
-Copyright (C)  2014-2016 
+Copyright (C)  2014-2016
 KUKA Roboter GmbH
 Augsburg, Germany
 
-LICENSE 
+LICENSE
 
 Redistribution and use of the software in source and binary forms, with or
 without modification, are permitted provided that the following conditions are
 met:
-a) The software is used in conjunction with KUKA products only. 
+a) The software is used in conjunction with KUKA products only.
 b) Redistributions of source code must retain the above copyright notice, this
 list of conditions and the disclaimer.
 c) Redistributions in binary form must reproduce the above copyright notice,
@@ -40,14 +40,14 @@ DISCLAIMER OF WARRANTY
 
 The Software is provided "AS IS" and "WITH ALL FAULTS," without warranty of
 any kind, including without limitation the warranties of merchantability,
-fitness for a particular purpose and non-infringement. 
+fitness for a particular purpose and non-infringement.
 KUKA makes no warranty that the Software is free of defects or is suitable for
 any particular purpose. In no event shall KUKA be responsible for loss or
 damages arising from the installation or use of the Software, including but
 not limited to any indirect, punitive, special, incidental or consequential
 damages of any character including, without limitation, damages for loss of
 goodwill, work stoppage, computer failure or malfunction, or any and all other
-commercial damages or losses. 
+commercial damages or losses.
 The entire risk to the quality and performance of the Software is not borne by
 KUKA. Should the Software prove defective, KUKA is not liable for the entire
 cost of any service and repair.
@@ -61,6 +61,7 @@ cost of any service and repair.
 #define _KUKA_FRI_CLIENT_DATA_H
 
 #include <vector>
+#include <string.h>
 
 #include "FRIMessages.pb.h"
 #include "friMonitoringMessageDecoder.h"
@@ -80,21 +81,21 @@ namespace FRI
 
       FRIMonitoringMessage monitoringMsg;          //!< monitoring message struct
       FRICommandMessage commandMsg;                //!< command message struct
-      
+
       MonitoringMessageDecoder decoder;            //!< monitoring message decoder
       CommandMessageEncoder encoder;               //!< command message encoder
-      
+
       ESessionState lastState;                     //!< last FRI state
       uint32_t sequenceCounter;                    //!< sequence counter for command messages
       uint32_t lastSendCounter;                    //!< steps since last send command
-      uint32_t expectedMonitorMsgID;               //!< expected ID for received monitoring messages     
+      uint32_t expectedMonitorMsgID;               //!< expected ID for received monitoring messages
 
       const size_t MAX_REQUESTED_TRANSFORMATIONS;  //!< maximum count of requested transformations
       const size_t MAX_SIZE_TRANSFORMATION_ID;     //!< maximum size in bytes of a transformation ID
       std::vector<const char*> requestedTrafoIDs;  //!< list of requested transformation ids
-      
-      ClientData(int numDofs) 
-      : decoder(&monitoringMsg, numDofs), 
+
+      ClientData(int numDofs)
+      : decoder(&monitoringMsg, numDofs),
         encoder(&commandMsg, numDofs),
         lastState(IDLE),
         sequenceCounter(0),
@@ -106,18 +107,24 @@ namespace FRI
       {
          requestedTrafoIDs.reserve(MAX_REQUESTED_TRANSFORMATIONS);
       }
-      
+
       void resetCommandMessage()
       {
          commandMsg.commandData.has_jointPosition = false;
+         tRepeatedDoubleArguments *positions = (tRepeatedDoubleArguments*)commandMsg.commandData.jointPosition.value.arg;
+         memset(positions->value, 0x00, 7 * sizeof(double));
          commandMsg.commandData.has_cartesianWrenchFeedForward = false;
+         double *wrench = commandMsg.commandData.cartesianWrenchFeedForward.element;
+         memset(wrench, 0x00, 6 * sizeof(double));
          commandMsg.commandData.has_jointTorque = false;
+         tRepeatedDoubleArguments *torques = (tRepeatedDoubleArguments*)commandMsg.commandData.jointTorque.value.arg;
+         memset(torques->value, 0x00, 7 * sizeof(double));
          commandMsg.commandData.commandedTransformations_count = 0;
-         commandMsg.has_commandData = false;     
+         commandMsg.has_commandData = false;
       }
-      
+
    };
-   
+
 }
 }
 
