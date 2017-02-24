@@ -581,7 +581,6 @@ public:
                 }
                 if (command_valid == true)
                 {
-                    std::cout << "Received new command: " << ordered_command << std::endl;
                     if ((arm_mode_ == POSITION) && (ordered_command.mode == iiwa_robot_controllers::FRICommand::POSITION))
                     {
                         //"Received valid FRI position command");
