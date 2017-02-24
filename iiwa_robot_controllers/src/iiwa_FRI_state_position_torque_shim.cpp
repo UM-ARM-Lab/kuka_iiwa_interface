@@ -514,13 +514,13 @@ public:
         // Convert into limited delta
         std::vector<double> limited_delta = EigenHelpers::Multiply(limited_velocity_per_step, time_delta);
 
-        limited_delta[0] = (limited_delta[0] >= 0.0) ? floor((limited_delta[0] * 100.0 + 0.5) / 100.0) : floor((limited_delta[0] * 100.0 - 0.5) / 100.0);
-        limited_delta[1] = (limited_delta[1] >= 0.0) ? floor((limited_delta[1] * 100.0 + 0.5) / 100.0) : floor((limited_delta[1] * 100.0 - 0.5) / 100.0);
-        limited_delta[2] = (limited_delta[2] >= 0.0) ? floor((limited_delta[2] * 100.0 + 0.5) / 100.0) : floor((limited_delta[2] * 100.0 - 0.5) / 100.0);
-        limited_delta[3] = (limited_delta[3] >= 0.0) ? floor((limited_delta[3] * 100.0 + 0.5) / 100.0) : floor((limited_delta[3] * 100.0 - 0.5) / 100.0);
-        limited_delta[4] = (limited_delta[4] >= 0.0) ? floor((limited_delta[4] * 100.0 + 0.5) / 100.0) : floor((limited_delta[4] * 100.0 - 0.5) / 100.0);
-        limited_delta[5] = (limited_delta[5] >= 0.0) ? floor((limited_delta[5] * 100.0 + 0.5) / 100.0) : floor((limited_delta[5] * 100.0 - 0.5) / 100.0);
-        limited_delta[6] = (limited_delta[6] >= 0.0) ? floor((limited_delta[6] * 100.0 + 0.5) / 100.0) : floor((limited_delta[6] * 100.0 - 0.5) / 100.0);
+        limited_delta[0] = (limited_delta[0] >= 0.0) ? floor((limited_delta[0] * 1000.0 + 0.5) / 1000.0) : floor((limited_delta[0] * 1000.0 - 0.5) / 1000.0);
+        limited_delta[1] = (limited_delta[1] >= 0.0) ? floor((limited_delta[1] * 1000.0 + 0.5) / 1000.0) : floor((limited_delta[1] * 1000.0 - 0.5) / 1000.0);
+        limited_delta[2] = (limited_delta[2] >= 0.0) ? floor((limited_delta[2] * 1000.0 + 0.5) / 1000.0) : floor((limited_delta[2] * 1000.0 - 0.5) / 1000.0);
+        limited_delta[3] = (limited_delta[3] >= 0.0) ? floor((limited_delta[3] * 1000.0 + 0.5) / 1000.0) : floor((limited_delta[3] * 1000.0 - 0.5) / 1000.0);
+        limited_delta[4] = (limited_delta[4] >= 0.0) ? floor((limited_delta[4] * 1000.0 + 0.5) / 1000.0) : floor((limited_delta[4] * 1000.0 - 0.5) / 1000.0);
+        limited_delta[5] = (limited_delta[5] >= 0.0) ? floor((limited_delta[5] * 1000.0 + 0.5) / 1000.0) : floor((limited_delta[5] * 1000.0 - 0.5) / 1000.0);
+        limited_delta[6] = (limited_delta[6] >= 0.0) ? floor((limited_delta[6] * 1000.0 + 0.5) / 1000.0) : floor((limited_delta[6] * 1000.0 - 0.5) / 1000.0);
 
 
         // Get interpolated target
