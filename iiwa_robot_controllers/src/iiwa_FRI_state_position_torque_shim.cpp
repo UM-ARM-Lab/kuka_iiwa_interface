@@ -513,8 +513,16 @@ public:
         }
         // Convert into limited delta
         std::vector<double> limited_delta = EigenHelpers::Multiply(limited_velocity_per_step, time_delta);
-        limited_delta[0] = -limited_delta[0];
-        limited_delta[1] = -limited_delta[1];
+
+        limited_delta[0] = (limited_delta[0] >= 0.0) ? floor((limited_delta[0] * 100.0 + 0.5) / 100.0) : floor((limited_delta[0] * 100.0 - 0.5) / 100.0);
+        limited_delta[1] = (limited_delta[1] >= 0.0) ? floor((limited_delta[1] * 100.0 + 0.5) / 100.0) : floor((limited_delta[1] * 100.0 - 0.5) / 100.0);
+        limited_delta[2] = (limited_delta[2] >= 0.0) ? floor((limited_delta[2] * 100.0 + 0.5) / 100.0) : floor((limited_delta[2] * 100.0 - 0.5) / 100.0);
+        limited_delta[3] = (limited_delta[3] >= 0.0) ? floor((limited_delta[3] * 100.0 + 0.5) / 100.0) : floor((limited_delta[3] * 100.0 - 0.5) / 100.0);
+        limited_delta[4] = (limited_delta[4] >= 0.0) ? floor((limited_delta[4] * 100.0 + 0.5) / 100.0) : floor((limited_delta[4] * 100.0 - 0.5) / 100.0);
+        limited_delta[5] = (limited_delta[5] >= 0.0) ? floor((limited_delta[5] * 100.0 + 0.5) / 100.0) : floor((limited_delta[5] * 100.0 - 0.5) / 100.0);
+        limited_delta[6] = (limited_delta[6] >= 0.0) ? floor((limited_delta[6] * 100.0 + 0.5) / 100.0) : floor((limited_delta[6] * 100.0 - 0.5) / 100.0);
+
+
         // Get interpolated target
         const std::vector<double> interpolated_target = EigenHelpers::Add(current_joint_positions, limited_delta);
         printf("CURRENT AT %+4.3f, %+4.3f, %+4.3f, %+4.3f, %+4.3f, %+4.3f, %+4.3f\nCURRENT GOTO %+4.3f, %+4.3f, %+4.3f, %+4.3f, %+4.3f, %+4.3f, %+4.3f\n", current_joint_positions[0], current_joint_positions[1], current_joint_positions[2], current_joint_positions[3], current_joint_positions[4], current_joint_positions[5], current_joint_positions[6], interpolated_target[0], interpolated_target[1], interpolated_target[2], interpolated_target[3], interpolated_target[4], interpolated_target[5], interpolated_target[6]);
