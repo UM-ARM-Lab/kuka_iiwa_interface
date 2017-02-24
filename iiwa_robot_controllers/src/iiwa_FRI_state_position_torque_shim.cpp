@@ -31,9 +31,6 @@ protected:
     std::vector<std::string> joint_names_;
     std::map<std::string, iiwa_robot_controllers::JointLimits> joint_limits_;
 
-    std::vector<double> current_position_command_;
-    uint32_t current_position_command_counter_;
-
     bool has_active_command_;
     iiwa_robot_controllers::FRICommand active_command_;
 
@@ -55,7 +52,6 @@ public:
                                const std::string& command_topic,
                                const std::map<std::string, iiwa_robot_controllers::JointLimits>& joint_limits) : nh_(nh)
     {
-        current_position_command_counter_ = 0u;
         assert(joint_limits.size() == 7);
         nh_.setCallbackQueue(&ros_callback_queue_);
         joint_names_ = arc_helpers::GetKeys(joint_limits);
@@ -450,17 +446,8 @@ public:
             {
                 //std::cout << "POSITION MODE - ACTIVE FRI COMMAND MODE" << std::endl;
                 const std::vector<double> interpolated_joint_target = InterpolatePositionTarget(current_measured_joint_positions, command, time_delta);
-                if ((current_position_command_.size() != 7) || (current_position_command_counter_ == 10u))
-                {
-                    current_position_command_ = interpolated_joint_target;
-                    current_position_command_counter_ = 0u;
-                }
-                else
-                {
-                    current_position_command_counter_++;
-                }
-                printf("CURRENT AT %+5.4f, %+5.4f, %+5.4f, %+5.4f, %+5.4f, %+5.4f, %+5.4f\nCURRENT GOTO %+5.4f, %+5.4f, %+5.4f, %+5.4f, %+5.4f, %+5.4f, %+5.4f\n", current_measured_joint_positions[0], current_measured_joint_positions[1], current_measured_joint_positions[2], current_measured_joint_positions[3], current_measured_joint_positions[4], current_measured_joint_positions[5], current_measured_joint_positions[6], current_position_command_[0], current_position_command_[1], current_position_command_[2], current_position_command_[3], current_position_command_[4], current_position_command_[5], current_position_command_[6]);
-                SetJointPosition(current_position_command_, command_msg);
+                printf("CURRENT AT %+5.4f, %+5.4f, %+5.4f, %+5.4f, %+5.4f, %+5.4f, %+5.4f\nCURRENT CMD %+5.4f, %+5.4f, %+5.4f, %+5.4f, %+5.4f, %+5.4f, %+5.4f\nCURRENT GOTO %+5.4f, %+5.4f, %+5.4f, %+5.4f, %+5.4f, %+5.4f, %+5.4f\n", current_measured_joint_positions[0], current_measured_joint_positions[1], current_measured_joint_positions[2], current_measured_joint_positions[3], current_measured_joint_positions[4], current_measured_joint_positions[5], current_measured_joint_positions[6], current_commanded_joint_positions[0], current_commanded_joint_positions[1], current_commanded_joint_positions[2], current_commanded_joint_positions[3], current_commanded_joint_positions[4], current_commanded_joint_positions[5], current_commanded_joint_positions[6], interpolated_joint_target[0], interpolated_joint_target[1], interpolated_joint_target[2], interpolated_joint_target[3], interpolated_joint_target[4], interpolated_joint_target[5], interpolated_joint_target[6]);
+                SetJointPosition(interpolated_joint_target, command_msg);
             }
             else if (has_active_command && (command_control_mode == iiwa_robot_controllers::FRICommand::TORQUE))
             {
