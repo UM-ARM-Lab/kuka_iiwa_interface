@@ -513,7 +513,7 @@ public:
         }
         // Convert into limited delta
         std::vector<double> limited_delta = EigenHelpers::Multiply(limited_velocity_per_step, time_delta);
-
+        printf("DELTA %+5.4f, %+5.4f, %+5.4f, %+5.4f, %+5.4f, %+5.4f, %+5.4f\n", limited_delta[0], limited_delta[1], limited_delta[2], limited_delta[3], limited_delta[4], limited_delta[5], limited_delta[6]);
         limited_delta[0] = (limited_delta[0] >= 0.0) ? floor((limited_delta[0] * 1000.0 + 0.5) / 1000.0) : floor((limited_delta[0] * 1000.0 - 0.5) / 1000.0);
         limited_delta[1] = (limited_delta[1] >= 0.0) ? floor((limited_delta[1] * 1000.0 + 0.5) / 1000.0) : floor((limited_delta[1] * 1000.0 - 0.5) / 1000.0);
         limited_delta[2] = (limited_delta[2] >= 0.0) ? floor((limited_delta[2] * 1000.0 + 0.5) / 1000.0) : floor((limited_delta[2] * 1000.0 - 0.5) / 1000.0);
@@ -521,11 +521,10 @@ public:
         limited_delta[4] = (limited_delta[4] >= 0.0) ? floor((limited_delta[4] * 1000.0 + 0.5) / 1000.0) : floor((limited_delta[4] * 1000.0 - 0.5) / 1000.0);
         limited_delta[5] = (limited_delta[5] >= 0.0) ? floor((limited_delta[5] * 1000.0 + 0.5) / 1000.0) : floor((limited_delta[5] * 1000.0 - 0.5) / 1000.0);
         limited_delta[6] = (limited_delta[6] >= 0.0) ? floor((limited_delta[6] * 1000.0 + 0.5) / 1000.0) : floor((limited_delta[6] * 1000.0 - 0.5) / 1000.0);
-
-
+        printf("DELTA %+5.4f, %+5.4f, %+5.4f, %+5.4f, %+5.4f, %+5.4f, %+5.4f\n", limited_delta[0], limited_delta[1], limited_delta[2], limited_delta[3], limited_delta[4], limited_delta[5], limited_delta[6]);
         // Get interpolated target
         const std::vector<double> interpolated_target = EigenHelpers::Add(current_joint_positions, limited_delta);
-        printf("CURRENT AT %+4.3f, %+4.3f, %+4.3f, %+4.3f, %+4.3f, %+4.3f, %+4.3f\nCURRENT GOTO %+4.3f, %+4.3f, %+4.3f, %+4.3f, %+4.3f, %+4.3f, %+4.3f\n", current_joint_positions[0], current_joint_positions[1], current_joint_positions[2], current_joint_positions[3], current_joint_positions[4], current_joint_positions[5], current_joint_positions[6], interpolated_target[0], interpolated_target[1], interpolated_target[2], interpolated_target[3], interpolated_target[4], interpolated_target[5], interpolated_target[6]);
+        printf("CURRENT AT %+5.4f, %+5.4f, %+5.4f, %+5.4f, %+5.4f, %+5.4f, %+5.4f\nCURRENT GOTO %+5.4f, %+5.4f, %+5.4f, %+5.4f, %+5.4f, %+5.4f, %+5.4f\n", current_joint_positions[0], current_joint_positions[1], current_joint_positions[2], current_joint_positions[3], current_joint_positions[4], current_joint_positions[5], current_joint_positions[6], interpolated_target[0], interpolated_target[1], interpolated_target[2], interpolated_target[3], interpolated_target[4], interpolated_target[5], interpolated_target[6]);
         return interpolated_target;
     }
 
