@@ -1,0 +1,14 @@
+<launch>
+
+    <arg name="model" default="$(find wiktor_description)/urdf/wiktor.urdf.xacro"/>
+    <arg name="gui" default="true"/>
+
+    <param name="robot_description" command="$(find xacro)/xacro --xacro-ns --inorder $(arg model)"/>
+    <param name="use_gui" value="$(arg gui)"/>
+
+    <node name="joint_state_publisher" pkg="joint_state_publisher" type="joint_state_publisher" />
+    <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher" />
+    <node pkg="tf" type="static_transform_publisher" name="mocap_to_robot_tf_publisher" args="0 0 0 0 0 0 1 mocap_world dual_arm_root 100" />
+    <!--<node name="rviz" pkg="rviz" type="rviz" required="true" />-->
+
+</launch>
