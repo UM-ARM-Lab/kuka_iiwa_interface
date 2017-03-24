@@ -60,7 +60,7 @@ catkin_package(INCLUDE_DIRS include LIBRARIES ${PROJECT_NAME} CATKIN_DEPENDS ros
 # include_directories(include)
 include_directories(include SYSTEM ${catkin_INCLUDE_DIRS})
 
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Wextra -Wconversion -O3 -g")
+set(CMAKE_C_FLAGS "-std=c99 ${CMAKE_C_FLAGS} -Wall -Wextra -Wconversion -O3 -g")
 set(CMAKE_CXX_FLAGS "-std=c++0x ${CMAKE_CXX_FLAGS} -Wall -Wextra -Wconversion -O3 -g")
 
 ## Declare C++ library
