@@ -1,0 +1,25 @@
+controller_list:
+  - name: fake_left_arm_controller
+    joints:
+      - wiktor_left_arm_joint_1
+      - wiktor_left_arm_joint_2
+      - wiktor_left_arm_joint_3
+      - wiktor_left_arm_joint_4
+      - wiktor_left_arm_joint_5
+      - wiktor_left_arm_joint_6
+      - wiktor_left_arm_joint_7
+  - name: fake_right_arm_controller
+    joints:
+      - wiktor_right_arm_joint_1
+      - wiktor_right_arm_joint_2
+      - wiktor_right_arm_joint_3
+      - wiktor_right_arm_joint_4
+      - wiktor_right_arm_joint_5
+      - wiktor_right_arm_joint_6
+      - wiktor_right_arm_joint_7
+  - name: fake_left_ee_controller
+    joints:
+      []
+  - name: fake_right_ee_controller
+    joints:
+      []

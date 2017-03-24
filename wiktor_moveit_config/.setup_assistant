@@ -1,0 +1,10 @@
+moveit_setup_assistant_config:
+  URDF:
+    package: wiktor_description
+    relative_path: urdf/wiktor.urdf.xacro
+  SRDF:
+    relative_path: config/wiktor.srdf
+  CONFIG:
+    author_name: Dale McConachie
+    author_email: dmcconac@umich.edu
+    generated_timestamp: 1490320365
