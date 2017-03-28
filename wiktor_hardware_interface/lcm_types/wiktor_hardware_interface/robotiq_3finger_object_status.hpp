@@ -9,7 +9,6 @@
 #ifndef __wiktor_hardware_interface_robotiq_3finger_object_status_hpp__
 #define __wiktor_hardware_interface_robotiq_3finger_object_status_hpp__
 
-#include "wiktor_hardware_interface/int8_.hpp"
 
 namespace wiktor_hardware_interface
 {
@@ -19,7 +18,7 @@ class robotiq_3finger_object_status
     public:
         int64_t    utime;
 
-        wiktor_hardware_interface::int8_ status;
+        int8_t     status;
 
     public:
         // If you're using C++11 and are getting compiler errors saying things like
@@ -147,7 +146,7 @@ int robotiq_3finger_object_status::_encodeNoHash(void *buf, int offset, int maxl
     tlen = __int64_t_encode_array(buf, offset + pos, maxlen - pos, &this->utime, 1);
     if(tlen < 0) return tlen; else pos += tlen;
 
-    tlen = this->status._encodeNoHash(buf, offset + pos, maxlen - pos);
+    tlen = __int8_t_encode_array(buf, offset + pos, maxlen - pos, &this->status, 1);
     if(tlen < 0) return tlen; else pos += tlen;
 
     return pos;
@@ -160,7 +159,7 @@ int robotiq_3finger_object_status::_decodeNoHash(const void *buf, int offset, in
     tlen = __int64_t_decode_array(buf, offset + pos, maxlen - pos, &this->utime, 1);
     if(tlen < 0) return tlen; else pos += tlen;
 
-    tlen = this->status._decodeNoHash(buf, offset + pos, maxlen - pos);
+    tlen = __int8_t_decode_array(buf, offset + pos, maxlen - pos, &this->status, 1);
     if(tlen < 0) return tlen; else pos += tlen;
 
     return pos;
@@ -170,21 +169,13 @@ int robotiq_3finger_object_status::_getEncodedSizeNoHash() const
 {
     int enc_size = 0;
     enc_size += __int64_t_encoded_array_size(NULL, 1);
-    enc_size += this->status._getEncodedSizeNoHash();
+    enc_size += __int8_t_encoded_array_size(NULL, 1);
     return enc_size;
 }
 
-uint64_t robotiq_3finger_object_status::_computeHash(const __lcm_hash_ptr *p)
+uint64_t robotiq_3finger_object_status::_computeHash(const __lcm_hash_ptr *)
 {
-    const __lcm_hash_ptr *fp;
-    for(fp = p; fp != NULL; fp = fp->parent)
-        if(fp->v == robotiq_3finger_object_status::getHash)
-            return 0;
-    const __lcm_hash_ptr cp = { p, (void*)robotiq_3finger_object_status::getHash };
-
-    uint64_t hash = 0x5466329f836fc1d0LL +
-         wiktor_hardware_interface::int8_::_computeHash(&cp);
-
+    uint64_t hash = 0x28edc52678586b83LL;
     return (hash<<1) + ((hash>>63)&1);
 }
 
