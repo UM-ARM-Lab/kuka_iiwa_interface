@@ -3,7 +3,7 @@ package wiktor_hardware_interface;
 struct robotiq_3finger_object_status
 {
     int64_t utime;
-    int8_ status;
+    int8_t status;
     const int8_t IN_MOTION=0;
     const int8_t AT_REQUESTED=1;
     const int8_t STOPPED=2;
