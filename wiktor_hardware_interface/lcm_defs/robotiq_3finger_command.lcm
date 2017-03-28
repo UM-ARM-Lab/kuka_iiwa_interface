@@ -1,0 +1,10 @@
+package wiktor_hardware_interface;
+
+struct robotiq_3finger_command
+{
+    int64_t utime;
+    wiktor_hardware_interface.robotiq_3finger_actuator_command finger_a_command;
+    wiktor_hardware_interface.robotiq_3finger_actuator_command finger_b_command;
+    wiktor_hardware_interface.robotiq_3finger_actuator_command finger_c_command;
+    wiktor_hardware_interface.robotiq_3finger_actuator_command scissor_command;
+}
