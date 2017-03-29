@@ -34,6 +34,9 @@
   <material name="DarkGray">
     <color rgba="0.2 0.2 0.2 1"/>
   </material>
+  <material name="DarkDarkGray">
+    <color rgba="0.1 0.1 0.1 1"/>
+  </material>
   <link name="wiktor_root"/>
   <joint name="wiktor_dummy_root_joint" type="fixed">
     <parent link="wiktor_root"/>
@@ -371,18 +374,18 @@
   <joint name="wiktor_left_arm_joint_ee" type="fixed">
     <parent link="wiktor_left_arm_link_7"/>
     <child link="wiktor_left_arm_link_ee"/>
-    <origin rpy="0 -1.57079632679 0" xyz="0 0 0.045"/>
+    <origin rpy="0 0 0" xyz="0 0 0.045"/>
   </joint>
   <link name="wiktor_left_arm_link_ee">
         </link>
-  <joint name="wiktor_left_arm_joint_ee_kuka" type="fixed">
-    <parent link="wiktor_left_arm_link_7"/>
-    <child link="wiktor_left_arm_link_ee_kuka"/>
-    <origin rpy="3.14159265359 3.14159265359 3.14159265359" xyz="0 0 0.045"/>
-    <axis xyz="0 0 1"/>
-  </joint>
-  <link name="wiktor_left_arm_link_ee_kuka">
-        </link>
+  <!--<joint name="${robot_name}_joint_ee_kuka" type="fixed">-->
+  <!--<parent link="${robot_name}_link_7"/>-->
+  <!--<child link="${robot_name}_link_ee_kuka"/>-->
+  <!--<origin xyz="0 0 0.045" rpy="${PI} ${PI} ${PI}"/>-->
+  <!--<axis xyz="0 0 1"/>-->
+  <!--</joint>-->
+  <!--<link name="${robot_name}_link_ee_kuka">-->
+  <!--</link>-->
   <!-- Load Gazebo lib and set the robot namespace -->
   <gazebo>
     <plugin filename="libgazebo_ros_control.so" name="gazebo_ros_control">
@@ -761,18 +764,18 @@
   <joint name="wiktor_right_arm_joint_ee" type="fixed">
     <parent link="wiktor_right_arm_link_7"/>
     <child link="wiktor_right_arm_link_ee"/>
-    <origin rpy="0 -1.57079632679 0" xyz="0 0 0.045"/>
+    <origin rpy="0 0 0" xyz="0 0 0.045"/>
   </joint>
   <link name="wiktor_right_arm_link_ee">
         </link>
-  <joint name="wiktor_right_arm_joint_ee_kuka" type="fixed">
-    <parent link="wiktor_right_arm_link_7"/>
-    <child link="wiktor_right_arm_link_ee_kuka"/>
-    <origin rpy="3.14159265359 3.14159265359 3.14159265359" xyz="0 0 0.045"/>
-    <axis xyz="0 0 1"/>
-  </joint>
-  <link name="wiktor_right_arm_link_ee_kuka">
-        </link>
+  <!--<joint name="${robot_name}_joint_ee_kuka" type="fixed">-->
+  <!--<parent link="${robot_name}_link_7"/>-->
+  <!--<child link="${robot_name}_link_ee_kuka"/>-->
+  <!--<origin xyz="0 0 0.045" rpy="${PI} ${PI} ${PI}"/>-->
+  <!--<axis xyz="0 0 1"/>-->
+  <!--</joint>-->
+  <!--<link name="${robot_name}_link_ee_kuka">-->
+  <!--</link>-->
   <!-- Load Gazebo lib and set the robot namespace -->
   <gazebo>
     <plugin filename="libgazebo_ros_control.so" name="gazebo_ros_control">
@@ -904,5 +907,963 @@
       <mechanicalReduction>1</mechanicalReduction>
     </actuator>
   </transmission>
+  <!--joint between {parent} and link_0-->
+  <joint name="wiktor_left_arm_link_ee_wiktor_left_joint" type="fixed">
+    <origin rpy="0 0 0" xyz="0 0 0"/>
+    <parent link="wiktor_left_arm_link_ee"/>
+    <child link="wiktor_left_gripper_mounting_bracket"/>
+  </joint>
+  <link name="wiktor_left_gripper_mounting_bracket">
+    <visual>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <geometry>
+        <mesh filename="package://wiktor_description/meshes/robotiq_3finger/kuka_to_palm_connectors_visual.stl"/>
+      </geometry>
+      <material name="LightGrey"/>
+    </visual>
+    <collision>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <geometry>
+        <mesh filename="package://wiktor_description/meshes/robotiq_3finger/kuka_to_palm_connectors_collision.stl"/>
+      </geometry>
+      <material name="LightGrey"/>
+    </collision>
+  </link>
+  <!--<link name="${prefix}_iiwa_bracket">-->
+  <!--<visual>-->
+  <!--<origin xyz="0 0 0" rpy="0 0 0"/>-->
+  <!--<geometry>-->
+  <!--<mesh filename="package://wiktor_description/meshes/robotiq_3finger/iiwa7_to_neutral_coupling_plate_visual.stl"/>-->
+  <!--</geometry>-->
+  <!--<material name="LightGrey"/>-->
+  <!--</visual>-->
+  <!--<collision>-->
+  <!--<origin xyz="0 0 0" rpy="0 0 0"/>-->
+  <!--<geometry>-->
+  <!--<mesh filename="package://wiktor_description/meshes/robotiq_3finger/iiwa7_to_neutral_coupling_plate_collision.stl"/>-->
+  <!--</geometry>-->
+  <!--<material name="LightGrey"/>-->
+  <!--</collision>-->
+  <!--</link>-->
+  <!--<joint name="${prefix}_iiwa_to_robotiq_joint" type="fixed">-->
+  <!--<origin xyz="0 0 0.008" rpy="0 0 0"/>-->
+  <!--<parent link="${prefix}_iiwa_bracket"/>-->
+  <!--<child link="${prefix}_robotiq_bracket"/>-->
+  <!--</joint>-->
+  <!--<link name="${prefix}_robotiq_bracket">-->
+  <!--<visual>-->
+  <!--<origin xyz="0 0 0" rpy="0 0 0"/>-->
+  <!--<geometry>-->
+  <!--<mesh filename="package://wiktor_description/meshes/robotiq_3finger/neutral_coupling_plate_to_robotiq_visual.stl"/>-->
+  <!--</geometry>-->
+  <!--<material name="DarkGrey"/>-->
+  <!--</visual>-->
+  <!--<collision>-->
+  <!--<origin xyz="0 0 0" rpy="0 0 0"/>-->
+  <!--<geometry>-->
+  <!--<mesh filename="package://wiktor_description/meshes/robotiq_3finger/neutral_coupling_plate_to_robotiq_collision.stl"/>-->
+  <!--</geometry>-->
+  <!--<material name="DarkGrey"/>-->
+  <!--</collision>-->
+  <!--</link>-->
+  <!--<joint name="${prefix}_robotiq_gripper_mounting_bracket_joint" type="fixed">-->
+  <!--<origin xyz="0 0 0.1" rpy="0 0 0"/>-->
+  <!--<parent link="${prefix}_robotiq_bracket"/>-->
+  <!--<child link="${prefix}_gripper_mounting_bracket"/>-->
+  <!--</joint>-->
+  <!--<link name="${prefix}_gripper_mounting_bracket">-->
+  <!--<inertial>-->
+  <!--<origin xyz="0 0 0" rpy="0 0 0"/>-->
+  <!--<mass value="1"/>-->
+  <!--<inertia ixx="0.01" ixy="0" ixz="0" iyy="0.01" iyz="0" izz="0.01"/>-->
+  <!--</inertial>-->
+  <!--<visual>-->
+  <!--<origin xyz="0 0 0" rpy="0 0 0"/>-->
+  <!--<geometry>-->
+  <!--<mesh filename="package://wiktor_description/meshes/robotiq_3finger/gripper_mounting_bracket_visual.stl"/>-->
+  <!--</geometry>-->
+  <!--<material name="DarkGray"/>-->
+  <!--</visual>-->
+  <!--<collision>-->
+  <!--<origin xyz="0 0 0" rpy="0 0 0"/>-->
+  <!--<geometry>-->
+  <!--<mesh filename="package://wiktor_description/meshes/robotiq_3finger/gripper_mounting_bracket_collision.stl"/>-->
+  <!--</geometry>-->
+  <!--<material name="DarkGray"/>-->
+  <!--</collision>-->
+  <!--</link>-->
+  <!--joint between {parent} and link_0-->
+  <joint name="wiktor_right_arm_link_ee_wiktor_right_joint" type="fixed">
+    <origin rpy="0 0 0" xyz="0 0 0"/>
+    <parent link="wiktor_right_arm_link_ee"/>
+    <child link="wiktor_right_gripper_mounting_bracket"/>
+  </joint>
+  <link name="wiktor_right_gripper_mounting_bracket">
+    <visual>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <geometry>
+        <mesh filename="package://wiktor_description/meshes/robotiq_3finger/kuka_to_palm_connectors_visual.stl"/>
+      </geometry>
+      <material name="LightGrey"/>
+    </visual>
+    <collision>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <geometry>
+        <mesh filename="package://wiktor_description/meshes/robotiq_3finger/kuka_to_palm_connectors_collision.stl"/>
+      </geometry>
+      <material name="LightGrey"/>
+    </collision>
+  </link>
+  <!--<link name="${prefix}_iiwa_bracket">-->
+  <!--<visual>-->
+  <!--<origin xyz="0 0 0" rpy="0 0 0"/>-->
+  <!--<geometry>-->
+  <!--<mesh filename="package://wiktor_description/meshes/robotiq_3finger/iiwa7_to_neutral_coupling_plate_visual.stl"/>-->
+  <!--</geometry>-->
+  <!--<material name="LightGrey"/>-->
+  <!--</visual>-->
+  <!--<collision>-->
+  <!--<origin xyz="0 0 0" rpy="0 0 0"/>-->
+  <!--<geometry>-->
+  <!--<mesh filename="package://wiktor_description/meshes/robotiq_3finger/iiwa7_to_neutral_coupling_plate_collision.stl"/>-->
+  <!--</geometry>-->
+  <!--<material name="LightGrey"/>-->
+  <!--</collision>-->
+  <!--</link>-->
+  <!--<joint name="${prefix}_iiwa_to_robotiq_joint" type="fixed">-->
+  <!--<origin xyz="0 0 0.008" rpy="0 0 0"/>-->
+  <!--<parent link="${prefix}_iiwa_bracket"/>-->
+  <!--<child link="${prefix}_robotiq_bracket"/>-->
+  <!--</joint>-->
+  <!--<link name="${prefix}_robotiq_bracket">-->
+  <!--<visual>-->
+  <!--<origin xyz="0 0 0" rpy="0 0 0"/>-->
+  <!--<geometry>-->
+  <!--<mesh filename="package://wiktor_description/meshes/robotiq_3finger/neutral_coupling_plate_to_robotiq_visual.stl"/>-->
+  <!--</geometry>-->
+  <!--<material name="DarkGrey"/>-->
+  <!--</visual>-->
+  <!--<collision>-->
+  <!--<origin xyz="0 0 0" rpy="0 0 0"/>-->
+  <!--<geometry>-->
+  <!--<mesh filename="package://wiktor_description/meshes/robotiq_3finger/neutral_coupling_plate_to_robotiq_collision.stl"/>-->
+  <!--</geometry>-->
+  <!--<material name="DarkGrey"/>-->
+  <!--</collision>-->
+  <!--</link>-->
+  <!--<joint name="${prefix}_robotiq_gripper_mounting_bracket_joint" type="fixed">-->
+  <!--<origin xyz="0 0 0.1" rpy="0 0 0"/>-->
+  <!--<parent link="${prefix}_robotiq_bracket"/>-->
+  <!--<child link="${prefix}_gripper_mounting_bracket"/>-->
+  <!--</joint>-->
+  <!--<link name="${prefix}_gripper_mounting_bracket">-->
+  <!--<inertial>-->
+  <!--<origin xyz="0 0 0" rpy="0 0 0"/>-->
+  <!--<mass value="1"/>-->
+  <!--<inertia ixx="0.01" ixy="0" ixz="0" iyy="0.01" iyz="0" izz="0.01"/>-->
+  <!--</inertial>-->
+  <!--<visual>-->
+  <!--<origin xyz="0 0 0" rpy="0 0 0"/>-->
+  <!--<geometry>-->
+  <!--<mesh filename="package://wiktor_description/meshes/robotiq_3finger/gripper_mounting_bracket_visual.stl"/>-->
+  <!--</geometry>-->
+  <!--<material name="DarkGray"/>-->
+  <!--</visual>-->
+  <!--<collision>-->
+  <!--<origin xyz="0 0 0" rpy="0 0 0"/>-->
+  <!--<geometry>-->
+  <!--<mesh filename="package://wiktor_description/meshes/robotiq_3finger/gripper_mounting_bracket_collision.stl"/>-->
+  <!--</geometry>-->
+  <!--<material name="DarkGray"/>-->
+  <!--</collision>-->
+  <!--</link>-->
+  <joint name="wiktor_left_gripper_palm_joint" type="fixed">
+    <origin rpy="0 0 0.785398163397" xyz="0 0 0.02705"/>
+    <parent link="wiktor_left_gripper_mounting_bracket"/>
+    <child link="wiktor_left_gripper_palm"/>
+  </joint>
+  <link name="wiktor_left_gripper_palm">
+    <inertial>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <mass value="1"/>
+      <inertia ixx="0.01" ixy="0" ixz="0" iyy="0.01" iyz="0" izz="0.01"/>
+    </inertial>
+    <visual>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <geometry>
+        <mesh filename="package://wiktor_description/meshes/robotiq_3finger/palm_visual.stl"/>
+      </geometry>
+      <material name="DarkGray"/>
+    </visual>
+    <collision>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <geometry>
+        <mesh filename="package://wiktor_description/meshes/robotiq_3finger/palm_collision.stl"/>
+      </geometry>
+      <material name="DarkGray"/>
+    </collision>
+  </link>
+  <!-- Finger A -->
+  <joint name="wiktor_left_gripper_fingerA_knuckle" type="fixed">
+    <origin rpy="0 0 0" xyz="0.02225040 0 0.06111875"/>
+    <parent link="wiktor_left_gripper_palm"/>
+    <child link="wiktor_left_gripper_fingerA_base"/>
+  </joint>
+  <link name="wiktor_left_gripper_fingerA_base">
+    <inertial>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <mass value="1"/>
+      <inertia ixx="0.01" ixy="0" ixz="0" iyy="0.01" iyz="0" izz="0.01"/>
+    </inertial>
+    <visual>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <geometry>
+        <mesh filename="package://wiktor_description/meshes/robotiq_3finger/finger_link1_base_visual.stl"/>
+      </geometry>
+      <material name="DarkGray"/>
+    </visual>
+    <collision>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <geometry>
+        <mesh filename="package://wiktor_description/meshes/robotiq_3finger/finger_link1_base_visual.stl"/>
+      </geometry>
+      <material name="DarkGray"/>
+    </collision>
+  </link>
+  <!-- Joint 2 (base-prox) -->
+  <joint name="wiktor_left_gripper_fingerA_joint_2" type="revolute">
+    <parent link="wiktor_left_gripper_fingerA_base"/>
+    <child link="wiktor_left_gripper_fingerA_prox"/>
+    <origin rpy="0 0 0" xyz="0.02225000 0 0.02151380"/>
+    <axis xyz="0 -1 0"/>
+    <limit effort="300" lower="-1" upper="1" velocity="10"/>
+    <safety_controller k_position="100" k_velocity="2" soft_lower_limit="-2.93215314335" soft_upper_limit="2.93215314335"/>
+    <dynamics damping="0.5"/>
+  </joint>
+  <link name="wiktor_left_gripper_fingerA_prox">
+    <inertial>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <mass value="1"/>
+      <inertia ixx="0.01" ixy="0" ixz="0" iyy="0.01" iyz="0" izz="0.01"/>
+    </inertial>
+    <visual>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <geometry>
+        <mesh filename="package://wiktor_description/meshes/robotiq_3finger/finger_link2_prox_visual.stl"/>
+      </geometry>
+      <material name="DarkGray"/>
+    </visual>
+    <collision>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <geometry>
+        <mesh filename="package://wiktor_description/meshes/robotiq_3finger/finger_link2_prox_collision.stl"/>
+      </geometry>
+      <material name="DarkGray"/>
+    </collision>
+  </link>
+  <!-- Joint 3 (prox-med) -->
+  <joint name="wiktor_left_gripper_fingerA_joint_3" type="revolute">
+    <parent link="wiktor_left_gripper_fingerA_prox"/>
+    <child link="wiktor_left_gripper_fingerA_med"/>
+    <origin rpy="0 0 0" xyz="0 0 0.05715000"/>
+    <axis xyz="0 -1 0"/>
+    <limit effort="300" lower="-1" upper="1" velocity="10"/>
+    <safety_controller k_position="100" k_velocity="2" soft_lower_limit="-2.93215314335" soft_upper_limit="2.93215314335"/>
+    <dynamics damping="0.5"/>
+  </joint>
+  <link name="wiktor_left_gripper_fingerA_med">
+    <inertial>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <mass value="1"/>
+      <inertia ixx="0.01" ixy="0" ixz="0" iyy="0.01" iyz="0" izz="0.01"/>
+    </inertial>
+    <visual>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <geometry>
+        <mesh filename="package://wiktor_description/meshes/robotiq_3finger/finger_link3_med_visual.stl"/>
+      </geometry>
+      <material name="DarkGray"/>
+    </visual>
+    <collision>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <geometry>
+        <mesh filename="package://wiktor_description/meshes/robotiq_3finger/finger_link3_med_collision.stl"/>
+      </geometry>
+      <material name="DarkGray"/>
+    </collision>
+  </link>
+  <!-- Joint 4 (med-dist) -->
+  <joint name="wiktor_left_gripper_fingerA_joint_4" type="revolute">
+    <parent link="wiktor_left_gripper_fingerA_med"/>
+    <child link="wiktor_left_gripper_fingerA_dist"/>
+    <origin rpy="0 0 0" xyz="0 0 0.03810000"/>
+    <axis xyz="0 -1 0"/>
+    <limit effort="300" lower="-1" upper="1" velocity="10"/>
+    <safety_controller k_position="100" k_velocity="2" soft_lower_limit="-2.93215314335" soft_upper_limit="2.93215314335"/>
+    <dynamics damping="0.5"/>
+  </joint>
+  <link name="wiktor_left_gripper_fingerA_dist">
+    <inertial>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <mass value="1"/>
+      <inertia ixx="0.01" ixy="0" ixz="0" iyy="0.01" iyz="0" izz="0.01"/>
+    </inertial>
+    <visual>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <geometry>
+        <mesh filename="package://wiktor_description/meshes/robotiq_3finger/finger_link4_dist_visual.stl"/>
+      </geometry>
+      <material name="DarkGray"/>
+    </visual>
+    <collision>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <geometry>
+        <mesh filename="package://wiktor_description/meshes/robotiq_3finger/finger_link4_dist_collision.stl"/>
+      </geometry>
+      <material name="DarkGray"/>
+    </collision>
+  </link>
+  <!-- Finger B -->
+  <joint name="wiktor_left_gripper_fingerB_knuckle" type="revolute">
+    <origin rpy="0 0 3.14159265359" xyz="-0.02230120 0.03651250 0.06111875"/>
+    <parent link="wiktor_left_gripper_palm"/>
+    <child link="wiktor_left_gripper_fingerB_base"/>
+    <axis xyz="-1 0 0"/>
+    <limit effort="300" lower="-1" upper="1" velocity="10"/>
+    <safety_controller k_position="100" k_velocity="2" soft_lower_limit="-2.93215314335" soft_upper_limit="2.93215314335"/>
+    <dynamics damping="0.5"/>
+  </joint>
+  <link name="wiktor_left_gripper_fingerB_base">
+    <inertial>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <mass value="1"/>
+      <inertia ixx="0.01" ixy="0" ixz="0" iyy="0.01" iyz="0" izz="0.01"/>
+    </inertial>
+    <visual>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <geometry>
+        <mesh filename="package://wiktor_description/meshes/robotiq_3finger/finger_link1_base_visual.stl"/>
+      </geometry>
+      <material name="DarkGray"/>
+    </visual>
+    <collision>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <geometry>
+        <mesh filename="package://wiktor_description/meshes/robotiq_3finger/finger_link1_base_visual.stl"/>
+      </geometry>
+      <material name="DarkGray"/>
+    </collision>
+  </link>
+  <!-- Joint 2 (base-prox) -->
+  <joint name="wiktor_left_gripper_fingerB_joint_2" type="revolute">
+    <parent link="wiktor_left_gripper_fingerB_base"/>
+    <child link="wiktor_left_gripper_fingerB_prox"/>
+    <origin rpy="0 0 0" xyz="0.02225000 0 0.02151380"/>
+    <axis xyz="0 -1 0"/>
+    <limit effort="300" lower="-1" upper="1" velocity="10"/>
+    <safety_controller k_position="100" k_velocity="2" soft_lower_limit="-2.93215314335" soft_upper_limit="2.93215314335"/>
+    <dynamics damping="0.5"/>
+  </joint>
+  <link name="wiktor_left_gripper_fingerB_prox">
+    <inertial>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <mass value="1"/>
+      <inertia ixx="0.01" ixy="0" ixz="0" iyy="0.01" iyz="0" izz="0.01"/>
+    </inertial>
+    <visual>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <geometry>
+        <mesh filename="package://wiktor_description/meshes/robotiq_3finger/finger_link2_prox_visual.stl"/>
+      </geometry>
+      <material name="DarkGray"/>
+    </visual>
+    <collision>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <geometry>
+        <mesh filename="package://wiktor_description/meshes/robotiq_3finger/finger_link2_prox_collision.stl"/>
+      </geometry>
+      <material name="DarkGray"/>
+    </collision>
+  </link>
+  <!-- Joint 3 (prox-med) -->
+  <joint name="wiktor_left_gripper_fingerB_joint_3" type="revolute">
+    <parent link="wiktor_left_gripper_fingerB_prox"/>
+    <child link="wiktor_left_gripper_fingerB_med"/>
+    <origin rpy="0 0 0" xyz="0 0 0.05715000"/>
+    <axis xyz="0 -1 0"/>
+    <limit effort="300" lower="-1" upper="1" velocity="10"/>
+    <safety_controller k_position="100" k_velocity="2" soft_lower_limit="-2.93215314335" soft_upper_limit="2.93215314335"/>
+    <dynamics damping="0.5"/>
+  </joint>
+  <link name="wiktor_left_gripper_fingerB_med">
+    <inertial>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <mass value="1"/>
+      <inertia ixx="0.01" ixy="0" ixz="0" iyy="0.01" iyz="0" izz="0.01"/>
+    </inertial>
+    <visual>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <geometry>
+        <mesh filename="package://wiktor_description/meshes/robotiq_3finger/finger_link3_med_visual.stl"/>
+      </geometry>
+      <material name="DarkGray"/>
+    </visual>
+    <collision>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <geometry>
+        <mesh filename="package://wiktor_description/meshes/robotiq_3finger/finger_link3_med_collision.stl"/>
+      </geometry>
+      <material name="DarkGray"/>
+    </collision>
+  </link>
+  <!-- Joint 4 (med-dist) -->
+  <joint name="wiktor_left_gripper_fingerB_joint_4" type="revolute">
+    <parent link="wiktor_left_gripper_fingerB_med"/>
+    <child link="wiktor_left_gripper_fingerB_dist"/>
+    <origin rpy="0 0 0" xyz="0 0 0.03810000"/>
+    <axis xyz="0 -1 0"/>
+    <limit effort="300" lower="-1" upper="1" velocity="10"/>
+    <safety_controller k_position="100" k_velocity="2" soft_lower_limit="-2.93215314335" soft_upper_limit="2.93215314335"/>
+    <dynamics damping="0.5"/>
+  </joint>
+  <link name="wiktor_left_gripper_fingerB_dist">
+    <inertial>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <mass value="1"/>
+      <inertia ixx="0.01" ixy="0" ixz="0" iyy="0.01" iyz="0" izz="0.01"/>
+    </inertial>
+    <visual>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <geometry>
+        <mesh filename="package://wiktor_description/meshes/robotiq_3finger/finger_link4_dist_visual.stl"/>
+      </geometry>
+      <material name="DarkGray"/>
+    </visual>
+    <collision>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <geometry>
+        <mesh filename="package://wiktor_description/meshes/robotiq_3finger/finger_link4_dist_collision.stl"/>
+      </geometry>
+      <material name="DarkGray"/>
+    </collision>
+  </link>
+  <!-- Finger C -->
+  <joint name="wiktor_left_gripper_fingerC_knuckle" type="revolute">
+    <origin rpy="0 0 3.14159265359" xyz="-0.02230120 -0.03651250 0.06111875"/>
+    <parent link="wiktor_left_gripper_palm"/>
+    <child link="wiktor_left_gripper_fingerC_base"/>
+    <axis xyz="1 0 0"/>
+    <limit effort="300" lower="-1" upper="1" velocity="10"/>
+    <safety_controller k_position="100" k_velocity="2" soft_lower_limit="-2.93215314335" soft_upper_limit="2.93215314335"/>
+    <dynamics damping="0.5"/>
+  </joint>
+  <link name="wiktor_left_gripper_fingerC_base">
+    <inertial>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <mass value="1"/>
+      <inertia ixx="0.01" ixy="0" ixz="0" iyy="0.01" iyz="0" izz="0.01"/>
+    </inertial>
+    <visual>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <geometry>
+        <mesh filename="package://wiktor_description/meshes/robotiq_3finger/finger_link1_base_visual.stl"/>
+      </geometry>
+      <material name="DarkGray"/>
+    </visual>
+    <collision>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <geometry>
+        <mesh filename="package://wiktor_description/meshes/robotiq_3finger/finger_link1_base_visual.stl"/>
+      </geometry>
+      <material name="DarkGray"/>
+    </collision>
+  </link>
+  <!-- Joint 2 (base-prox) -->
+  <joint name="wiktor_left_gripper_fingerC_joint_2" type="revolute">
+    <parent link="wiktor_left_gripper_fingerC_base"/>
+    <child link="wiktor_left_gripper_fingerC_prox"/>
+    <origin rpy="0 0 0" xyz="0.02225000 0 0.02151380"/>
+    <axis xyz="0 -1 0"/>
+    <limit effort="300" lower="-1" upper="1" velocity="10"/>
+    <safety_controller k_position="100" k_velocity="2" soft_lower_limit="-2.93215314335" soft_upper_limit="2.93215314335"/>
+    <dynamics damping="0.5"/>
+  </joint>
+  <link name="wiktor_left_gripper_fingerC_prox">
+    <inertial>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <mass value="1"/>
+      <inertia ixx="0.01" ixy="0" ixz="0" iyy="0.01" iyz="0" izz="0.01"/>
+    </inertial>
+    <visual>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <geometry>
+        <mesh filename="package://wiktor_description/meshes/robotiq_3finger/finger_link2_prox_visual.stl"/>
+      </geometry>
+      <material name="DarkGray"/>
+    </visual>
+    <collision>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <geometry>
+        <mesh filename="package://wiktor_description/meshes/robotiq_3finger/finger_link2_prox_collision.stl"/>
+      </geometry>
+      <material name="DarkGray"/>
+    </collision>
+  </link>
+  <!-- Joint 3 (prox-med) -->
+  <joint name="wiktor_left_gripper_fingerC_joint_3" type="revolute">
+    <parent link="wiktor_left_gripper_fingerC_prox"/>
+    <child link="wiktor_left_gripper_fingerC_med"/>
+    <origin rpy="0 0 0" xyz="0 0 0.05715000"/>
+    <axis xyz="0 -1 0"/>
+    <limit effort="300" lower="-1" upper="1" velocity="10"/>
+    <safety_controller k_position="100" k_velocity="2" soft_lower_limit="-2.93215314335" soft_upper_limit="2.93215314335"/>
+    <dynamics damping="0.5"/>
+  </joint>
+  <link name="wiktor_left_gripper_fingerC_med">
+    <inertial>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <mass value="1"/>
+      <inertia ixx="0.01" ixy="0" ixz="0" iyy="0.01" iyz="0" izz="0.01"/>
+    </inertial>
+    <visual>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <geometry>
+        <mesh filename="package://wiktor_description/meshes/robotiq_3finger/finger_link3_med_visual.stl"/>
+      </geometry>
+      <material name="DarkGray"/>
+    </visual>
+    <collision>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <geometry>
+        <mesh filename="package://wiktor_description/meshes/robotiq_3finger/finger_link3_med_collision.stl"/>
+      </geometry>
+      <material name="DarkGray"/>
+    </collision>
+  </link>
+  <!-- Joint 4 (med-dist) -->
+  <joint name="wiktor_left_gripper_fingerC_joint_4" type="revolute">
+    <parent link="wiktor_left_gripper_fingerC_med"/>
+    <child link="wiktor_left_gripper_fingerC_dist"/>
+    <origin rpy="0 0 0" xyz="0 0 0.03810000"/>
+    <axis xyz="0 -1 0"/>
+    <limit effort="300" lower="-1" upper="1" velocity="10"/>
+    <safety_controller k_position="100" k_velocity="2" soft_lower_limit="-2.93215314335" soft_upper_limit="2.93215314335"/>
+    <dynamics damping="0.5"/>
+  </joint>
+  <link name="wiktor_left_gripper_fingerC_dist">
+    <inertial>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <mass value="1"/>
+      <inertia ixx="0.01" ixy="0" ixz="0" iyy="0.01" iyz="0" izz="0.01"/>
+    </inertial>
+    <visual>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <geometry>
+        <mesh filename="package://wiktor_description/meshes/robotiq_3finger/finger_link4_dist_visual.stl"/>
+      </geometry>
+      <material name="DarkGray"/>
+    </visual>
+    <collision>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <geometry>
+        <mesh filename="package://wiktor_description/meshes/robotiq_3finger/finger_link4_dist_collision.stl"/>
+      </geometry>
+      <material name="DarkGray"/>
+    </collision>
+  </link>
+  <joint name="wiktor_right_gripper_palm_joint" type="fixed">
+    <origin rpy="0 0 0.785398163397" xyz="0 0 0.02705"/>
+    <parent link="wiktor_right_gripper_mounting_bracket"/>
+    <child link="wiktor_right_gripper_palm"/>
+  </joint>
+  <link name="wiktor_right_gripper_palm">
+    <inertial>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <mass value="1"/>
+      <inertia ixx="0.01" ixy="0" ixz="0" iyy="0.01" iyz="0" izz="0.01"/>
+    </inertial>
+    <visual>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <geometry>
+        <mesh filename="package://wiktor_description/meshes/robotiq_3finger/palm_visual.stl"/>
+      </geometry>
+      <material name="DarkGray"/>
+    </visual>
+    <collision>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <geometry>
+        <mesh filename="package://wiktor_description/meshes/robotiq_3finger/palm_collision.stl"/>
+      </geometry>
+      <material name="DarkGray"/>
+    </collision>
+  </link>
+  <!-- Finger A -->
+  <joint name="wiktor_right_gripper_fingerA_knuckle" type="fixed">
+    <origin rpy="0 0 0" xyz="0.02225040 0 0.06111875"/>
+    <parent link="wiktor_right_gripper_palm"/>
+    <child link="wiktor_right_gripper_fingerA_base"/>
+  </joint>
+  <link name="wiktor_right_gripper_fingerA_base">
+    <inertial>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <mass value="1"/>
+      <inertia ixx="0.01" ixy="0" ixz="0" iyy="0.01" iyz="0" izz="0.01"/>
+    </inertial>
+    <visual>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <geometry>
+        <mesh filename="package://wiktor_description/meshes/robotiq_3finger/finger_link1_base_visual.stl"/>
+      </geometry>
+      <material name="DarkGray"/>
+    </visual>
+    <collision>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <geometry>
+        <mesh filename="package://wiktor_description/meshes/robotiq_3finger/finger_link1_base_visual.stl"/>
+      </geometry>
+      <material name="DarkGray"/>
+    </collision>
+  </link>
+  <!-- Joint 2 (base-prox) -->
+  <joint name="wiktor_right_gripper_fingerA_joint_2" type="revolute">
+    <parent link="wiktor_right_gripper_fingerA_base"/>
+    <child link="wiktor_right_gripper_fingerA_prox"/>
+    <origin rpy="0 0 0" xyz="0.02225000 0 0.02151380"/>
+    <axis xyz="0 -1 0"/>
+    <limit effort="300" lower="-1" upper="1" velocity="10"/>
+    <safety_controller k_position="100" k_velocity="2" soft_lower_limit="-2.93215314335" soft_upper_limit="2.93215314335"/>
+    <dynamics damping="0.5"/>
+  </joint>
+  <link name="wiktor_right_gripper_fingerA_prox">
+    <inertial>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <mass value="1"/>
+      <inertia ixx="0.01" ixy="0" ixz="0" iyy="0.01" iyz="0" izz="0.01"/>
+    </inertial>
+    <visual>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <geometry>
+        <mesh filename="package://wiktor_description/meshes/robotiq_3finger/finger_link2_prox_visual.stl"/>
+      </geometry>
+      <material name="DarkGray"/>
+    </visual>
+    <collision>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <geometry>
+        <mesh filename="package://wiktor_description/meshes/robotiq_3finger/finger_link2_prox_collision.stl"/>
+      </geometry>
+      <material name="DarkGray"/>
+    </collision>
+  </link>
+  <!-- Joint 3 (prox-med) -->
+  <joint name="wiktor_right_gripper_fingerA_joint_3" type="revolute">
+    <parent link="wiktor_right_gripper_fingerA_prox"/>
+    <child link="wiktor_right_gripper_fingerA_med"/>
+    <origin rpy="0 0 0" xyz="0 0 0.05715000"/>
+    <axis xyz="0 -1 0"/>
+    <limit effort="300" lower="-1" upper="1" velocity="10"/>
+    <safety_controller k_position="100" k_velocity="2" soft_lower_limit="-2.93215314335" soft_upper_limit="2.93215314335"/>
+    <dynamics damping="0.5"/>
+  </joint>
+  <link name="wiktor_right_gripper_fingerA_med">
+    <inertial>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <mass value="1"/>
+      <inertia ixx="0.01" ixy="0" ixz="0" iyy="0.01" iyz="0" izz="0.01"/>
+    </inertial>
+    <visual>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <geometry>
+        <mesh filename="package://wiktor_description/meshes/robotiq_3finger/finger_link3_med_visual.stl"/>
+      </geometry>
+      <material name="DarkGray"/>
+    </visual>
+    <collision>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <geometry>
+        <mesh filename="package://wiktor_description/meshes/robotiq_3finger/finger_link3_med_collision.stl"/>
+      </geometry>
+      <material name="DarkGray"/>
+    </collision>
+  </link>
+  <!-- Joint 4 (med-dist) -->
+  <joint name="wiktor_right_gripper_fingerA_joint_4" type="revolute">
+    <parent link="wiktor_right_gripper_fingerA_med"/>
+    <child link="wiktor_right_gripper_fingerA_dist"/>
+    <origin rpy="0 0 0" xyz="0 0 0.03810000"/>
+    <axis xyz="0 -1 0"/>
+    <limit effort="300" lower="-1" upper="1" velocity="10"/>
+    <safety_controller k_position="100" k_velocity="2" soft_lower_limit="-2.93215314335" soft_upper_limit="2.93215314335"/>
+    <dynamics damping="0.5"/>
+  </joint>
+  <link name="wiktor_right_gripper_fingerA_dist">
+    <inertial>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <mass value="1"/>
+      <inertia ixx="0.01" ixy="0" ixz="0" iyy="0.01" iyz="0" izz="0.01"/>
+    </inertial>
+    <visual>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <geometry>
+        <mesh filename="package://wiktor_description/meshes/robotiq_3finger/finger_link4_dist_visual.stl"/>
+      </geometry>
+      <material name="DarkGray"/>
+    </visual>
+    <collision>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <geometry>
+        <mesh filename="package://wiktor_description/meshes/robotiq_3finger/finger_link4_dist_collision.stl"/>
+      </geometry>
+      <material name="DarkGray"/>
+    </collision>
+  </link>
+  <!-- Finger B -->
+  <joint name="wiktor_right_gripper_fingerB_knuckle" type="revolute">
+    <origin rpy="0 0 3.14159265359" xyz="-0.02230120 0.03651250 0.06111875"/>
+    <parent link="wiktor_right_gripper_palm"/>
+    <child link="wiktor_right_gripper_fingerB_base"/>
+    <axis xyz="-1 0 0"/>
+    <limit effort="300" lower="-1" upper="1" velocity="10"/>
+    <safety_controller k_position="100" k_velocity="2" soft_lower_limit="-2.93215314335" soft_upper_limit="2.93215314335"/>
+    <dynamics damping="0.5"/>
+  </joint>
+  <link name="wiktor_right_gripper_fingerB_base">
+    <inertial>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <mass value="1"/>
+      <inertia ixx="0.01" ixy="0" ixz="0" iyy="0.01" iyz="0" izz="0.01"/>
+    </inertial>
+    <visual>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <geometry>
+        <mesh filename="package://wiktor_description/meshes/robotiq_3finger/finger_link1_base_visual.stl"/>
+      </geometry>
+      <material name="DarkGray"/>
+    </visual>
+    <collision>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <geometry>
+        <mesh filename="package://wiktor_description/meshes/robotiq_3finger/finger_link1_base_visual.stl"/>
+      </geometry>
+      <material name="DarkGray"/>
+    </collision>
+  </link>
+  <!-- Joint 2 (base-prox) -->
+  <joint name="wiktor_right_gripper_fingerB_joint_2" type="revolute">
+    <parent link="wiktor_right_gripper_fingerB_base"/>
+    <child link="wiktor_right_gripper_fingerB_prox"/>
+    <origin rpy="0 0 0" xyz="0.02225000 0 0.02151380"/>
+    <axis xyz="0 -1 0"/>
+    <limit effort="300" lower="-1" upper="1" velocity="10"/>
+    <safety_controller k_position="100" k_velocity="2" soft_lower_limit="-2.93215314335" soft_upper_limit="2.93215314335"/>
+    <dynamics damping="0.5"/>
+  </joint>
+  <link name="wiktor_right_gripper_fingerB_prox">
+    <inertial>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <mass value="1"/>
+      <inertia ixx="0.01" ixy="0" ixz="0" iyy="0.01" iyz="0" izz="0.01"/>
+    </inertial>
+    <visual>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <geometry>
+        <mesh filename="package://wiktor_description/meshes/robotiq_3finger/finger_link2_prox_visual.stl"/>
+      </geometry>
+      <material name="DarkGray"/>
+    </visual>
+    <collision>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <geometry>
+        <mesh filename="package://wiktor_description/meshes/robotiq_3finger/finger_link2_prox_collision.stl"/>
+      </geometry>
+      <material name="DarkGray"/>
+    </collision>
+  </link>
+  <!-- Joint 3 (prox-med) -->
+  <joint name="wiktor_right_gripper_fingerB_joint_3" type="revolute">
+    <parent link="wiktor_right_gripper_fingerB_prox"/>
+    <child link="wiktor_right_gripper_fingerB_med"/>
+    <origin rpy="0 0 0" xyz="0 0 0.05715000"/>
+    <axis xyz="0 -1 0"/>
+    <limit effort="300" lower="-1" upper="1" velocity="10"/>
+    <safety_controller k_position="100" k_velocity="2" soft_lower_limit="-2.93215314335" soft_upper_limit="2.93215314335"/>
+    <dynamics damping="0.5"/>
+  </joint>
+  <link name="wiktor_right_gripper_fingerB_med">
+    <inertial>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <mass value="1"/>
+      <inertia ixx="0.01" ixy="0" ixz="0" iyy="0.01" iyz="0" izz="0.01"/>
+    </inertial>
+    <visual>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <geometry>
+        <mesh filename="package://wiktor_description/meshes/robotiq_3finger/finger_link3_med_visual.stl"/>
+      </geometry>
+      <material name="DarkGray"/>
+    </visual>
+    <collision>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <geometry>
+        <mesh filename="package://wiktor_description/meshes/robotiq_3finger/finger_link3_med_collision.stl"/>
+      </geometry>
+      <material name="DarkGray"/>
+    </collision>
+  </link>
+  <!-- Joint 4 (med-dist) -->
+  <joint name="wiktor_right_gripper_fingerB_joint_4" type="revolute">
+    <parent link="wiktor_right_gripper_fingerB_med"/>
+    <child link="wiktor_right_gripper_fingerB_dist"/>
+    <origin rpy="0 0 0" xyz="0 0 0.03810000"/>
+    <axis xyz="0 -1 0"/>
+    <limit effort="300" lower="-1" upper="1" velocity="10"/>
+    <safety_controller k_position="100" k_velocity="2" soft_lower_limit="-2.93215314335" soft_upper_limit="2.93215314335"/>
+    <dynamics damping="0.5"/>
+  </joint>
+  <link name="wiktor_right_gripper_fingerB_dist">
+    <inertial>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <mass value="1"/>
+      <inertia ixx="0.01" ixy="0" ixz="0" iyy="0.01" iyz="0" izz="0.01"/>
+    </inertial>
+    <visual>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <geometry>
+        <mesh filename="package://wiktor_description/meshes/robotiq_3finger/finger_link4_dist_visual.stl"/>
+      </geometry>
+      <material name="DarkGray"/>
+    </visual>
+    <collision>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <geometry>
+        <mesh filename="package://wiktor_description/meshes/robotiq_3finger/finger_link4_dist_collision.stl"/>
+      </geometry>
+      <material name="DarkGray"/>
+    </collision>
+  </link>
+  <!-- Finger C -->
+  <joint name="wiktor_right_gripper_fingerC_knuckle" type="revolute">
+    <origin rpy="0 0 3.14159265359" xyz="-0.02230120 -0.03651250 0.06111875"/>
+    <parent link="wiktor_right_gripper_palm"/>
+    <child link="wiktor_right_gripper_fingerC_base"/>
+    <axis xyz="1 0 0"/>
+    <limit effort="300" lower="-1" upper="1" velocity="10"/>
+    <safety_controller k_position="100" k_velocity="2" soft_lower_limit="-2.93215314335" soft_upper_limit="2.93215314335"/>
+    <dynamics damping="0.5"/>
+  </joint>
+  <link name="wiktor_right_gripper_fingerC_base">
+    <inertial>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <mass value="1"/>
+      <inertia ixx="0.01" ixy="0" ixz="0" iyy="0.01" iyz="0" izz="0.01"/>
+    </inertial>
+    <visual>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <geometry>
+        <mesh filename="package://wiktor_description/meshes/robotiq_3finger/finger_link1_base_visual.stl"/>
+      </geometry>
+      <material name="DarkGray"/>
+    </visual>
+    <collision>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <geometry>
+        <mesh filename="package://wiktor_description/meshes/robotiq_3finger/finger_link1_base_visual.stl"/>
+      </geometry>
+      <material name="DarkGray"/>
+    </collision>
+  </link>
+  <!-- Joint 2 (base-prox) -->
+  <joint name="wiktor_right_gripper_fingerC_joint_2" type="revolute">
+    <parent link="wiktor_right_gripper_fingerC_base"/>
+    <child link="wiktor_right_gripper_fingerC_prox"/>
+    <origin rpy="0 0 0" xyz="0.02225000 0 0.02151380"/>
+    <axis xyz="0 -1 0"/>
+    <limit effort="300" lower="-1" upper="1" velocity="10"/>
+    <safety_controller k_position="100" k_velocity="2" soft_lower_limit="-2.93215314335" soft_upper_limit="2.93215314335"/>
+    <dynamics damping="0.5"/>
+  </joint>
+  <link name="wiktor_right_gripper_fingerC_prox">
+    <inertial>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <mass value="1"/>
+      <inertia ixx="0.01" ixy="0" ixz="0" iyy="0.01" iyz="0" izz="0.01"/>
+    </inertial>
+    <visual>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <geometry>
+        <mesh filename="package://wiktor_description/meshes/robotiq_3finger/finger_link2_prox_visual.stl"/>
+      </geometry>
+      <material name="DarkGray"/>
+    </visual>
+    <collision>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <geometry>
+        <mesh filename="package://wiktor_description/meshes/robotiq_3finger/finger_link2_prox_collision.stl"/>
+      </geometry>
+      <material name="DarkGray"/>
+    </collision>
+  </link>
+  <!-- Joint 3 (prox-med) -->
+  <joint name="wiktor_right_gripper_fingerC_joint_3" type="revolute">
+    <parent link="wiktor_right_gripper_fingerC_prox"/>
+    <child link="wiktor_right_gripper_fingerC_med"/>
+    <origin rpy="0 0 0" xyz="0 0 0.05715000"/>
+    <axis xyz="0 -1 0"/>
+    <limit effort="300" lower="-1" upper="1" velocity="10"/>
+    <safety_controller k_position="100" k_velocity="2" soft_lower_limit="-2.93215314335" soft_upper_limit="2.93215314335"/>
+    <dynamics damping="0.5"/>
+  </joint>
+  <link name="wiktor_right_gripper_fingerC_med">
+    <inertial>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <mass value="1"/>
+      <inertia ixx="0.01" ixy="0" ixz="0" iyy="0.01" iyz="0" izz="0.01"/>
+    </inertial>
+    <visual>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <geometry>
+        <mesh filename="package://wiktor_description/meshes/robotiq_3finger/finger_link3_med_visual.stl"/>
+      </geometry>
+      <material name="DarkGray"/>
+    </visual>
+    <collision>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <geometry>
+        <mesh filename="package://wiktor_description/meshes/robotiq_3finger/finger_link3_med_collision.stl"/>
+      </geometry>
+      <material name="DarkGray"/>
+    </collision>
+  </link>
+  <!-- Joint 4 (med-dist) -->
+  <joint name="wiktor_right_gripper_fingerC_joint_4" type="revolute">
+    <parent link="wiktor_right_gripper_fingerC_med"/>
+    <child link="wiktor_right_gripper_fingerC_dist"/>
+    <origin rpy="0 0 0" xyz="0 0 0.03810000"/>
+    <axis xyz="0 -1 0"/>
+    <limit effort="300" lower="-1" upper="1" velocity="10"/>
+    <safety_controller k_position="100" k_velocity="2" soft_lower_limit="-2.93215314335" soft_upper_limit="2.93215314335"/>
+    <dynamics damping="0.5"/>
+  </joint>
+  <link name="wiktor_right_gripper_fingerC_dist">
+    <inertial>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <mass value="1"/>
+      <inertia ixx="0.01" ixy="0" ixz="0" iyy="0.01" iyz="0" izz="0.01"/>
+    </inertial>
+    <visual>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <geometry>
+        <mesh filename="package://wiktor_description/meshes/robotiq_3finger/finger_link4_dist_visual.stl"/>
+      </geometry>
+      <material name="DarkGray"/>
+    </visual>
+    <collision>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <geometry>
+        <mesh filename="package://wiktor_description/meshes/robotiq_3finger/finger_link4_dist_collision.stl"/>
+      </geometry>
+      <material name="DarkGray"/>
+    </collision>
+  </link>
 </robot>
 

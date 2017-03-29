@@ -174,7 +174,7 @@ right_arm:
     - SPARStwokConfigDefault
   projection_evaluator: joints(wiktor_right_arm_joint_1,wiktor_right_arm_joint_2)
   longest_valid_segment_fraction: 0.005
-left_ee:
+left_gripper:
   planner_configs:
     - SBLkConfigDefault
     - ESTkConfigDefault
@@ -199,7 +199,7 @@ left_ee:
     - LazyPRMstarkConfigDefault
     - SPARSkConfigDefault
     - SPARStwokConfigDefault
-right_ee:
+right_gripper:
   planner_configs:
     - SBLkConfigDefault
     - ESTkConfigDefault
