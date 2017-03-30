@@ -65,6 +65,94 @@ public:
         gripper_status_queue_.push_back(gripper_status);
     }
 
+    static inline bool JVQMatch(const wiktor_hardware_interface::JointValueQuantity& jvq1, const wiktor_hardware_interface::JointValueQuantity& jvq2)
+    {
+        if (jvq1.joint_1 != jvq2.joint_1)
+        {
+            return false;
+        }
+        else if (jvq1.joint_2 != jvq2.joint_2)
+        {
+            return false;
+        }
+        else if (jvq1.joint_3 != jvq2.joint_3)
+        {
+            return false;
+        }
+        else if (jvq1.joint_4 != jvq2.joint_4)
+        {
+            return false;
+        }
+        else if (jvq1.joint_5 != jvq2.joint_5)
+        {
+            return false;
+        }
+        else if (jvq1.joint_6 != jvq2.joint_6)
+        {
+            return false;
+        }
+        else if (jvq1.joint_7 != jvq2.joint_7)
+        {
+            return false;
+        }
+        else
+        {
+            return true;
+        }
+    }
+
+    static inline bool CVQMatch(const wiktor_hardware_interface::CartesianValueQuantity& cvq1, const wiktor_hardware_interface::CartesianValueQuantity& cvq2)
+    {
+        if (cvq1.x != cvq2.x)
+        {
+            return false;
+        }
+        else if (cvq1.y != cvq2.y)
+        {
+            return false;
+        }
+        else if (cvq1.z != cvq2.z)
+        {
+            return false;
+        }
+        else if (cvq1.a != cvq2.a)
+        {
+            return false;
+        }
+        else if (cvq1.b != cvq2.b)
+        {
+            return false;
+        }
+        else if (cvq1.c != cvq2.c)
+        {
+            return false;
+        }
+        else
+        {
+            return true;
+        }
+    }
+
+    static inline bool PExPMatch(const wiktor_hardware_interface::PathExecutionParameters& pexp1, const wiktor_hardware_interface::PathExecutionParameters& pexp2)
+    {
+        if (pexp1.joint_relative_acceleration != pexp2.joint_relative_acceleration)
+        {
+            return false;
+        }
+        else if (pexp1.joint_relative_velocity != pexp2.joint_relative_velocity)
+        {
+            return false;
+        }
+        else if (pexp1.override_joint_acceleration != pexp2.override_joint_acceleration)
+        {
+            return false;
+        }
+        else
+        {
+            return true;
+        }
+    }
+
     static inline wiktor_hardware_interface::JointValueQuantity MakeJVQ(const double j1, const double j2, const double j3, const double j4, const double j5, const double j6, const double j7)
     {
         wiktor_hardware_interface::JointValueQuantity jvq;
@@ -121,6 +209,22 @@ public:
         motion_command_queue_.push_back(command);
     }
 
+    bool CheckMotionCommandAndStatusMatch(const wiktor_hardware_interface::MotionCommand& command, const wiktor_hardware_interface::MotionStatus& status) const
+    {
+        const bool jpmatch = JVQMatch(command.joint_position, status.measured_joint_position);
+        const bool jvmatch = JVQMatch(command.joint_velocity, status.measured_joint_velocity);
+        const bool cpmatch = CVQMatch(command.cartesian_pose, status.measured_cartesian_pose);
+        const bool ctmatch = (command.command_type == status.active_command_type);
+        if (jpmatch && jvmatch && cpmatch && ctmatch)
+        {
+            return true;
+        }
+        else
+        {
+            return false;
+        }
+    }
+
     void SendControlModeCommand()
     {
         wiktor_hardware_interface::ControlModeCommand command;
@@ -136,6 +240,26 @@ public:
         const bool sent = iiwa_ptr_->SendControlModeCommandMessage(command);
         assert(sent);
         control_mode_command_queue_.push_back(command);
+    }
+
+    bool CheckControlModeCommandAndStatusMatch(const wiktor_hardware_interface::ControlModeCommand& command, const wiktor_hardware_interface::ControlModeStatus& status) const
+    {
+        const bool cdmatch = CVQMatch(command.cartesian_impedance_params.cartesian_damping, status.cartesian_impedance_params.cartesian_damping);
+        const bool ndmatch = (command.cartesian_impedance_params.nullspace_damping == status.cartesian_impedance_params.nullspace_damping);
+        const bool csmatch = CVQMatch(command.cartesian_impedance_params.cartesian_stiffness, status.cartesian_impedance_params.cartesian_stiffness);
+        const bool nsmatch = (command.cartesian_impedance_params.nullspace_stiffness == status.cartesian_impedance_params.nullspace_stiffness);
+        const bool jdmatch = JVQMatch(command.joint_impedance_params.joint_damping, status.joint_impedance_params.joint_damping);
+        const bool jsmatch = JVQMatch(command.joint_impedance_params.joint_stiffness, status.joint_impedance_params.joint_stiffness);
+        const bool pexpmatch = PExPMatch(command.path_execution_params, status.path_execution_params);
+        const bool cmmatch = (command.control_mode == status.active_control_mode);
+        if (cdmatch && ndmatch && csmatch && nsmatch && jdmatch && jsmatch && pexpmatch && cmmatch)
+        {
+            return true;
+        }
+        else
+        {
+            return true;
+        }
     }
 
     void SendGripperCommand()
@@ -155,19 +279,62 @@ public:
         gripper_command_queue_.push_back(command);
     }
 
+    static inline bool FingerActuatorCommandStatusTestMatch(const wiktor_hardware_interface::Robotiq3FingerActuatorCommand& command, const wiktor_hardware_interface::Robotiq3FingerActuatorStatus& status)
+    {
+        if (command.position != status.position_request)
+        {
+            return false;
+        }
+        else
+        {
+            return true;
+        }
+    }
+
+    bool CheckGripperCommandAndStatusMatch(const wiktor_hardware_interface::Robotiq3FingerCommand& command, const wiktor_hardware_interface::Robotiq3FingerStatus& status) const
+    {
+        const bool famatch = FingerActuatorCommandStatusTestMatch(command.finger_a_command, status.finger_a_status);
+        const bool fbmatch = FingerActuatorCommandStatusTestMatch(command.finger_b_command, status.finger_b_status);
+        const bool fcmatch = FingerActuatorCommandStatusTestMatch(command.finger_c_command, status.finger_c_status);
+        const bool smatch = FingerActuatorCommandStatusTestMatch(command.scissor_command, status.scissor_status);
+        if (famatch && fbmatch && fcmatch && smatch)
+        {
+            return true;
+        }
+        else
+        {
+            return false;
+        }
+    }
+
     void CheckMotionCommandAndStatus()
     {
-        ;
+        assert(motion_command_queue_.size() == 1);
+        assert(motion_status_queue_.size() == 1);
+        const bool match = CheckMotionCommandAndStatusMatch(motion_command_queue_.front(), motion_status_queue_.front());
+        assert(match);
+        motion_command_queue_.clear();
+        motion_status_queue_.clear();
     }
 
     void CheckControlModeCommandAndStatus()
     {
-        ;
+        assert(control_mode_command_queue_.size() == 1);
+        assert(control_mode_status_queue_.size() == 1);
+        const bool match = CheckControlModeCommandAndStatusMatch(control_mode_command_queue_.front(), control_mode_status_queue_.front());
+        assert(match);
+        control_mode_command_queue_.clear();
+        control_mode_status_queue_.clear();
     }
 
     void CheckGripperCommandAndStatus()
     {
-        ;
+        assert(gripper_command_queue_.size() == 1);
+        assert(gripper_status_queue_.size() == 1);
+        const bool match = CheckGripperCommandAndStatusMatch(gripper_command_queue_.front(), gripper_status_queue_.front());
+        assert(match);
+        gripper_command_queue_.clear();
+        gripper_status_queue_.clear();
     }
 
     void Loop()
