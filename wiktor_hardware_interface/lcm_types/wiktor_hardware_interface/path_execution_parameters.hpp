@@ -6,26 +6,21 @@
 
 #include <lcm/lcm_coretypes.h>
 
-#ifndef __wiktor_hardware_interface_robotiq_3finger_object_status_hpp__
-#define __wiktor_hardware_interface_robotiq_3finger_object_status_hpp__
+#ifndef __wiktor_hardware_interface_path_execution_parameters_hpp__
+#define __wiktor_hardware_interface_path_execution_parameters_hpp__
 
 
 namespace wiktor_hardware_interface
 {
 
-class robotiq_3finger_object_status
+class path_execution_parameters
 {
     public:
-        int64_t    utime;
+        double     joint_relative_velocity;
 
-        int8_t     status;
+        double     joint_relative_acceleration;
 
-    public:
-        static constexpr int8_t   IN_MOTION = 0;
-        static constexpr int8_t   AT_REQUESTED = 1;
-        static constexpr int8_t   STOPPED = 2;
-        static constexpr int8_t   CONTACT_OPENING = 3;
-        static constexpr int8_t   CONTACT_CLOSING = 4;
+        double     override_joint_acceleration;
 
     public:
         /**
@@ -63,7 +58,7 @@ class robotiq_3finger_object_status
         inline static int64_t getHash();
 
         /**
-         * Returns "robotiq_3finger_object_status"
+         * Returns "path_execution_parameters"
          */
         inline static const char* getTypeName();
 
@@ -74,7 +69,7 @@ class robotiq_3finger_object_status
         inline static uint64_t _computeHash(const __lcm_hash_ptr *p);
 };
 
-int robotiq_3finger_object_status::encode(void *buf, int offset, int maxlen) const
+int path_execution_parameters::encode(void *buf, int offset, int maxlen) const
 {
     int pos = 0, tlen;
     int64_t hash = (int64_t)getHash();
@@ -88,7 +83,7 @@ int robotiq_3finger_object_status::encode(void *buf, int offset, int maxlen) con
     return pos;
 }
 
-int robotiq_3finger_object_status::decode(const void *buf, int offset, int maxlen)
+int path_execution_parameters::decode(const void *buf, int offset, int maxlen)
 {
     int pos = 0, thislen;
 
@@ -103,59 +98,66 @@ int robotiq_3finger_object_status::decode(const void *buf, int offset, int maxle
     return pos;
 }
 
-int robotiq_3finger_object_status::getEncodedSize() const
+int path_execution_parameters::getEncodedSize() const
 {
     return 8 + _getEncodedSizeNoHash();
 }
 
-int64_t robotiq_3finger_object_status::getHash()
+int64_t path_execution_parameters::getHash()
 {
     static int64_t hash = _computeHash(NULL);
     return hash;
 }
 
-const char* robotiq_3finger_object_status::getTypeName()
+const char* path_execution_parameters::getTypeName()
 {
-    return "robotiq_3finger_object_status";
+    return "path_execution_parameters";
 }
 
-int robotiq_3finger_object_status::_encodeNoHash(void *buf, int offset, int maxlen) const
+int path_execution_parameters::_encodeNoHash(void *buf, int offset, int maxlen) const
 {
     int pos = 0, tlen;
 
-    tlen = __int64_t_encode_array(buf, offset + pos, maxlen - pos, &this->utime, 1);
+    tlen = __double_encode_array(buf, offset + pos, maxlen - pos, &this->joint_relative_velocity, 1);
     if(tlen < 0) return tlen; else pos += tlen;
 
-    tlen = __int8_t_encode_array(buf, offset + pos, maxlen - pos, &this->status, 1);
+    tlen = __double_encode_array(buf, offset + pos, maxlen - pos, &this->joint_relative_acceleration, 1);
+    if(tlen < 0) return tlen; else pos += tlen;
+
+    tlen = __double_encode_array(buf, offset + pos, maxlen - pos, &this->override_joint_acceleration, 1);
     if(tlen < 0) return tlen; else pos += tlen;
 
     return pos;
 }
 
-int robotiq_3finger_object_status::_decodeNoHash(const void *buf, int offset, int maxlen)
+int path_execution_parameters::_decodeNoHash(const void *buf, int offset, int maxlen)
 {
     int pos = 0, tlen;
 
-    tlen = __int64_t_decode_array(buf, offset + pos, maxlen - pos, &this->utime, 1);
+    tlen = __double_decode_array(buf, offset + pos, maxlen - pos, &this->joint_relative_velocity, 1);
     if(tlen < 0) return tlen; else pos += tlen;
 
-    tlen = __int8_t_decode_array(buf, offset + pos, maxlen - pos, &this->status, 1);
+    tlen = __double_decode_array(buf, offset + pos, maxlen - pos, &this->joint_relative_acceleration, 1);
+    if(tlen < 0) return tlen; else pos += tlen;
+
+    tlen = __double_decode_array(buf, offset + pos, maxlen - pos, &this->override_joint_acceleration, 1);
     if(tlen < 0) return tlen; else pos += tlen;
 
     return pos;
 }
 
-int robotiq_3finger_object_status::_getEncodedSizeNoHash() const
+int path_execution_parameters::_getEncodedSizeNoHash() const
 {
     int enc_size = 0;
-    enc_size += __int64_t_encoded_array_size(NULL, 1);
-    enc_size += __int8_t_encoded_array_size(NULL, 1);
+    enc_size += __double_encoded_array_size(NULL, 1);
+    enc_size += __double_encoded_array_size(NULL, 1);
+    enc_size += __double_encoded_array_size(NULL, 1);
     return enc_size;
 }
 
-uint64_t robotiq_3finger_object_status::_computeHash(const __lcm_hash_ptr *)
+uint64_t path_execution_parameters::_computeHash(const __lcm_hash_ptr *)
 {
-    uint64_t hash = 0x28edc52678586b83LL;
+    uint64_t hash = 0x31db436c85aab16cLL;
     return (hash<<1) + ((hash>>63)&1);
 }
 

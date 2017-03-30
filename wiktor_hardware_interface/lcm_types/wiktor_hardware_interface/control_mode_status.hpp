@@ -6,26 +6,37 @@
 
 #include <lcm/lcm_coretypes.h>
 
-#ifndef __wiktor_hardware_interface_robotiq_3finger_object_status_hpp__
-#define __wiktor_hardware_interface_robotiq_3finger_object_status_hpp__
+#ifndef __wiktor_hardware_interface_control_mode_status_hpp__
+#define __wiktor_hardware_interface_control_mode_status_hpp__
 
+#include "wiktor_hardware_interface/joint_impedance_parameters.hpp"
+#include "wiktor_hardware_interface/cartesian_impedance_parameters.hpp"
+#include "wiktor_hardware_interface/path_execution_parameters.hpp"
 
 namespace wiktor_hardware_interface
 {
 
-class robotiq_3finger_object_status
+class control_mode_status
 {
     public:
+        wiktor_hardware_interface::joint_impedance_parameters joint_impedance_params;
+
+        wiktor_hardware_interface::cartesian_impedance_parameters cartesian_impedance_params;
+
+        wiktor_hardware_interface::path_execution_parameters path_execution_params;
+
         int64_t    utime;
 
-        int8_t     status;
+        int8_t     active_control_mode;
 
     public:
-        static constexpr int8_t   IN_MOTION = 0;
-        static constexpr int8_t   AT_REQUESTED = 1;
-        static constexpr int8_t   STOPPED = 2;
-        static constexpr int8_t   CONTACT_OPENING = 3;
-        static constexpr int8_t   CONTACT_CLOSING = 4;
+        static constexpr int8_t   IS_POSITION_MOTION = 0;
+        static constexpr int8_t   IS_CARTESIAN_MOTION = 1;
+        static constexpr int8_t   IS_IMPEDANCE_CONTROL = 2;
+        static constexpr int8_t   JOINT_POSITION = 0;
+        static constexpr int8_t   JOINT_IMPEDANCE = 2;
+        static constexpr int8_t   CARTESIAN_POSE = 1;
+        static constexpr int8_t   CARTESIAN_IMPEDANCE = 3;
 
     public:
         /**
@@ -63,7 +74,7 @@ class robotiq_3finger_object_status
         inline static int64_t getHash();
 
         /**
-         * Returns "robotiq_3finger_object_status"
+         * Returns "control_mode_status"
          */
         inline static const char* getTypeName();
 
@@ -74,7 +85,7 @@ class robotiq_3finger_object_status
         inline static uint64_t _computeHash(const __lcm_hash_ptr *p);
 };
 
-int robotiq_3finger_object_status::encode(void *buf, int offset, int maxlen) const
+int control_mode_status::encode(void *buf, int offset, int maxlen) const
 {
     int pos = 0, tlen;
     int64_t hash = (int64_t)getHash();
@@ -88,7 +99,7 @@ int robotiq_3finger_object_status::encode(void *buf, int offset, int maxlen) con
     return pos;
 }
 
-int robotiq_3finger_object_status::decode(const void *buf, int offset, int maxlen)
+int control_mode_status::decode(const void *buf, int offset, int maxlen)
 {
     int pos = 0, thislen;
 
@@ -103,59 +114,90 @@ int robotiq_3finger_object_status::decode(const void *buf, int offset, int maxle
     return pos;
 }
 
-int robotiq_3finger_object_status::getEncodedSize() const
+int control_mode_status::getEncodedSize() const
 {
     return 8 + _getEncodedSizeNoHash();
 }
 
-int64_t robotiq_3finger_object_status::getHash()
+int64_t control_mode_status::getHash()
 {
     static int64_t hash = _computeHash(NULL);
     return hash;
 }
 
-const char* robotiq_3finger_object_status::getTypeName()
+const char* control_mode_status::getTypeName()
 {
-    return "robotiq_3finger_object_status";
+    return "control_mode_status";
 }
 
-int robotiq_3finger_object_status::_encodeNoHash(void *buf, int offset, int maxlen) const
+int control_mode_status::_encodeNoHash(void *buf, int offset, int maxlen) const
 {
     int pos = 0, tlen;
+
+    tlen = this->joint_impedance_params._encodeNoHash(buf, offset + pos, maxlen - pos);
+    if(tlen < 0) return tlen; else pos += tlen;
+
+    tlen = this->cartesian_impedance_params._encodeNoHash(buf, offset + pos, maxlen - pos);
+    if(tlen < 0) return tlen; else pos += tlen;
+
+    tlen = this->path_execution_params._encodeNoHash(buf, offset + pos, maxlen - pos);
+    if(tlen < 0) return tlen; else pos += tlen;
 
     tlen = __int64_t_encode_array(buf, offset + pos, maxlen - pos, &this->utime, 1);
     if(tlen < 0) return tlen; else pos += tlen;
 
-    tlen = __int8_t_encode_array(buf, offset + pos, maxlen - pos, &this->status, 1);
+    tlen = __int8_t_encode_array(buf, offset + pos, maxlen - pos, &this->active_control_mode, 1);
     if(tlen < 0) return tlen; else pos += tlen;
 
     return pos;
 }
 
-int robotiq_3finger_object_status::_decodeNoHash(const void *buf, int offset, int maxlen)
+int control_mode_status::_decodeNoHash(const void *buf, int offset, int maxlen)
 {
     int pos = 0, tlen;
+
+    tlen = this->joint_impedance_params._decodeNoHash(buf, offset + pos, maxlen - pos);
+    if(tlen < 0) return tlen; else pos += tlen;
+
+    tlen = this->cartesian_impedance_params._decodeNoHash(buf, offset + pos, maxlen - pos);
+    if(tlen < 0) return tlen; else pos += tlen;
+
+    tlen = this->path_execution_params._decodeNoHash(buf, offset + pos, maxlen - pos);
+    if(tlen < 0) return tlen; else pos += tlen;
 
     tlen = __int64_t_decode_array(buf, offset + pos, maxlen - pos, &this->utime, 1);
     if(tlen < 0) return tlen; else pos += tlen;
 
-    tlen = __int8_t_decode_array(buf, offset + pos, maxlen - pos, &this->status, 1);
+    tlen = __int8_t_decode_array(buf, offset + pos, maxlen - pos, &this->active_control_mode, 1);
     if(tlen < 0) return tlen; else pos += tlen;
 
     return pos;
 }
 
-int robotiq_3finger_object_status::_getEncodedSizeNoHash() const
+int control_mode_status::_getEncodedSizeNoHash() const
 {
     int enc_size = 0;
+    enc_size += this->joint_impedance_params._getEncodedSizeNoHash();
+    enc_size += this->cartesian_impedance_params._getEncodedSizeNoHash();
+    enc_size += this->path_execution_params._getEncodedSizeNoHash();
     enc_size += __int64_t_encoded_array_size(NULL, 1);
     enc_size += __int8_t_encoded_array_size(NULL, 1);
     return enc_size;
 }
 
-uint64_t robotiq_3finger_object_status::_computeHash(const __lcm_hash_ptr *)
+uint64_t control_mode_status::_computeHash(const __lcm_hash_ptr *p)
 {
-    uint64_t hash = 0x28edc52678586b83LL;
+    const __lcm_hash_ptr *fp;
+    for(fp = p; fp != NULL; fp = fp->parent)
+        if(fp->v == control_mode_status::getHash)
+            return 0;
+    const __lcm_hash_ptr cp = { p, (void*)control_mode_status::getHash };
+
+    uint64_t hash = 0x2cf80f734143b2a8LL +
+         wiktor_hardware_interface::joint_impedance_parameters::_computeHash(&cp) +
+         wiktor_hardware_interface::cartesian_impedance_parameters::_computeHash(&cp) +
+         wiktor_hardware_interface::path_execution_parameters::_computeHash(&cp);
+
     return (hash<<1) + ((hash>>63)&1);
 }
 

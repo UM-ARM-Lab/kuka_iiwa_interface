@@ -2,16 +2,14 @@
 
 for lcmdef in *.lcm
 do
+    echo "Generating C++11 type for LCM def $lcmdef"
     ~/lcm/lcmgen/lcm-gen -x --cpp-std c++11 $lcmdef
+    echo "Generating Java type for LCM def $lcmdef"
     ~/lcm/lcmgen/lcm-gen -j $lcmdef
 done
 
-for lcmcpp in *.hpp
-do
-    mv $lcmcpp ../lcm_types/wiktor_hardware_interface/
-done
+echo "Removing previously generated types"
+rm -r ../lcm_types/wiktor_hardware_interface
 
-for lcmjava in *.java
-do
-    mv $lcmjava ../lcm_types/wiktor_hardware_interface/
-done
+echo "Moving generated types"
+mv ./wiktor_hardware_interface ../lcm_types/

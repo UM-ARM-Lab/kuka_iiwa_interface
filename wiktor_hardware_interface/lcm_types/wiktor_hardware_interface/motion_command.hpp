@@ -6,26 +6,36 @@
 
 #include <lcm/lcm_coretypes.h>
 
-#ifndef __wiktor_hardware_interface_robotiq_3finger_object_status_hpp__
-#define __wiktor_hardware_interface_robotiq_3finger_object_status_hpp__
+#ifndef __wiktor_hardware_interface_motion_command_hpp__
+#define __wiktor_hardware_interface_motion_command_hpp__
 
+#include "wiktor_hardware_interface/joint_value_quantity.hpp"
+#include "wiktor_hardware_interface/joint_value_quantity.hpp"
+#include "wiktor_hardware_interface/cartesian_value_quantity.hpp"
 
 namespace wiktor_hardware_interface
 {
 
-class robotiq_3finger_object_status
+class motion_command
 {
     public:
+        wiktor_hardware_interface::joint_value_quantity joint_position;
+
+        wiktor_hardware_interface::joint_value_quantity joint_velocity;
+
+        wiktor_hardware_interface::cartesian_value_quantity cartesian_pose;
+
         int64_t    utime;
 
-        int8_t     status;
+        int8_t     command_type;
 
     public:
-        static constexpr int8_t   IN_MOTION = 0;
-        static constexpr int8_t   AT_REQUESTED = 1;
-        static constexpr int8_t   STOPPED = 2;
-        static constexpr int8_t   CONTACT_OPENING = 3;
-        static constexpr int8_t   CONTACT_CLOSING = 4;
+        static constexpr int8_t   IS_POSITION_MOTION = 0;
+        static constexpr int8_t   IS_VELOCITY_MOTION = 2;
+        static constexpr int8_t   IS_CARTESIAN_MOTION = 1;
+        static constexpr int8_t   JOINT_POSITION = 0;
+        static constexpr int8_t   JOINT_POSITION_VELOCITY = 2;
+        static constexpr int8_t   CARTESIAN_POSE = 1;
 
     public:
         /**
@@ -63,7 +73,7 @@ class robotiq_3finger_object_status
         inline static int64_t getHash();
 
         /**
-         * Returns "robotiq_3finger_object_status"
+         * Returns "motion_command"
          */
         inline static const char* getTypeName();
 
@@ -74,7 +84,7 @@ class robotiq_3finger_object_status
         inline static uint64_t _computeHash(const __lcm_hash_ptr *p);
 };
 
-int robotiq_3finger_object_status::encode(void *buf, int offset, int maxlen) const
+int motion_command::encode(void *buf, int offset, int maxlen) const
 {
     int pos = 0, tlen;
     int64_t hash = (int64_t)getHash();
@@ -88,7 +98,7 @@ int robotiq_3finger_object_status::encode(void *buf, int offset, int maxlen) con
     return pos;
 }
 
-int robotiq_3finger_object_status::decode(const void *buf, int offset, int maxlen)
+int motion_command::decode(const void *buf, int offset, int maxlen)
 {
     int pos = 0, thislen;
 
@@ -103,59 +113,90 @@ int robotiq_3finger_object_status::decode(const void *buf, int offset, int maxle
     return pos;
 }
 
-int robotiq_3finger_object_status::getEncodedSize() const
+int motion_command::getEncodedSize() const
 {
     return 8 + _getEncodedSizeNoHash();
 }
 
-int64_t robotiq_3finger_object_status::getHash()
+int64_t motion_command::getHash()
 {
     static int64_t hash = _computeHash(NULL);
     return hash;
 }
 
-const char* robotiq_3finger_object_status::getTypeName()
+const char* motion_command::getTypeName()
 {
-    return "robotiq_3finger_object_status";
+    return "motion_command";
 }
 
-int robotiq_3finger_object_status::_encodeNoHash(void *buf, int offset, int maxlen) const
+int motion_command::_encodeNoHash(void *buf, int offset, int maxlen) const
 {
     int pos = 0, tlen;
+
+    tlen = this->joint_position._encodeNoHash(buf, offset + pos, maxlen - pos);
+    if(tlen < 0) return tlen; else pos += tlen;
+
+    tlen = this->joint_velocity._encodeNoHash(buf, offset + pos, maxlen - pos);
+    if(tlen < 0) return tlen; else pos += tlen;
+
+    tlen = this->cartesian_pose._encodeNoHash(buf, offset + pos, maxlen - pos);
+    if(tlen < 0) return tlen; else pos += tlen;
 
     tlen = __int64_t_encode_array(buf, offset + pos, maxlen - pos, &this->utime, 1);
     if(tlen < 0) return tlen; else pos += tlen;
 
-    tlen = __int8_t_encode_array(buf, offset + pos, maxlen - pos, &this->status, 1);
+    tlen = __int8_t_encode_array(buf, offset + pos, maxlen - pos, &this->command_type, 1);
     if(tlen < 0) return tlen; else pos += tlen;
 
     return pos;
 }
 
-int robotiq_3finger_object_status::_decodeNoHash(const void *buf, int offset, int maxlen)
+int motion_command::_decodeNoHash(const void *buf, int offset, int maxlen)
 {
     int pos = 0, tlen;
+
+    tlen = this->joint_position._decodeNoHash(buf, offset + pos, maxlen - pos);
+    if(tlen < 0) return tlen; else pos += tlen;
+
+    tlen = this->joint_velocity._decodeNoHash(buf, offset + pos, maxlen - pos);
+    if(tlen < 0) return tlen; else pos += tlen;
+
+    tlen = this->cartesian_pose._decodeNoHash(buf, offset + pos, maxlen - pos);
+    if(tlen < 0) return tlen; else pos += tlen;
 
     tlen = __int64_t_decode_array(buf, offset + pos, maxlen - pos, &this->utime, 1);
     if(tlen < 0) return tlen; else pos += tlen;
 
-    tlen = __int8_t_decode_array(buf, offset + pos, maxlen - pos, &this->status, 1);
+    tlen = __int8_t_decode_array(buf, offset + pos, maxlen - pos, &this->command_type, 1);
     if(tlen < 0) return tlen; else pos += tlen;
 
     return pos;
 }
 
-int robotiq_3finger_object_status::_getEncodedSizeNoHash() const
+int motion_command::_getEncodedSizeNoHash() const
 {
     int enc_size = 0;
+    enc_size += this->joint_position._getEncodedSizeNoHash();
+    enc_size += this->joint_velocity._getEncodedSizeNoHash();
+    enc_size += this->cartesian_pose._getEncodedSizeNoHash();
     enc_size += __int64_t_encoded_array_size(NULL, 1);
     enc_size += __int8_t_encoded_array_size(NULL, 1);
     return enc_size;
 }
 
-uint64_t robotiq_3finger_object_status::_computeHash(const __lcm_hash_ptr *)
+uint64_t motion_command::_computeHash(const __lcm_hash_ptr *p)
 {
-    uint64_t hash = 0x28edc52678586b83LL;
+    const __lcm_hash_ptr *fp;
+    for(fp = p; fp != NULL; fp = fp->parent)
+        if(fp->v == motion_command::getHash)
+            return 0;
+    const __lcm_hash_ptr cp = { p, (void*)motion_command::getHash };
+
+    uint64_t hash = 0x7996715ba0ceabeaLL +
+         wiktor_hardware_interface::joint_value_quantity::_computeHash(&cp) +
+         wiktor_hardware_interface::joint_value_quantity::_computeHash(&cp) +
+         wiktor_hardware_interface::cartesian_value_quantity::_computeHash(&cp);
+
     return (hash<<1) + ((hash>>63)&1);
 }
 

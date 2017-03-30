@@ -53,121 +53,29 @@ class robotiq_3finger_status
         int8_t     gripper_fault_status;
 
     public:
-        // If you're using C++11 and are getting compiler errors saying things like
-        // ‘constexpr’ needed for in-class initialization of static data member
-        // then re-run lcm-gen with '--cpp-std=c++11' to generate code that is
-        // compliant with C++11
-        static const int8_t   GRIPPER_RESET = 0;
-        // If you're using C++11 and are getting compiler errors saying things like
-        // ‘constexpr’ needed for in-class initialization of static data member
-        // then re-run lcm-gen with '--cpp-std=c++11' to generate code that is
-        // compliant with C++11
-        static const int8_t   GRIPPER_ACTIVATION = 1;
-        // If you're using C++11 and are getting compiler errors saying things like
-        // ‘constexpr’ needed for in-class initialization of static data member
-        // then re-run lcm-gen with '--cpp-std=c++11' to generate code that is
-        // compliant with C++11
-        static const int8_t   GRIPPER_STOPPED_OR_BUSY = 0;
-        // If you're using C++11 and are getting compiler errors saying things like
-        // ‘constexpr’ needed for in-class initialization of static data member
-        // then re-run lcm-gen with '--cpp-std=c++11' to generate code that is
-        // compliant with C++11
-        static const int8_t   GRIPPER_GOTO = 1;
-        // If you're using C++11 and are getting compiler errors saying things like
-        // ‘constexpr’ needed for in-class initialization of static data member
-        // then re-run lcm-gen with '--cpp-std=c++11' to generate code that is
-        // compliant with C++11
-        static const int8_t   GRIPPER_RESET_OR_AUTO_RELEASE = 0;
-        // If you're using C++11 and are getting compiler errors saying things like
-        // ‘constexpr’ needed for in-class initialization of static data member
-        // then re-run lcm-gen with '--cpp-std=c++11' to generate code that is
-        // compliant with C++11
-        static const int8_t   GRIPPER_ACTIVATION_IN_PROGRESS = 1;
-        // If you're using C++11 and are getting compiler errors saying things like
-        // ‘constexpr’ needed for in-class initialization of static data member
-        // then re-run lcm-gen with '--cpp-std=c++11' to generate code that is
-        // compliant with C++11
-        static const int8_t   GRIPPER_MODE_CHANGE_IN_PROGRESS = 2;
-        // If you're using C++11 and are getting compiler errors saying things like
-        // ‘constexpr’ needed for in-class initialization of static data member
-        // then re-run lcm-gen with '--cpp-std=c++11' to generate code that is
-        // compliant with C++11
-        static const int8_t   GRIPPER_ACTIVATION_MODE_CHANGE_COMPLETE = 3;
-        // If you're using C++11 and are getting compiler errors saying things like
-        // ‘constexpr’ needed for in-class initialization of static data member
-        // then re-run lcm-gen with '--cpp-std=c++11' to generate code that is
-        // compliant with C++11
-        static const int8_t   GRIPPER_STOPPED_UNKNOWN = 0;
-        // If you're using C++11 and are getting compiler errors saying things like
-        // ‘constexpr’ needed for in-class initialization of static data member
-        // then re-run lcm-gen with '--cpp-std=c++11' to generate code that is
-        // compliant with C++11
-        static const int8_t   GRIPPER_IN_MOTION = 1;
-        // If you're using C++11 and are getting compiler errors saying things like
-        // ‘constexpr’ needed for in-class initialization of static data member
-        // then re-run lcm-gen with '--cpp-std=c++11' to generate code that is
-        // compliant with C++11
-        static const int8_t   GRIPPER_ONE_OR_TWO_STOPPED_EARLY = 2;
-        // If you're using C++11 and are getting compiler errors saying things like
-        // ‘constexpr’ needed for in-class initialization of static data member
-        // then re-run lcm-gen with '--cpp-std=c++11' to generate code that is
-        // compliant with C++11
-        static const int8_t   GRIPPER_ALL_STOPPED_EARLY = 3;
-        // If you're using C++11 and are getting compiler errors saying things like
-        // ‘constexpr’ needed for in-class initialization of static data member
-        // then re-run lcm-gen with '--cpp-std=c++11' to generate code that is
-        // compliant with C++11
-        static const int8_t   GRIPPER_ALL_AT_REQUESTED = 4;
-        // If you're using C++11 and are getting compiler errors saying things like
-        // ‘constexpr’ needed for in-class initialization of static data member
-        // then re-run lcm-gen with '--cpp-std=c++11' to generate code that is
-        // compliant with C++11
-        static const int8_t   NO_FAULTS = 0;
-        // If you're using C++11 and are getting compiler errors saying things like
-        // ‘constexpr’ needed for in-class initialization of static data member
-        // then re-run lcm-gen with '--cpp-std=c++11' to generate code that is
-        // compliant with C++11
-        static const int8_t   PRIORITY_ACTIVATION_MUST_BE_SET = 9;
-        // If you're using C++11 and are getting compiler errors saying things like
-        // ‘constexpr’ needed for in-class initialization of static data member
-        // then re-run lcm-gen with '--cpp-std=c++11' to generate code that is
-        // compliant with C++11
-        static const int8_t   PRIORITY_MODE_CHANGE_NEEDED = 17;
-        // If you're using C++11 and are getting compiler errors saying things like
-        // ‘constexpr’ needed for in-class initialization of static data member
-        // then re-run lcm-gen with '--cpp-std=c++11' to generate code that is
-        // compliant with C++11
-        static const int8_t   PRIORITY_NEEDS_ACTIVATION = 25;
-        // If you're using C++11 and are getting compiler errors saying things like
-        // ‘constexpr’ needed for in-class initialization of static data member
-        // then re-run lcm-gen with '--cpp-std=c++11' to generate code that is
-        // compliant with C++11
-        static const int8_t   MAJOR_ACTIVATION_FAULT = 10;
-        // If you're using C++11 and are getting compiler errors saying things like
-        // ‘constexpr’ needed for in-class initialization of static data member
-        // then re-run lcm-gen with '--cpp-std=c++11' to generate code that is
-        // compliant with C++11
-        static const int8_t   MAJOR_CHANGING_MODE_FAULT = 18;
-        // If you're using C++11 and are getting compiler errors saying things like
-        // ‘constexpr’ needed for in-class initialization of static data member
-        // then re-run lcm-gen with '--cpp-std=c++11' to generate code that is
-        // compliant with C++11
-        static const int8_t   MAJOR_AUTO_RELEASE_COMPLETE = 26;
-        // If you're using C++11 and are getting compiler errors saying things like
-        // ‘constexpr’ needed for in-class initialization of static data member
-        // then re-run lcm-gen with '--cpp-std=c++11' to generate code that is
-        // compliant with C++11
-        static const int8_t   MINOR_COMM_CHIP_NOT_READY = 12;
-        // If you're using C++11 and are getting compiler errors saying things like
-        // ‘constexpr’ needed for in-class initialization of static data member
-        // then re-run lcm-gen with '--cpp-std=c++11' to generate code that is
-        // compliant with C++11
-        static const int8_t   MINOR_CHANGING_MODE_FAULT = 20;
-        // If you're using C++11 and are getting compiler errors saying things like
-        // ‘constexpr’ needed for in-class initialization of static data member
-        // then re-run lcm-gen with '--cpp-std=c++11' to generate code that is
-        // compliant with C++11
-        static const int8_t   MINOR_AUTO_RELEASE_IN_PROGRESS = 28;
+        static constexpr int8_t   GRIPPER_RESET = 0;
+        static constexpr int8_t   GRIPPER_ACTIVATION = 1;
+        static constexpr int8_t   GRIPPER_STOPPED_OR_BUSY = 0;
+        static constexpr int8_t   GRIPPER_GOTO = 1;
+        static constexpr int8_t   GRIPPER_RESET_OR_AUTO_RELEASE = 0;
+        static constexpr int8_t   GRIPPER_ACTIVATION_IN_PROGRESS = 1;
+        static constexpr int8_t   GRIPPER_MODE_CHANGE_IN_PROGRESS = 2;
+        static constexpr int8_t   GRIPPER_ACTIVATION_MODE_CHANGE_COMPLETE = 3;
+        static constexpr int8_t   GRIPPER_STOPPED_UNKNOWN = 0;
+        static constexpr int8_t   GRIPPER_IN_MOTION = 1;
+        static constexpr int8_t   GRIPPER_ONE_OR_TWO_STOPPED_EARLY = 2;
+        static constexpr int8_t   GRIPPER_ALL_STOPPED_EARLY = 3;
+        static constexpr int8_t   GRIPPER_ALL_AT_REQUESTED = 4;
+        static constexpr int8_t   NO_FAULTS = 0;
+        static constexpr int8_t   PRIORITY_ACTIVATION_MUST_BE_SET = 9;
+        static constexpr int8_t   PRIORITY_MODE_CHANGE_NEEDED = 17;
+        static constexpr int8_t   PRIORITY_NEEDS_ACTIVATION = 25;
+        static constexpr int8_t   MAJOR_ACTIVATION_FAULT = 10;
+        static constexpr int8_t   MAJOR_CHANGING_MODE_FAULT = 18;
+        static constexpr int8_t   MAJOR_AUTO_RELEASE_COMPLETE = 26;
+        static constexpr int8_t   MINOR_COMM_CHIP_NOT_READY = 12;
+        static constexpr int8_t   MINOR_CHANGING_MODE_FAULT = 20;
+        static constexpr int8_t   MINOR_AUTO_RELEASE_IN_PROGRESS = 28;
 
     public:
         /**

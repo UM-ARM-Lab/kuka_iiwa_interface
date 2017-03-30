@@ -6,26 +6,21 @@
 
 #include <lcm/lcm_coretypes.h>
 
-#ifndef __wiktor_hardware_interface_robotiq_3finger_object_status_hpp__
-#define __wiktor_hardware_interface_robotiq_3finger_object_status_hpp__
+#ifndef __wiktor_hardware_interface_joint_impedance_parameters_hpp__
+#define __wiktor_hardware_interface_joint_impedance_parameters_hpp__
 
+#include "wiktor_hardware_interface/joint_value_quantity.hpp"
+#include "wiktor_hardware_interface/joint_value_quantity.hpp"
 
 namespace wiktor_hardware_interface
 {
 
-class robotiq_3finger_object_status
+class joint_impedance_parameters
 {
     public:
-        int64_t    utime;
+        wiktor_hardware_interface::joint_value_quantity joint_stiffness;
 
-        int8_t     status;
-
-    public:
-        static constexpr int8_t   IN_MOTION = 0;
-        static constexpr int8_t   AT_REQUESTED = 1;
-        static constexpr int8_t   STOPPED = 2;
-        static constexpr int8_t   CONTACT_OPENING = 3;
-        static constexpr int8_t   CONTACT_CLOSING = 4;
+        wiktor_hardware_interface::joint_value_quantity joint_damping;
 
     public:
         /**
@@ -63,7 +58,7 @@ class robotiq_3finger_object_status
         inline static int64_t getHash();
 
         /**
-         * Returns "robotiq_3finger_object_status"
+         * Returns "joint_impedance_parameters"
          */
         inline static const char* getTypeName();
 
@@ -74,7 +69,7 @@ class robotiq_3finger_object_status
         inline static uint64_t _computeHash(const __lcm_hash_ptr *p);
 };
 
-int robotiq_3finger_object_status::encode(void *buf, int offset, int maxlen) const
+int joint_impedance_parameters::encode(void *buf, int offset, int maxlen) const
 {
     int pos = 0, tlen;
     int64_t hash = (int64_t)getHash();
@@ -88,7 +83,7 @@ int robotiq_3finger_object_status::encode(void *buf, int offset, int maxlen) con
     return pos;
 }
 
-int robotiq_3finger_object_status::decode(const void *buf, int offset, int maxlen)
+int joint_impedance_parameters::decode(const void *buf, int offset, int maxlen)
 {
     int pos = 0, thislen;
 
@@ -103,59 +98,68 @@ int robotiq_3finger_object_status::decode(const void *buf, int offset, int maxle
     return pos;
 }
 
-int robotiq_3finger_object_status::getEncodedSize() const
+int joint_impedance_parameters::getEncodedSize() const
 {
     return 8 + _getEncodedSizeNoHash();
 }
 
-int64_t robotiq_3finger_object_status::getHash()
+int64_t joint_impedance_parameters::getHash()
 {
     static int64_t hash = _computeHash(NULL);
     return hash;
 }
 
-const char* robotiq_3finger_object_status::getTypeName()
+const char* joint_impedance_parameters::getTypeName()
 {
-    return "robotiq_3finger_object_status";
+    return "joint_impedance_parameters";
 }
 
-int robotiq_3finger_object_status::_encodeNoHash(void *buf, int offset, int maxlen) const
+int joint_impedance_parameters::_encodeNoHash(void *buf, int offset, int maxlen) const
 {
     int pos = 0, tlen;
 
-    tlen = __int64_t_encode_array(buf, offset + pos, maxlen - pos, &this->utime, 1);
+    tlen = this->joint_stiffness._encodeNoHash(buf, offset + pos, maxlen - pos);
     if(tlen < 0) return tlen; else pos += tlen;
 
-    tlen = __int8_t_encode_array(buf, offset + pos, maxlen - pos, &this->status, 1);
+    tlen = this->joint_damping._encodeNoHash(buf, offset + pos, maxlen - pos);
     if(tlen < 0) return tlen; else pos += tlen;
 
     return pos;
 }
 
-int robotiq_3finger_object_status::_decodeNoHash(const void *buf, int offset, int maxlen)
+int joint_impedance_parameters::_decodeNoHash(const void *buf, int offset, int maxlen)
 {
     int pos = 0, tlen;
 
-    tlen = __int64_t_decode_array(buf, offset + pos, maxlen - pos, &this->utime, 1);
+    tlen = this->joint_stiffness._decodeNoHash(buf, offset + pos, maxlen - pos);
     if(tlen < 0) return tlen; else pos += tlen;
 
-    tlen = __int8_t_decode_array(buf, offset + pos, maxlen - pos, &this->status, 1);
+    tlen = this->joint_damping._decodeNoHash(buf, offset + pos, maxlen - pos);
     if(tlen < 0) return tlen; else pos += tlen;
 
     return pos;
 }
 
-int robotiq_3finger_object_status::_getEncodedSizeNoHash() const
+int joint_impedance_parameters::_getEncodedSizeNoHash() const
 {
     int enc_size = 0;
-    enc_size += __int64_t_encoded_array_size(NULL, 1);
-    enc_size += __int8_t_encoded_array_size(NULL, 1);
+    enc_size += this->joint_stiffness._getEncodedSizeNoHash();
+    enc_size += this->joint_damping._getEncodedSizeNoHash();
     return enc_size;
 }
 
-uint64_t robotiq_3finger_object_status::_computeHash(const __lcm_hash_ptr *)
+uint64_t joint_impedance_parameters::_computeHash(const __lcm_hash_ptr *p)
 {
-    uint64_t hash = 0x28edc52678586b83LL;
+    const __lcm_hash_ptr *fp;
+    for(fp = p; fp != NULL; fp = fp->parent)
+        if(fp->v == joint_impedance_parameters::getHash)
+            return 0;
+    const __lcm_hash_ptr cp = { p, (void*)joint_impedance_parameters::getHash };
+
+    uint64_t hash = 0x183f83ab1b5b43a7LL +
+         wiktor_hardware_interface::joint_value_quantity::_computeHash(&cp) +
+         wiktor_hardware_interface::joint_value_quantity::_computeHash(&cp);
+
     return (hash<<1) + ((hash>>63)&1);
 }
 
