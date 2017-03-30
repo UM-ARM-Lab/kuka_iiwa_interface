@@ -24,7 +24,7 @@ namespace wiktor_hardware_interface
 class robotiq_3finger_status
 {
     public:
-        int64_t    utime;
+        double     timestamp;
 
         wiktor_hardware_interface::robotiq_3finger_actuator_status finger_a_status;
 
@@ -173,7 +173,7 @@ int robotiq_3finger_status::_encodeNoHash(void *buf, int offset, int maxlen) con
 {
     int pos = 0, tlen;
 
-    tlen = __int64_t_encode_array(buf, offset + pos, maxlen - pos, &this->utime, 1);
+    tlen = __double_encode_array(buf, offset + pos, maxlen - pos, &this->timestamp, 1);
     if(tlen < 0) return tlen; else pos += tlen;
 
     tlen = this->finger_a_status._encodeNoHash(buf, offset + pos, maxlen - pos);
@@ -222,7 +222,7 @@ int robotiq_3finger_status::_decodeNoHash(const void *buf, int offset, int maxle
 {
     int pos = 0, tlen;
 
-    tlen = __int64_t_decode_array(buf, offset + pos, maxlen - pos, &this->utime, 1);
+    tlen = __double_decode_array(buf, offset + pos, maxlen - pos, &this->timestamp, 1);
     if(tlen < 0) return tlen; else pos += tlen;
 
     tlen = this->finger_a_status._decodeNoHash(buf, offset + pos, maxlen - pos);
@@ -270,7 +270,7 @@ int robotiq_3finger_status::_decodeNoHash(const void *buf, int offset, int maxle
 int robotiq_3finger_status::_getEncodedSizeNoHash() const
 {
     int enc_size = 0;
-    enc_size += __int64_t_encoded_array_size(NULL, 1);
+    enc_size += __double_encoded_array_size(NULL, 1);
     enc_size += this->finger_a_status._getEncodedSizeNoHash();
     enc_size += this->finger_b_status._getEncodedSizeNoHash();
     enc_size += this->finger_c_status._getEncodedSizeNoHash();
@@ -295,7 +295,7 @@ uint64_t robotiq_3finger_status::_computeHash(const __lcm_hash_ptr *p)
             return 0;
     const __lcm_hash_ptr cp = { p, (void*)robotiq_3finger_status::getHash };
 
-    uint64_t hash = 0xc0d930b164f18db1LL +
+    uint64_t hash = 0x167393c65a518866LL +
          wiktor_hardware_interface::robotiq_3finger_actuator_status::_computeHash(&cp) +
          wiktor_hardware_interface::robotiq_3finger_actuator_status::_computeHash(&cp) +
          wiktor_hardware_interface::robotiq_3finger_actuator_status::_computeHash(&cp) +

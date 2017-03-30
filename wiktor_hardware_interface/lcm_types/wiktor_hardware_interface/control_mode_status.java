@@ -14,7 +14,7 @@ public final class control_mode_status implements lcm.lcm.LCMEncodable
     public wiktor_hardware_interface.joint_impedance_parameters joint_impedance_params;
     public wiktor_hardware_interface.cartesian_impedance_parameters cartesian_impedance_params;
     public wiktor_hardware_interface.path_execution_parameters path_execution_params;
-    public long utime;
+    public double timestamp;
     public byte active_control_mode;
  
     public control_mode_status()
@@ -22,7 +22,7 @@ public final class control_mode_status implements lcm.lcm.LCMEncodable
     }
  
     public static final long LCM_FINGERPRINT;
-    public static final long LCM_FINGERPRINT_BASE = 0x2cf80f734143b2a8L;
+    public static final long LCM_FINGERPRINT_BASE = 0xef74ea71217717acL;
  
     public static final byte IS_POSITION_MOTION = (byte) 0;
     public static final byte IS_CARTESIAN_MOTION = (byte) 1;
@@ -65,7 +65,7 @@ public final class control_mode_status implements lcm.lcm.LCMEncodable
  
         this.path_execution_params._encodeRecursive(outs); 
  
-        outs.writeLong(this.utime); 
+        outs.writeDouble(this.timestamp); 
  
         outs.writeByte(this.active_control_mode); 
  
@@ -99,7 +99,7 @@ public final class control_mode_status implements lcm.lcm.LCMEncodable
  
         this.path_execution_params = wiktor_hardware_interface.path_execution_parameters._decodeRecursiveFactory(ins);
  
-        this.utime = ins.readLong();
+        this.timestamp = ins.readDouble();
  
         this.active_control_mode = ins.readByte();
  
@@ -114,7 +114,7 @@ public final class control_mode_status implements lcm.lcm.LCMEncodable
  
         outobj.path_execution_params = this.path_execution_params.copy();
  
-        outobj.utime = this.utime;
+        outobj.timestamp = this.timestamp;
  
         outobj.active_control_mode = this.active_control_mode;
  

@@ -25,7 +25,7 @@ class control_mode_command
 
         wiktor_hardware_interface::path_execution_parameters path_execution_params;
 
-        int64_t    utime;
+        double     timestamp;
 
         int8_t     control_mode;
 
@@ -143,7 +143,7 @@ int control_mode_command::_encodeNoHash(void *buf, int offset, int maxlen) const
     tlen = this->path_execution_params._encodeNoHash(buf, offset + pos, maxlen - pos);
     if(tlen < 0) return tlen; else pos += tlen;
 
-    tlen = __int64_t_encode_array(buf, offset + pos, maxlen - pos, &this->utime, 1);
+    tlen = __double_encode_array(buf, offset + pos, maxlen - pos, &this->timestamp, 1);
     if(tlen < 0) return tlen; else pos += tlen;
 
     tlen = __int8_t_encode_array(buf, offset + pos, maxlen - pos, &this->control_mode, 1);
@@ -165,7 +165,7 @@ int control_mode_command::_decodeNoHash(const void *buf, int offset, int maxlen)
     tlen = this->path_execution_params._decodeNoHash(buf, offset + pos, maxlen - pos);
     if(tlen < 0) return tlen; else pos += tlen;
 
-    tlen = __int64_t_decode_array(buf, offset + pos, maxlen - pos, &this->utime, 1);
+    tlen = __double_decode_array(buf, offset + pos, maxlen - pos, &this->timestamp, 1);
     if(tlen < 0) return tlen; else pos += tlen;
 
     tlen = __int8_t_decode_array(buf, offset + pos, maxlen - pos, &this->control_mode, 1);
@@ -180,7 +180,7 @@ int control_mode_command::_getEncodedSizeNoHash() const
     enc_size += this->joint_impedance_params._getEncodedSizeNoHash();
     enc_size += this->cartesian_impedance_params._getEncodedSizeNoHash();
     enc_size += this->path_execution_params._getEncodedSizeNoHash();
-    enc_size += __int64_t_encoded_array_size(NULL, 1);
+    enc_size += __double_encoded_array_size(NULL, 1);
     enc_size += __int8_t_encoded_array_size(NULL, 1);
     return enc_size;
 }
@@ -193,7 +193,7 @@ uint64_t control_mode_command::_computeHash(const __lcm_hash_ptr *p)
             return 0;
     const __lcm_hash_ptr cp = { p, (void*)control_mode_command::getHash };
 
-    uint64_t hash = 0xbad4d711a4f61020LL +
+    uint64_t hash = 0x0ece5857611cd25bLL +
          wiktor_hardware_interface::joint_impedance_parameters::_computeHash(&cp) +
          wiktor_hardware_interface::cartesian_impedance_parameters::_computeHash(&cp) +
          wiktor_hardware_interface::path_execution_parameters::_computeHash(&cp);

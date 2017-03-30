@@ -14,7 +14,7 @@ public final class motion_command implements lcm.lcm.LCMEncodable
     public wiktor_hardware_interface.joint_value_quantity joint_position;
     public wiktor_hardware_interface.joint_value_quantity joint_velocity;
     public wiktor_hardware_interface.cartesian_value_quantity cartesian_pose;
-    public long utime;
+    public double timestamp;
     public byte command_type;
  
     public motion_command()
@@ -22,7 +22,7 @@ public final class motion_command implements lcm.lcm.LCMEncodable
     }
  
     public static final long LCM_FINGERPRINT;
-    public static final long LCM_FINGERPRINT_BASE = 0x7996715ba0ceabeaL;
+    public static final long LCM_FINGERPRINT_BASE = 0xf94aa07f1e8be95cL;
  
     public static final byte IS_POSITION_MOTION = (byte) 0;
     public static final byte IS_VELOCITY_MOTION = (byte) 2;
@@ -64,7 +64,7 @@ public final class motion_command implements lcm.lcm.LCMEncodable
  
         this.cartesian_pose._encodeRecursive(outs); 
  
-        outs.writeLong(this.utime); 
+        outs.writeDouble(this.timestamp); 
  
         outs.writeByte(this.command_type); 
  
@@ -98,7 +98,7 @@ public final class motion_command implements lcm.lcm.LCMEncodable
  
         this.cartesian_pose = wiktor_hardware_interface.cartesian_value_quantity._decodeRecursiveFactory(ins);
  
-        this.utime = ins.readLong();
+        this.timestamp = ins.readDouble();
  
         this.command_type = ins.readByte();
  
@@ -113,7 +113,7 @@ public final class motion_command implements lcm.lcm.LCMEncodable
  
         outobj.cartesian_pose = this.cartesian_pose.copy();
  
-        outobj.utime = this.utime;
+        outobj.timestamp = this.timestamp;
  
         outobj.command_type = this.command_type;
  

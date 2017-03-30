@@ -16,7 +16,7 @@ namespace wiktor_hardware_interface
 class robotiq_3finger_actuator_status
 {
     public:
-        int64_t    utime;
+        double     timestamp;
 
         double     position_request;
 
@@ -120,7 +120,7 @@ int robotiq_3finger_actuator_status::_encodeNoHash(void *buf, int offset, int ma
 {
     int pos = 0, tlen;
 
-    tlen = __int64_t_encode_array(buf, offset + pos, maxlen - pos, &this->utime, 1);
+    tlen = __double_encode_array(buf, offset + pos, maxlen - pos, &this->timestamp, 1);
     if(tlen < 0) return tlen; else pos += tlen;
 
     tlen = __double_encode_array(buf, offset + pos, maxlen - pos, &this->position_request, 1);
@@ -139,7 +139,7 @@ int robotiq_3finger_actuator_status::_decodeNoHash(const void *buf, int offset, 
 {
     int pos = 0, tlen;
 
-    tlen = __int64_t_decode_array(buf, offset + pos, maxlen - pos, &this->utime, 1);
+    tlen = __double_decode_array(buf, offset + pos, maxlen - pos, &this->timestamp, 1);
     if(tlen < 0) return tlen; else pos += tlen;
 
     tlen = __double_decode_array(buf, offset + pos, maxlen - pos, &this->position_request, 1);
@@ -157,7 +157,7 @@ int robotiq_3finger_actuator_status::_decodeNoHash(const void *buf, int offset, 
 int robotiq_3finger_actuator_status::_getEncodedSizeNoHash() const
 {
     int enc_size = 0;
-    enc_size += __int64_t_encoded_array_size(NULL, 1);
+    enc_size += __double_encoded_array_size(NULL, 1);
     enc_size += __double_encoded_array_size(NULL, 1);
     enc_size += __double_encoded_array_size(NULL, 1);
     enc_size += __double_encoded_array_size(NULL, 1);
@@ -166,7 +166,7 @@ int robotiq_3finger_actuator_status::_getEncodedSizeNoHash() const
 
 uint64_t robotiq_3finger_actuator_status::_computeHash(const __lcm_hash_ptr *)
 {
-    uint64_t hash = 0x5b65b32f8bf320f9LL;
+    uint64_t hash = 0x0cc2ea12e058c2dcLL;
     return (hash<<1) + ((hash>>63)&1);
 }
 

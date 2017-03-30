@@ -25,7 +25,7 @@ class motion_command
 
         wiktor_hardware_interface::cartesian_value_quantity cartesian_pose;
 
-        int64_t    utime;
+        double     timestamp;
 
         int8_t     command_type;
 
@@ -142,7 +142,7 @@ int motion_command::_encodeNoHash(void *buf, int offset, int maxlen) const
     tlen = this->cartesian_pose._encodeNoHash(buf, offset + pos, maxlen - pos);
     if(tlen < 0) return tlen; else pos += tlen;
 
-    tlen = __int64_t_encode_array(buf, offset + pos, maxlen - pos, &this->utime, 1);
+    tlen = __double_encode_array(buf, offset + pos, maxlen - pos, &this->timestamp, 1);
     if(tlen < 0) return tlen; else pos += tlen;
 
     tlen = __int8_t_encode_array(buf, offset + pos, maxlen - pos, &this->command_type, 1);
@@ -164,7 +164,7 @@ int motion_command::_decodeNoHash(const void *buf, int offset, int maxlen)
     tlen = this->cartesian_pose._decodeNoHash(buf, offset + pos, maxlen - pos);
     if(tlen < 0) return tlen; else pos += tlen;
 
-    tlen = __int64_t_decode_array(buf, offset + pos, maxlen - pos, &this->utime, 1);
+    tlen = __double_decode_array(buf, offset + pos, maxlen - pos, &this->timestamp, 1);
     if(tlen < 0) return tlen; else pos += tlen;
 
     tlen = __int8_t_decode_array(buf, offset + pos, maxlen - pos, &this->command_type, 1);
@@ -179,7 +179,7 @@ int motion_command::_getEncodedSizeNoHash() const
     enc_size += this->joint_position._getEncodedSizeNoHash();
     enc_size += this->joint_velocity._getEncodedSizeNoHash();
     enc_size += this->cartesian_pose._getEncodedSizeNoHash();
-    enc_size += __int64_t_encoded_array_size(NULL, 1);
+    enc_size += __double_encoded_array_size(NULL, 1);
     enc_size += __int8_t_encoded_array_size(NULL, 1);
     return enc_size;
 }
@@ -192,7 +192,7 @@ uint64_t motion_command::_computeHash(const __lcm_hash_ptr *p)
             return 0;
     const __lcm_hash_ptr cp = { p, (void*)motion_command::getHash };
 
-    uint64_t hash = 0x7996715ba0ceabeaLL +
+    uint64_t hash = 0xf94aa07f1e8be95cLL +
          wiktor_hardware_interface::joint_value_quantity::_computeHash(&cp) +
          wiktor_hardware_interface::joint_value_quantity::_computeHash(&cp) +
          wiktor_hardware_interface::cartesian_value_quantity::_computeHash(&cp);

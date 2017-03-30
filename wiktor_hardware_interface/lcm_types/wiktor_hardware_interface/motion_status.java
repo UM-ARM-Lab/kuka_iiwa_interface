@@ -19,7 +19,7 @@ public final class motion_status implements lcm.lcm.LCMEncodable
     public wiktor_hardware_interface.cartesian_value_quantity measured_cartesian_pose;
     public wiktor_hardware_interface.cartesian_value_quantity commanded_cartesian_pose;
     public wiktor_hardware_interface.cartesian_value_quantity estimated_external_wrench;
-    public long utime;
+    public double timestamp;
     public byte active_command_type;
  
     public motion_status()
@@ -27,7 +27,7 @@ public final class motion_status implements lcm.lcm.LCMEncodable
     }
  
     public static final long LCM_FINGERPRINT;
-    public static final long LCM_FINGERPRINT_BASE = 0x934f3ea9916cf2adL;
+    public static final long LCM_FINGERPRINT_BASE = 0x54f626e8ca598243L;
  
     public static final byte IS_POSITION_MOTION = (byte) 0;
     public static final byte IS_VELOCITY_MOTION = (byte) 2;
@@ -84,7 +84,7 @@ public final class motion_status implements lcm.lcm.LCMEncodable
  
         this.estimated_external_wrench._encodeRecursive(outs); 
  
-        outs.writeLong(this.utime); 
+        outs.writeDouble(this.timestamp); 
  
         outs.writeByte(this.active_command_type); 
  
@@ -128,7 +128,7 @@ public final class motion_status implements lcm.lcm.LCMEncodable
  
         this.estimated_external_wrench = wiktor_hardware_interface.cartesian_value_quantity._decodeRecursiveFactory(ins);
  
-        this.utime = ins.readLong();
+        this.timestamp = ins.readDouble();
  
         this.active_command_type = ins.readByte();
  
@@ -153,7 +153,7 @@ public final class motion_status implements lcm.lcm.LCMEncodable
  
         outobj.estimated_external_wrench = this.estimated_external_wrench.copy();
  
-        outobj.utime = this.utime;
+        outobj.timestamp = this.timestamp;
  
         outobj.active_command_type = this.active_command_type;
  

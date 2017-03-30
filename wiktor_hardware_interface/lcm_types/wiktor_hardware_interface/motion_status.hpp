@@ -40,7 +40,7 @@ class motion_status
 
         wiktor_hardware_interface::cartesian_value_quantity estimated_external_wrench;
 
-        int64_t    utime;
+        double     timestamp;
 
         int8_t     active_command_type;
 
@@ -172,7 +172,7 @@ int motion_status::_encodeNoHash(void *buf, int offset, int maxlen) const
     tlen = this->estimated_external_wrench._encodeNoHash(buf, offset + pos, maxlen - pos);
     if(tlen < 0) return tlen; else pos += tlen;
 
-    tlen = __int64_t_encode_array(buf, offset + pos, maxlen - pos, &this->utime, 1);
+    tlen = __double_encode_array(buf, offset + pos, maxlen - pos, &this->timestamp, 1);
     if(tlen < 0) return tlen; else pos += tlen;
 
     tlen = __int8_t_encode_array(buf, offset + pos, maxlen - pos, &this->active_command_type, 1);
@@ -209,7 +209,7 @@ int motion_status::_decodeNoHash(const void *buf, int offset, int maxlen)
     tlen = this->estimated_external_wrench._decodeNoHash(buf, offset + pos, maxlen - pos);
     if(tlen < 0) return tlen; else pos += tlen;
 
-    tlen = __int64_t_decode_array(buf, offset + pos, maxlen - pos, &this->utime, 1);
+    tlen = __double_decode_array(buf, offset + pos, maxlen - pos, &this->timestamp, 1);
     if(tlen < 0) return tlen; else pos += tlen;
 
     tlen = __int8_t_decode_array(buf, offset + pos, maxlen - pos, &this->active_command_type, 1);
@@ -229,7 +229,7 @@ int motion_status::_getEncodedSizeNoHash() const
     enc_size += this->measured_cartesian_pose._getEncodedSizeNoHash();
     enc_size += this->commanded_cartesian_pose._getEncodedSizeNoHash();
     enc_size += this->estimated_external_wrench._getEncodedSizeNoHash();
-    enc_size += __int64_t_encoded_array_size(NULL, 1);
+    enc_size += __double_encoded_array_size(NULL, 1);
     enc_size += __int8_t_encoded_array_size(NULL, 1);
     return enc_size;
 }
@@ -242,7 +242,7 @@ uint64_t motion_status::_computeHash(const __lcm_hash_ptr *p)
             return 0;
     const __lcm_hash_ptr cp = { p, (void*)motion_status::getHash };
 
-    uint64_t hash = 0x934f3ea9916cf2adLL +
+    uint64_t hash = 0x54f626e8ca598243LL +
          wiktor_hardware_interface::joint_value_quantity::_computeHash(&cp) +
          wiktor_hardware_interface::joint_value_quantity::_computeHash(&cp) +
          wiktor_hardware_interface::joint_value_quantity::_computeHash(&cp) +
