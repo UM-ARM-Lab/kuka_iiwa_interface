@@ -10,9 +10,16 @@
 
 namespace robotiq_3finger_hardware_interface
 {
-    Robotiq3FingerHardwareInterface::Robotiq3FingerHardwareInterface(const std::shared_ptr<lcm::LCM>& lcm_ptr, const std::string& command_channel_name, const std::string& status_channel_name) : lcm_ptr_(lcm_ptr), command_channel_name_(command_channel_name), status_channel_name_(status_channel_name) {}
+    Robotiq3FingerHardwareInterface::Robotiq3FingerHardwareInterface(const std::shared_ptr<lcm::LCM>& lcm_ptr, const std::string& command_channel_name, const std::string& status_channel_name, const std::function<void(const wiktor_hardware_interface::Robotiq3FingerStatus&)>& status_callback_fn) : lcm_ptr_(lcm_ptr), command_channel_name_(command_channel_name), status_channel_name_(status_channel_name), status_callback_fn_(status_callback_fn)
+    {
+        if (lcm_ptr_->good() != true)
+        {
+            throw std::invalid_argument("LCM interface is not good");
+        }
+        lcm_ptr_->subscribe(status_channel_name_, &Robotiq3FingerHardwareInterface::InternalStatusLCMCallback, this);
+    }
 
-    wiktor_hardware_interface::robotiq_3finger_actuator_command Robotiq3FingerHardwareInterface::ConvertFingerCommand(const wiktor_hardware_interface::Robotiq3FingerActuatorCommand& finger_command)
+    wiktor_hardware_interface::robotiq_3finger_actuator_command Robotiq3FingerHardwareInterface::ConvertFingerCommand(const wiktor_hardware_interface::Robotiq3FingerActuatorCommand& finger_command) const
     {
         wiktor_hardware_interface::robotiq_3finger_actuator_command lcm_command;
         lcm_command.position = arc_helpers::ClampValueAndWarn(finger_command.position, 0.0, 1.0);
@@ -55,7 +62,7 @@ namespace robotiq_3finger_hardware_interface
         ros_status.gripper_system_status = (uint8_t)status.gripper_system_status;
         ros_status.gripper_motion_status = (uint8_t)status.gripper_motion_status;
         ros_status.gripper_fault_status = (uint8_t)status.gripper_fault_status;
-        ros_status.initialization_status = (uint8t_)status.initialization_status;
+        ros_status.initialization_status = (uint8_t)status.initialization_status;
         ros_status.header.stamp = ros::Time(status.timestamp);
         return ros_status;
     }
@@ -83,5 +90,13 @@ namespace robotiq_3finger_hardware_interface
         {
             return false;
         }
+    }
+
+    void Robotiq3FingerHardwareInterface::InternalStatusLCMCallback(const lcm::ReceiveBuffer* buffer, const std::string& channel, const wiktor_hardware_interface::robotiq_3finger_status* status_msg)
+    {
+        UNUSED(buffer);
+        UNUSED(channel);
+        const wiktor_hardware_interface::Robotiq3FingerStatus ros_status = ConvertStatus(*status_msg);
+        status_callback_fn_(ros_status);
     }
 }
