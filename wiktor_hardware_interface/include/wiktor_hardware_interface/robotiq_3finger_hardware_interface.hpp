@@ -6,6 +6,12 @@
 #include <string>
 #include <iostream>
 #include <arc_utilities/arc_helpers.hpp>
+// ROS message headers
+#include <wiktor_hardware_interface/Robotiq3FingerCommand.h>
+#include <wiktor_hardware_interface/Robotiq3FingerStatus.h>
+// LCM type headers
+#include <wiktor_hardware_interface/robotiq_3finger_command.hpp>
+#include <wiktor_hardware_interface/robotiq_3finger_status.hpp>
 
 #ifndef ROBOTIQ_3FINGER_HARDWARE_INTERFACE_HPP
 #define ROBOTIQ_3FINGER_HARDWARE_INTERFACE_HPP
