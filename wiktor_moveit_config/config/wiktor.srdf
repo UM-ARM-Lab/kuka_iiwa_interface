@@ -10,35 +10,49 @@
     <!--CHAINS: When a chain is specified, all the links along the chain (including endpoints) are included in the group. Additionally, all the joints that are parents to included links are also included. This means that joints along the chain and the parent joint of the base link are included in the group-->
     <!--SUBGROUPS: Groups can also be formed by referencing to already defined group names-->
     <group name="left_arm">
-        <joint name="wiktor_left_arm_joint_1" />
-        <joint name="wiktor_left_arm_joint_2" />
-        <joint name="wiktor_left_arm_joint_3" />
-        <joint name="wiktor_left_arm_joint_4" />
-        <joint name="wiktor_left_arm_joint_5" />
-        <joint name="wiktor_left_arm_joint_6" />
-        <joint name="wiktor_left_arm_joint_7" />
+        <chain base_link="wiktor_left_arm_link_0" tip_link="wiktor_left_arm_link_ee" />
     </group>
     <group name="right_arm">
-        <joint name="wiktor_right_arm_joint_1" />
-        <joint name="wiktor_right_arm_joint_2" />
-        <joint name="wiktor_right_arm_joint_3" />
-        <joint name="wiktor_right_arm_joint_4" />
-        <joint name="wiktor_right_arm_joint_5" />
-        <joint name="wiktor_right_arm_joint_6" />
-        <joint name="wiktor_right_arm_joint_7" />
+        <chain base_link="wiktor_right_arm_link_0" tip_link="wiktor_right_arm_link_ee" />
     </group>
-    <group name="left_ee">
-        <joint name="wiktor_left_arm_joint_ee" />
+    <group name="left_gripper">
+        <link name="wiktor_left_gripper_palm" />
+        <link name="wiktor_left_gripper_fingerA_base" />
+        <link name="wiktor_left_gripper_fingerA_prox" />
+        <link name="wiktor_left_gripper_fingerA_med" />
+        <link name="wiktor_left_gripper_fingerA_dist" />
+        <link name="wiktor_left_gripper_fingerB_base" />
+        <link name="wiktor_left_gripper_fingerB_prox" />
+        <link name="wiktor_left_gripper_fingerB_med" />
+        <link name="wiktor_left_gripper_fingerB_dist" />
+        <link name="wiktor_left_gripper_fingerC_base" />
+        <link name="wiktor_left_gripper_fingerC_prox" />
+        <link name="wiktor_left_gripper_fingerC_med" />
+        <link name="wiktor_left_gripper_fingerC_dist" />
+        <link name="wiktor_left_gripper_mounting_bracket" />
     </group>
-    <group name="right_ee">
-        <joint name="wiktor_right_arm_joint_ee" />
+    <group name="right_gripper">
+        <link name="wiktor_right_gripper_palm" />
+        <link name="wiktor_right_gripper_fingerA_base" />
+        <link name="wiktor_right_gripper_fingerA_prox" />
+        <link name="wiktor_right_gripper_fingerA_med" />
+        <link name="wiktor_right_gripper_fingerA_dist" />
+        <link name="wiktor_right_gripper_fingerB_base" />
+        <link name="wiktor_right_gripper_fingerB_prox" />
+        <link name="wiktor_right_gripper_fingerB_med" />
+        <link name="wiktor_right_gripper_fingerB_dist" />
+        <link name="wiktor_right_gripper_fingerC_base" />
+        <link name="wiktor_right_gripper_fingerC_prox" />
+        <link name="wiktor_right_gripper_fingerC_med" />
+        <link name="wiktor_right_gripper_fingerC_dist" />
+        <link name="wiktor_right_gripper_mounting_bracket" />
     </group>
     <!--GROUP STATES: Purpose: Define a named state for a particular group, in terms of joint values. This is useful to define states like 'folded arms'-->
     <group_state name="left_arm_home" group="left_arm" />
     <group_state name="right_arm_home" group="right_arm" />
     <!--END EFFECTOR: Purpose: Represent information about an end effector.-->
-    <end_effector name="left_flange" parent_link="wiktor_left_arm_link_7" group="left_ee" parent_group="left_arm" />
-    <end_effector name="right_flange" parent_link="wiktor_right_arm_link_7" group="right_ee" parent_group="right_arm" />
+    <end_effector name="left_ee" parent_link="wiktor_left_arm_link_ee" group="left_gripper" parent_group="left_arm" />
+    <end_effector name="right_ee" parent_link="wiktor_right_arm_link_ee" group="right_gripper" parent_group="right_arm" />
     <!--DISABLE COLLISIONS: By default it is assumed that any link of the robot could potentially come into collision with any other link in the robot. This tag disables collision checking between a specified pair of links. -->
     <disable_collisions link1="wiktor_base_plate" link2="wiktor_left_arm_link_0" reason="Default" />
     <disable_collisions link1="wiktor_base_plate" link2="wiktor_left_arm_link_1" reason="Never" />
@@ -68,6 +82,8 @@
     <disable_collisions link1="wiktor_left_arm_link_1" link2="wiktor_left_arm_link_6" reason="Never" />
     <disable_collisions link1="wiktor_left_arm_link_1" link2="wiktor_left_arm_link_7" reason="Never" />
     <disable_collisions link1="wiktor_left_arm_link_1" link2="wiktor_left_arm_mount" reason="Never" />
+    <disable_collisions link1="wiktor_left_arm_link_1" link2="wiktor_left_gripper_fingerC_base" reason="Never" />
+    <disable_collisions link1="wiktor_left_arm_link_1" link2="wiktor_left_gripper_mounting_bracket" reason="Never" />
     <disable_collisions link1="wiktor_left_arm_link_1" link2="wiktor_pedestal" reason="Never" />
     <disable_collisions link1="wiktor_left_arm_link_1" link2="wiktor_right_arm_link_0" reason="Never" />
     <disable_collisions link1="wiktor_left_arm_link_1" link2="wiktor_right_arm_link_1" reason="Never" />
@@ -81,6 +97,12 @@
     <disable_collisions link1="wiktor_left_arm_link_2" link2="wiktor_left_arm_link_6" reason="Never" />
     <disable_collisions link1="wiktor_left_arm_link_2" link2="wiktor_left_arm_link_7" reason="Never" />
     <disable_collisions link1="wiktor_left_arm_link_2" link2="wiktor_left_arm_mount" reason="Never" />
+    <disable_collisions link1="wiktor_left_arm_link_2" link2="wiktor_left_gripper_fingerA_base" reason="Never" />
+    <disable_collisions link1="wiktor_left_arm_link_2" link2="wiktor_left_gripper_fingerB_base" reason="Never" />
+    <disable_collisions link1="wiktor_left_arm_link_2" link2="wiktor_left_gripper_fingerC_base" reason="Never" />
+    <disable_collisions link1="wiktor_left_arm_link_2" link2="wiktor_left_gripper_fingerC_prox" reason="Never" />
+    <disable_collisions link1="wiktor_left_arm_link_2" link2="wiktor_left_gripper_mounting_bracket" reason="Never" />
+    <disable_collisions link1="wiktor_left_arm_link_2" link2="wiktor_left_gripper_palm" reason="Never" />
     <disable_collisions link1="wiktor_left_arm_link_2" link2="wiktor_pedestal" reason="Never" />
     <disable_collisions link1="wiktor_left_arm_link_2" link2="wiktor_right_arm_link_0" reason="Never" />
     <disable_collisions link1="wiktor_left_arm_link_2" link2="wiktor_right_arm_link_1" reason="Never" />
@@ -93,6 +115,20 @@
     <disable_collisions link1="wiktor_left_arm_link_3" link2="wiktor_left_arm_link_6" reason="Never" />
     <disable_collisions link1="wiktor_left_arm_link_3" link2="wiktor_left_arm_link_7" reason="Never" />
     <disable_collisions link1="wiktor_left_arm_link_3" link2="wiktor_left_arm_mount" reason="Never" />
+    <disable_collisions link1="wiktor_left_arm_link_3" link2="wiktor_left_gripper_fingerA_base" reason="Never" />
+    <disable_collisions link1="wiktor_left_arm_link_3" link2="wiktor_left_gripper_fingerA_dist" reason="Never" />
+    <disable_collisions link1="wiktor_left_arm_link_3" link2="wiktor_left_gripper_fingerA_med" reason="Never" />
+    <disable_collisions link1="wiktor_left_arm_link_3" link2="wiktor_left_gripper_fingerA_prox" reason="Never" />
+    <disable_collisions link1="wiktor_left_arm_link_3" link2="wiktor_left_gripper_fingerB_base" reason="Never" />
+    <disable_collisions link1="wiktor_left_arm_link_3" link2="wiktor_left_gripper_fingerB_dist" reason="Never" />
+    <disable_collisions link1="wiktor_left_arm_link_3" link2="wiktor_left_gripper_fingerB_med" reason="Never" />
+    <disable_collisions link1="wiktor_left_arm_link_3" link2="wiktor_left_gripper_fingerB_prox" reason="Never" />
+    <disable_collisions link1="wiktor_left_arm_link_3" link2="wiktor_left_gripper_fingerC_base" reason="Never" />
+    <disable_collisions link1="wiktor_left_arm_link_3" link2="wiktor_left_gripper_fingerC_dist" reason="Never" />
+    <disable_collisions link1="wiktor_left_arm_link_3" link2="wiktor_left_gripper_fingerC_med" reason="Never" />
+    <disable_collisions link1="wiktor_left_arm_link_3" link2="wiktor_left_gripper_fingerC_prox" reason="Never" />
+    <disable_collisions link1="wiktor_left_arm_link_3" link2="wiktor_left_gripper_mounting_bracket" reason="Never" />
+    <disable_collisions link1="wiktor_left_arm_link_3" link2="wiktor_left_gripper_palm" reason="Never" />
     <disable_collisions link1="wiktor_left_arm_link_3" link2="wiktor_pedestal" reason="Never" />
     <disable_collisions link1="wiktor_left_arm_link_3" link2="wiktor_right_arm_link_0" reason="Never" />
     <disable_collisions link1="wiktor_left_arm_link_3" link2="wiktor_right_arm_link_1" reason="Never" />
@@ -102,13 +138,69 @@
     <disable_collisions link1="wiktor_left_arm_link_4" link2="wiktor_left_arm_link_6" reason="Never" />
     <disable_collisions link1="wiktor_left_arm_link_4" link2="wiktor_left_arm_link_7" reason="Never" />
     <disable_collisions link1="wiktor_left_arm_link_4" link2="wiktor_left_arm_mount" reason="Never" />
+    <disable_collisions link1="wiktor_left_arm_link_4" link2="wiktor_left_gripper_fingerA_base" reason="Never" />
+    <disable_collisions link1="wiktor_left_arm_link_4" link2="wiktor_left_gripper_fingerA_dist" reason="Never" />
+    <disable_collisions link1="wiktor_left_arm_link_4" link2="wiktor_left_gripper_fingerA_med" reason="Never" />
+    <disable_collisions link1="wiktor_left_arm_link_4" link2="wiktor_left_gripper_fingerA_prox" reason="Never" />
+    <disable_collisions link1="wiktor_left_arm_link_4" link2="wiktor_left_gripper_fingerB_base" reason="Never" />
+    <disable_collisions link1="wiktor_left_arm_link_4" link2="wiktor_left_gripper_fingerB_dist" reason="Never" />
+    <disable_collisions link1="wiktor_left_arm_link_4" link2="wiktor_left_gripper_fingerB_med" reason="Never" />
+    <disable_collisions link1="wiktor_left_arm_link_4" link2="wiktor_left_gripper_fingerB_prox" reason="Never" />
+    <disable_collisions link1="wiktor_left_arm_link_4" link2="wiktor_left_gripper_fingerC_base" reason="Never" />
+    <disable_collisions link1="wiktor_left_arm_link_4" link2="wiktor_left_gripper_fingerC_dist" reason="Never" />
+    <disable_collisions link1="wiktor_left_arm_link_4" link2="wiktor_left_gripper_fingerC_med" reason="Never" />
+    <disable_collisions link1="wiktor_left_arm_link_4" link2="wiktor_left_gripper_fingerC_prox" reason="Never" />
+    <disable_collisions link1="wiktor_left_arm_link_4" link2="wiktor_left_gripper_mounting_bracket" reason="Never" />
+    <disable_collisions link1="wiktor_left_arm_link_4" link2="wiktor_left_gripper_palm" reason="Never" />
     <disable_collisions link1="wiktor_left_arm_link_4" link2="wiktor_right_arm_link_0" reason="Never" />
     <disable_collisions link1="wiktor_left_arm_link_4" link2="wiktor_right_arm_link_1" reason="Never" />
     <disable_collisions link1="wiktor_left_arm_link_4" link2="wiktor_right_arm_link_2" reason="Never" />
     <disable_collisions link1="wiktor_left_arm_link_4" link2="wiktor_right_arm_mount" reason="Never" />
     <disable_collisions link1="wiktor_left_arm_link_5" link2="wiktor_left_arm_link_6" reason="Adjacent" />
     <disable_collisions link1="wiktor_left_arm_link_5" link2="wiktor_left_arm_link_7" reason="Never" />
+    <disable_collisions link1="wiktor_left_arm_link_5" link2="wiktor_left_gripper_fingerA_base" reason="Never" />
+    <disable_collisions link1="wiktor_left_arm_link_5" link2="wiktor_left_gripper_fingerA_dist" reason="Never" />
+    <disable_collisions link1="wiktor_left_arm_link_5" link2="wiktor_left_gripper_fingerA_med" reason="Never" />
+    <disable_collisions link1="wiktor_left_arm_link_5" link2="wiktor_left_gripper_fingerA_prox" reason="Never" />
+    <disable_collisions link1="wiktor_left_arm_link_5" link2="wiktor_left_gripper_fingerB_base" reason="Never" />
+    <disable_collisions link1="wiktor_left_arm_link_5" link2="wiktor_left_gripper_fingerB_dist" reason="Never" />
+    <disable_collisions link1="wiktor_left_arm_link_5" link2="wiktor_left_gripper_fingerB_med" reason="Never" />
+    <disable_collisions link1="wiktor_left_arm_link_5" link2="wiktor_left_gripper_fingerB_prox" reason="Never" />
+    <disable_collisions link1="wiktor_left_arm_link_5" link2="wiktor_left_gripper_fingerC_base" reason="Never" />
+    <disable_collisions link1="wiktor_left_arm_link_5" link2="wiktor_left_gripper_fingerC_dist" reason="Never" />
+    <disable_collisions link1="wiktor_left_arm_link_5" link2="wiktor_left_gripper_fingerC_med" reason="Never" />
+    <disable_collisions link1="wiktor_left_arm_link_5" link2="wiktor_left_gripper_fingerC_prox" reason="Never" />
+    <disable_collisions link1="wiktor_left_arm_link_5" link2="wiktor_left_gripper_mounting_bracket" reason="Never" />
+    <disable_collisions link1="wiktor_left_arm_link_5" link2="wiktor_left_gripper_palm" reason="Never" />
     <disable_collisions link1="wiktor_left_arm_link_6" link2="wiktor_left_arm_link_7" reason="Adjacent" />
+    <disable_collisions link1="wiktor_left_arm_link_6" link2="wiktor_left_gripper_fingerA_base" reason="Never" />
+    <disable_collisions link1="wiktor_left_arm_link_6" link2="wiktor_left_gripper_fingerA_dist" reason="Never" />
+    <disable_collisions link1="wiktor_left_arm_link_6" link2="wiktor_left_gripper_fingerA_med" reason="Never" />
+    <disable_collisions link1="wiktor_left_arm_link_6" link2="wiktor_left_gripper_fingerA_prox" reason="Never" />
+    <disable_collisions link1="wiktor_left_arm_link_6" link2="wiktor_left_gripper_fingerB_base" reason="Never" />
+    <disable_collisions link1="wiktor_left_arm_link_6" link2="wiktor_left_gripper_fingerB_dist" reason="Never" />
+    <disable_collisions link1="wiktor_left_arm_link_6" link2="wiktor_left_gripper_fingerB_med" reason="Never" />
+    <disable_collisions link1="wiktor_left_arm_link_6" link2="wiktor_left_gripper_fingerB_prox" reason="Never" />
+    <disable_collisions link1="wiktor_left_arm_link_6" link2="wiktor_left_gripper_fingerC_base" reason="Never" />
+    <disable_collisions link1="wiktor_left_arm_link_6" link2="wiktor_left_gripper_fingerC_dist" reason="Never" />
+    <disable_collisions link1="wiktor_left_arm_link_6" link2="wiktor_left_gripper_fingerC_med" reason="Never" />
+    <disable_collisions link1="wiktor_left_arm_link_6" link2="wiktor_left_gripper_fingerC_prox" reason="Never" />
+    <disable_collisions link1="wiktor_left_arm_link_6" link2="wiktor_left_gripper_mounting_bracket" reason="Never" />
+    <disable_collisions link1="wiktor_left_arm_link_6" link2="wiktor_left_gripper_palm" reason="Never" />
+    <disable_collisions link1="wiktor_left_arm_link_7" link2="wiktor_left_gripper_fingerA_base" reason="Never" />
+    <disable_collisions link1="wiktor_left_arm_link_7" link2="wiktor_left_gripper_fingerA_dist" reason="Never" />
+    <disable_collisions link1="wiktor_left_arm_link_7" link2="wiktor_left_gripper_fingerA_med" reason="Never" />
+    <disable_collisions link1="wiktor_left_arm_link_7" link2="wiktor_left_gripper_fingerA_prox" reason="Never" />
+    <disable_collisions link1="wiktor_left_arm_link_7" link2="wiktor_left_gripper_fingerB_base" reason="Never" />
+    <disable_collisions link1="wiktor_left_arm_link_7" link2="wiktor_left_gripper_fingerB_dist" reason="Never" />
+    <disable_collisions link1="wiktor_left_arm_link_7" link2="wiktor_left_gripper_fingerB_med" reason="Never" />
+    <disable_collisions link1="wiktor_left_arm_link_7" link2="wiktor_left_gripper_fingerB_prox" reason="Never" />
+    <disable_collisions link1="wiktor_left_arm_link_7" link2="wiktor_left_gripper_fingerC_base" reason="Never" />
+    <disable_collisions link1="wiktor_left_arm_link_7" link2="wiktor_left_gripper_fingerC_dist" reason="Never" />
+    <disable_collisions link1="wiktor_left_arm_link_7" link2="wiktor_left_gripper_fingerC_med" reason="Never" />
+    <disable_collisions link1="wiktor_left_arm_link_7" link2="wiktor_left_gripper_fingerC_prox" reason="Never" />
+    <disable_collisions link1="wiktor_left_arm_link_7" link2="wiktor_left_gripper_mounting_bracket" reason="Adjacent" />
+    <disable_collisions link1="wiktor_left_arm_link_7" link2="wiktor_left_gripper_palm" reason="Never" />
     <disable_collisions link1="wiktor_left_arm_mount" link2="wiktor_pedestal" reason="Never" />
     <disable_collisions link1="wiktor_left_arm_mount" link2="wiktor_right_arm_link_0" reason="Never" />
     <disable_collisions link1="wiktor_left_arm_mount" link2="wiktor_right_arm_link_1" reason="Never" />
@@ -116,6 +208,70 @@
     <disable_collisions link1="wiktor_left_arm_mount" link2="wiktor_right_arm_link_3" reason="Never" />
     <disable_collisions link1="wiktor_left_arm_mount" link2="wiktor_right_arm_link_4" reason="Never" />
     <disable_collisions link1="wiktor_left_arm_mount" link2="wiktor_right_arm_mount" reason="Never" />
+    <disable_collisions link1="wiktor_left_gripper_fingerA_base" link2="wiktor_left_gripper_fingerA_dist" reason="Never" />
+    <disable_collisions link1="wiktor_left_gripper_fingerA_base" link2="wiktor_left_gripper_fingerA_med" reason="Never" />
+    <disable_collisions link1="wiktor_left_gripper_fingerA_base" link2="wiktor_left_gripper_fingerA_prox" reason="Adjacent" />
+    <disable_collisions link1="wiktor_left_gripper_fingerA_base" link2="wiktor_left_gripper_fingerB_base" reason="Never" />
+    <disable_collisions link1="wiktor_left_gripper_fingerA_base" link2="wiktor_left_gripper_fingerB_prox" reason="Never" />
+    <disable_collisions link1="wiktor_left_gripper_fingerA_base" link2="wiktor_left_gripper_fingerC_base" reason="Never" />
+    <disable_collisions link1="wiktor_left_gripper_fingerA_base" link2="wiktor_left_gripper_fingerC_prox" reason="Never" />
+    <disable_collisions link1="wiktor_left_gripper_fingerA_base" link2="wiktor_left_gripper_mounting_bracket" reason="Never" />
+    <disable_collisions link1="wiktor_left_gripper_fingerA_base" link2="wiktor_left_gripper_palm" reason="Adjacent" />
+    <disable_collisions link1="wiktor_left_gripper_fingerA_dist" link2="wiktor_left_gripper_fingerA_med" reason="Adjacent" />
+    <disable_collisions link1="wiktor_left_gripper_fingerA_dist" link2="wiktor_left_gripper_mounting_bracket" reason="Never" />
+    <disable_collisions link1="wiktor_left_gripper_fingerA_dist" link2="wiktor_right_gripper_fingerA_base" reason="Never" />
+    <disable_collisions link1="wiktor_left_gripper_fingerA_dist" link2="wiktor_right_gripper_fingerB_base" reason="Never" />
+    <disable_collisions link1="wiktor_left_gripper_fingerA_med" link2="wiktor_left_gripper_fingerA_prox" reason="Adjacent" />
+    <disable_collisions link1="wiktor_left_gripper_fingerA_med" link2="wiktor_left_gripper_fingerB_base" reason="Never" />
+    <disable_collisions link1="wiktor_left_gripper_fingerA_med" link2="wiktor_left_gripper_fingerC_base" reason="Never" />
+    <disable_collisions link1="wiktor_left_gripper_fingerA_med" link2="wiktor_left_gripper_mounting_bracket" reason="Never" />
+    <disable_collisions link1="wiktor_left_gripper_fingerA_prox" link2="wiktor_left_gripper_fingerB_base" reason="Never" />
+    <disable_collisions link1="wiktor_left_gripper_fingerA_prox" link2="wiktor_left_gripper_fingerC_base" reason="Never" />
+    <disable_collisions link1="wiktor_left_gripper_fingerA_prox" link2="wiktor_left_gripper_mounting_bracket" reason="Never" />
+    <disable_collisions link1="wiktor_left_gripper_fingerA_prox" link2="wiktor_left_gripper_palm" reason="Default" />
+    <disable_collisions link1="wiktor_left_gripper_fingerB_base" link2="wiktor_left_gripper_fingerB_dist" reason="Never" />
+    <disable_collisions link1="wiktor_left_gripper_fingerB_base" link2="wiktor_left_gripper_fingerB_med" reason="Never" />
+    <disable_collisions link1="wiktor_left_gripper_fingerB_base" link2="wiktor_left_gripper_fingerB_prox" reason="Adjacent" />
+    <disable_collisions link1="wiktor_left_gripper_fingerB_base" link2="wiktor_left_gripper_fingerC_base" reason="Never" />
+    <disable_collisions link1="wiktor_left_gripper_fingerB_base" link2="wiktor_left_gripper_fingerC_dist" reason="Never" />
+    <disable_collisions link1="wiktor_left_gripper_fingerB_base" link2="wiktor_left_gripper_mounting_bracket" reason="Never" />
+    <disable_collisions link1="wiktor_left_gripper_fingerB_base" link2="wiktor_left_gripper_palm" reason="Adjacent" />
+    <disable_collisions link1="wiktor_left_gripper_fingerB_base" link2="wiktor_right_gripper_fingerB_dist" reason="Never" />
+    <disable_collisions link1="wiktor_left_gripper_fingerB_base" link2="wiktor_right_gripper_fingerC_dist" reason="Never" />
+    <disable_collisions link1="wiktor_left_gripper_fingerB_base" link2="wiktor_right_gripper_fingerC_med" reason="Never" />
+    <disable_collisions link1="wiktor_left_gripper_fingerB_base" link2="wiktor_right_gripper_fingerC_prox" reason="Never" />
+    <disable_collisions link1="wiktor_left_gripper_fingerB_dist" link2="wiktor_left_gripper_fingerB_med" reason="Adjacent" />
+    <disable_collisions link1="wiktor_left_gripper_fingerB_dist" link2="wiktor_left_gripper_fingerC_base" reason="Never" />
+    <disable_collisions link1="wiktor_left_gripper_fingerB_dist" link2="wiktor_left_gripper_mounting_bracket" reason="Never" />
+    <disable_collisions link1="wiktor_left_gripper_fingerB_dist" link2="wiktor_right_gripper_fingerA_dist" reason="Never" />
+    <disable_collisions link1="wiktor_left_gripper_fingerB_dist" link2="wiktor_right_gripper_fingerB_dist" reason="Never" />
+    <disable_collisions link1="wiktor_left_gripper_fingerB_med" link2="wiktor_left_gripper_fingerB_prox" reason="Adjacent" />
+    <disable_collisions link1="wiktor_left_gripper_fingerB_med" link2="wiktor_left_gripper_mounting_bracket" reason="Never" />
+    <disable_collisions link1="wiktor_left_gripper_fingerB_med" link2="wiktor_right_gripper_fingerB_dist" reason="Never" />
+    <disable_collisions link1="wiktor_left_gripper_fingerB_prox" link2="wiktor_left_gripper_mounting_bracket" reason="Never" />
+    <disable_collisions link1="wiktor_left_gripper_fingerB_prox" link2="wiktor_left_gripper_palm" reason="Default" />
+    <disable_collisions link1="wiktor_left_gripper_fingerB_prox" link2="wiktor_right_gripper_fingerB_dist" reason="Never" />
+    <disable_collisions link1="wiktor_left_gripper_fingerC_base" link2="wiktor_left_gripper_fingerC_dist" reason="Never" />
+    <disable_collisions link1="wiktor_left_gripper_fingerC_base" link2="wiktor_left_gripper_fingerC_med" reason="Never" />
+    <disable_collisions link1="wiktor_left_gripper_fingerC_base" link2="wiktor_left_gripper_fingerC_prox" reason="Adjacent" />
+    <disable_collisions link1="wiktor_left_gripper_fingerC_base" link2="wiktor_left_gripper_mounting_bracket" reason="Never" />
+    <disable_collisions link1="wiktor_left_gripper_fingerC_base" link2="wiktor_left_gripper_palm" reason="Adjacent" />
+    <disable_collisions link1="wiktor_left_gripper_fingerC_base" link2="wiktor_right_gripper_fingerA_dist" reason="Never" />
+    <disable_collisions link1="wiktor_left_gripper_fingerC_base" link2="wiktor_right_gripper_fingerC_dist" reason="Never" />
+    <disable_collisions link1="wiktor_left_gripper_fingerC_base" link2="wiktor_right_gripper_fingerC_med" reason="Never" />
+    <disable_collisions link1="wiktor_left_gripper_fingerC_dist" link2="wiktor_left_gripper_fingerC_med" reason="Adjacent" />
+    <disable_collisions link1="wiktor_left_gripper_fingerC_dist" link2="wiktor_left_gripper_mounting_bracket" reason="Never" />
+    <disable_collisions link1="wiktor_left_gripper_fingerC_dist" link2="wiktor_right_gripper_fingerA_base" reason="Never" />
+    <disable_collisions link1="wiktor_left_gripper_fingerC_dist" link2="wiktor_right_gripper_fingerA_dist" reason="Never" />
+    <disable_collisions link1="wiktor_left_gripper_fingerC_dist" link2="wiktor_right_gripper_fingerA_med" reason="Never" />
+    <disable_collisions link1="wiktor_left_gripper_fingerC_dist" link2="wiktor_right_gripper_fingerA_prox" reason="Never" />
+    <disable_collisions link1="wiktor_left_gripper_fingerC_dist" link2="wiktor_right_gripper_fingerB_base" reason="Never" />
+    <disable_collisions link1="wiktor_left_gripper_fingerC_med" link2="wiktor_left_gripper_fingerC_prox" reason="Adjacent" />
+    <disable_collisions link1="wiktor_left_gripper_fingerC_med" link2="wiktor_left_gripper_mounting_bracket" reason="Never" />
+    <disable_collisions link1="wiktor_left_gripper_fingerC_med" link2="wiktor_right_gripper_fingerA_dist" reason="Never" />
+    <disable_collisions link1="wiktor_left_gripper_fingerC_prox" link2="wiktor_left_gripper_mounting_bracket" reason="Never" />
+    <disable_collisions link1="wiktor_left_gripper_fingerC_prox" link2="wiktor_left_gripper_palm" reason="Default" />
+    <disable_collisions link1="wiktor_left_gripper_mounting_bracket" link2="wiktor_left_gripper_palm" reason="Adjacent" />
     <disable_collisions link1="wiktor_pedestal" link2="wiktor_right_arm_link_0" reason="Never" />
     <disable_collisions link1="wiktor_pedestal" link2="wiktor_right_arm_link_1" reason="Never" />
     <disable_collisions link1="wiktor_pedestal" link2="wiktor_right_arm_link_2" reason="Never" />
@@ -133,22 +289,144 @@
     <disable_collisions link1="wiktor_right_arm_link_1" link2="wiktor_right_arm_link_6" reason="Never" />
     <disable_collisions link1="wiktor_right_arm_link_1" link2="wiktor_right_arm_link_7" reason="Never" />
     <disable_collisions link1="wiktor_right_arm_link_1" link2="wiktor_right_arm_mount" reason="Never" />
+    <disable_collisions link1="wiktor_right_arm_link_1" link2="wiktor_right_gripper_fingerB_base" reason="Never" />
+    <disable_collisions link1="wiktor_right_arm_link_1" link2="wiktor_right_gripper_fingerC_base" reason="Never" />
+    <disable_collisions link1="wiktor_right_arm_link_1" link2="wiktor_right_gripper_mounting_bracket" reason="Never" />
     <disable_collisions link1="wiktor_right_arm_link_2" link2="wiktor_right_arm_link_3" reason="Adjacent" />
     <disable_collisions link1="wiktor_right_arm_link_2" link2="wiktor_right_arm_link_4" reason="Never" />
     <disable_collisions link1="wiktor_right_arm_link_2" link2="wiktor_right_arm_link_5" reason="Never" />
     <disable_collisions link1="wiktor_right_arm_link_2" link2="wiktor_right_arm_link_6" reason="Never" />
     <disable_collisions link1="wiktor_right_arm_link_2" link2="wiktor_right_arm_link_7" reason="Never" />
     <disable_collisions link1="wiktor_right_arm_link_2" link2="wiktor_right_arm_mount" reason="Never" />
+    <disable_collisions link1="wiktor_right_arm_link_2" link2="wiktor_right_gripper_fingerA_base" reason="Never" />
+    <disable_collisions link1="wiktor_right_arm_link_2" link2="wiktor_right_gripper_fingerB_base" reason="Never" />
+    <disable_collisions link1="wiktor_right_arm_link_2" link2="wiktor_right_gripper_fingerC_base" reason="Never" />
+    <disable_collisions link1="wiktor_right_arm_link_2" link2="wiktor_right_gripper_mounting_bracket" reason="Never" />
+    <disable_collisions link1="wiktor_right_arm_link_2" link2="wiktor_right_gripper_palm" reason="Never" />
     <disable_collisions link1="wiktor_right_arm_link_3" link2="wiktor_right_arm_link_4" reason="Adjacent" />
     <disable_collisions link1="wiktor_right_arm_link_3" link2="wiktor_right_arm_link_5" reason="Never" />
     <disable_collisions link1="wiktor_right_arm_link_3" link2="wiktor_right_arm_link_6" reason="Never" />
     <disable_collisions link1="wiktor_right_arm_link_3" link2="wiktor_right_arm_link_7" reason="Never" />
     <disable_collisions link1="wiktor_right_arm_link_3" link2="wiktor_right_arm_mount" reason="Never" />
+    <disable_collisions link1="wiktor_right_arm_link_3" link2="wiktor_right_gripper_fingerA_base" reason="Never" />
+    <disable_collisions link1="wiktor_right_arm_link_3" link2="wiktor_right_gripper_fingerA_med" reason="Never" />
+    <disable_collisions link1="wiktor_right_arm_link_3" link2="wiktor_right_gripper_fingerA_prox" reason="Never" />
+    <disable_collisions link1="wiktor_right_arm_link_3" link2="wiktor_right_gripper_fingerB_base" reason="Never" />
+    <disable_collisions link1="wiktor_right_arm_link_3" link2="wiktor_right_gripper_fingerB_dist" reason="Never" />
+    <disable_collisions link1="wiktor_right_arm_link_3" link2="wiktor_right_gripper_fingerB_med" reason="Never" />
+    <disable_collisions link1="wiktor_right_arm_link_3" link2="wiktor_right_gripper_fingerB_prox" reason="Never" />
+    <disable_collisions link1="wiktor_right_arm_link_3" link2="wiktor_right_gripper_fingerC_base" reason="Never" />
+    <disable_collisions link1="wiktor_right_arm_link_3" link2="wiktor_right_gripper_fingerC_dist" reason="Never" />
+    <disable_collisions link1="wiktor_right_arm_link_3" link2="wiktor_right_gripper_fingerC_med" reason="Never" />
+    <disable_collisions link1="wiktor_right_arm_link_3" link2="wiktor_right_gripper_fingerC_prox" reason="Never" />
+    <disable_collisions link1="wiktor_right_arm_link_3" link2="wiktor_right_gripper_mounting_bracket" reason="Never" />
+    <disable_collisions link1="wiktor_right_arm_link_3" link2="wiktor_right_gripper_palm" reason="Never" />
     <disable_collisions link1="wiktor_right_arm_link_4" link2="wiktor_right_arm_link_5" reason="Adjacent" />
     <disable_collisions link1="wiktor_right_arm_link_4" link2="wiktor_right_arm_link_6" reason="Never" />
     <disable_collisions link1="wiktor_right_arm_link_4" link2="wiktor_right_arm_link_7" reason="Never" />
     <disable_collisions link1="wiktor_right_arm_link_4" link2="wiktor_right_arm_mount" reason="Never" />
+    <disable_collisions link1="wiktor_right_arm_link_4" link2="wiktor_right_gripper_fingerA_base" reason="Never" />
+    <disable_collisions link1="wiktor_right_arm_link_4" link2="wiktor_right_gripper_fingerA_dist" reason="Never" />
+    <disable_collisions link1="wiktor_right_arm_link_4" link2="wiktor_right_gripper_fingerA_med" reason="Never" />
+    <disable_collisions link1="wiktor_right_arm_link_4" link2="wiktor_right_gripper_fingerA_prox" reason="Never" />
+    <disable_collisions link1="wiktor_right_arm_link_4" link2="wiktor_right_gripper_fingerB_base" reason="Never" />
+    <disable_collisions link1="wiktor_right_arm_link_4" link2="wiktor_right_gripper_fingerB_dist" reason="Never" />
+    <disable_collisions link1="wiktor_right_arm_link_4" link2="wiktor_right_gripper_fingerB_med" reason="Never" />
+    <disable_collisions link1="wiktor_right_arm_link_4" link2="wiktor_right_gripper_fingerB_prox" reason="Never" />
+    <disable_collisions link1="wiktor_right_arm_link_4" link2="wiktor_right_gripper_fingerC_base" reason="Never" />
+    <disable_collisions link1="wiktor_right_arm_link_4" link2="wiktor_right_gripper_fingerC_dist" reason="Never" />
+    <disable_collisions link1="wiktor_right_arm_link_4" link2="wiktor_right_gripper_fingerC_med" reason="Never" />
+    <disable_collisions link1="wiktor_right_arm_link_4" link2="wiktor_right_gripper_fingerC_prox" reason="Never" />
+    <disable_collisions link1="wiktor_right_arm_link_4" link2="wiktor_right_gripper_mounting_bracket" reason="Never" />
+    <disable_collisions link1="wiktor_right_arm_link_4" link2="wiktor_right_gripper_palm" reason="Never" />
     <disable_collisions link1="wiktor_right_arm_link_5" link2="wiktor_right_arm_link_6" reason="Adjacent" />
     <disable_collisions link1="wiktor_right_arm_link_5" link2="wiktor_right_arm_link_7" reason="Never" />
+    <disable_collisions link1="wiktor_right_arm_link_5" link2="wiktor_right_gripper_fingerA_base" reason="Never" />
+    <disable_collisions link1="wiktor_right_arm_link_5" link2="wiktor_right_gripper_fingerA_dist" reason="Never" />
+    <disable_collisions link1="wiktor_right_arm_link_5" link2="wiktor_right_gripper_fingerA_med" reason="Never" />
+    <disable_collisions link1="wiktor_right_arm_link_5" link2="wiktor_right_gripper_fingerA_prox" reason="Never" />
+    <disable_collisions link1="wiktor_right_arm_link_5" link2="wiktor_right_gripper_fingerB_base" reason="Never" />
+    <disable_collisions link1="wiktor_right_arm_link_5" link2="wiktor_right_gripper_fingerB_dist" reason="Never" />
+    <disable_collisions link1="wiktor_right_arm_link_5" link2="wiktor_right_gripper_fingerB_med" reason="Never" />
+    <disable_collisions link1="wiktor_right_arm_link_5" link2="wiktor_right_gripper_fingerB_prox" reason="Never" />
+    <disable_collisions link1="wiktor_right_arm_link_5" link2="wiktor_right_gripper_fingerC_base" reason="Never" />
+    <disable_collisions link1="wiktor_right_arm_link_5" link2="wiktor_right_gripper_fingerC_dist" reason="Never" />
+    <disable_collisions link1="wiktor_right_arm_link_5" link2="wiktor_right_gripper_fingerC_med" reason="Never" />
+    <disable_collisions link1="wiktor_right_arm_link_5" link2="wiktor_right_gripper_fingerC_prox" reason="Never" />
+    <disable_collisions link1="wiktor_right_arm_link_5" link2="wiktor_right_gripper_mounting_bracket" reason="Never" />
+    <disable_collisions link1="wiktor_right_arm_link_5" link2="wiktor_right_gripper_palm" reason="Never" />
     <disable_collisions link1="wiktor_right_arm_link_6" link2="wiktor_right_arm_link_7" reason="Adjacent" />
+    <disable_collisions link1="wiktor_right_arm_link_6" link2="wiktor_right_gripper_fingerA_base" reason="Never" />
+    <disable_collisions link1="wiktor_right_arm_link_6" link2="wiktor_right_gripper_fingerA_dist" reason="Never" />
+    <disable_collisions link1="wiktor_right_arm_link_6" link2="wiktor_right_gripper_fingerA_med" reason="Never" />
+    <disable_collisions link1="wiktor_right_arm_link_6" link2="wiktor_right_gripper_fingerA_prox" reason="Never" />
+    <disable_collisions link1="wiktor_right_arm_link_6" link2="wiktor_right_gripper_fingerB_base" reason="Never" />
+    <disable_collisions link1="wiktor_right_arm_link_6" link2="wiktor_right_gripper_fingerB_dist" reason="Never" />
+    <disable_collisions link1="wiktor_right_arm_link_6" link2="wiktor_right_gripper_fingerB_med" reason="Never" />
+    <disable_collisions link1="wiktor_right_arm_link_6" link2="wiktor_right_gripper_fingerB_prox" reason="Never" />
+    <disable_collisions link1="wiktor_right_arm_link_6" link2="wiktor_right_gripper_fingerC_base" reason="Never" />
+    <disable_collisions link1="wiktor_right_arm_link_6" link2="wiktor_right_gripper_fingerC_dist" reason="Never" />
+    <disable_collisions link1="wiktor_right_arm_link_6" link2="wiktor_right_gripper_fingerC_med" reason="Never" />
+    <disable_collisions link1="wiktor_right_arm_link_6" link2="wiktor_right_gripper_fingerC_prox" reason="Never" />
+    <disable_collisions link1="wiktor_right_arm_link_6" link2="wiktor_right_gripper_mounting_bracket" reason="Never" />
+    <disable_collisions link1="wiktor_right_arm_link_6" link2="wiktor_right_gripper_palm" reason="Never" />
+    <disable_collisions link1="wiktor_right_arm_link_7" link2="wiktor_right_gripper_fingerA_base" reason="Never" />
+    <disable_collisions link1="wiktor_right_arm_link_7" link2="wiktor_right_gripper_fingerA_dist" reason="Never" />
+    <disable_collisions link1="wiktor_right_arm_link_7" link2="wiktor_right_gripper_fingerA_med" reason="Never" />
+    <disable_collisions link1="wiktor_right_arm_link_7" link2="wiktor_right_gripper_fingerA_prox" reason="Never" />
+    <disable_collisions link1="wiktor_right_arm_link_7" link2="wiktor_right_gripper_fingerB_base" reason="Never" />
+    <disable_collisions link1="wiktor_right_arm_link_7" link2="wiktor_right_gripper_fingerB_dist" reason="Never" />
+    <disable_collisions link1="wiktor_right_arm_link_7" link2="wiktor_right_gripper_fingerB_med" reason="Never" />
+    <disable_collisions link1="wiktor_right_arm_link_7" link2="wiktor_right_gripper_fingerB_prox" reason="Never" />
+    <disable_collisions link1="wiktor_right_arm_link_7" link2="wiktor_right_gripper_fingerC_base" reason="Never" />
+    <disable_collisions link1="wiktor_right_arm_link_7" link2="wiktor_right_gripper_fingerC_dist" reason="Never" />
+    <disable_collisions link1="wiktor_right_arm_link_7" link2="wiktor_right_gripper_fingerC_med" reason="Never" />
+    <disable_collisions link1="wiktor_right_arm_link_7" link2="wiktor_right_gripper_fingerC_prox" reason="Never" />
+    <disable_collisions link1="wiktor_right_arm_link_7" link2="wiktor_right_gripper_mounting_bracket" reason="Adjacent" />
+    <disable_collisions link1="wiktor_right_arm_link_7" link2="wiktor_right_gripper_palm" reason="Never" />
+    <disable_collisions link1="wiktor_right_gripper_fingerA_base" link2="wiktor_right_gripper_fingerA_dist" reason="Never" />
+    <disable_collisions link1="wiktor_right_gripper_fingerA_base" link2="wiktor_right_gripper_fingerA_med" reason="Never" />
+    <disable_collisions link1="wiktor_right_gripper_fingerA_base" link2="wiktor_right_gripper_fingerA_prox" reason="Adjacent" />
+    <disable_collisions link1="wiktor_right_gripper_fingerA_base" link2="wiktor_right_gripper_fingerB_base" reason="Never" />
+    <disable_collisions link1="wiktor_right_gripper_fingerA_base" link2="wiktor_right_gripper_fingerB_prox" reason="Never" />
+    <disable_collisions link1="wiktor_right_gripper_fingerA_base" link2="wiktor_right_gripper_fingerC_base" reason="Never" />
+    <disable_collisions link1="wiktor_right_gripper_fingerA_base" link2="wiktor_right_gripper_fingerC_prox" reason="Never" />
+    <disable_collisions link1="wiktor_right_gripper_fingerA_base" link2="wiktor_right_gripper_mounting_bracket" reason="Never" />
+    <disable_collisions link1="wiktor_right_gripper_fingerA_base" link2="wiktor_right_gripper_palm" reason="Adjacent" />
+    <disable_collisions link1="wiktor_right_gripper_fingerA_dist" link2="wiktor_right_gripper_fingerA_med" reason="Adjacent" />
+    <disable_collisions link1="wiktor_right_gripper_fingerA_dist" link2="wiktor_right_gripper_mounting_bracket" reason="Never" />
+    <disable_collisions link1="wiktor_right_gripper_fingerA_med" link2="wiktor_right_gripper_fingerA_prox" reason="Adjacent" />
+    <disable_collisions link1="wiktor_right_gripper_fingerA_med" link2="wiktor_right_gripper_fingerB_base" reason="Never" />
+    <disable_collisions link1="wiktor_right_gripper_fingerA_med" link2="wiktor_right_gripper_fingerC_base" reason="Never" />
+    <disable_collisions link1="wiktor_right_gripper_fingerA_med" link2="wiktor_right_gripper_mounting_bracket" reason="Never" />
+    <disable_collisions link1="wiktor_right_gripper_fingerA_prox" link2="wiktor_right_gripper_fingerB_base" reason="Never" />
+    <disable_collisions link1="wiktor_right_gripper_fingerA_prox" link2="wiktor_right_gripper_fingerC_base" reason="Never" />
+    <disable_collisions link1="wiktor_right_gripper_fingerA_prox" link2="wiktor_right_gripper_mounting_bracket" reason="Never" />
+    <disable_collisions link1="wiktor_right_gripper_fingerA_prox" link2="wiktor_right_gripper_palm" reason="Default" />
+    <disable_collisions link1="wiktor_right_gripper_fingerB_base" link2="wiktor_right_gripper_fingerB_dist" reason="Never" />
+    <disable_collisions link1="wiktor_right_gripper_fingerB_base" link2="wiktor_right_gripper_fingerB_med" reason="Never" />
+    <disable_collisions link1="wiktor_right_gripper_fingerB_base" link2="wiktor_right_gripper_fingerB_prox" reason="Adjacent" />
+    <disable_collisions link1="wiktor_right_gripper_fingerB_base" link2="wiktor_right_gripper_fingerC_base" reason="Never" />
+    <disable_collisions link1="wiktor_right_gripper_fingerB_base" link2="wiktor_right_gripper_fingerC_dist" reason="Never" />
+    <disable_collisions link1="wiktor_right_gripper_fingerB_base" link2="wiktor_right_gripper_mounting_bracket" reason="Never" />
+    <disable_collisions link1="wiktor_right_gripper_fingerB_base" link2="wiktor_right_gripper_palm" reason="Adjacent" />
+    <disable_collisions link1="wiktor_right_gripper_fingerB_dist" link2="wiktor_right_gripper_fingerB_med" reason="Adjacent" />
+    <disable_collisions link1="wiktor_right_gripper_fingerB_dist" link2="wiktor_right_gripper_fingerC_base" reason="Never" />
+    <disable_collisions link1="wiktor_right_gripper_fingerB_dist" link2="wiktor_right_gripper_mounting_bracket" reason="Never" />
+    <disable_collisions link1="wiktor_right_gripper_fingerB_med" link2="wiktor_right_gripper_fingerB_prox" reason="Adjacent" />
+    <disable_collisions link1="wiktor_right_gripper_fingerB_med" link2="wiktor_right_gripper_mounting_bracket" reason="Never" />
+    <disable_collisions link1="wiktor_right_gripper_fingerB_prox" link2="wiktor_right_gripper_mounting_bracket" reason="Never" />
+    <disable_collisions link1="wiktor_right_gripper_fingerB_prox" link2="wiktor_right_gripper_palm" reason="Default" />
+    <disable_collisions link1="wiktor_right_gripper_fingerC_base" link2="wiktor_right_gripper_fingerC_dist" reason="Never" />
+    <disable_collisions link1="wiktor_right_gripper_fingerC_base" link2="wiktor_right_gripper_fingerC_med" reason="Never" />
+    <disable_collisions link1="wiktor_right_gripper_fingerC_base" link2="wiktor_right_gripper_fingerC_prox" reason="Adjacent" />
+    <disable_collisions link1="wiktor_right_gripper_fingerC_base" link2="wiktor_right_gripper_mounting_bracket" reason="Never" />
+    <disable_collisions link1="wiktor_right_gripper_fingerC_base" link2="wiktor_right_gripper_palm" reason="Adjacent" />
+    <disable_collisions link1="wiktor_right_gripper_fingerC_dist" link2="wiktor_right_gripper_fingerC_med" reason="Adjacent" />
+    <disable_collisions link1="wiktor_right_gripper_fingerC_dist" link2="wiktor_right_gripper_mounting_bracket" reason="Never" />
+    <disable_collisions link1="wiktor_right_gripper_fingerC_med" link2="wiktor_right_gripper_fingerC_prox" reason="Adjacent" />
+    <disable_collisions link1="wiktor_right_gripper_fingerC_med" link2="wiktor_right_gripper_mounting_bracket" reason="Never" />
+    <disable_collisions link1="wiktor_right_gripper_fingerC_prox" link2="wiktor_right_gripper_mounting_bracket" reason="Never" />
+    <disable_collisions link1="wiktor_right_gripper_fingerC_prox" link2="wiktor_right_gripper_palm" reason="Default" />
+    <disable_collisions link1="wiktor_right_gripper_mounting_bracket" link2="wiktor_right_gripper_palm" reason="Adjacent" />
 </robot>

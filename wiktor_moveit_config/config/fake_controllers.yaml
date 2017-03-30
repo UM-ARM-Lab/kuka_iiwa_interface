@@ -17,9 +17,29 @@ controller_list:
       - wiktor_right_arm_joint_5
       - wiktor_right_arm_joint_6
       - wiktor_right_arm_joint_7
-  - name: fake_left_ee_controller
+  - name: fake_left_gripper_controller
     joints:
-      []
-  - name: fake_right_ee_controller
+      - wiktor_left_gripper_fingerA_joint_2
+      - wiktor_left_gripper_fingerA_joint_3
+      - wiktor_left_gripper_fingerA_joint_4
+      - wiktor_left_gripper_fingerB_knuckle
+      - wiktor_left_gripper_fingerB_joint_2
+      - wiktor_left_gripper_fingerB_joint_3
+      - wiktor_left_gripper_fingerB_joint_4
+      - wiktor_left_gripper_fingerC_knuckle
+      - wiktor_left_gripper_fingerC_joint_2
+      - wiktor_left_gripper_fingerC_joint_3
+      - wiktor_left_gripper_fingerC_joint_4
+  - name: fake_right_gripper_controller
     joints:
-      []
+      - wiktor_right_gripper_fingerA_joint_2
+      - wiktor_right_gripper_fingerA_joint_3
+      - wiktor_right_gripper_fingerA_joint_4
+      - wiktor_right_gripper_fingerB_knuckle
+      - wiktor_right_gripper_fingerB_joint_2
+      - wiktor_right_gripper_fingerB_joint_3
+      - wiktor_right_gripper_fingerB_joint_4
+      - wiktor_right_gripper_fingerC_knuckle
+      - wiktor_right_gripper_fingerC_joint_2
+      - wiktor_right_gripper_fingerC_joint_3
+      - wiktor_right_gripper_fingerC_joint_4
