@@ -29,6 +29,13 @@ protected:
     std::unique_ptr<iiwa_hardware_interface::IIWAHardwareInterface> iiwa_ptr_;
     std::unique_ptr<robotiq_3finger_hardware_interface::Robotiq3FingerHardwareInterface> robotiq_ptr_;
 
+    std::vector<wiktor_hardware_interface::MotionCommand> motion_command_queue_;
+    std::vector<wiktor_hardware_interface::MotionStatus> motion_status_queue_;
+    std::vector<wiktor_hardware_interface::ControlModeCommand> control_mode_command_queue_;
+    std::vector<wiktor_hardware_interface::ControlModeStatus> control_mode_status_queue_;
+    std::vector<wiktor_hardware_interface::Robotiq3FingerCommand> gripper_command_queue_;
+    std::vector<wiktor_hardware_interface::Robotiq3FingerStatus> gripper_status_queue_;
+
 public:
 
     LoopbackTester(ros::NodeHandle& nh, const std::shared_ptr<lcm::LCM>& lcm_ptr, const std::string& motion_command_channel, const std::string& motion_status_channel, const std::string& control_mode_command_channel, const std::string& control_mode_status_channel, const std::string& gripper_command_channel, const std::string& gripper_status_channel) : nh_(nh), lcm_ptr_(lcm_ptr)
@@ -43,21 +50,205 @@ public:
     void MotionStatusCallback(const wiktor_hardware_interface::MotionStatus& motion_status)
     {
         ROS_INFO_STREAM_NAMED(ros::this_node::getName(), "Got motion status " << motion_status);
+        motion_status_queue_.push_back(motion_status);
     }
 
     void ControlModeStatusCallback(const wiktor_hardware_interface::ControlModeStatus& control_mode_status)
     {
         ROS_INFO_STREAM_NAMED(ros::this_node::getName(), "Got control mode status " << control_mode_status);
+        control_mode_status_queue_.push_back(control_mode_status);
     }
 
     void GripperStatusCallback(const wiktor_hardware_interface::Robotiq3FingerStatus& gripper_status)
     {
         ROS_INFO_STREAM_NAMED(ros::this_node::getName(), "Got gripper status " << gripper_status);
+        gripper_status_queue_.push_back(gripper_status);
+    }
+
+    static inline wiktor_hardware_interface::JointValueQuantity MakeJVQ(const double j1, const double j2, const double j3, const double j4, const double j5, const double j6, const double j7)
+    {
+        wiktor_hardware_interface::JointValueQuantity jvq;
+        jvq.joint_1 = j1;
+        jvq.joint_2 = j2;
+        jvq.joint_3 = j3;
+        jvq.joint_4 = j4;
+        jvq.joint_5 = j5;
+        jvq.joint_6 = j6;
+        jvq.joint_7 = j7;
+        return jvq;
+    }
+
+    static inline wiktor_hardware_interface::CartesianValueQuantity MakeCVQ(const double x, const double y, const double z, const double a, const double b, const double c)
+    {
+        wiktor_hardware_interface::CartesianValueQuantity cvq;
+        cvq.x = x;
+        cvq.y = y;
+        cvq.z = z;
+        cvq.a = a;
+        cvq.b = b;
+        cvq.c = c;
+        return cvq;
+    }
+
+    static inline wiktor_hardware_interface::PathExecutionParameters MakePExP(const double jra, const double jrv, const double oja)
+    {
+        wiktor_hardware_interface::PathExecutionParameters pexp;
+        pexp.joint_relative_acceleration = jra;
+        pexp.joint_relative_velocity = jrv;
+        pexp.override_joint_acceleration = oja;
+        return pexp;
+    }
+
+    static inline wiktor_hardware_interface::Robotiq3FingerActuatorCommand MakeRobotiqActuatorCommand(const double p, const double s, const double f)
+    {
+        wiktor_hardware_interface::Robotiq3FingerActuatorCommand command;
+        command.position = p;
+        command.speed = s;
+        command.force = f;
+        return command;
+    }
+
+    void SendMotionCommand()
+    {
+        wiktor_hardware_interface::MotionCommand command;
+        command.joint_position = MakeJVQ(0.125, 0.25, 0.375, 0.5, 0.625, 0.75, 0.875);
+        command.joint_velocity = MakeJVQ(0.875, 0.75, 0.625, 0.5, 0.375, 0.25, 0.125);
+        command.cartesian_pose = MakeCVQ(1.0, 2.0, 3.0, 4.0, 5.0, 6.0);
+        command.command_type = 0x00;
+        command.header.stamp = ros::Time::now();
+        const bool sent = iiwa_ptr_->SendMotionCommandMessage(command);
+        assert(sent);
+        motion_command_queue_.push_back(command);
+    }
+
+    void SendControlModeCommand()
+    {
+        wiktor_hardware_interface::ControlModeCommand command;
+        command.joint_impedance_params.joint_damping = MakeJVQ(0.125, 0.25, 0.375, 0.5, 0.625, 0.75, 0.875);
+        command.joint_impedance_params.joint_stiffness = MakeJVQ(0.875, 0.75, 0.625, 0.5, 0.375, 0.25, 0.125);
+        command.cartesian_impedance_params.cartesian_damping = MakeCVQ(1.0, 2.0, 3.0, 4.0, 5.0, 6.0);
+        command.cartesian_impedance_params.cartesian_stiffness = MakeCVQ(7.0, 6.0, 5.0, 4.0, 3.0, 2.0);
+        command.cartesian_impedance_params.nullspace_damping = 7.0;
+        command.cartesian_impedance_params.nullspace_stiffness = 1.0;
+        command.path_execution_params = MakePExP(1.0, 2.0, 3.0);
+        command.control_mode = 0x00;
+        command.header.stamp = ros::Time::now();
+        const bool sent = iiwa_ptr_->SendControlModeCommandMessage(command);
+        assert(sent);
+        control_mode_command_queue_.push_back(command);
+    }
+
+    void SendGripperCommand()
+    {
+        wiktor_hardware_interface::Robotiq3FingerCommand command;
+        command.finger_a_command = MakeRobotiqActuatorCommand(0.0, 0.125, 0.25);
+        command.finger_b_command = MakeRobotiqActuatorCommand(0.125, 0.25, 0.375);
+        command.finger_c_command = MakeRobotiqActuatorCommand(0.25, 0.375, 0.5);
+        command.scissor_command = MakeRobotiqActuatorCommand(0.375, 0.5, 0.625);
+        command.header.stamp = ros::Time::now();
+        command.finger_a_command.header.stamp = command.header.stamp;
+        command.finger_b_command.header.stamp = command.header.stamp;
+        command.finger_c_command.header.stamp = command.header.stamp;
+        command.scissor_command.header.stamp = command.header.stamp;
+        const bool sent = robotiq_ptr_->SendCommandMessage(command);
+        assert(sent);
+        gripper_command_queue_.push_back(command);
+    }
+
+    void CheckMotionCommandAndStatus()
+    {
+        ;
+    }
+
+    void CheckControlModeCommandAndStatus()
+    {
+        ;
+    }
+
+    void CheckGripperCommandAndStatus()
+    {
+        ;
     }
 
     void Loop()
     {
-        ;
+        bool lcm_ok = true;
+        while (ros::ok() && lcm_ok)
+        {
+            if (motion_command_queue_.empty() && motion_status_queue_.empty())
+            {
+                SendMotionCommand();
+            }
+            else if (!motion_command_queue_.empty() && !motion_status_queue_.empty())
+            {
+                CheckMotionCommandAndStatus();
+            }
+            else if (motion_command_queue_.empty() && !motion_status_queue_.empty())
+            {
+                ROS_ERROR_STREAM_NAMED(ros::this_node::getName(), "Motion command queue " << motion_command_queue_.size() << " Motion status queue " << motion_status_queue_.size());
+                break;
+            }
+            else
+            {
+                ; // Waiting for a response
+            }
+            if (control_mode_command_queue_.empty() && control_mode_status_queue_.empty())
+            {
+                SendControlModeCommand();
+            }
+            else if (!control_mode_command_queue_.empty() && !control_mode_status_queue_.empty())
+            {
+                CheckControlModeCommandAndStatus();
+            }
+            else if (control_mode_command_queue_.empty() && !control_mode_status_queue_.empty())
+            {
+                ROS_ERROR_STREAM_NAMED(ros::this_node::getName(), "Control mode command queue " << control_mode_command_queue_.size() << " Control mode status queue " << control_mode_status_queue_.size());
+                break;
+            }
+            else
+            {
+                ; // Waiting for a response
+            }
+            if (gripper_command_queue_.empty() && gripper_status_queue_.empty())
+            {
+                SendGripperCommand();
+            }
+            else if (!gripper_command_queue_.empty() && !gripper_status_queue_.empty())
+            {
+                CheckGripperCommandAndStatus();
+            }
+            else if (gripper_command_queue_.empty() && !gripper_status_queue_.empty())
+            {
+                ROS_ERROR_STREAM_NAMED(ros::this_node::getName(), "Gripper command queue " << gripper_command_queue_.size() << " Gripper status queue " << gripper_status_queue_.size());
+                break;
+            }
+            else
+            {
+                ; // Waiting for a response
+            }
+            // Run LCM callbacks
+            bool lcm_running = true;
+            while (lcm_running)
+            {
+                const int ret = lcm_ptr_->handleTimeout(1);
+                if (ret > 0)
+                {
+                    lcm_running = true;
+                }
+                else if (ret == 0)
+                {
+                    lcm_running = false;
+                }
+                else
+                {
+                    lcm_running = false;
+                    lcm_ok = false;
+                    ROS_ERROR_STREAM_NAMED(ros::this_node::getName(), "LCM error " << ret << " stopping loop");
+                }
+            }
+            // Run ROS callbacks
+            ros::spinOnce();
+        }
     }
 };
 
