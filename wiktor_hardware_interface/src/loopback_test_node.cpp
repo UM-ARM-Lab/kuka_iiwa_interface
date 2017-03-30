@@ -255,7 +255,7 @@ public:
 int main(int argc, char** argv)
 {
     // Default parameter values
-    const std::string DEFAULT_LCM_URL("");
+    const std::string DEFAULT_LCM_URL("udpm://239.255.76.67:30000?ttl=1");
     const std::string DEFAULT_MOTION_COMMAND_CHANNEL("motion_command");
     const std::string DEFAULT_MOTION_STATUS_CHANNEL("motion_status");
     const std::string DEFAULT_CONTROL_MODE_COMMAND_CHANNEL("control_mode_command");
