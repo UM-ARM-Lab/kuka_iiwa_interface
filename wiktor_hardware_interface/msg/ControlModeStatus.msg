@@ -1,0 +1,12 @@
+wiktor_hardware_interface/JointImpedanceParameters joint_impedance_params
+wiktor_hardware_interface/CartesianImpedanceParameters cartesian_impedance_params
+wiktor_hardware_interface/PathExecutionParameters path_execution_params
+std_msgs/Header header
+uint8 IS_POSITION_MOTION=0
+uint8 IS_CARTESIAN_MOTION=1
+uint8 IS_IMPEDANCE_CONTROL=2
+uint8 JOINT_POSITION=0
+uint8 JOINT_IMPEDANCE=2
+uint8 CARTESIAN_POSE=1
+uint8 CARTESIAN_IMPEDANCE=3
+uint8 active_control_mode

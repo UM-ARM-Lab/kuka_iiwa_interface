@@ -51,11 +51,20 @@ set(Eigen3_INCLUDE_DIRS ${EIGEN3_INCLUDE_DIR})
 ##   * add every package in MSG_DEP_SET to generate_messages(DEPENDENCIES ...)
 
 ## Generate messages in the 'msg' folder
-# add_message_files(
-#   FILES
-#   Message1.msg
-#   Message2.msg
-# )
+add_message_files(DIRECTORY msg FILES CartesianImpedanceParameters.msg
+                                      MotionStatus.msg
+                                      CartesianValueQuantity.msg
+                                      PathExecutionParameters.msg
+                                      ControlModeCommand.msg
+                                      Robotiq3FingerActuatorCommand.msg
+                                      ControlModeStatus.msg
+                                      Robotiq3FingerActuatorStatus.msg
+                                      JointImpedanceParameters.msg
+                                      Robotiq3FingerCommand.msg
+                                      JointValueQuantity.msg
+                                      Robotiq3FingerObjectStatus.msg
+                                      MotionCommand.msg
+                                      Robotiq3FingerStatus.msg)
 
 ## Generate services in the 'srv' folder
 # add_service_files(
@@ -72,10 +81,7 @@ set(Eigen3_INCLUDE_DIRS ${EIGEN3_INCLUDE_DIR})
 # )
 
 ## Generate added messages and services with any dependencies listed here
-# generate_messages(
-#   DEPENDENCIES
-#   diagnostic_msgs#   geometry_msgs#   sensor_msgs#   std_msgs
-# )
+generate_messages(DEPENDENCIES diagnostic_msgs geometry_msgs sensor_msgs std_msgs)
 
 ################################################
 ## Declare ROS dynamic reconfigure parameters ##
