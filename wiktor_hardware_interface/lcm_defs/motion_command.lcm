@@ -5,7 +5,7 @@ struct motion_command
     wiktor_hardware_interface.joint_value_quantity joint_position;
     wiktor_hardware_interface.joint_value_quantity joint_velocity;
     wiktor_hardware_interface.cartesian_value_quantity cartesian_pose;
-    int64_t utime;
+    double timestamp;
     const int8_t IS_POSITION_MOTION=0; // Flag to bitmask
     const int8_t IS_VELOCITY_MOTION=2; // Flag to bitmask
     const int8_t IS_CARTESIAN_MOTION=1; // Flag to bitmask

@@ -10,7 +10,7 @@ struct motion_status
     wiktor_hardware_interface.cartesian_value_quantity measured_cartesian_pose;
     wiktor_hardware_interface.cartesian_value_quantity commanded_cartesian_pose;
     wiktor_hardware_interface.cartesian_value_quantity estimated_external_wrench;
-    int64_t utime;
+    double timestamp;
     const int8_t IS_POSITION_MOTION=0; // Flag to bitmask
     const int8_t IS_VELOCITY_MOTION=2; // Flag to bitmask
     const int8_t IS_CARTESIAN_MOTION=1; // Flag to bitmask

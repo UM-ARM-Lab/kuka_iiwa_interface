@@ -2,7 +2,7 @@ package wiktor_hardware_interface;
 
 struct robotiq_3finger_actuator_command
 {
-    int64_t utime;
+    double timestamp;
     double position;
     double speed;
     double force;
