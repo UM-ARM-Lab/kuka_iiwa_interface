@@ -20,6 +20,8 @@
 // LCM
 #include <lcm/lcm-cpp.hpp>
 
+#define RTT_CHECK_COUNT 10000
+
 class LoopbackTester
 {
 protected:
@@ -37,10 +39,18 @@ protected:
     std::vector<wiktor_hardware_interface::Robotiq3FingerCommand> gripper_command_queue_;
     std::vector<wiktor_hardware_interface::Robotiq3FingerStatus> gripper_status_queue_;
 
+    std::vector<double> motion_command_rtt_;
+    std::vector<double> control_mode_command_rtt_;
+    std::vector<double> gripper_command_rtt_;
+
 public:
 
     LoopbackTester(ros::NodeHandle& nh, const std::shared_ptr<lcm::LCM>& send_lcm_ptr, const std::shared_ptr<lcm::LCM>& recv_lcm_ptr, const std::string& motion_command_channel, const std::string& motion_status_channel, const std::string& control_mode_command_channel, const std::string& control_mode_status_channel, const std::string& gripper_command_channel, const std::string& gripper_status_channel) : nh_(nh), send_lcm_ptr_(send_lcm_ptr), recv_lcm_ptr_(recv_lcm_ptr)
     {
+        motion_command_rtt_.reserve(RTT_CHECK_COUNT);
+        control_mode_command_rtt_.reserve(RTT_CHECK_COUNT);
+        gripper_command_rtt_.reserve(RTT_CHECK_COUNT);
+        //
         std::function<void(const wiktor_hardware_interface::MotionStatus&)> motion_status_callback_fn = [&] (const wiktor_hardware_interface::MotionStatus& motion_status) { return MotionStatusCallback(motion_status); };
         std::function<void(const wiktor_hardware_interface::ControlModeStatus&)> control_mode_status_callback_fn = [&] (const wiktor_hardware_interface::ControlModeStatus& control_mode_status) { return ControlModeStatusCallback(control_mode_status); };
         iiwa_ptr_ = std::unique_ptr<iiwa_hardware_interface::IIWAHardwareInterface>(new iiwa_hardware_interface::IIWAHardwareInterface(send_lcm_ptr_, recv_lcm_ptr_, motion_command_channel, motion_status_channel, motion_status_callback_fn, control_mode_command_channel, control_mode_status_channel, control_mode_status_callback_fn));
@@ -50,19 +60,19 @@ public:
 
     void MotionStatusCallback(const wiktor_hardware_interface::MotionStatus& motion_status)
     {
-        ROS_INFO_STREAM_NAMED(ros::this_node::getName(), "Got motion status " << motion_status);
+        ROS_DEBUG_STREAM_NAMED(ros::this_node::getName(), "Got motion status " << motion_status);
         motion_status_queue_.push_back(motion_status);
     }
 
     void ControlModeStatusCallback(const wiktor_hardware_interface::ControlModeStatus& control_mode_status)
     {
-        ROS_INFO_STREAM_NAMED(ros::this_node::getName(), "Got control mode status " << control_mode_status);
+        ROS_DEBUG_STREAM_NAMED(ros::this_node::getName(), "Got control mode status " << control_mode_status);
         control_mode_status_queue_.push_back(control_mode_status);
     }
 
     void GripperStatusCallback(const wiktor_hardware_interface::Robotiq3FingerStatus& gripper_status)
     {
-        ROS_INFO_STREAM_NAMED(ros::this_node::getName(), "Got gripper status " << gripper_status);
+        ROS_DEBUG_STREAM_NAMED(ros::this_node::getName(), "Got gripper status " << gripper_status);
         gripper_status_queue_.push_back(gripper_status);
     }
 
@@ -308,12 +318,19 @@ public:
         }
     }
 
+    inline double GetRTT(const ros::Time& start, const ros::Time& end)
+    {
+        const ros::Duration rtt = end - start;
+        return rtt.toSec();
+    }
+
     void CheckMotionCommandAndStatus()
     {
         assert(motion_command_queue_.size() == 1);
         assert(motion_status_queue_.size() == 1);
         const bool match = CheckMotionCommandAndStatusMatch(motion_command_queue_.front(), motion_status_queue_.front());
         assert(match);
+        motion_command_rtt_.push_back(GetRTT(motion_command_queue_.front().header.stamp, ros::Time::now()));
         motion_command_queue_.clear();
         motion_status_queue_.clear();
     }
@@ -324,6 +341,7 @@ public:
         assert(control_mode_status_queue_.size() == 1);
         const bool match = CheckControlModeCommandAndStatusMatch(control_mode_command_queue_.front(), control_mode_status_queue_.front());
         assert(match);
+        control_mode_command_rtt_.push_back(GetRTT(control_mode_command_queue_.front().header.stamp, ros::Time::now()));
         control_mode_command_queue_.clear();
         control_mode_status_queue_.clear();
     }
@@ -334,14 +352,16 @@ public:
         assert(gripper_status_queue_.size() == 1);
         const bool match = CheckGripperCommandAndStatusMatch(gripper_command_queue_.front(), gripper_status_queue_.front());
         assert(match);
+        gripper_command_rtt_.push_back(GetRTT(gripper_command_queue_.front().header.stamp, ros::Time::now()));
         gripper_command_queue_.clear();
         gripper_status_queue_.clear();
     }
 
     void Loop()
     {
+        bool rtt_gathering = true;
         bool lcm_ok = true;
-        while (ros::ok() && lcm_ok)
+        while (ros::ok() && lcm_ok && rtt_gathering)
         {
             if (motion_command_queue_.empty() && motion_status_queue_.empty())
             {
@@ -416,7 +436,27 @@ public:
             }
             // Run ROS callbacks
             ros::spinOnce();
+            if (motion_command_rtt_.size() >= RTT_CHECK_COUNT && control_mode_command_rtt_.size() >= RTT_CHECK_COUNT && gripper_command_rtt_.size() >= RTT_CHECK_COUNT)
+            {
+                rtt_gathering = false;
+            }
         }
+        // Show RTT stats
+        const auto minmax_motion_command_rtt = std::minmax_element(motion_command_rtt_.begin(), motion_command_rtt_.end());
+        const double min_motion_command_rtt = *minmax_motion_command_rtt.first;
+        const double max_motion_command_rtt = *minmax_motion_command_rtt.second;
+        const double avg_motion_command_rtt = EigenHelpers::AverageStdVectorDouble(motion_command_rtt_);
+        ROS_INFO_NAMED(ros::this_node::getName(), "Motion command RTT: %f (min) %f (max) %f (avg)", min_motion_command_rtt, max_motion_command_rtt, avg_motion_command_rtt);
+        const auto minmax_control_mode_command_rtt = std::minmax_element(control_mode_command_rtt_.begin(), control_mode_command_rtt_.end());
+        const double min_control_mode_command_rtt = *minmax_control_mode_command_rtt.first;
+        const double max_control_mode_command_rtt = *minmax_control_mode_command_rtt.second;
+        const double avg_control_mode_command_rtt = EigenHelpers::AverageStdVectorDouble(control_mode_command_rtt_);
+        ROS_INFO_NAMED(ros::this_node::getName(), "Control mode command RTT: %f (min) %f (max) %f (avg)", min_control_mode_command_rtt, max_control_mode_command_rtt, avg_control_mode_command_rtt);
+        const auto minmax_gripper_command_rtt = std::minmax_element(gripper_command_rtt_.begin(), gripper_command_rtt_.end());
+        const double min_gripper_command_rtt = *minmax_gripper_command_rtt.first;
+        const double max_gripper_command_rtt = *minmax_gripper_command_rtt.second;
+        const double avg_gripper_command_rtt = EigenHelpers::AverageStdVectorDouble(gripper_command_rtt_);
+        ROS_INFO_NAMED(ros::this_node::getName(), "Gripper command RTT: %f (min) %f (max) %f (avg)", min_gripper_command_rtt, max_gripper_command_rtt, avg_gripper_command_rtt);
     }
 };
 
