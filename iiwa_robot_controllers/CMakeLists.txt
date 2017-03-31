@@ -80,7 +80,7 @@ generate_messages(DEPENDENCIES std_msgs)
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(INCLUDE_DIRS include
 #  LIBRARIES baxter_robot_controllers
-CATKIN_DEPENDS arc_utilities geometry_msgs trajectory_msgs control_msgs roscpp sensor_msgs std_msgs kdl_parser message_runtime linux_fri_client DEPENDS system_lib Eigen3)
+CATKIN_DEPENDS arc_utilities geometry_msgs trajectory_msgs control_msgs roscpp sensor_msgs std_msgs kdl_parser message_runtime linux_fri_client DEPENDS Eigen3)
 
 ###########
 ## Build ##
