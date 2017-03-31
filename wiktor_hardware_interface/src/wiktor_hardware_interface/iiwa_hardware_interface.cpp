@@ -10,14 +10,18 @@
 
 namespace iiwa_hardware_interface
 {
-    IIWAHardwareInterface::IIWAHardwareInterface(const std::shared_ptr<lcm::LCM>& lcm_ptr, const std::string& motion_command_channel_name, const std::string& motion_status_channel_name, const std::function<void(const wiktor_hardware_interface::MotionStatus&)>& motion_status_callback_fn, const std::string& control_mode_command_channel_name, const std::string& control_mode_status_channel_name, const std::function<void(const wiktor_hardware_interface::ControlModeStatus&)>& control_mode_status_callback_fn) : lcm_ptr_(lcm_ptr), motion_command_channel_name_(motion_command_channel_name), motion_status_channel_name_(motion_status_channel_name), motion_status_callback_fn_(motion_status_callback_fn), control_mode_command_channel_name_(control_mode_command_channel_name), control_mode_status_channel_name_(control_mode_status_channel_name), control_mode_status_callback_fn_(control_mode_status_callback_fn)
+    IIWAHardwareInterface::IIWAHardwareInterface(const std::shared_ptr<lcm::LCM>& send_lcm_ptr, const std::shared_ptr<lcm::LCM>& recv_lcm_ptr, const std::string& motion_command_channel_name, const std::string& motion_status_channel_name, const std::function<void(const wiktor_hardware_interface::MotionStatus&)>& motion_status_callback_fn, const std::string& control_mode_command_channel_name, const std::string& control_mode_status_channel_name, const std::function<void(const wiktor_hardware_interface::ControlModeStatus&)>& control_mode_status_callback_fn) : send_lcm_ptr_(send_lcm_ptr), recv_lcm_ptr_(recv_lcm_ptr), motion_command_channel_name_(motion_command_channel_name), motion_status_channel_name_(motion_status_channel_name), motion_status_callback_fn_(motion_status_callback_fn), control_mode_command_channel_name_(control_mode_command_channel_name), control_mode_status_channel_name_(control_mode_status_channel_name), control_mode_status_callback_fn_(control_mode_status_callback_fn)
     {
-        if (lcm_ptr_->good() != true)
+        if (send_lcm_ptr_->good() != true)
         {
-            throw std::invalid_argument("LCM interface is not good");
+            throw std::invalid_argument("Send LCM interface is not good");
         }
-        lcm_ptr_->subscribe(motion_status_channel_name_, &IIWAHardwareInterface::InternalMotionStatusLCMCallback, this);
-        lcm_ptr_->subscribe(control_mode_status_channel_name_, &IIWAHardwareInterface::InternalControlModeStatusLCMCallback, this);
+        if (recv_lcm_ptr_->good() != true)
+        {
+            throw std::invalid_argument("Receive LCM interface is not good");
+        }
+        recv_lcm_ptr_->subscribe(motion_status_channel_name_, &IIWAHardwareInterface::InternalMotionStatusLCMCallback, this);
+        recv_lcm_ptr_->subscribe(control_mode_status_channel_name_, &IIWAHardwareInterface::InternalControlModeStatusLCMCallback, this);
     }
 
     wiktor_hardware_interface::JointImpedanceParameters IIWAHardwareInterface::ConvertJointImpedanceParameters(const wiktor_hardware_interface::joint_impedance_parameters& joint_impedance_params) const
@@ -126,7 +130,7 @@ namespace iiwa_hardware_interface
     bool IIWAHardwareInterface::SendMotionCommandMessage(const wiktor_hardware_interface::MotionCommand& command)
     {
         const wiktor_hardware_interface::motion_command lcm_command = ConvertMotionCommand(command);
-        const int ret = lcm_ptr_->publish(motion_command_channel_name_, &lcm_command);
+        const int ret = send_lcm_ptr_->publish(motion_command_channel_name_, &lcm_command);
         if (ret == 0)
         {
             return true;
@@ -140,7 +144,7 @@ namespace iiwa_hardware_interface
     bool IIWAHardwareInterface::SendControlModeCommandMessage(const wiktor_hardware_interface::ControlModeCommand& command)
     {
         const wiktor_hardware_interface::control_mode_command lcm_command = ConvertControlModeCommand(command);
-        const int ret = lcm_ptr_->publish(control_mode_command_channel_name_, &lcm_command);
+        const int ret = send_lcm_ptr_->publish(control_mode_command_channel_name_, &lcm_command);
         if (ret == 0)
         {
             return true;

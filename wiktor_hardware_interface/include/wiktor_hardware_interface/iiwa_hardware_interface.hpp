@@ -28,7 +28,8 @@ namespace iiwa_hardware_interface
     {
     protected:
 
-        std::shared_ptr<lcm::LCM> lcm_ptr_;
+        std::shared_ptr<lcm::LCM> send_lcm_ptr_;
+        std::shared_ptr<lcm::LCM> recv_lcm_ptr_;
         std::string motion_command_channel_name_;
         std::string motion_status_channel_name_;
         std::function<void(const wiktor_hardware_interface::MotionStatus&)> motion_status_callback_fn_;
@@ -112,7 +113,7 @@ namespace iiwa_hardware_interface
             return ros_cvq;
         }
 
-        IIWAHardwareInterface(const std::shared_ptr<lcm::LCM>& lcm_ptr, const std::string& motion_command_channel_name, const std::string& motion_status_channel_name, const std::function<void(const wiktor_hardware_interface::MotionStatus&)>& motion_status_callback_fn, const std::string& control_mode_command_channel_name, const std::string& control_mode_status_channel_name, const std::function<void(const wiktor_hardware_interface::ControlModeStatus&)>& control_mode_status_callback_fn);
+        IIWAHardwareInterface(const std::shared_ptr<lcm::LCM>& send_lcm_ptr, const std::shared_ptr<lcm::LCM>& recv_lcm_ptr, const std::string& motion_command_channel_name, const std::string& motion_status_channel_name, const std::function<void(const wiktor_hardware_interface::MotionStatus&)>& motion_status_callback_fn, const std::string& control_mode_command_channel_name, const std::string& control_mode_status_channel_name, const std::function<void(const wiktor_hardware_interface::ControlModeStatus&)>& control_mode_status_callback_fn);
 
         bool SendMotionCommandMessage(const wiktor_hardware_interface::MotionCommand& command);
 

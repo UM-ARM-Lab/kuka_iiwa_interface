@@ -49,6 +49,7 @@ struct _lcm_subscription_t {
     int num_queued_messages;
 };
 
+extern void lcm_udp_provider_init (GPtrArray * providers);
 extern void lcm_udpm_provider_init (GPtrArray * providers);
 extern void lcm_logprov_provider_init (GPtrArray * providers);
 extern void lcm_tcpq_provider_init (GPtrArray * providers);
@@ -77,6 +78,7 @@ lcm_create (const char *url)
     lcm_t *lcm = NULL;
 
     // initialize the list of providers
+    lcm_udp_provider_init (providers);
     lcm_udpm_provider_init (providers);
     lcm_logprov_provider_init (providers);
     lcm_tcpq_provider_init (providers);

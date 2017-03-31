@@ -24,7 +24,8 @@ namespace robotiq_3finger_hardware_interface
     {
     protected:
 
-        std::shared_ptr<lcm::LCM> lcm_ptr_;
+        std::shared_ptr<lcm::LCM> send_lcm_ptr_;
+        std::shared_ptr<lcm::LCM> recv_lcm_ptr_;
         std::string command_channel_name_;
         std::string status_channel_name_;
         std::function<void(const wiktor_hardware_interface::Robotiq3FingerStatus&)> status_callback_fn_;
@@ -43,7 +44,7 @@ namespace robotiq_3finger_hardware_interface
 
     public:
 
-        Robotiq3FingerHardwareInterface(const std::shared_ptr<lcm::LCM>& lcm_ptr, const std::string& command_channel_name, const std::string& status_channel_name, const std::function<void(const wiktor_hardware_interface::Robotiq3FingerStatus&)>& status_callback_fn);
+        Robotiq3FingerHardwareInterface(const std::shared_ptr<lcm::LCM>& send_lcm_ptr, const std::shared_ptr<lcm::LCM>& recv_lcm_ptr, const std::string& command_channel_name, const std::string& status_channel_name, const std::function<void(const wiktor_hardware_interface::Robotiq3FingerStatus&)>& status_callback_fn);
 
         bool SendCommandMessage(const wiktor_hardware_interface::Robotiq3FingerCommand& command);
     };

@@ -10,13 +10,17 @@
 
 namespace robotiq_3finger_hardware_interface
 {
-    Robotiq3FingerHardwareInterface::Robotiq3FingerHardwareInterface(const std::shared_ptr<lcm::LCM>& lcm_ptr, const std::string& command_channel_name, const std::string& status_channel_name, const std::function<void(const wiktor_hardware_interface::Robotiq3FingerStatus&)>& status_callback_fn) : lcm_ptr_(lcm_ptr), command_channel_name_(command_channel_name), status_channel_name_(status_channel_name), status_callback_fn_(status_callback_fn)
+    Robotiq3FingerHardwareInterface::Robotiq3FingerHardwareInterface(const std::shared_ptr<lcm::LCM>& send_lcm_ptr, const std::shared_ptr<lcm::LCM>& recv_lcm_ptr, const std::string& command_channel_name, const std::string& status_channel_name, const std::function<void(const wiktor_hardware_interface::Robotiq3FingerStatus&)>& status_callback_fn) : send_lcm_ptr_(send_lcm_ptr), recv_lcm_ptr_(recv_lcm_ptr), command_channel_name_(command_channel_name), status_channel_name_(status_channel_name), status_callback_fn_(status_callback_fn)
     {
-        if (lcm_ptr_->good() != true)
+        if (send_lcm_ptr_->good() != true)
         {
-            throw std::invalid_argument("LCM interface is not good");
+            throw std::invalid_argument("Send LCM interface is not good");
         }
-        lcm_ptr_->subscribe(status_channel_name_, &Robotiq3FingerHardwareInterface::InternalStatusLCMCallback, this);
+        if (recv_lcm_ptr_->good() != true)
+        {
+            throw std::invalid_argument("Receive LCM interface is not good");
+        }
+        recv_lcm_ptr_->subscribe(status_channel_name_, &Robotiq3FingerHardwareInterface::InternalStatusLCMCallback, this);
     }
 
     wiktor_hardware_interface::robotiq_3finger_actuator_command Robotiq3FingerHardwareInterface::ConvertFingerCommand(const wiktor_hardware_interface::Robotiq3FingerActuatorCommand& finger_command) const
@@ -81,7 +85,7 @@ namespace robotiq_3finger_hardware_interface
     bool Robotiq3FingerHardwareInterface::SendCommandMessage(const wiktor_hardware_interface::Robotiq3FingerCommand& command)
     {
         const wiktor_hardware_interface::robotiq_3finger_command lcm_command = ConvertCommand(command);
-        const int ret = lcm_ptr_->publish(command_channel_name_, &lcm_command);
+        const int ret = send_lcm_ptr_->publish(command_channel_name_, &lcm_command);
         if (ret == 0)
         {
             return true;

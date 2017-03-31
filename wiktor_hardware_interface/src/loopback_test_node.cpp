@@ -25,7 +25,8 @@ class LoopbackTester
 protected:
 
     ros::NodeHandle nh_;
-    std::shared_ptr<lcm::LCM> lcm_ptr_;
+    std::shared_ptr<lcm::LCM> send_lcm_ptr_;
+    std::shared_ptr<lcm::LCM> recv_lcm_ptr_;
     std::unique_ptr<iiwa_hardware_interface::IIWAHardwareInterface> iiwa_ptr_;
     std::unique_ptr<robotiq_3finger_hardware_interface::Robotiq3FingerHardwareInterface> robotiq_ptr_;
 
@@ -38,13 +39,13 @@ protected:
 
 public:
 
-    LoopbackTester(ros::NodeHandle& nh, const std::shared_ptr<lcm::LCM>& lcm_ptr, const std::string& motion_command_channel, const std::string& motion_status_channel, const std::string& control_mode_command_channel, const std::string& control_mode_status_channel, const std::string& gripper_command_channel, const std::string& gripper_status_channel) : nh_(nh), lcm_ptr_(lcm_ptr)
+    LoopbackTester(ros::NodeHandle& nh, const std::shared_ptr<lcm::LCM>& send_lcm_ptr, const std::shared_ptr<lcm::LCM>& recv_lcm_ptr, const std::string& motion_command_channel, const std::string& motion_status_channel, const std::string& control_mode_command_channel, const std::string& control_mode_status_channel, const std::string& gripper_command_channel, const std::string& gripper_status_channel) : nh_(nh), send_lcm_ptr_(send_lcm_ptr), recv_lcm_ptr_(recv_lcm_ptr)
     {
         std::function<void(const wiktor_hardware_interface::MotionStatus&)> motion_status_callback_fn = [&] (const wiktor_hardware_interface::MotionStatus& motion_status) { return MotionStatusCallback(motion_status); };
         std::function<void(const wiktor_hardware_interface::ControlModeStatus&)> control_mode_status_callback_fn = [&] (const wiktor_hardware_interface::ControlModeStatus& control_mode_status) { return ControlModeStatusCallback(control_mode_status); };
-        iiwa_ptr_ = std::unique_ptr<iiwa_hardware_interface::IIWAHardwareInterface>(new iiwa_hardware_interface::IIWAHardwareInterface(lcm_ptr_, motion_command_channel, motion_status_channel, motion_status_callback_fn, control_mode_command_channel, control_mode_status_channel, control_mode_status_callback_fn));
+        iiwa_ptr_ = std::unique_ptr<iiwa_hardware_interface::IIWAHardwareInterface>(new iiwa_hardware_interface::IIWAHardwareInterface(send_lcm_ptr_, recv_lcm_ptr_, motion_command_channel, motion_status_channel, motion_status_callback_fn, control_mode_command_channel, control_mode_status_channel, control_mode_status_callback_fn));
         std::function<void(const wiktor_hardware_interface::Robotiq3FingerStatus&)> gripper_status_callback_fn = [&] (const wiktor_hardware_interface::Robotiq3FingerStatus& gripper_status) { return GripperStatusCallback(gripper_status); };
-        robotiq_ptr_ = std::unique_ptr<robotiq_3finger_hardware_interface::Robotiq3FingerHardwareInterface>(new robotiq_3finger_hardware_interface::Robotiq3FingerHardwareInterface(lcm_ptr_, gripper_command_channel, gripper_status_channel, gripper_status_callback_fn));
+        robotiq_ptr_ = std::unique_ptr<robotiq_3finger_hardware_interface::Robotiq3FingerHardwareInterface>(new robotiq_3finger_hardware_interface::Robotiq3FingerHardwareInterface(send_lcm_ptr_, recv_lcm_ptr_, gripper_command_channel, gripper_status_channel, gripper_status_callback_fn));
     }
 
     void MotionStatusCallback(const wiktor_hardware_interface::MotionStatus& motion_status)
@@ -397,7 +398,7 @@ public:
             bool lcm_running = true;
             while (lcm_running)
             {
-                const int ret = lcm_ptr_->handleTimeout(1);
+                const int ret = recv_lcm_ptr_->handleTimeout(1);
                 if (ret > 0)
                 {
                     lcm_running = true;
@@ -422,7 +423,8 @@ public:
 int main(int argc, char** argv)
 {
     // Default parameter values
-    const std::string DEFAULT_LCM_URL("udpm://239.255.76.67:30000?ttl=1");
+    const std::string DEFAULT_SEND_LCM_URL("udp://10.10.10.11:30001");
+    const std::string DEFAULT_RECV_LCM_URL("udp://10.10.10.99:30000");
     const std::string DEFAULT_MOTION_COMMAND_CHANNEL("motion_command");
     const std::string DEFAULT_MOTION_STATUS_CHANNEL("motion_status");
     const std::string DEFAULT_CONTROL_MODE_COMMAND_CHANNEL("control_mode_command");
@@ -433,7 +435,8 @@ int main(int argc, char** argv)
     ros::init(argc, argv, "loopback_test_node");
     ros::NodeHandle nh;
     ros::NodeHandle nhp("~");
-    const std::string lcm_url = nhp.param(std::string("lcm_url"), DEFAULT_LCM_URL);
+    const std::string send_lcm_url = nhp.param(std::string("send_lcm_url"), DEFAULT_SEND_LCM_URL);
+    const std::string recv_lcm_url = nhp.param(std::string("recv_lcm_url"), DEFAULT_RECV_LCM_URL);
     const std::string motion_command_channel = nhp.param(std::string("motion_command_channel"), DEFAULT_MOTION_COMMAND_CHANNEL);
     const std::string motion_status_channel = nhp.param(std::string("motion_status_channel"), DEFAULT_MOTION_STATUS_CHANNEL);
     const std::string control_mode_command_channel = nhp.param(std::string("control_mode_command_channel"), DEFAULT_CONTROL_MODE_COMMAND_CHANNEL);
@@ -441,9 +444,21 @@ int main(int argc, char** argv)
     const std::string gripper_command_channel = nhp.param(std::string("gripper_command_channel"), DEFAULT_GRIPPER_COMMAND_CHANNEL);
     const std::string gripper_status_channel = nhp.param(std::string("gripper_status_channel"), DEFAULT_GRIPPER_STATUS_CHANNEL);
     // Start LCM
-    std::shared_ptr<lcm::LCM> lcm_ptr(new lcm::LCM(lcm_url));
-    ROS_INFO("Starting Loopback Test Node...");
-    LoopbackTester tester(nh, lcm_ptr, motion_command_channel, motion_status_channel, control_mode_command_channel, control_mode_status_channel, gripper_command_channel, gripper_status_channel);
-    tester.Loop();
-    return 0;
+    if (send_lcm_url == recv_lcm_url)
+    {
+        std::shared_ptr<lcm::LCM> lcm_ptr(new lcm::LCM(send_lcm_url));
+        ROS_INFO("Starting Loopback Test Node with shared send/receive LCM...");
+        LoopbackTester tester(nh, lcm_ptr, lcm_ptr, motion_command_channel, motion_status_channel, control_mode_command_channel, control_mode_status_channel, gripper_command_channel, gripper_status_channel);
+        tester.Loop();
+        return 0;
+    }
+    else
+    {
+        std::shared_ptr<lcm::LCM> send_lcm_ptr(new lcm::LCM(send_lcm_url));
+        std::shared_ptr<lcm::LCM> recv_lcm_ptr(new lcm::LCM(recv_lcm_url));
+        ROS_INFO("Starting Loopback Test Node with separate send and receive LCM...");
+        LoopbackTester tester(nh, send_lcm_ptr, recv_lcm_ptr, motion_command_channel, motion_status_channel, control_mode_command_channel, control_mode_status_channel, gripper_command_channel, gripper_status_channel);
+        tester.Loop();
+        return 0;
+    }
 }

@@ -53,6 +53,7 @@ add_library(${PROJECT_NAME} include/${PROJECT_NAME}/dbg.h
                             src/${PROJECT_NAME}/eventlog.c
                             src/${PROJECT_NAME}/lcm_mpudpm.c
                             src/${PROJECT_NAME}/lcm_udpm.c
+                            src/${PROJECT_NAME}/lcm_udp.c
                             src/${PROJECT_NAME}/lcm_tcpq.c
                             src/${PROJECT_NAME}/lcmtypes/channel_port_map_update_t.c
                             src/${PROJECT_NAME}/lcmtypes/channel_to_port_t.c)
