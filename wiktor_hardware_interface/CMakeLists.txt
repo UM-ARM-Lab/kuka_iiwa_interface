@@ -68,11 +68,7 @@ add_message_files(DIRECTORY msg FILES CartesianImpedanceParameters.msg
                                       Robotiq3FingerStatus.msg)
 
 ## Generate services in the 'srv' folder
-# add_service_files(
-#   FILES
-#   Service1.srv
-#   Service2.srv
-# )
+add_service_files(DIRECTORY srv FILES SetControlMode.srv GetControlMode.srv)
 
 ## Generate actions in the 'action' folder
 # add_action_files(
@@ -142,3 +138,7 @@ target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES})
 add_executable(${PROJECT_NAME}_loopback_test_node src/loopback_test_node.cpp)
 add_dependencies(${PROJECT_NAME}_loopback_test_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 target_link_libraries(${PROJECT_NAME}_loopback_test_node ${PROJECT_NAME} ${catkin_LIBRARIES})
+
+add_executable(${PROJECT_NAME}_right_arm_node src/right_arm_node.cpp)
+add_dependencies(${PROJECT_NAME}_right_arm_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+target_link_libraries(${PROJECT_NAME}_right_arm_node ${PROJECT_NAME} ${catkin_LIBRARIES})
