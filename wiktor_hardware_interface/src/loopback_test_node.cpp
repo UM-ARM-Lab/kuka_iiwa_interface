@@ -446,17 +446,20 @@ public:
         const double min_motion_command_rtt = *minmax_motion_command_rtt.first;
         const double max_motion_command_rtt = *minmax_motion_command_rtt.second;
         const double avg_motion_command_rtt = EigenHelpers::AverageStdVectorDouble(motion_command_rtt_);
-        ROS_INFO_NAMED(ros::this_node::getName(), "Motion command RTT: %f (min) %f (max) %f (avg)", min_motion_command_rtt, max_motion_command_rtt, avg_motion_command_rtt);
+        const double stddev_motion_command_rtt = std::sqrt(EigenHelpers::AverageStdVectorDouble(EigenHelpers::Sub(motion_command_rtt_, std::vector<double>(motion_command_rtt_.size(), avg_motion_command_rtt))));
+        ROS_INFO_NAMED(ros::this_node::getName(), "Motion command RTT: %f (min) %f (max) %f (avg) %f (stddev)", min_motion_command_rtt, max_motion_command_rtt, avg_motion_command_rtt, stddev_motion_command_rtt);
         const auto minmax_control_mode_command_rtt = std::minmax_element(control_mode_command_rtt_.begin(), control_mode_command_rtt_.end());
         const double min_control_mode_command_rtt = *minmax_control_mode_command_rtt.first;
         const double max_control_mode_command_rtt = *minmax_control_mode_command_rtt.second;
         const double avg_control_mode_command_rtt = EigenHelpers::AverageStdVectorDouble(control_mode_command_rtt_);
-        ROS_INFO_NAMED(ros::this_node::getName(), "Control mode command RTT: %f (min) %f (max) %f (avg)", min_control_mode_command_rtt, max_control_mode_command_rtt, avg_control_mode_command_rtt);
+        const double stddev_control_mode_command_rtt = std::sqrt(EigenHelpers::AverageStdVectorDouble(EigenHelpers::Sub(control_mode_command_rtt_, std::vector<double>(control_mode_command_rtt_.size(), avg_motion_command_rtt))));
+        ROS_INFO_NAMED(ros::this_node::getName(), "Control mode command RTT: %f (min) %f (max) %f (avg) %f (stddev)", min_control_mode_command_rtt, max_control_mode_command_rtt, avg_control_mode_command_rtt, stddev_control_mode_command_rtt);
         const auto minmax_gripper_command_rtt = std::minmax_element(gripper_command_rtt_.begin(), gripper_command_rtt_.end());
         const double min_gripper_command_rtt = *minmax_gripper_command_rtt.first;
         const double max_gripper_command_rtt = *minmax_gripper_command_rtt.second;
         const double avg_gripper_command_rtt = EigenHelpers::AverageStdVectorDouble(gripper_command_rtt_);
-        ROS_INFO_NAMED(ros::this_node::getName(), "Gripper command RTT: %f (min) %f (max) %f (avg)", min_gripper_command_rtt, max_gripper_command_rtt, avg_gripper_command_rtt);
+        const double stddev_gripper_command_rtt = std::sqrt(EigenHelpers::AverageStdVectorDouble(EigenHelpers::Sub(gripper_command_rtt_, std::vector<double>(gripper_command_rtt_.size(), avg_motion_command_rtt))));
+        ROS_INFO_NAMED(ros::this_node::getName(), "Gripper command RTT: %f (min) %f (max) %f (avg) %f (stddev)", min_gripper_command_rtt, max_gripper_command_rtt, avg_gripper_command_rtt, stddev_gripper_command_rtt);
     }
 };
 
