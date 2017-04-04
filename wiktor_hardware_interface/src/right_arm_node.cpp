@@ -26,8 +26,6 @@
 // LCM
 #include <lcm/lcm-cpp.hpp>
 
-#define RTT_CHECK_COUNT 10000
-
 class RightArmNode
 {
 protected:
@@ -53,9 +51,8 @@ protected:
 
 public:
 
-    RightArmNode(ros::NodeHandle& nh, const std::string& motion_command_topic, const std::string& motion_status_topic, const std::string& get_control_mode_service, const std::string& set_control_mode_service, const std::string& gripper_command_topic, const std::string& gripper_status_topic, const std::shared_ptr<lcm::LCM>& send_lcm_ptr, const std::shared_ptr<lcm::LCM>& recv_lcm_ptr, const std::string& motion_command_channel, const std::string& motion_status_channel, const std::string& control_mode_command_channel, const std::string& control_mode_status_channel, const std::string& gripper_command_channel, const std::string& gripper_status_channel) : nh_(nh), send_lcm_ptr_(send_lcm_ptr), recv_lcm_ptr_(recv_lcm_ptr)
+    RightArmNode(ros::NodeHandle& nh, const std::string& motion_command_topic, const std::string& motion_status_topic, const std::string& get_control_mode_service, const std::string& set_control_mode_service, const std::string& gripper_command_topic, const std::string& gripper_status_topic, const std::shared_ptr<lcm::LCM>& send_lcm_ptr, const std::shared_ptr<lcm::LCM>& recv_lcm_ptr, const std::string& motion_command_channel, const std::string& motion_status_channel, const std::string& control_mode_command_channel, const std::string& control_mode_status_channel, const std::string& gripper_command_channel, const std::string& gripper_status_channel) : nh_(nh), has_active_control_mode_(false), setting_control_mode_(false), send_lcm_ptr_(send_lcm_ptr), recv_lcm_ptr_(recv_lcm_ptr)
     {
-        setting_control_mode_.store(false);
         nh_.setCallbackQueue(&ros_callback_queue_);
         // Set up IIWA LCM interface
         std::function<void(const wiktor_hardware_interface::MotionStatus&)> motion_status_callback_fn = [&] (const wiktor_hardware_interface::MotionStatus& motion_status) { return MotionStatusCallback(motion_status); };
@@ -223,7 +220,7 @@ public:
     std::pair<bool, std::string> SafetyCheckControlMode(const wiktor_hardware_interface::ControlModeCommand& control_mode) const
     {
         UNUSED(control_mode);
-        return std::make_pair(false, "");
+        return std::make_pair(false, "Not implemented");
     }
 
     bool SetControlModeCallback(wiktor_hardware_interface::SetControlMode::Request& req, wiktor_hardware_interface::SetControlMode::Response& res)
@@ -245,11 +242,13 @@ public:
             }
             if (CheckControlModeCommandAndStatusMatch(req.new_control_mode, active_control_mode_))
             {
+                has_active_control_mode_ = true;
                 res.success = true;
                 res.message = "Control mode set successfully";
             }
             else
             {
+                has_active_control_mode_ = false;
                 res.success = false;
                 res.message = "Control mode could not be set in Sunrise";
             }
@@ -404,13 +403,12 @@ public:
     {
         if (setting_control_mode_.load())
         {
-            has_active_control_mode_ = true;
             active_control_mode_ = control_mode_status;
             setting_control_mode_.store(false);
         }
         else
         {
-            ROS_ERROR_NAMED(ros::this_node::getName(), "Got a control mode status message we did not expect, dropping!");
+            ROS_WARN_NAMED(ros::this_node::getName(), "Got a control mode status message we did not expect, dropping!");
         }
     }
 
