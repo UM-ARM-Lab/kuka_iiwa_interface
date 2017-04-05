@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 # [Create a window]
 
 import sys
@@ -87,7 +89,7 @@ class Widget(QWidget):
 			self.joint_5_textbox = QLineEdit('0')
 			self.joint_6_textbox = QLineEdit('0')
 			self.joint_7_textbox = QLineEdit('0')
-			
+
 			self.v_layout.addWidget(self.joint_1_textbox,2,1)
 			self.v_layout.addWidget(self.joint_2_textbox,4,1)
 			self.v_layout.addWidget(self.joint_3_textbox,6,1)
@@ -215,7 +217,7 @@ class Widget(QWidget):
 		self.joint_5_slider.setValue(0)
 		self.joint_6_slider.setValue(0)
 		self.joint_7_slider.setValue(0)
-		
+
 		self.arm_command.joint_position.joint_1 = 0
 		self.arm_command.joint_position.joint_2 = 0
 		self.arm_command.joint_position.joint_3 = 0
@@ -243,19 +245,19 @@ class Widget(QWidget):
 		self.finger_command.finger_a_command.position = value
 		self.finger_command.finger_a_command.speed = 1.0
 		self.finger_a_slider.setValue(position)
-		
+
 		self.finger_b_label.setText('Finger B Command: %5.3f' % value)
 		self.finger_b_textbox.setText('%5.3f'%value)
 		self.finger_command.finger_b_command.position = value
 		self.finger_command.finger_b_command.speed = 1.0
 		self.finger_b_slider.setValue(position)
-		
+
 		self.finger_c_label.setText('Finger C Command: %5.3f' % value)
 		self.finger_c_textbox.setText('%5.3f'%value)
 		self.finger_command.finger_c_command.position = value
 		self.finger_command.finger_c_command.speed = 1.0
 		self.finger_c_slider.setValue(position)
-		
+
 		self.finger_command_publisher.publish(self.finger_command)
 
 	def finger_a_textbox_modified(self):
@@ -283,7 +285,7 @@ class Widget(QWidget):
 			self.finger_command.finger_a_command.position = value
 			self.finger_command.finger_a_command.speed = 1.0
 			self.finger_command_publisher.publish(self.finger_command)
-		
+
 	def finger_b_slider_moved(self, position):
 		if(self.fingers_same_position):
 			self.move_all_fingers(position)
