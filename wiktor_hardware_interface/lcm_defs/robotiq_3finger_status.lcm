@@ -2,7 +2,7 @@ package wiktor_hardware_interface;
 
 struct robotiq_3finger_status
 {
-    int64_t utime;
+    double timestamp;
     wiktor_hardware_interface.robotiq_3finger_actuator_status finger_a_status;
     wiktor_hardware_interface.robotiq_3finger_actuator_status finger_b_status;
     wiktor_hardware_interface.robotiq_3finger_actuator_status finger_c_status;

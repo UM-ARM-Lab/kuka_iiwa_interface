@@ -11,7 +11,7 @@ import lcm.lcm.*;
  
 public final class robotiq_3finger_object_status implements lcm.lcm.LCMEncodable
 {
-    public long utime;
+    public double timestamp;
     public byte status;
  
     public robotiq_3finger_object_status()
@@ -19,7 +19,7 @@ public final class robotiq_3finger_object_status implements lcm.lcm.LCMEncodable
     }
  
     public static final long LCM_FINGERPRINT;
-    public static final long LCM_FINGERPRINT_BASE = 0x28edc52678586b83L;
+    public static final long LCM_FINGERPRINT_BASE = 0x69f7a795f409b44fL;
  
     public static final byte IN_MOTION = (byte) 0;
     public static final byte AT_REQUESTED = (byte) 1;
@@ -51,7 +51,7 @@ public final class robotiq_3finger_object_status implements lcm.lcm.LCMEncodable
  
     public void _encodeRecursive(DataOutput outs) throws IOException
     {
-        outs.writeLong(this.utime); 
+        outs.writeDouble(this.timestamp); 
  
         outs.writeByte(this.status); 
  
@@ -79,7 +79,7 @@ public final class robotiq_3finger_object_status implements lcm.lcm.LCMEncodable
  
     public void _decodeRecursive(DataInput ins) throws IOException
     {
-        this.utime = ins.readLong();
+        this.timestamp = ins.readDouble();
  
         this.status = ins.readByte();
  
@@ -88,7 +88,7 @@ public final class robotiq_3finger_object_status implements lcm.lcm.LCMEncodable
     public wiktor_hardware_interface.robotiq_3finger_object_status copy()
     {
         wiktor_hardware_interface.robotiq_3finger_object_status outobj = new wiktor_hardware_interface.robotiq_3finger_object_status();
-        outobj.utime = this.utime;
+        outobj.timestamp = this.timestamp;
  
         outobj.status = this.status;
  

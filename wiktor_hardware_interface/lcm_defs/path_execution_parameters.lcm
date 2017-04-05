@@ -1,0 +1,8 @@
+package wiktor_hardware_interface;
+
+struct path_execution_parameters
+{
+    double joint_relative_velocity;
+    double joint_relative_acceleration;
+    double override_joint_acceleration;
+}

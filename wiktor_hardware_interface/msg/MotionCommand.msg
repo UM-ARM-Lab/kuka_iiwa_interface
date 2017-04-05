@@ -1,0 +1,11 @@
+wiktor_hardware_interface/JointValueQuantity joint_position
+wiktor_hardware_interface/JointValueQuantity joint_velocity
+wiktor_hardware_interface/CartesianValueQuantity cartesian_pose
+std_msgs/Header header
+uint8 IS_POSITION_MOTION=0
+uint8 IS_VELOCITY_MOTION=2
+uint8 IS_CARTESIAN_MOTION=1
+uint8 JOINT_POSITION=0
+uint8 JOINT_POSITION_VELOCITY=2
+uint8 CARTESIAN_POSE=1
+uint8 command_type

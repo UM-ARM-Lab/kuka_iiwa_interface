@@ -12,6 +12,7 @@ find_package(catkin REQUIRED COMPONENTS
   roscpp
   sensor_msgs
   std_msgs
+  lcm
 )
 find_package(cmake_modules REQUIRED)
 find_package(Eigen3 REQUIRED)
@@ -51,18 +52,23 @@ set(Eigen3_INCLUDE_DIRS ${EIGEN3_INCLUDE_DIR})
 ##   * add every package in MSG_DEP_SET to generate_messages(DEPENDENCIES ...)
 
 ## Generate messages in the 'msg' folder
-# add_message_files(
-#   FILES
-#   Message1.msg
-#   Message2.msg
-# )
+add_message_files(DIRECTORY msg FILES CartesianImpedanceParameters.msg
+                                      MotionStatus.msg
+                                      CartesianValueQuantity.msg
+                                      PathExecutionParameters.msg
+                                      ControlModeCommand.msg
+                                      Robotiq3FingerActuatorCommand.msg
+                                      ControlModeStatus.msg
+                                      Robotiq3FingerActuatorStatus.msg
+                                      JointImpedanceParameters.msg
+                                      Robotiq3FingerCommand.msg
+                                      JointValueQuantity.msg
+                                      Robotiq3FingerObjectStatus.msg
+                                      MotionCommand.msg
+                                      Robotiq3FingerStatus.msg)
 
 ## Generate services in the 'srv' folder
-# add_service_files(
-#   FILES
-#   Service1.srv
-#   Service2.srv
-# )
+add_service_files(DIRECTORY srv FILES SetControlMode.srv GetControlMode.srv)
 
 ## Generate actions in the 'action' folder
 # add_action_files(
@@ -72,10 +78,7 @@ set(Eigen3_INCLUDE_DIRS ${EIGEN3_INCLUDE_DIR})
 # )
 
 ## Generate added messages and services with any dependencies listed here
-# generate_messages(
-#   DEPENDENCIES
-#   diagnostic_msgs#   geometry_msgs#   sensor_msgs#   std_msgs
-# )
+generate_messages(DEPENDENCIES diagnostic_msgs geometry_msgs sensor_msgs std_msgs)
 
 ################################################
 ## Declare ROS dynamic reconfigure parameters ##
@@ -106,7 +109,7 @@ set(Eigen3_INCLUDE_DIRS ${EIGEN3_INCLUDE_DIR})
 ## LIBRARIES: libraries you create in this project that dependent projects also need
 ## CATKIN_DEPENDS: catkin_packages dependent projects also need
 ## DEPENDS: system dependencies of this project that dependent projects also need
-catkin_package(INCLUDE_DIRS include LIBRARIES ${PROJECT_NAME} CATKIN_DEPENDS arc_utilities diagnostic_msgs geometry_msgs message_runtime roscpp sensor_msgs std_msgs DEPENDS system_lib Eigen3)
+catkin_package(INCLUDE_DIRS include LIBRARIES ${PROJECT_NAME} CATKIN_DEPENDS arc_utilities diagnostic_msgs geometry_msgs message_runtime roscpp sensor_msgs std_msgs lcm DEPENDS system_lib Eigen3)
 
 ###########
 ## Build ##
@@ -131,3 +134,11 @@ add_library(${PROJECT_NAME} include/${PROJECT_NAME}/iiwa_hardware_interface.hpp
                             src/${PROJECT_NAME}/takktile_hardware_interface.cpp)
 add_dependencies(${PROJECT_NAME} ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES})
+
+add_executable(${PROJECT_NAME}_loopback_test_node src/loopback_test_node.cpp)
+add_dependencies(${PROJECT_NAME}_loopback_test_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+target_link_libraries(${PROJECT_NAME}_loopback_test_node ${PROJECT_NAME} ${catkin_LIBRARIES})
+
+add_executable(${PROJECT_NAME}_right_arm_node src/right_arm_node.cpp)
+add_dependencies(${PROJECT_NAME}_right_arm_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+target_link_libraries(${PROJECT_NAME}_right_arm_node ${PROJECT_NAME} ${catkin_LIBRARIES})

@@ -11,7 +11,7 @@ import lcm.lcm.*;
  
 public final class robotiq_3finger_command implements lcm.lcm.LCMEncodable
 {
-    public long utime;
+    public double timestamp;
     public wiktor_hardware_interface.robotiq_3finger_actuator_command finger_a_command;
     public wiktor_hardware_interface.robotiq_3finger_actuator_command finger_b_command;
     public wiktor_hardware_interface.robotiq_3finger_actuator_command finger_c_command;
@@ -22,7 +22,7 @@ public final class robotiq_3finger_command implements lcm.lcm.LCMEncodable
     }
  
     public static final long LCM_FINGERPRINT;
-    public static final long LCM_FINGERPRINT_BASE = 0x91f5365e8adb6eb4L;
+    public static final long LCM_FINGERPRINT_BASE = 0x9d2a6410c4f20386L;
  
     static {
         LCM_FINGERPRINT = _hashRecursive(new ArrayList<Class<?>>());
@@ -52,7 +52,7 @@ public final class robotiq_3finger_command implements lcm.lcm.LCMEncodable
  
     public void _encodeRecursive(DataOutput outs) throws IOException
     {
-        outs.writeLong(this.utime); 
+        outs.writeDouble(this.timestamp); 
  
         this.finger_a_command._encodeRecursive(outs); 
  
@@ -86,7 +86,7 @@ public final class robotiq_3finger_command implements lcm.lcm.LCMEncodable
  
     public void _decodeRecursive(DataInput ins) throws IOException
     {
-        this.utime = ins.readLong();
+        this.timestamp = ins.readDouble();
  
         this.finger_a_command = wiktor_hardware_interface.robotiq_3finger_actuator_command._decodeRecursiveFactory(ins);
  
@@ -101,7 +101,7 @@ public final class robotiq_3finger_command implements lcm.lcm.LCMEncodable
     public wiktor_hardware_interface.robotiq_3finger_command copy()
     {
         wiktor_hardware_interface.robotiq_3finger_command outobj = new wiktor_hardware_interface.robotiq_3finger_command();
-        outobj.utime = this.utime;
+        outobj.timestamp = this.timestamp;
  
         outobj.finger_a_command = this.finger_a_command.copy();
  
