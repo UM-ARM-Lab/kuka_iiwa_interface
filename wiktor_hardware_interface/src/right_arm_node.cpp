@@ -232,8 +232,34 @@ public:
 
     std::pair<bool, std::string> SafetyCheckControlMode(const wiktor_hardware_interface::ControlModeCommand& control_mode) const
     {
-        const bool valid = control_mode.control_mode == wiktor_hardware_interface::ControlModeCommand::JOINT_POSITION;
-        return std::make_pair(valid, "Not implemented");
+        bool valid = true;
+        std::string message;;
+
+        if (control_mode.path_execution_params.joint_relative_velocity <= 0 || control_mode.path_execution_params.joint_relative_velocity > 1)
+        {
+            valid = false;
+            message += "\nInvalid joint relative velocity";
+        }
+
+        if (control_mode.path_execution_params.joint_relative_acceleration <= 0 || control_mode.path_execution_params.joint_relative_acceleration > 1)
+        {
+            valid = false;
+            message += "\nInvalid joint relative acceleration";
+        }
+
+        if (control_mode.path_execution_params.override_joint_acceleration < 0 || control_mode.path_execution_params.override_joint_acceleration > 10)
+        {
+            valid = false;
+            message += "\nInvalid override joint acceleration";
+        }
+
+        if (control_mode.control_mode != wiktor_hardware_interface::ControlModeCommand::JOINT_POSITION)
+        {
+            valid = false;
+            message += "\nControl mode " + std::to_string(control_mode.control_mode) + " not implemented";
+        }
+
+        return std::make_pair(valid, message);
     }
 
     bool SetControlModeCallback(wiktor_hardware_interface::SetControlMode::Request& req, wiktor_hardware_interface::SetControlMode::Response& res)
