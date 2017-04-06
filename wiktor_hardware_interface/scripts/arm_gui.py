@@ -284,6 +284,7 @@ class Widget(QWidget):
 			self.finger_a_slider.setValue(position)
 			self.finger_command.finger_a_command.position = value
 			self.finger_command.finger_a_command.speed = 1.0
+			self.finger_command.finger_a_command.force = 1.0
 			self.finger_command_publisher.publish(self.finger_command)
 
 	def finger_b_slider_moved(self, position):
@@ -298,6 +299,7 @@ class Widget(QWidget):
 			self.finger_b_slider.setValue(position)
 			self.finger_command.finger_b_command.position = value
 			self.finger_command.finger_b_command.speed = 1.0
+			self.finger_command.finger_b_command.force = 1.0
 			self.finger_command_publisher.publish(self.finger_command)
 
 	def finger_c_slider_moved(self, position):
@@ -312,6 +314,7 @@ class Widget(QWidget):
 			self.finger_c_slider.setValue(position)
 			self.finger_command.finger_c_command.position = value
 			self.finger_command.finger_c_command.speed = 1.0
+			self.finger_command.finger_c_command.force = 1.0
 			self.finger_command_publisher.publish(self.finger_command)
 
 	def scissor_slider_moved(self, position):
@@ -323,6 +326,7 @@ class Widget(QWidget):
 		self.scissor_slider.setValue(position)
 		self.finger_command.scissor_command.position = value
 		self.finger_command.scissor_command.speed = 1.0
+		self.finger_command.scissor_command.force = 1.0
 		self.finger_command_publisher.publish(self.finger_command)
 
 	def joint_1_textbox_modified(self):

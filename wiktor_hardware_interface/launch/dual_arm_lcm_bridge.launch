@@ -1,0 +1,11 @@
+<launch>
+    <group ns="left_arm">
+        <node pkg="wiktor_hardware_interface" type="wiktor_hardware_interface_left_arm_node" name="left_arm_lcm_bridge_node" required="true"/>
+        <!--<node pkg="wiktor_hardware_interface" type="arm_gui.py" name="left_arm_gui"/>-->
+    </group>
+
+    <group ns="right_arm">
+        <node pkg="wiktor_hardware_interface" type="wiktor_hardware_interface_right_arm_node" name="right_arm_lcm_bridge_node" required="true"/>
+        <node pkg="wiktor_hardware_interface" type="arm_gui.py" name="right_arm_gui"/>
+    </group>
+</launch>
