@@ -30,6 +30,7 @@ class WiktorJointStatePublisher:
         self.joint_state_msg.velocity = []
         self.joint_state_msg.effort = []
 
+        # Set the default values for the left arm, just in case it is not publishing data
         self.joint_state_msg.position[0] = pi / 2;
         self.joint_state_msg.position[1] = -pi / 2;
 

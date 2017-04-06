@@ -929,69 +929,6 @@
       <material name="LightGrey"/>
     </collision>
   </link>
-  <!--<link name="${prefix}_iiwa_bracket">-->
-  <!--<visual>-->
-  <!--<origin xyz="0 0 0" rpy="0 0 0"/>-->
-  <!--<geometry>-->
-  <!--<mesh filename="package://wiktor_description/meshes/robotiq_3finger/iiwa7_to_neutral_coupling_plate_visual.stl"/>-->
-  <!--</geometry>-->
-  <!--<material name="LightGrey"/>-->
-  <!--</visual>-->
-  <!--<collision>-->
-  <!--<origin xyz="0 0 0" rpy="0 0 0"/>-->
-  <!--<geometry>-->
-  <!--<mesh filename="package://wiktor_description/meshes/robotiq_3finger/iiwa7_to_neutral_coupling_plate_collision.stl"/>-->
-  <!--</geometry>-->
-  <!--<material name="LightGrey"/>-->
-  <!--</collision>-->
-  <!--</link>-->
-  <!--<joint name="${prefix}_iiwa_to_robotiq_joint" type="fixed">-->
-  <!--<origin xyz="0 0 0.008" rpy="0 0 0"/>-->
-  <!--<parent link="${prefix}_iiwa_bracket"/>-->
-  <!--<child link="${prefix}_robotiq_bracket"/>-->
-  <!--</joint>-->
-  <!--<link name="${prefix}_robotiq_bracket">-->
-  <!--<visual>-->
-  <!--<origin xyz="0 0 0" rpy="0 0 0"/>-->
-  <!--<geometry>-->
-  <!--<mesh filename="package://wiktor_description/meshes/robotiq_3finger/neutral_coupling_plate_to_robotiq_visual.stl"/>-->
-  <!--</geometry>-->
-  <!--<material name="DarkGrey"/>-->
-  <!--</visual>-->
-  <!--<collision>-->
-  <!--<origin xyz="0 0 0" rpy="0 0 0"/>-->
-  <!--<geometry>-->
-  <!--<mesh filename="package://wiktor_description/meshes/robotiq_3finger/neutral_coupling_plate_to_robotiq_collision.stl"/>-->
-  <!--</geometry>-->
-  <!--<material name="DarkGrey"/>-->
-  <!--</collision>-->
-  <!--</link>-->
-  <!--<joint name="${prefix}_robotiq_gripper_mounting_bracket_joint" type="fixed">-->
-  <!--<origin xyz="0 0 0.1" rpy="0 0 0"/>-->
-  <!--<parent link="${prefix}_robotiq_bracket"/>-->
-  <!--<child link="${prefix}_gripper_mounting_bracket"/>-->
-  <!--</joint>-->
-  <!--<link name="${prefix}_gripper_mounting_bracket">-->
-  <!--<inertial>-->
-  <!--<origin xyz="0 0 0" rpy="0 0 0"/>-->
-  <!--<mass value="1"/>-->
-  <!--<inertia ixx="0.01" ixy="0" ixz="0" iyy="0.01" iyz="0" izz="0.01"/>-->
-  <!--</inertial>-->
-  <!--<visual>-->
-  <!--<origin xyz="0 0 0" rpy="0 0 0"/>-->
-  <!--<geometry>-->
-  <!--<mesh filename="package://wiktor_description/meshes/robotiq_3finger/gripper_mounting_bracket_visual.stl"/>-->
-  <!--</geometry>-->
-  <!--<material name="DarkGray"/>-->
-  <!--</visual>-->
-  <!--<collision>-->
-  <!--<origin xyz="0 0 0" rpy="0 0 0"/>-->
-  <!--<geometry>-->
-  <!--<mesh filename="package://wiktor_description/meshes/robotiq_3finger/gripper_mounting_bracket_collision.stl"/>-->
-  <!--</geometry>-->
-  <!--<material name="DarkGray"/>-->
-  <!--</collision>-->
-  <!--</link>-->
   <!--joint between {parent} and link_0-->
   <joint name="wiktor_right_arm_link_ee_wiktor_right_joint" type="fixed">
     <origin rpy="0 0 0" xyz="0 0 0"/>
@@ -1014,69 +951,6 @@
       <material name="LightGrey"/>
     </collision>
   </link>
-  <!--<link name="${prefix}_iiwa_bracket">-->
-  <!--<visual>-->
-  <!--<origin xyz="0 0 0" rpy="0 0 0"/>-->
-  <!--<geometry>-->
-  <!--<mesh filename="package://wiktor_description/meshes/robotiq_3finger/iiwa7_to_neutral_coupling_plate_visual.stl"/>-->
-  <!--</geometry>-->
-  <!--<material name="LightGrey"/>-->
-  <!--</visual>-->
-  <!--<collision>-->
-  <!--<origin xyz="0 0 0" rpy="0 0 0"/>-->
-  <!--<geometry>-->
-  <!--<mesh filename="package://wiktor_description/meshes/robotiq_3finger/iiwa7_to_neutral_coupling_plate_collision.stl"/>-->
-  <!--</geometry>-->
-  <!--<material name="LightGrey"/>-->
-  <!--</collision>-->
-  <!--</link>-->
-  <!--<joint name="${prefix}_iiwa_to_robotiq_joint" type="fixed">-->
-  <!--<origin xyz="0 0 0.008" rpy="0 0 0"/>-->
-  <!--<parent link="${prefix}_iiwa_bracket"/>-->
-  <!--<child link="${prefix}_robotiq_bracket"/>-->
-  <!--</joint>-->
-  <!--<link name="${prefix}_robotiq_bracket">-->
-  <!--<visual>-->
-  <!--<origin xyz="0 0 0" rpy="0 0 0"/>-->
-  <!--<geometry>-->
-  <!--<mesh filename="package://wiktor_description/meshes/robotiq_3finger/neutral_coupling_plate_to_robotiq_visual.stl"/>-->
-  <!--</geometry>-->
-  <!--<material name="DarkGrey"/>-->
-  <!--</visual>-->
-  <!--<collision>-->
-  <!--<origin xyz="0 0 0" rpy="0 0 0"/>-->
-  <!--<geometry>-->
-  <!--<mesh filename="package://wiktor_description/meshes/robotiq_3finger/neutral_coupling_plate_to_robotiq_collision.stl"/>-->
-  <!--</geometry>-->
-  <!--<material name="DarkGrey"/>-->
-  <!--</collision>-->
-  <!--</link>-->
-  <!--<joint name="${prefix}_robotiq_gripper_mounting_bracket_joint" type="fixed">-->
-  <!--<origin xyz="0 0 0.1" rpy="0 0 0"/>-->
-  <!--<parent link="${prefix}_robotiq_bracket"/>-->
-  <!--<child link="${prefix}_gripper_mounting_bracket"/>-->
-  <!--</joint>-->
-  <!--<link name="${prefix}_gripper_mounting_bracket">-->
-  <!--<inertial>-->
-  <!--<origin xyz="0 0 0" rpy="0 0 0"/>-->
-  <!--<mass value="1"/>-->
-  <!--<inertia ixx="0.01" ixy="0" ixz="0" iyy="0.01" iyz="0" izz="0.01"/>-->
-  <!--</inertial>-->
-  <!--<visual>-->
-  <!--<origin xyz="0 0 0" rpy="0 0 0"/>-->
-  <!--<geometry>-->
-  <!--<mesh filename="package://wiktor_description/meshes/robotiq_3finger/gripper_mounting_bracket_visual.stl"/>-->
-  <!--</geometry>-->
-  <!--<material name="DarkGray"/>-->
-  <!--</visual>-->
-  <!--<collision>-->
-  <!--<origin xyz="0 0 0" rpy="0 0 0"/>-->
-  <!--<geometry>-->
-  <!--<mesh filename="package://wiktor_description/meshes/robotiq_3finger/gripper_mounting_bracket_collision.stl"/>-->
-  <!--</geometry>-->
-  <!--<material name="DarkGray"/>-->
-  <!--</collision>-->
-  <!--</link>-->
   <joint name="wiktor_left_gripper_palm_joint" type="fixed">
     <origin rpy="0 0 0.785398163397" xyz="0 0 0.02705"/>
     <parent link="wiktor_left_gripper_mounting_bracket"/>
@@ -1134,10 +1008,10 @@
   <joint name="wiktor_left_gripper_fingerA_joint_2" type="revolute">
     <parent link="wiktor_left_gripper_fingerA_base"/>
     <child link="wiktor_left_gripper_fingerA_prox"/>
-    <origin rpy="0 0 0" xyz="0.02225000 0 0.02151380"/>
+    <origin rpy="0 0.610865238198 0" xyz="0.02225000 0 0.02151380"/>
     <axis xyz="0 -1 0"/>
     <limit effort="300" lower="-1" upper="1" velocity="10"/>
-    <safety_controller k_position="100" k_velocity="2" soft_lower_limit="-2.93215314335" soft_upper_limit="2.93215314335"/>
+    <safety_controller k_position="100" k_velocity="2" soft_lower_limit="-0.610865238198" soft_upper_limit="0.610865238198"/>
     <dynamics damping="0.5"/>
   </joint>
   <link name="wiktor_left_gripper_fingerA_prox">
@@ -1168,7 +1042,7 @@
     <origin rpy="0 0 0" xyz="0 0 0.05715000"/>
     <axis xyz="0 -1 0"/>
     <limit effort="300" lower="-1" upper="1" velocity="10"/>
-    <safety_controller k_position="100" k_velocity="2" soft_lower_limit="-2.93215314335" soft_upper_limit="2.93215314335"/>
+    <safety_controller k_position="100" k_velocity="2" soft_lower_limit="0.0" soft_upper_limit="1.57079632679"/>
     <dynamics damping="0.5"/>
   </joint>
   <link name="wiktor_left_gripper_fingerA_med">
@@ -1196,10 +1070,10 @@
   <joint name="wiktor_left_gripper_fingerA_joint_4" type="revolute">
     <parent link="wiktor_left_gripper_fingerA_med"/>
     <child link="wiktor_left_gripper_fingerA_dist"/>
-    <origin rpy="0 0 0" xyz="0 0 0.03810000"/>
+    <origin rpy="0 -0.436332312999 0" xyz="0 0 0.03810000"/>
     <axis xyz="0 -1 0"/>
     <limit effort="300" lower="-1" upper="1" velocity="10"/>
-    <safety_controller k_position="100" k_velocity="2" soft_lower_limit="-2.93215314335" soft_upper_limit="2.93215314335"/>
+    <safety_controller k_position="100" k_velocity="2" soft_lower_limit="-0.436332312999" soft_upper_limit="1.27409035396"/>
     <dynamics damping="0.5"/>
   </joint>
   <link name="wiktor_left_gripper_fingerA_dist">
@@ -1258,10 +1132,10 @@
   <joint name="wiktor_left_gripper_fingerB_joint_2" type="revolute">
     <parent link="wiktor_left_gripper_fingerB_base"/>
     <child link="wiktor_left_gripper_fingerB_prox"/>
-    <origin rpy="0 0 0" xyz="0.02225000 0 0.02151380"/>
+    <origin rpy="0 0.610865238198 0" xyz="0.02225000 0 0.02151380"/>
     <axis xyz="0 -1 0"/>
     <limit effort="300" lower="-1" upper="1" velocity="10"/>
-    <safety_controller k_position="100" k_velocity="2" soft_lower_limit="-2.93215314335" soft_upper_limit="2.93215314335"/>
+    <safety_controller k_position="100" k_velocity="2" soft_lower_limit="-0.610865238198" soft_upper_limit="0.610865238198"/>
     <dynamics damping="0.5"/>
   </joint>
   <link name="wiktor_left_gripper_fingerB_prox">
@@ -1292,7 +1166,7 @@
     <origin rpy="0 0 0" xyz="0 0 0.05715000"/>
     <axis xyz="0 -1 0"/>
     <limit effort="300" lower="-1" upper="1" velocity="10"/>
-    <safety_controller k_position="100" k_velocity="2" soft_lower_limit="-2.93215314335" soft_upper_limit="2.93215314335"/>
+    <safety_controller k_position="100" k_velocity="2" soft_lower_limit="0.0" soft_upper_limit="1.57079632679"/>
     <dynamics damping="0.5"/>
   </joint>
   <link name="wiktor_left_gripper_fingerB_med">
@@ -1320,10 +1194,10 @@
   <joint name="wiktor_left_gripper_fingerB_joint_4" type="revolute">
     <parent link="wiktor_left_gripper_fingerB_med"/>
     <child link="wiktor_left_gripper_fingerB_dist"/>
-    <origin rpy="0 0 0" xyz="0 0 0.03810000"/>
+    <origin rpy="0 -0.436332312999 0" xyz="0 0 0.03810000"/>
     <axis xyz="0 -1 0"/>
     <limit effort="300" lower="-1" upper="1" velocity="10"/>
-    <safety_controller k_position="100" k_velocity="2" soft_lower_limit="-2.93215314335" soft_upper_limit="2.93215314335"/>
+    <safety_controller k_position="100" k_velocity="2" soft_lower_limit="-0.436332312999" soft_upper_limit="1.27409035396"/>
     <dynamics damping="0.5"/>
   </joint>
   <link name="wiktor_left_gripper_fingerB_dist">
@@ -1382,10 +1256,10 @@
   <joint name="wiktor_left_gripper_fingerC_joint_2" type="revolute">
     <parent link="wiktor_left_gripper_fingerC_base"/>
     <child link="wiktor_left_gripper_fingerC_prox"/>
-    <origin rpy="0 0 0" xyz="0.02225000 0 0.02151380"/>
+    <origin rpy="0 0.610865238198 0" xyz="0.02225000 0 0.02151380"/>
     <axis xyz="0 -1 0"/>
     <limit effort="300" lower="-1" upper="1" velocity="10"/>
-    <safety_controller k_position="100" k_velocity="2" soft_lower_limit="-2.93215314335" soft_upper_limit="2.93215314335"/>
+    <safety_controller k_position="100" k_velocity="2" soft_lower_limit="-0.610865238198" soft_upper_limit="0.610865238198"/>
     <dynamics damping="0.5"/>
   </joint>
   <link name="wiktor_left_gripper_fingerC_prox">
@@ -1416,7 +1290,7 @@
     <origin rpy="0 0 0" xyz="0 0 0.05715000"/>
     <axis xyz="0 -1 0"/>
     <limit effort="300" lower="-1" upper="1" velocity="10"/>
-    <safety_controller k_position="100" k_velocity="2" soft_lower_limit="-2.93215314335" soft_upper_limit="2.93215314335"/>
+    <safety_controller k_position="100" k_velocity="2" soft_lower_limit="0.0" soft_upper_limit="1.57079632679"/>
     <dynamics damping="0.5"/>
   </joint>
   <link name="wiktor_left_gripper_fingerC_med">
@@ -1444,10 +1318,10 @@
   <joint name="wiktor_left_gripper_fingerC_joint_4" type="revolute">
     <parent link="wiktor_left_gripper_fingerC_med"/>
     <child link="wiktor_left_gripper_fingerC_dist"/>
-    <origin rpy="0 0 0" xyz="0 0 0.03810000"/>
+    <origin rpy="0 -0.436332312999 0" xyz="0 0 0.03810000"/>
     <axis xyz="0 -1 0"/>
     <limit effort="300" lower="-1" upper="1" velocity="10"/>
-    <safety_controller k_position="100" k_velocity="2" soft_lower_limit="-2.93215314335" soft_upper_limit="2.93215314335"/>
+    <safety_controller k_position="100" k_velocity="2" soft_lower_limit="-0.436332312999" soft_upper_limit="1.27409035396"/>
     <dynamics damping="0.5"/>
   </joint>
   <link name="wiktor_left_gripper_fingerC_dist">
@@ -1528,10 +1402,10 @@
   <joint name="wiktor_right_gripper_fingerA_joint_2" type="revolute">
     <parent link="wiktor_right_gripper_fingerA_base"/>
     <child link="wiktor_right_gripper_fingerA_prox"/>
-    <origin rpy="0 0 0" xyz="0.02225000 0 0.02151380"/>
+    <origin rpy="0 0.610865238198 0" xyz="0.02225000 0 0.02151380"/>
     <axis xyz="0 -1 0"/>
     <limit effort="300" lower="-1" upper="1" velocity="10"/>
-    <safety_controller k_position="100" k_velocity="2" soft_lower_limit="-2.93215314335" soft_upper_limit="2.93215314335"/>
+    <safety_controller k_position="100" k_velocity="2" soft_lower_limit="-0.610865238198" soft_upper_limit="0.610865238198"/>
     <dynamics damping="0.5"/>
   </joint>
   <link name="wiktor_right_gripper_fingerA_prox">
@@ -1562,7 +1436,7 @@
     <origin rpy="0 0 0" xyz="0 0 0.05715000"/>
     <axis xyz="0 -1 0"/>
     <limit effort="300" lower="-1" upper="1" velocity="10"/>
-    <safety_controller k_position="100" k_velocity="2" soft_lower_limit="-2.93215314335" soft_upper_limit="2.93215314335"/>
+    <safety_controller k_position="100" k_velocity="2" soft_lower_limit="0.0" soft_upper_limit="1.57079632679"/>
     <dynamics damping="0.5"/>
   </joint>
   <link name="wiktor_right_gripper_fingerA_med">
@@ -1590,10 +1464,10 @@
   <joint name="wiktor_right_gripper_fingerA_joint_4" type="revolute">
     <parent link="wiktor_right_gripper_fingerA_med"/>
     <child link="wiktor_right_gripper_fingerA_dist"/>
-    <origin rpy="0 0 0" xyz="0 0 0.03810000"/>
+    <origin rpy="0 -0.436332312999 0" xyz="0 0 0.03810000"/>
     <axis xyz="0 -1 0"/>
     <limit effort="300" lower="-1" upper="1" velocity="10"/>
-    <safety_controller k_position="100" k_velocity="2" soft_lower_limit="-2.93215314335" soft_upper_limit="2.93215314335"/>
+    <safety_controller k_position="100" k_velocity="2" soft_lower_limit="-0.436332312999" soft_upper_limit="1.27409035396"/>
     <dynamics damping="0.5"/>
   </joint>
   <link name="wiktor_right_gripper_fingerA_dist">
@@ -1652,10 +1526,10 @@
   <joint name="wiktor_right_gripper_fingerB_joint_2" type="revolute">
     <parent link="wiktor_right_gripper_fingerB_base"/>
     <child link="wiktor_right_gripper_fingerB_prox"/>
-    <origin rpy="0 0 0" xyz="0.02225000 0 0.02151380"/>
+    <origin rpy="0 0.610865238198 0" xyz="0.02225000 0 0.02151380"/>
     <axis xyz="0 -1 0"/>
     <limit effort="300" lower="-1" upper="1" velocity="10"/>
-    <safety_controller k_position="100" k_velocity="2" soft_lower_limit="-2.93215314335" soft_upper_limit="2.93215314335"/>
+    <safety_controller k_position="100" k_velocity="2" soft_lower_limit="-0.610865238198" soft_upper_limit="0.610865238198"/>
     <dynamics damping="0.5"/>
   </joint>
   <link name="wiktor_right_gripper_fingerB_prox">
@@ -1686,7 +1560,7 @@
     <origin rpy="0 0 0" xyz="0 0 0.05715000"/>
     <axis xyz="0 -1 0"/>
     <limit effort="300" lower="-1" upper="1" velocity="10"/>
-    <safety_controller k_position="100" k_velocity="2" soft_lower_limit="-2.93215314335" soft_upper_limit="2.93215314335"/>
+    <safety_controller k_position="100" k_velocity="2" soft_lower_limit="0.0" soft_upper_limit="1.57079632679"/>
     <dynamics damping="0.5"/>
   </joint>
   <link name="wiktor_right_gripper_fingerB_med">
@@ -1714,10 +1588,10 @@
   <joint name="wiktor_right_gripper_fingerB_joint_4" type="revolute">
     <parent link="wiktor_right_gripper_fingerB_med"/>
     <child link="wiktor_right_gripper_fingerB_dist"/>
-    <origin rpy="0 0 0" xyz="0 0 0.03810000"/>
+    <origin rpy="0 -0.436332312999 0" xyz="0 0 0.03810000"/>
     <axis xyz="0 -1 0"/>
     <limit effort="300" lower="-1" upper="1" velocity="10"/>
-    <safety_controller k_position="100" k_velocity="2" soft_lower_limit="-2.93215314335" soft_upper_limit="2.93215314335"/>
+    <safety_controller k_position="100" k_velocity="2" soft_lower_limit="-0.436332312999" soft_upper_limit="1.27409035396"/>
     <dynamics damping="0.5"/>
   </joint>
   <link name="wiktor_right_gripper_fingerB_dist">
@@ -1776,10 +1650,10 @@
   <joint name="wiktor_right_gripper_fingerC_joint_2" type="revolute">
     <parent link="wiktor_right_gripper_fingerC_base"/>
     <child link="wiktor_right_gripper_fingerC_prox"/>
-    <origin rpy="0 0 0" xyz="0.02225000 0 0.02151380"/>
+    <origin rpy="0 0.610865238198 0" xyz="0.02225000 0 0.02151380"/>
     <axis xyz="0 -1 0"/>
     <limit effort="300" lower="-1" upper="1" velocity="10"/>
-    <safety_controller k_position="100" k_velocity="2" soft_lower_limit="-2.93215314335" soft_upper_limit="2.93215314335"/>
+    <safety_controller k_position="100" k_velocity="2" soft_lower_limit="-0.610865238198" soft_upper_limit="0.610865238198"/>
     <dynamics damping="0.5"/>
   </joint>
   <link name="wiktor_right_gripper_fingerC_prox">
@@ -1810,7 +1684,7 @@
     <origin rpy="0 0 0" xyz="0 0 0.05715000"/>
     <axis xyz="0 -1 0"/>
     <limit effort="300" lower="-1" upper="1" velocity="10"/>
-    <safety_controller k_position="100" k_velocity="2" soft_lower_limit="-2.93215314335" soft_upper_limit="2.93215314335"/>
+    <safety_controller k_position="100" k_velocity="2" soft_lower_limit="0.0" soft_upper_limit="1.57079632679"/>
     <dynamics damping="0.5"/>
   </joint>
   <link name="wiktor_right_gripper_fingerC_med">
@@ -1838,10 +1712,10 @@
   <joint name="wiktor_right_gripper_fingerC_joint_4" type="revolute">
     <parent link="wiktor_right_gripper_fingerC_med"/>
     <child link="wiktor_right_gripper_fingerC_dist"/>
-    <origin rpy="0 0 0" xyz="0 0 0.03810000"/>
+    <origin rpy="0 -0.436332312999 0" xyz="0 0 0.03810000"/>
     <axis xyz="0 -1 0"/>
     <limit effort="300" lower="-1" upper="1" velocity="10"/>
-    <safety_controller k_position="100" k_velocity="2" soft_lower_limit="-2.93215314335" soft_upper_limit="2.93215314335"/>
+    <safety_controller k_position="100" k_velocity="2" soft_lower_limit="-0.436332312999" soft_upper_limit="1.27409035396"/>
     <dynamics damping="0.5"/>
   </joint>
   <link name="wiktor_right_gripper_fingerC_dist">
