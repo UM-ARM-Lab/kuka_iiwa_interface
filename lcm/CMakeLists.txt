@@ -28,6 +28,10 @@ catkin_package(INCLUDE_DIRS include LIBRARIES ${PROJECT_NAME} DEPENDS system_lib
 ## Build ##
 ###########
 
+message(AUTHOR_WARNING "------- Deprecated definitions disabled for LCM build")
+
+add_definitions(-Wno-deprecated-declarations)
+
 ## Specify additional locations of header files
 ## Your package locations should be listed before other locations
 include_directories(include SYSTEM ${GLib_INCLUDE_DIRS})
