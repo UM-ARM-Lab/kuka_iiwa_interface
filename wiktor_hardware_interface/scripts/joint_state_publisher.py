@@ -31,8 +31,8 @@ class WiktorJointStatePublisher:
         self.joint_state_msg.effort = []
 
         # Set the default values for the left arm, just in case it is not publishing data
-        self.joint_state_msg.position[0] = pi / 2;
-        self.joint_state_msg.position[1] = -pi / 2;
+        self.joint_state_msg.position[0] = pi / 2
+        self.joint_state_msg.position[1] = -pi / 2
 
 
         rate = rospy.Rate(self.rate)
@@ -63,14 +63,6 @@ class WiktorJointStatePublisher:
         self.joint_state_msg.header.stamp = rospy.Time.now()
         self.joint_state_pub.publish(self.joint_state_msg)
         self.joint_state_lock.release()
-
-    def test(self, data):
-        for ind in range(len(self.joint_state_msg.name)):
-            if data.name[ind] != self.joint_state_msg.name[ind]:
-                print data.name[ind], ' ', self.joint_state_msg.name[ind]
-        # print data
-        # print self.joint_state_msg.name
-
 
 
 if __name__ == '__main__':

@@ -180,8 +180,8 @@ class Widget(QWidget):
 			self.finger_command.finger_c_command.speed = 1.0
 			self.finger_command.scissor_command.speed = 1.0
 
-			self.finger_command_publisher = rospy.Publisher('gripper_command', Robotiq3FingerCommand, queue_size=10)
-			self.arm_command_publisher = rospy.Publisher('motion_command', MotionCommand, queue_size=10)
+			self.finger_command_publisher = rospy.Publisher('gripper_command', Robotiq3FingerCommand, queue_size=1)
+			self.arm_command_publisher = rospy.Publisher('motion_command', MotionCommand, queue_size=1)
 
 			self.fingers_same_position = False
 
