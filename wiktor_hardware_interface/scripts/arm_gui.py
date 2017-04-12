@@ -19,6 +19,7 @@ arm_joint_limit_margin = 1
 
 class Widget(QWidget):
 	def __init__(self, parent=None):
+
 		QWidget.__init__(self, parent)
 
 		self.v_layout = QGridLayout()
@@ -186,6 +187,7 @@ class Arm():
 		self.row_count[col] = self.row_count[col] + 1
 
 		return checkbox
+
 
 
 	def finger_same_position_checkbox_changed(self):
