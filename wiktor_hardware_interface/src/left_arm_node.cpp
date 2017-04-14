@@ -253,7 +253,7 @@ public:
             message += "\nInvalid override joint acceleration";
         }
 
-        if (control_mode.control_mode != wiktor_hardware_interface::ControlModeCommand::JOINT_POSITION)
+        if (control_mode.control_mode != wiktor_hardware_interface::ControlModeCommand::JOINT_POSITION && control_mode.control_mode != wiktor_hardware_interface::ControlModeCommand::CARTESIAN_POSE)
         {
             valid = false;
             message += "\nControl mode " + std::to_string(control_mode.control_mode) + " not implemented";
