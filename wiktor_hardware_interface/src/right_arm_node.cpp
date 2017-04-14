@@ -34,6 +34,7 @@ protected:
 
     ros::NodeHandle nh_;
     ros::Publisher motion_status_pub_;
+    ros::Publisher control_mode_status_pub_;
     ros::Publisher gripper_status_pub_;
     ros::Subscriber motion_command_sub_;
     ros::Subscriber gripper_command_sub_;
@@ -53,7 +54,7 @@ protected:
 
 public:
 
-    RightArmNode(ros::NodeHandle& nh, const std::string& motion_command_topic, const std::string& motion_status_topic, const std::string& get_control_mode_service, const std::string& set_control_mode_service, const std::string& gripper_command_topic, const std::string& gripper_status_topic, const std::shared_ptr<lcm::LCM>& send_lcm_ptr, const std::shared_ptr<lcm::LCM>& recv_lcm_ptr, const std::string& motion_command_channel, const std::string& motion_status_channel, const std::string& control_mode_command_channel, const std::string& control_mode_status_channel, const std::string& gripper_command_channel, const std::string& gripper_status_channel, const double set_control_mode_timeout) : nh_(nh), set_control_mode_timeout_(set_control_mode_timeout), send_lcm_ptr_(send_lcm_ptr), recv_lcm_ptr_(recv_lcm_ptr)
+    RightArmNode(ros::NodeHandle& nh, const std::string& motion_command_topic, const std::string& motion_status_topic, const std::string& control_mode_status_topic, const std::string& get_control_mode_service, const std::string& set_control_mode_service, const std::string& gripper_command_topic, const std::string& gripper_status_topic, const std::shared_ptr<lcm::LCM>& send_lcm_ptr, const std::shared_ptr<lcm::LCM>& recv_lcm_ptr, const std::string& motion_command_channel, const std::string& motion_status_channel, const std::string& control_mode_command_channel, const std::string& control_mode_status_channel, const std::string& gripper_command_channel, const std::string& gripper_status_channel, const double set_control_mode_timeout) : nh_(nh), set_control_mode_timeout_(set_control_mode_timeout), send_lcm_ptr_(send_lcm_ptr), recv_lcm_ptr_(recv_lcm_ptr)
     {
         nh_.setCallbackQueue(&ros_callback_queue_);
         // Set up IIWA LCM interface
@@ -65,6 +66,7 @@ public:
         robotiq_ptr_ = std::unique_ptr<robotiq_3finger_hardware_interface::Robotiq3FingerHardwareInterface>(new robotiq_3finger_hardware_interface::Robotiq3FingerHardwareInterface(send_lcm_ptr_, recv_lcm_ptr_, gripper_command_channel, gripper_status_channel, gripper_status_callback_fn));
         // Set up ROS interfaces
         motion_status_pub_ = nh_.advertise<wiktor_hardware_interface::MotionStatus>(motion_status_topic, 1, false);
+        control_mode_status_pub_ = nh_.advertise<wiktor_hardware_interface::ControlModeStatus>(control_mode_status_topic, 1, false);
         gripper_status_pub_ = nh_.advertise<wiktor_hardware_interface::Robotiq3FingerStatus>(gripper_status_topic, 1, false);
         motion_command_sub_ = nh_.subscribe(motion_command_topic, 1, &RightArmNode::MotionCommandROSCallback, this);
         gripper_command_sub_ = nh_.subscribe(gripper_command_topic, 1, &RightArmNode::GripperCommandROSCallback, this);;
@@ -454,8 +456,10 @@ public:
 
     void ControlModeStatusLCMCallback(const wiktor_hardware_interface::ControlModeStatus& control_mode_status)
     {
-        std::lock_guard<std::mutex> lock(control_mode_status_mutex_);
+        control_mode_status_mutex_.lock();
         active_control_mode_ = control_mode_status;
+        control_mode_status_mutex_.unlock();
+        control_mode_status_pub_.publish(control_mode_status);
     }
 
     void GripperStatusLCMCallback(const wiktor_hardware_interface::Robotiq3FingerStatus& gripper_status)
@@ -470,13 +474,14 @@ int main(int argc, char** argv)
     // Default ROS topic / service names
     const std::string DEFAULT_MOTION_COMMAND_TOPIC("motion_command");
     const std::string DEFAULT_MOTION_STATUS_TOPIC("motion_status");
+    const std::string DEFAULT_CONTROL_MODE_STATUS_TOPIC("control_mode_status");
     const std::string DEFAULT_SET_CONTROL_MODE_SERVICE("set_control_mode_service");
     const std::string DEFAULT_GET_CONTROL_MODE_SERVICE("get_control_mode_service");
     const std::string DEFAULT_GRIPPER_COMMAND_TOPIC("gripper_command");
     const std::string DEFAULT_GRIPPER_STATUS_TOPIC("gripper_status");
     // Default LCM parameters
     const std::string DEFAULT_SEND_LCM_URL("udp://10.10.10.11:30000");
-    const std::string DEFAULT_RECV_LCM_URL("udp://10.10.10.99:30001");
+    const std::string DEFAULT_RECV_LCM_URL("udp://10.10.10.122:30001");
     const std::string DEFAULT_MOTION_COMMAND_CHANNEL("motion_command");
     const std::string DEFAULT_MOTION_STATUS_CHANNEL("motion_status");
     const std::string DEFAULT_CONTROL_MODE_COMMAND_CHANNEL("control_mode_command");
@@ -491,6 +496,7 @@ int main(int argc, char** argv)
     // Get topic & service names
     const std::string motion_command_topic = nhp.param(std::string("motion_command_topic"), DEFAULT_MOTION_COMMAND_TOPIC);
     const std::string motion_status_topic = nhp.param(std::string("motion_status_topic"), DEFAULT_MOTION_STATUS_TOPIC);
+    const std::string control_mode_status_topic = nhp.param(std::string("control_mode_status_topic"), DEFAULT_CONTROL_MODE_STATUS_TOPIC);
     const std::string get_control_mode_service = nhp.param(std::string("get_control_mode_service"), DEFAULT_GET_CONTROL_MODE_SERVICE);
     const std::string set_control_mode_service = nhp.param(std::string("set_control_mode_service"), DEFAULT_SET_CONTROL_MODE_SERVICE);
     const std::string gripper_command_topic = nhp.param(std::string("gripper_command_topic"), DEFAULT_GRIPPER_COMMAND_TOPIC);
@@ -510,7 +516,7 @@ int main(int argc, char** argv)
     {
         std::shared_ptr<lcm::LCM> lcm_ptr(new lcm::LCM(send_lcm_url));
         ROS_INFO("Starting Right Arm Node with shared send/receive LCM...");
-        RightArmNode node(nh, motion_command_topic, motion_status_topic, get_control_mode_service, set_control_mode_service, gripper_command_topic, gripper_status_topic, lcm_ptr, lcm_ptr, motion_command_channel, motion_status_channel, control_mode_command_channel, control_mode_status_channel, gripper_command_channel, gripper_status_channel, set_control_mode_timeout);
+        RightArmNode node(nh, motion_command_topic, motion_status_topic, control_mode_status_topic, get_control_mode_service, set_control_mode_service, gripper_command_topic, gripper_status_topic, lcm_ptr, lcm_ptr, motion_command_channel, motion_status_channel, control_mode_command_channel, control_mode_status_channel, gripper_command_channel, gripper_status_channel, set_control_mode_timeout);
         node.LCMLoop();
         return 0;
     }
@@ -519,7 +525,7 @@ int main(int argc, char** argv)
         std::shared_ptr<lcm::LCM> send_lcm_ptr(new lcm::LCM(send_lcm_url));
         std::shared_ptr<lcm::LCM> recv_lcm_ptr(new lcm::LCM(recv_lcm_url));
         ROS_INFO("Starting Right Arm Node with separate send and receive LCM...");
-        RightArmNode node(nh, motion_command_topic, motion_status_topic, get_control_mode_service, set_control_mode_service, gripper_command_topic, gripper_status_topic, send_lcm_ptr, recv_lcm_ptr, motion_command_channel, motion_status_channel, control_mode_command_channel, control_mode_status_channel, gripper_command_channel, gripper_status_channel, set_control_mode_timeout);
+        RightArmNode node(nh, motion_command_topic, motion_status_topic, control_mode_status_topic, get_control_mode_service, set_control_mode_service, gripper_command_topic, gripper_status_topic, send_lcm_ptr, recv_lcm_ptr, motion_command_channel, motion_status_channel, control_mode_command_channel, control_mode_status_channel, gripper_command_channel, gripper_status_channel, set_control_mode_timeout);
         node.LCMLoop();
         return 0;
     }
