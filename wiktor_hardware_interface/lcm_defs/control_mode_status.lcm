@@ -4,6 +4,7 @@ struct control_mode_status
 {
     wiktor_hardware_interface.joint_impedance_parameters joint_impedance_params;
     wiktor_hardware_interface.cartesian_impedance_parameters cartesian_impedance_params;
+    wiktor_hardware_interface.cartesian_control_mode_limits cartesian_control_mode_limits;
     wiktor_hardware_interface.path_execution_parameters path_execution_params;
     double timestamp;
     const int8_t IS_POSITION_MOTION=0; // Flag to bitmask
