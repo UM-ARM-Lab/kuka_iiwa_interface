@@ -1,12 +1,15 @@
 <launch>
     <group ns="left_arm">
         <node pkg="wiktor_hardware_interface" type="wiktor_hardware_interface_left_arm_node" name="left_arm_lcm_bridge_node" required="true"/>
-        <node pkg="tf" type="static_transform_publisher" name="left_arm_mount_broadcaster" required="true" args="-0.02 0.1384885 1.248 -0.78539816339 0 0 wiktor_root wiktor_left_arm_world_frame_kuka 100"/>
+        <node pkg="tf" type="static_transform_publisher" name="left_arm_kuka_world_frame_broadcaster" required="true" args="-0.02 0.1384885 1.248 -0.78539816339 0 0 wiktor_root wiktor_left_arm_world_frame_kuka 100"/>
+        <node pkg="tf" type="static_transform_publisher" name="left_gripper_palm_surface_kuka_broadcaster" required="true" args="0 0 0.092075 -0.78539816339 0 0 wiktor_left_gripper_palm wiktor_left_gripper_palm_surface_kuka 100"/>
     </group>
 
     <group ns="right_arm">
         <node pkg="wiktor_hardware_interface" type="wiktor_hardware_interface_right_arm_node" name="right_arm_lcm_bridge_node" required="true"/>
-        <node pkg="tf" type="static_transform_publisher" name="right_arm_mount_broadcaster" required="true" args="-0.02 -0.1384885 1.248 0.78539816339 0 0 wiktor_root wiktor_right_arm_world_frame_kuka 100"/>
+        <node pkg="tf" type="static_transform_publisher" name="right_arm_kuka_world_frame_broadcaster" required="true" args="-0.02 -0.1384885 1.248 0.78539816339 0 0 wiktor_root wiktor_right_arm_world_frame_kuka 100"/>
+        <node pkg="tf" type="static_transform_publisher" name="right_gripper_palm_surface_kuka_broadcaster" required="true" args="0 0 0.092075 -0.78539816339 0 0 wiktor_right_gripper_palm wiktor_right_gripper_palm_surface_kuka 100"/>
+    </node>
     </group>
 
 
