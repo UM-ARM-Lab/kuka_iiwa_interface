@@ -14,14 +14,14 @@ public final class cartesian_control_mode_limits implements lcm.lcm.LCMEncodable
     public wiktor_hardware_interface.cartesian_value_quantity max_path_deviation;
     public wiktor_hardware_interface.cartesian_value_quantity max_cartesian_velocity;
     public wiktor_hardware_interface.cartesian_value_quantity max_control_force;
-    public wiktor_hardware_interface.bool stop_on_max_control_force;
+    public boolean stop_on_max_control_force;
  
     public cartesian_control_mode_limits()
     {
     }
  
     public static final long LCM_FINGERPRINT;
-    public static final long LCM_FINGERPRINT_BASE = 0x29e2ecfa38a5acc4L;
+    public static final long LCM_FINGERPRINT_BASE = 0x4b3495770cad1468L;
  
     static {
         LCM_FINGERPRINT = _hashRecursive(new ArrayList<Class<?>>());
@@ -37,7 +37,6 @@ public final class cartesian_control_mode_limits implements lcm.lcm.LCMEncodable
              + wiktor_hardware_interface.cartesian_value_quantity._hashRecursive(classes)
              + wiktor_hardware_interface.cartesian_value_quantity._hashRecursive(classes)
              + wiktor_hardware_interface.cartesian_value_quantity._hashRecursive(classes)
-             + wiktor_hardware_interface.bool._hashRecursive(classes)
             ;
         classes.remove(classes.size() - 1);
         return (hash<<1) + ((hash>>63)&1);
@@ -57,7 +56,7 @@ public final class cartesian_control_mode_limits implements lcm.lcm.LCMEncodable
  
         this.max_control_force._encodeRecursive(outs); 
  
-        this.stop_on_max_control_force._encodeRecursive(outs); 
+        outs.writeByte( this.stop_on_max_control_force ? 1 : 0); 
  
     }
  
@@ -89,7 +88,7 @@ public final class cartesian_control_mode_limits implements lcm.lcm.LCMEncodable
  
         this.max_control_force = wiktor_hardware_interface.cartesian_value_quantity._decodeRecursiveFactory(ins);
  
-        this.stop_on_max_control_force = wiktor_hardware_interface.bool._decodeRecursiveFactory(ins);
+        this.stop_on_max_control_force = ins.readByte()!=0;
  
     }
  
@@ -102,7 +101,7 @@ public final class cartesian_control_mode_limits implements lcm.lcm.LCMEncodable
  
         outobj.max_control_force = this.max_control_force.copy();
  
-        outobj.stop_on_max_control_force = this.stop_on_max_control_force.copy();
+        outobj.stop_on_max_control_force = this.stop_on_max_control_force;
  
         return outobj;
     }

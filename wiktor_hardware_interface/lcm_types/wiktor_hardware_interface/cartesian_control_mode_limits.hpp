@@ -12,7 +12,6 @@
 #include "wiktor_hardware_interface/cartesian_value_quantity.hpp"
 #include "wiktor_hardware_interface/cartesian_value_quantity.hpp"
 #include "wiktor_hardware_interface/cartesian_value_quantity.hpp"
-#include "wiktor_hardware_interface/bool.hpp"
 
 namespace wiktor_hardware_interface
 {
@@ -26,7 +25,7 @@ class cartesian_control_mode_limits
 
         wiktor_hardware_interface::cartesian_value_quantity max_control_force;
 
-        wiktor_hardware_interface::bool stop_on_max_control_force;
+        int8_t     stop_on_max_control_force;
 
     public:
         /**
@@ -133,7 +132,7 @@ int cartesian_control_mode_limits::_encodeNoHash(void *buf, int offset, int maxl
     tlen = this->max_control_force._encodeNoHash(buf, offset + pos, maxlen - pos);
     if(tlen < 0) return tlen; else pos += tlen;
 
-    tlen = this->stop_on_max_control_force._encodeNoHash(buf, offset + pos, maxlen - pos);
+    tlen = __boolean_encode_array(buf, offset + pos, maxlen - pos, &this->stop_on_max_control_force, 1);
     if(tlen < 0) return tlen; else pos += tlen;
 
     return pos;
@@ -152,7 +151,7 @@ int cartesian_control_mode_limits::_decodeNoHash(const void *buf, int offset, in
     tlen = this->max_control_force._decodeNoHash(buf, offset + pos, maxlen - pos);
     if(tlen < 0) return tlen; else pos += tlen;
 
-    tlen = this->stop_on_max_control_force._decodeNoHash(buf, offset + pos, maxlen - pos);
+    tlen = __boolean_decode_array(buf, offset + pos, maxlen - pos, &this->stop_on_max_control_force, 1);
     if(tlen < 0) return tlen; else pos += tlen;
 
     return pos;
@@ -164,7 +163,7 @@ int cartesian_control_mode_limits::_getEncodedSizeNoHash() const
     enc_size += this->max_path_deviation._getEncodedSizeNoHash();
     enc_size += this->max_cartesian_velocity._getEncodedSizeNoHash();
     enc_size += this->max_control_force._getEncodedSizeNoHash();
-    enc_size += this->stop_on_max_control_force._getEncodedSizeNoHash();
+    enc_size += __boolean_encoded_array_size(NULL, 1);
     return enc_size;
 }
 
@@ -176,11 +175,10 @@ uint64_t cartesian_control_mode_limits::_computeHash(const __lcm_hash_ptr *p)
             return 0;
     const __lcm_hash_ptr cp = { p, (void*)cartesian_control_mode_limits::getHash };
 
-    uint64_t hash = 0x29e2ecfa38a5acc4LL +
+    uint64_t hash = 0x4b3495770cad1468LL +
          wiktor_hardware_interface::cartesian_value_quantity::_computeHash(&cp) +
          wiktor_hardware_interface::cartesian_value_quantity::_computeHash(&cp) +
-         wiktor_hardware_interface::cartesian_value_quantity::_computeHash(&cp) +
-         wiktor_hardware_interface::bool::_computeHash(&cp);
+         wiktor_hardware_interface::cartesian_value_quantity::_computeHash(&cp);
 
     return (hash<<1) + ((hash>>63)&1);
 }
