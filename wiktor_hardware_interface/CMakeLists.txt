@@ -53,6 +53,7 @@ set(Eigen3_INCLUDE_DIRS ${EIGEN3_INCLUDE_DIR})
 
 ## Generate messages in the 'msg' folder
 add_message_files(DIRECTORY msg FILES CartesianImpedanceParameters.msg
+                                      CartesianControlModeLimits.msg
                                       MotionStatus.msg
                                       CartesianValueQuantity.msg
                                       PathExecutionParameters.msg

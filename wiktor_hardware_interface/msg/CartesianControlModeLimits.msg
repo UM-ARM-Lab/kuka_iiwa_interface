@@ -1,0 +1,4 @@
+wiktor_hardware_interface/CartesianValueQuantity max_path_deviation
+wiktor_hardware_interface/CartesianValueQuantity max_cartesian_velocity
+wiktor_hardware_interface/CartesianValueQuantity max_control_force
+bool stop_on_max_control_force
