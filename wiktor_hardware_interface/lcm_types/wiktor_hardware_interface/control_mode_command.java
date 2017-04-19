@@ -14,7 +14,8 @@ public final class control_mode_command implements lcm.lcm.LCMEncodable
     public wiktor_hardware_interface.joint_impedance_parameters joint_impedance_params;
     public wiktor_hardware_interface.cartesian_impedance_parameters cartesian_impedance_params;
     public wiktor_hardware_interface.cartesian_control_mode_limits cartesian_control_mode_limits;
-    public wiktor_hardware_interface.path_execution_parameters path_execution_params;
+    public wiktor_hardware_interface.joint_path_execution_parameters joint_path_execution_params;
+    public wiktor_hardware_interface.cartesian_path_execution_parameters cartesian_path_execution_params;
     public double timestamp;
     public byte control_mode;
  
@@ -23,7 +24,7 @@ public final class control_mode_command implements lcm.lcm.LCMEncodable
     }
  
     public static final long LCM_FINGERPRINT;
-    public static final long LCM_FINGERPRINT_BASE = 0x840382f3e1c6c4b6L;
+    public static final long LCM_FINGERPRINT_BASE = 0x9697ed1b5b3d7921L;
  
     public static final byte IS_POSITION_MOTION = (byte) 0;
     public static final byte IS_CARTESIAN_MOTION = (byte) 1;
@@ -47,7 +48,8 @@ public final class control_mode_command implements lcm.lcm.LCMEncodable
              + wiktor_hardware_interface.joint_impedance_parameters._hashRecursive(classes)
              + wiktor_hardware_interface.cartesian_impedance_parameters._hashRecursive(classes)
              + wiktor_hardware_interface.cartesian_control_mode_limits._hashRecursive(classes)
-             + wiktor_hardware_interface.path_execution_parameters._hashRecursive(classes)
+             + wiktor_hardware_interface.joint_path_execution_parameters._hashRecursive(classes)
+             + wiktor_hardware_interface.cartesian_path_execution_parameters._hashRecursive(classes)
             ;
         classes.remove(classes.size() - 1);
         return (hash<<1) + ((hash>>63)&1);
@@ -67,7 +69,9 @@ public final class control_mode_command implements lcm.lcm.LCMEncodable
  
         this.cartesian_control_mode_limits._encodeRecursive(outs); 
  
-        this.path_execution_params._encodeRecursive(outs); 
+        this.joint_path_execution_params._encodeRecursive(outs); 
+ 
+        this.cartesian_path_execution_params._encodeRecursive(outs); 
  
         outs.writeDouble(this.timestamp); 
  
@@ -103,7 +107,9 @@ public final class control_mode_command implements lcm.lcm.LCMEncodable
  
         this.cartesian_control_mode_limits = wiktor_hardware_interface.cartesian_control_mode_limits._decodeRecursiveFactory(ins);
  
-        this.path_execution_params = wiktor_hardware_interface.path_execution_parameters._decodeRecursiveFactory(ins);
+        this.joint_path_execution_params = wiktor_hardware_interface.joint_path_execution_parameters._decodeRecursiveFactory(ins);
+ 
+        this.cartesian_path_execution_params = wiktor_hardware_interface.cartesian_path_execution_parameters._decodeRecursiveFactory(ins);
  
         this.timestamp = ins.readDouble();
  
@@ -120,7 +126,9 @@ public final class control_mode_command implements lcm.lcm.LCMEncodable
  
         outobj.cartesian_control_mode_limits = this.cartesian_control_mode_limits.copy();
  
-        outobj.path_execution_params = this.path_execution_params.copy();
+        outobj.joint_path_execution_params = this.joint_path_execution_params.copy();
+ 
+        outobj.cartesian_path_execution_params = this.cartesian_path_execution_params.copy();
  
         outobj.timestamp = this.timestamp;
  
