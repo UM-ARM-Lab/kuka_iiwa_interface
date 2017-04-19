@@ -103,9 +103,10 @@ namespace wiktor_hardware_interface
         const bool smcf_match = (command.cartesian_control_mode_limits.stop_on_max_control_force == status.cartesian_control_mode_limits.stop_on_max_control_force);
         const bool jdmatch = JVQMatch(command.joint_impedance_params.joint_damping, status.joint_impedance_params.joint_damping);
         const bool jsmatch = JVQMatch(command.joint_impedance_params.joint_stiffness, status.joint_impedance_params.joint_stiffness);
-        const bool pexpmatch = PExPMatch(command.path_execution_params, status.path_execution_params);
+        const bool jpexpmatch = JointPExPMatch(command.joint_path_execution_params, status.joint_path_execution_params);
+        const bool cpexpmatch = CartesianPExPMatch(command.cartesian_path_execution_params, status.cartesian_path_execution_params);
         const bool cmmatch = (command.control_mode == status.active_control_mode);
-        if (cdmatch && ndmatch && csmatch && nsmatch && mpd_match && mcv_match && mcf_match && smcf_match && jdmatch && jsmatch && pexpmatch && cmmatch)
+        if (cdmatch && ndmatch && csmatch && nsmatch && mpd_match && mcv_match && mcf_match && smcf_match && jdmatch && jsmatch && jpexpmatch && cpexpmatch && cmmatch)
         {
             return true;
         }
@@ -115,7 +116,7 @@ namespace wiktor_hardware_interface
         }
     }
 
-    std::pair<bool, std::string> MinimalArmWrapperInterface::SafetyCheckPathExecutionParams(const wiktor_hardware_interface::PathExecutionParameters& params) const
+    std::pair<bool, std::string> MinimalArmWrapperInterface::SafetyCheckJointPathExecutionParams(const wiktor_hardware_interface::JointPathExecutionParameters& params) const
     {
         bool valid = true;
         std::string message;
@@ -133,6 +134,83 @@ namespace wiktor_hardware_interface
         {
             valid = false;
             message += "+Invalid override joint acceleration";
+        }
+        return std::make_pair(valid, message);
+    }
+
+    std::pair<bool, std::string> MinimalArmWrapperInterface::SafetyCheckCartesianPathExecutionParams(const wiktor_hardware_interface::CartesianPathExecutionParameters& params) const
+    {
+        bool valid = true;
+        std::string message;
+        if (params.max_velocity.x <= 0.0)
+        {
+            valid = false;
+            message += "+Invalid DoF X max velocity";
+        }
+        if (params.max_velocity.y <= 0.0)
+        {
+            valid = false;
+            message += "+Invalid DoF Y max velocity";
+        }
+        if (params.max_velocity.z <= 0.0)
+        {
+            valid = false;
+            message += "+Invalid DoF Z max velocity";
+        }
+        if (params.max_velocity.a <= 0.0)
+        {
+            valid = false;
+            message += "+Invalid DoF A max velocity";
+        }
+        if (params.max_velocity.b <= 0.0)
+        {
+            valid = false;
+            message += "+Invalid DoF B max velocity";
+        }
+        if (params.max_velocity.c <= 0.0)
+        {
+            valid = false;
+            message += "+Invalid DoF C max velocity";
+        }
+        if (params.max_nullspace_velocity <= 0.0)
+        {
+            valid = false;
+            message += "+Invalid nullspace max velocity";
+        }
+        if (params.max_acceleration.x <= 0.0)
+        {
+            valid = false;
+            message += "+Invalid DoF X max acceleration";
+        }
+        if (params.max_acceleration.y <= 0.0)
+        {
+            valid = false;
+            message += "+Invalid DoF Y max acceleration";
+        }
+        if (params.max_acceleration.z <= 0.0)
+        {
+            valid = false;
+            message += "+Invalid DoF Z max acceleration";
+        }
+        if (params.max_acceleration.a <= 0.0)
+        {
+            valid = false;
+            message += "+Invalid DoF A max acceleration";
+        }
+        if (params.max_acceleration.b <= 0.0)
+        {
+            valid = false;
+            message += "+Invalid DoF B max acceleration";
+        }
+        if (params.max_acceleration.c <= 0.0)
+        {
+            valid = false;
+            message += "+Invalid DoF C max acceleration";
+        }
+        if (params.max_nullspace_acceleration <= 0.0)
+        {
+            valid = false;
+            message += "+Invalid nullspace max acceleration";
         }
         return std::make_pair(valid, message);
     }
@@ -392,6 +470,14 @@ namespace wiktor_hardware_interface
     {
         bool valid = true;
         std::string message;
+        if (control_mode.control_mode != wiktor_hardware_interface::ControlModeCommand::JOINT_POSITION
+                && control_mode.control_mode != wiktor_hardware_interface::ControlModeCommand::JOINT_IMPEDANCE
+                && control_mode.control_mode != wiktor_hardware_interface::ControlModeCommand::CARTESIAN_POSE
+                && control_mode.control_mode != wiktor_hardware_interface::ControlModeCommand::CARTESIAN_IMPEDANCE)
+        {
+            valid = false;
+            message += "+Invalid control mode";
+        }
         const auto valid_joint_impedance_params = SafetyCheckJointImpedanceParameters(control_mode.joint_impedance_params);
         message += valid_joint_impedance_params.second;
         if (!valid_joint_impedance_params.first)
@@ -410,9 +496,15 @@ namespace wiktor_hardware_interface
         {
             valid = false;
         }
-        const auto valid_path_execution_params = SafetyCheckPathExecutionParams(control_mode.path_execution_params);
-        message += valid_path_execution_params.second;
-        if (!valid_path_execution_params.first)
+        const auto joint_valid_path_execution_params = SafetyCheckJointPathExecutionParams(control_mode.joint_path_execution_params);
+        message += joint_valid_path_execution_params.second;
+        if (!joint_valid_path_execution_params.first)
+        {
+            valid = false;
+        }
+        const auto valid_cartesian_path_execution_params = SafetyCheckCartesianPathExecutionParams(control_mode.cartesian_path_execution_params);
+        message += valid_cartesian_path_execution_params.second;
+        if (!valid_cartesian_path_execution_params.first)
         {
             valid = false;
         }
@@ -422,32 +514,37 @@ namespace wiktor_hardware_interface
     wiktor_hardware_interface::ControlModeCommand MinimalArmWrapperInterface::MergeControlModeCommand(const wiktor_hardware_interface::ControlModeStatus& active_control_mode, const wiktor_hardware_interface::ControlModeCommand& new_control_mode) const
     {
         wiktor_hardware_interface::ControlModeCommand merged_control_mode;
+        // Copy the old over
+        merged_control_mode.joint_path_execution_params = active_control_mode.joint_path_execution_params;
+        merged_control_mode.joint_impedance_params = active_control_mode.joint_impedance_params;
+        merged_control_mode.cartesian_impedance_params = active_control_mode.cartesian_impedance_params;
+        merged_control_mode.cartesian_control_mode_limits = active_control_mode.cartesian_control_mode_limits;
+        merged_control_mode.cartesian_path_execution_params = active_control_mode.cartesian_path_execution_params;
         // Copy manadatory members
         merged_control_mode.control_mode = new_control_mode.control_mode;
-        merged_control_mode.path_execution_params = new_control_mode.path_execution_params;
         // Copy mode-dependant members
         if (new_control_mode.control_mode == wiktor_hardware_interface::ControlModeCommand::JOINT_IMPEDANCE)
         {
             // From the new
             merged_control_mode.joint_impedance_params = new_control_mode.joint_impedance_params;
-            // From the old
-            merged_control_mode.cartesian_impedance_params = active_control_mode.cartesian_impedance_params;
-            merged_control_mode.cartesian_control_mode_limits = active_control_mode.cartesian_control_mode_limits;
+            merged_control_mode.joint_path_execution_params = new_control_mode.joint_path_execution_params;
         }
         else if (new_control_mode.control_mode == wiktor_hardware_interface::ControlModeCommand::CARTESIAN_IMPEDANCE)
         {
             // From the new
             merged_control_mode.cartesian_impedance_params = new_control_mode.cartesian_impedance_params;
             merged_control_mode.cartesian_control_mode_limits = new_control_mode.cartesian_control_mode_limits;
-            // From the old
-            merged_control_mode.joint_impedance_params = active_control_mode.joint_impedance_params;
+            merged_control_mode.cartesian_path_execution_params = new_control_mode.cartesian_path_execution_params;
         }
-        else
+        else if (new_control_mode.control_mode == wiktor_hardware_interface::ControlModeCommand::JOINT_POSITION)
         {
-            // From the old
-            merged_control_mode.joint_impedance_params = active_control_mode.joint_impedance_params;
-            merged_control_mode.cartesian_impedance_params = active_control_mode.cartesian_impedance_params;
-            merged_control_mode.cartesian_control_mode_limits = active_control_mode.cartesian_control_mode_limits;
+            // From the new
+            merged_control_mode.joint_path_execution_params = new_control_mode.joint_path_execution_params;
+        }
+        else if (new_control_mode.control_mode == wiktor_hardware_interface::ControlModeCommand::CARTESIAN_POSE)
+        {
+            // From the new
+            merged_control_mode.cartesian_path_execution_params = active_control_mode.cartesian_path_execution_params;
         }
         return merged_control_mode;
     }

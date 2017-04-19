@@ -133,7 +133,7 @@ namespace wiktor_hardware_interface
             }
         }
 
-        static inline bool PExPMatch(const wiktor_hardware_interface::PathExecutionParameters& pexp1, const wiktor_hardware_interface::PathExecutionParameters& pexp2)
+        static inline bool JointPExPMatch(const wiktor_hardware_interface::JointPathExecutionParameters& pexp1, const wiktor_hardware_interface::JointPathExecutionParameters& pexp2)
         {
             if (pexp1.joint_relative_acceleration != pexp2.joint_relative_acceleration)
             {
@@ -153,9 +153,35 @@ namespace wiktor_hardware_interface
             }
         }
 
+        static inline bool CartesianPExPMatch(const wiktor_hardware_interface::CartesianPathExecutionParameters& pexp1, const wiktor_hardware_interface::CartesianPathExecutionParameters& pexp2)
+        {
+            if (CVQMatch(pexp1.max_velocity, pexp2.max_velocity) == false)
+            {
+                return false;
+            }
+            else if (CVQMatch(pexp1.max_acceleration, pexp2.max_acceleration) == false)
+            {
+                return false;
+            }
+            else if (pexp1.max_nullspace_velocity != pexp2.max_nullspace_velocity)
+            {
+                return false;
+            }
+            else if (pexp1.max_nullspace_acceleration != pexp2.max_nullspace_acceleration)
+            {
+                return false;
+            }
+            else
+            {
+                return true;
+            }
+        }
+
         bool CheckControlModeCommandAndStatusMatch(const wiktor_hardware_interface::ControlModeCommand& command, const wiktor_hardware_interface::ControlModeStatus& status) const;
 
-        std::pair<bool, std::string> SafetyCheckPathExecutionParams(const wiktor_hardware_interface::PathExecutionParameters& params) const;
+        std::pair<bool, std::string> SafetyCheckJointPathExecutionParams(const wiktor_hardware_interface::JointPathExecutionParameters& params) const;
+
+        std::pair<bool, std::string> SafetyCheckCartesianPathExecutionParams(const wiktor_hardware_interface::CartesianPathExecutionParameters& params) const;
 
         std::pair<bool, std::string> SafetyCheckJointImpedanceParameters(const wiktor_hardware_interface::JointImpedanceParameters& params) const;
 

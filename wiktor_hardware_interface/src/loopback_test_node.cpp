@@ -144,7 +144,7 @@ public:
         }
     }
 
-    static inline bool PExPMatch(const wiktor_hardware_interface::PathExecutionParameters& pexp1, const wiktor_hardware_interface::PathExecutionParameters& pexp2)
+    static inline bool JointPExPMatch(const wiktor_hardware_interface::JointPathExecutionParameters& pexp1, const wiktor_hardware_interface::JointPathExecutionParameters& pexp2)
     {
         if (pexp1.joint_relative_acceleration != pexp2.joint_relative_acceleration)
         {
@@ -155,6 +155,30 @@ public:
             return false;
         }
         else if (pexp1.override_joint_acceleration != pexp2.override_joint_acceleration)
+        {
+            return false;
+        }
+        else
+        {
+            return true;
+        }
+    }
+
+    static inline bool CartesianPExPMatch(const wiktor_hardware_interface::CartesianPathExecutionParameters& pexp1, const wiktor_hardware_interface::CartesianPathExecutionParameters& pexp2)
+    {
+        if (CVQMatch(pexp1.max_velocity, pexp2.max_velocity) == false)
+        {
+            return false;
+        }
+        else if (CVQMatch(pexp1.max_acceleration, pexp2.max_acceleration) == false)
+        {
+            return false;
+        }
+        else if (pexp1.max_nullspace_velocity != pexp2.max_nullspace_velocity)
+        {
+            return false;
+        }
+        else if (pexp1.max_nullspace_acceleration != pexp2.max_nullspace_acceleration)
         {
             return false;
         }
@@ -189,9 +213,9 @@ public:
         return cvq;
     }
 
-    static inline wiktor_hardware_interface::PathExecutionParameters MakePExP(const double jra, const double jrv, const double oja)
+    static inline wiktor_hardware_interface::JointPathExecutionParameters MakeJointPExP(const double jra, const double jrv, const double oja)
     {
-        wiktor_hardware_interface::PathExecutionParameters pexp;
+        wiktor_hardware_interface::JointPathExecutionParameters pexp;
         pexp.joint_relative_acceleration = jra;
         pexp.joint_relative_velocity = jrv;
         pexp.override_joint_acceleration = oja;
@@ -245,7 +269,11 @@ public:
         command.cartesian_impedance_params.cartesian_stiffness = MakeCVQ(7.0, 6.0, 5.0, 4.0, 3.0, 2.0);
         command.cartesian_impedance_params.nullspace_damping = 7.0;
         command.cartesian_impedance_params.nullspace_stiffness = 1.0;
-        command.path_execution_params = MakePExP(1.0, 2.0, 3.0);
+        command.joint_path_execution_params = MakeJointPExP(1.0, 2.0, 3.0);
+        command.cartesian_path_execution_params.max_velocity = MakeCVQ(1.0, 2.0, 3.0, 4.0, 5.0, 6.0);
+        command.cartesian_path_execution_params.max_acceleration = MakeCVQ(7.0, 6.0, 5.0, 4.0, 3.0, 2.0);
+        command.cartesian_path_execution_params.max_nullspace_velocity = 7.0;
+        command.cartesian_path_execution_params.max_nullspace_acceleration = 1.0;
         command.control_mode = 0x00;
         command.header.stamp = ros::Time::now();
         const bool sent = iiwa_ptr_->SendControlModeCommandMessage(command);
@@ -261,9 +289,10 @@ public:
         const bool nsmatch = (command.cartesian_impedance_params.nullspace_stiffness == status.cartesian_impedance_params.nullspace_stiffness);
         const bool jdmatch = JVQMatch(command.joint_impedance_params.joint_damping, status.joint_impedance_params.joint_damping);
         const bool jsmatch = JVQMatch(command.joint_impedance_params.joint_stiffness, status.joint_impedance_params.joint_stiffness);
-        const bool pexpmatch = PExPMatch(command.path_execution_params, status.path_execution_params);
+        const bool jpexpmatch = JointPExPMatch(command.joint_path_execution_params, status.joint_path_execution_params);
+        const bool cpexpmatch = CartesianPExPMatch(command.cartesian_path_execution_params, status.cartesian_path_execution_params);
         const bool cmmatch = (command.control_mode == status.active_control_mode);
-        if (cdmatch && ndmatch && csmatch && nsmatch && jdmatch && jsmatch && pexpmatch && cmmatch)
+        if (cdmatch && ndmatch && csmatch && nsmatch && jdmatch && jsmatch && jpexpmatch && cpexpmatch && cmmatch)
         {
             return true;
         }
