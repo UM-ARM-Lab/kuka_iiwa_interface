@@ -20,6 +20,7 @@
 #include <linux_fri_client/friClientData.h>
 #include <linux_fri_client/friLBRClient.h>
 #include <linux_fri_client/FRIMessages.pb.h>
+#include <arc_utilities/eigen_helpers.hpp>
 
 class FRIStatePositionTorqueShim
 {
