@@ -75,7 +75,7 @@ int main(int argc, char** argv)
     if (send_lcm_url == recv_lcm_url)
     {
         std::shared_ptr<lcm::LCM> lcm_ptr(new lcm::LCM(send_lcm_url));
-        ROS_INFO("Starting Right Arm Node with shared send/receive LCM...");
+        ROS_INFO_NAMED(ros::this_node::getName(), "Starting with shared send/receive LCM [%s]...", send_lcm_url.c_str());
         wiktor_hardware_interface::MinimalArmWrapperInterface interface(nh, motion_command_topic, motion_status_topic, control_mode_status_topic, get_control_mode_service, set_control_mode_service, gripper_command_topic, gripper_status_topic, lcm_ptr, lcm_ptr, motion_command_channel, motion_status_channel, control_mode_command_channel, control_mode_status_channel, gripper_command_channel, gripper_status_channel, set_control_mode_timeout);
         interface.LCMLoop();
         return 0;
@@ -84,7 +84,7 @@ int main(int argc, char** argv)
     {
         std::shared_ptr<lcm::LCM> send_lcm_ptr(new lcm::LCM(send_lcm_url));
         std::shared_ptr<lcm::LCM> recv_lcm_ptr(new lcm::LCM(recv_lcm_url));
-        ROS_INFO("Starting Right Arm Node with separate send and receive LCM...");
+        ROS_INFO_NAMED(ros::this_node::getName(), "Starting with separate send [%s] and receive [%s] LCM...", send_lcm_url.c_str(), recv_lcm_url.c_str());
         wiktor_hardware_interface::MinimalArmWrapperInterface interface(nh, motion_command_topic, motion_status_topic, control_mode_status_topic, get_control_mode_service, set_control_mode_service, gripper_command_topic, gripper_status_topic, send_lcm_ptr, recv_lcm_ptr, motion_command_channel, motion_status_channel, control_mode_command_channel, control_mode_status_channel, gripper_command_channel, gripper_status_channel, set_control_mode_timeout);
         interface.LCMLoop();
         return 0;
