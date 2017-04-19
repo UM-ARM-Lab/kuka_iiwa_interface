@@ -56,7 +56,8 @@ add_message_files(DIRECTORY msg FILES CartesianImpedanceParameters.msg
                                       CartesianControlModeLimits.msg
                                       MotionStatus.msg
                                       CartesianValueQuantity.msg
-                                      PathExecutionParameters.msg
+                                      JointPathExecutionParameters.msg
+                                      CartesianPathExecutionParameters.msg
                                       ControlModeCommand.msg
                                       Robotiq3FingerActuatorCommand.msg
                                       ControlModeStatus.msg
