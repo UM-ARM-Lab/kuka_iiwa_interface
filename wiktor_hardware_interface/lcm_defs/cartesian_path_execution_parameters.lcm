@@ -1,0 +1,9 @@
+package wiktor_hardware_interface;
+
+struct cartesian_path_execution_parameters
+{
+    wiktor_hardware_interface.cartesian_value_quantity max_velocity;
+    wiktor_hardware_interface.cartesian_value_quantity max_acceleration;
+    double max_nullspace_velocity;
+    double max_nullspace_acceleration;
+}

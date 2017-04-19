@@ -11,7 +11,9 @@
 
 #include "wiktor_hardware_interface/joint_impedance_parameters.hpp"
 #include "wiktor_hardware_interface/cartesian_impedance_parameters.hpp"
-#include "wiktor_hardware_interface/path_execution_parameters.hpp"
+#include "wiktor_hardware_interface/cartesian_control_mode_limits.hpp"
+#include "wiktor_hardware_interface/joint_path_execution_parameters.hpp"
+#include "wiktor_hardware_interface/cartesian_path_execution_parameters.hpp"
 
 namespace wiktor_hardware_interface
 {
@@ -23,7 +25,11 @@ class control_mode_status
 
         wiktor_hardware_interface::cartesian_impedance_parameters cartesian_impedance_params;
 
-        wiktor_hardware_interface::path_execution_parameters path_execution_params;
+        wiktor_hardware_interface::cartesian_control_mode_limits cartesian_control_mode_limits;
+
+        wiktor_hardware_interface::joint_path_execution_parameters joint_path_execution_params;
+
+        wiktor_hardware_interface::cartesian_path_execution_parameters cartesian_path_execution_params;
 
         double     timestamp;
 
@@ -140,7 +146,13 @@ int control_mode_status::_encodeNoHash(void *buf, int offset, int maxlen) const
     tlen = this->cartesian_impedance_params._encodeNoHash(buf, offset + pos, maxlen - pos);
     if(tlen < 0) return tlen; else pos += tlen;
 
-    tlen = this->path_execution_params._encodeNoHash(buf, offset + pos, maxlen - pos);
+    tlen = this->cartesian_control_mode_limits._encodeNoHash(buf, offset + pos, maxlen - pos);
+    if(tlen < 0) return tlen; else pos += tlen;
+
+    tlen = this->joint_path_execution_params._encodeNoHash(buf, offset + pos, maxlen - pos);
+    if(tlen < 0) return tlen; else pos += tlen;
+
+    tlen = this->cartesian_path_execution_params._encodeNoHash(buf, offset + pos, maxlen - pos);
     if(tlen < 0) return tlen; else pos += tlen;
 
     tlen = __double_encode_array(buf, offset + pos, maxlen - pos, &this->timestamp, 1);
@@ -162,7 +174,13 @@ int control_mode_status::_decodeNoHash(const void *buf, int offset, int maxlen)
     tlen = this->cartesian_impedance_params._decodeNoHash(buf, offset + pos, maxlen - pos);
     if(tlen < 0) return tlen; else pos += tlen;
 
-    tlen = this->path_execution_params._decodeNoHash(buf, offset + pos, maxlen - pos);
+    tlen = this->cartesian_control_mode_limits._decodeNoHash(buf, offset + pos, maxlen - pos);
+    if(tlen < 0) return tlen; else pos += tlen;
+
+    tlen = this->joint_path_execution_params._decodeNoHash(buf, offset + pos, maxlen - pos);
+    if(tlen < 0) return tlen; else pos += tlen;
+
+    tlen = this->cartesian_path_execution_params._decodeNoHash(buf, offset + pos, maxlen - pos);
     if(tlen < 0) return tlen; else pos += tlen;
 
     tlen = __double_decode_array(buf, offset + pos, maxlen - pos, &this->timestamp, 1);
@@ -179,7 +197,9 @@ int control_mode_status::_getEncodedSizeNoHash() const
     int enc_size = 0;
     enc_size += this->joint_impedance_params._getEncodedSizeNoHash();
     enc_size += this->cartesian_impedance_params._getEncodedSizeNoHash();
-    enc_size += this->path_execution_params._getEncodedSizeNoHash();
+    enc_size += this->cartesian_control_mode_limits._getEncodedSizeNoHash();
+    enc_size += this->joint_path_execution_params._getEncodedSizeNoHash();
+    enc_size += this->cartesian_path_execution_params._getEncodedSizeNoHash();
     enc_size += __double_encoded_array_size(NULL, 1);
     enc_size += __int8_t_encoded_array_size(NULL, 1);
     return enc_size;
@@ -193,10 +213,12 @@ uint64_t control_mode_status::_computeHash(const __lcm_hash_ptr *p)
             return 0;
     const __lcm_hash_ptr cp = { p, (void*)control_mode_status::getHash };
 
-    uint64_t hash = 0xef74ea71217717acLL +
+    uint64_t hash = 0xc74b95355b6fb644LL +
          wiktor_hardware_interface::joint_impedance_parameters::_computeHash(&cp) +
          wiktor_hardware_interface::cartesian_impedance_parameters::_computeHash(&cp) +
-         wiktor_hardware_interface::path_execution_parameters::_computeHash(&cp);
+         wiktor_hardware_interface::cartesian_control_mode_limits::_computeHash(&cp) +
+         wiktor_hardware_interface::joint_path_execution_parameters::_computeHash(&cp) +
+         wiktor_hardware_interface::cartesian_path_execution_parameters::_computeHash(&cp);
 
     return (hash<<1) + ((hash>>63)&1);
 }

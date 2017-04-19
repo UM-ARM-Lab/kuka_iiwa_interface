@@ -9,13 +9,13 @@ import java.io.*;
 import java.util.*;
 import lcm.lcm.*;
  
-public final class path_execution_parameters implements lcm.lcm.LCMEncodable
+public final class joint_path_execution_parameters implements lcm.lcm.LCMEncodable
 {
     public double joint_relative_velocity;
     public double joint_relative_acceleration;
     public double override_joint_acceleration;
  
-    public path_execution_parameters()
+    public joint_path_execution_parameters()
     {
     }
  
@@ -28,10 +28,10 @@ public final class path_execution_parameters implements lcm.lcm.LCMEncodable
  
     public static long _hashRecursive(ArrayList<Class<?>> classes)
     {
-        if (classes.contains(wiktor_hardware_interface.path_execution_parameters.class))
+        if (classes.contains(wiktor_hardware_interface.joint_path_execution_parameters.class))
             return 0L;
  
-        classes.add(wiktor_hardware_interface.path_execution_parameters.class);
+        classes.add(wiktor_hardware_interface.joint_path_execution_parameters.class);
         long hash = LCM_FINGERPRINT_BASE
             ;
         classes.remove(classes.size() - 1);
@@ -54,12 +54,12 @@ public final class path_execution_parameters implements lcm.lcm.LCMEncodable
  
     }
  
-    public path_execution_parameters(byte[] data) throws IOException
+    public joint_path_execution_parameters(byte[] data) throws IOException
     {
         this(new LCMDataInputStream(data));
     }
  
-    public path_execution_parameters(DataInput ins) throws IOException
+    public joint_path_execution_parameters(DataInput ins) throws IOException
     {
         if (ins.readLong() != LCM_FINGERPRINT)
             throw new IOException("LCM Decode error: bad fingerprint");
@@ -67,9 +67,9 @@ public final class path_execution_parameters implements lcm.lcm.LCMEncodable
         _decodeRecursive(ins);
     }
  
-    public static wiktor_hardware_interface.path_execution_parameters _decodeRecursiveFactory(DataInput ins) throws IOException
+    public static wiktor_hardware_interface.joint_path_execution_parameters _decodeRecursiveFactory(DataInput ins) throws IOException
     {
-        wiktor_hardware_interface.path_execution_parameters o = new wiktor_hardware_interface.path_execution_parameters();
+        wiktor_hardware_interface.joint_path_execution_parameters o = new wiktor_hardware_interface.joint_path_execution_parameters();
         o._decodeRecursive(ins);
         return o;
     }
@@ -84,9 +84,9 @@ public final class path_execution_parameters implements lcm.lcm.LCMEncodable
  
     }
  
-    public wiktor_hardware_interface.path_execution_parameters copy()
+    public wiktor_hardware_interface.joint_path_execution_parameters copy()
     {
-        wiktor_hardware_interface.path_execution_parameters outobj = new wiktor_hardware_interface.path_execution_parameters();
+        wiktor_hardware_interface.joint_path_execution_parameters outobj = new wiktor_hardware_interface.joint_path_execution_parameters();
         outobj.joint_relative_velocity = this.joint_relative_velocity;
  
         outobj.joint_relative_acceleration = this.joint_relative_acceleration;

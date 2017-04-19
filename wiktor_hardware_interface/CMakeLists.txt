@@ -53,9 +53,11 @@ set(Eigen3_INCLUDE_DIRS ${EIGEN3_INCLUDE_DIR})
 
 ## Generate messages in the 'msg' folder
 add_message_files(DIRECTORY msg FILES CartesianImpedanceParameters.msg
+                                      CartesianControlModeLimits.msg
                                       MotionStatus.msg
                                       CartesianValueQuantity.msg
-                                      PathExecutionParameters.msg
+                                      JointPathExecutionParameters.msg
+                                      CartesianPathExecutionParameters.msg
                                       ControlModeCommand.msg
                                       Robotiq3FingerActuatorCommand.msg
                                       ControlModeStatus.msg
@@ -128,10 +130,12 @@ add_library(${PROJECT_NAME} include/${PROJECT_NAME}/iiwa_hardware_interface.hpp
                             include/${PROJECT_NAME}/robotiq_3finger_hardware_interface.hpp
                             include/${PROJECT_NAME}/wrist_force_torque_hardware_interface.hpp
                             include/${PROJECT_NAME}/takktile_hardware_interface.hpp
+                            include/${PROJECT_NAME}/minimal_arm_wrapper_interface.hpp
                             src/${PROJECT_NAME}/iiwa_hardware_interface.cpp
                             src/${PROJECT_NAME}/robotiq_3finger_hardware_interface.cpp
                             src/${PROJECT_NAME}/wrist_force_torque_hardware_interface.cpp
-                            src/${PROJECT_NAME}/takktile_hardware_interface.cpp)
+                            src/${PROJECT_NAME}/takktile_hardware_interface.cpp
+                            src/${PROJECT_NAME}/minimal_arm_wrapper_interface.cpp)
 add_dependencies(${PROJECT_NAME} ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES})
 
@@ -139,10 +143,6 @@ add_executable(${PROJECT_NAME}_loopback_test_node src/loopback_test_node.cpp)
 add_dependencies(${PROJECT_NAME}_loopback_test_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 target_link_libraries(${PROJECT_NAME}_loopback_test_node ${PROJECT_NAME} ${catkin_LIBRARIES})
 
-add_executable(${PROJECT_NAME}_right_arm_node src/right_arm_node.cpp)
-add_dependencies(${PROJECT_NAME}_right_arm_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
-target_link_libraries(${PROJECT_NAME}_right_arm_node ${PROJECT_NAME} ${catkin_LIBRARIES})
-
-add_executable(${PROJECT_NAME}_left_arm_node src/left_arm_node.cpp)
-add_dependencies(${PROJECT_NAME}_left_arm_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
-target_link_libraries(${PROJECT_NAME}_left_arm_node ${PROJECT_NAME} ${catkin_LIBRARIES})
+add_executable(${PROJECT_NAME}_arm_wrapper_node src/arm_wrapper_node.cpp)
+add_dependencies(${PROJECT_NAME}_arm_wrapper_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+target_link_libraries(${PROJECT_NAME}_arm_wrapper_node ${PROJECT_NAME} ${catkin_LIBRARIES})

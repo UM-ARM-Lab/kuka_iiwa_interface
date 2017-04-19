@@ -60,21 +60,41 @@ namespace iiwa_hardware_interface
         return lcm_cip;
     }
 
-    wiktor_hardware_interface::PathExecutionParameters IIWAHardwareInterface::ConvertPathExecutionParameters(const wiktor_hardware_interface::path_execution_parameters& path_execution_params) const
+    wiktor_hardware_interface::JointPathExecutionParameters IIWAHardwareInterface::ConvertJointPathExecutionParameters(const wiktor_hardware_interface::joint_path_execution_parameters& path_execution_params) const
     {
-        wiktor_hardware_interface::PathExecutionParameters ros_pexp;
+        wiktor_hardware_interface::JointPathExecutionParameters ros_pexp;
         ros_pexp.joint_relative_acceleration = path_execution_params.joint_relative_acceleration;
         ros_pexp.joint_relative_velocity = path_execution_params.joint_relative_velocity;
         ros_pexp.override_joint_acceleration = path_execution_params.override_joint_acceleration;
         return ros_pexp;
     }
 
-    wiktor_hardware_interface::path_execution_parameters IIWAHardwareInterface::ConvertPathExecutionParameters(const wiktor_hardware_interface::PathExecutionParameters& path_execution_params) const
+    wiktor_hardware_interface::joint_path_execution_parameters IIWAHardwareInterface::ConvertJointPathExecutionParameters(const wiktor_hardware_interface::JointPathExecutionParameters& path_execution_params) const
     {
-        wiktor_hardware_interface::path_execution_parameters lcm_pexp;
+        wiktor_hardware_interface::joint_path_execution_parameters lcm_pexp;
         lcm_pexp.joint_relative_acceleration = path_execution_params.joint_relative_acceleration;
         lcm_pexp.joint_relative_velocity = path_execution_params.joint_relative_velocity;
         lcm_pexp.override_joint_acceleration = path_execution_params.override_joint_acceleration;
+        return lcm_pexp;
+    }
+
+    wiktor_hardware_interface::CartesianPathExecutionParameters IIWAHardwareInterface::ConvertCartesianPathExecutionParameters(const wiktor_hardware_interface::cartesian_path_execution_parameters& path_execution_params) const
+    {
+        wiktor_hardware_interface::CartesianPathExecutionParameters ros_pexp;
+        ros_pexp.max_velocity = ConvertCVQfromLCMtoROS(path_execution_params.max_velocity);
+        ros_pexp.max_acceleration = ConvertCVQfromLCMtoROS(path_execution_params.max_acceleration);
+        ros_pexp.max_nullspace_velocity = path_execution_params.max_nullspace_velocity;
+        ros_pexp.max_nullspace_acceleration = path_execution_params.max_nullspace_acceleration;
+        return ros_pexp;
+    }
+
+    wiktor_hardware_interface::cartesian_path_execution_parameters IIWAHardwareInterface::ConvertCartesianPathExecutionParameters(const wiktor_hardware_interface::CartesianPathExecutionParameters& path_execution_params) const
+    {
+        wiktor_hardware_interface::cartesian_path_execution_parameters lcm_pexp;
+        lcm_pexp.max_velocity = ConvertCVQfromROStoLCM(path_execution_params.max_velocity);
+        lcm_pexp.max_acceleration = ConvertCVQfromROStoLCM(path_execution_params.max_acceleration);
+        lcm_pexp.max_nullspace_velocity = path_execution_params.max_nullspace_velocity;
+        lcm_pexp.max_nullspace_acceleration = path_execution_params.max_nullspace_acceleration;
         return lcm_pexp;
     }
 
@@ -110,7 +130,8 @@ namespace iiwa_hardware_interface
         wiktor_hardware_interface::control_mode_command lcm_command;
         lcm_command.cartesian_impedance_params = ConvertCartesianImpedanceParameters(control_mode_command.cartesian_impedance_params);
         lcm_command.joint_impedance_params = ConvertJointImpedanceParameters(control_mode_command.joint_impedance_params);
-        lcm_command.path_execution_params = ConvertPathExecutionParameters(control_mode_command.path_execution_params);
+        lcm_command.joint_path_execution_params = ConvertJointPathExecutionParameters(control_mode_command.joint_path_execution_params);
+        lcm_command.cartesian_path_execution_params = ConvertCartesianPathExecutionParameters(control_mode_command.cartesian_path_execution_params);
         lcm_command.control_mode = (int8_t)control_mode_command.control_mode;
         lcm_command.timestamp = control_mode_command.header.stamp.toSec();
         return lcm_command;
@@ -121,7 +142,8 @@ namespace iiwa_hardware_interface
         wiktor_hardware_interface::ControlModeStatus ros_status;
         ros_status.cartesian_impedance_params = ConvertCartesianImpedanceParameters(control_mode_status.cartesian_impedance_params);
         ros_status.joint_impedance_params = ConvertJointImpedanceParameters(control_mode_status.joint_impedance_params);
-        ros_status.path_execution_params = ConvertPathExecutionParameters(control_mode_status.path_execution_params);
+        ros_status.joint_path_execution_params = ConvertJointPathExecutionParameters(control_mode_status.joint_path_execution_params);
+        ros_status.cartesian_path_execution_params = ConvertCartesianPathExecutionParameters(control_mode_status.cartesian_path_execution_params);
         ros_status.active_control_mode = (uint8_t)control_mode_status.active_control_mode;
         ros_status.header.stamp = ros::Time(control_mode_status.timestamp);
         return ros_status;

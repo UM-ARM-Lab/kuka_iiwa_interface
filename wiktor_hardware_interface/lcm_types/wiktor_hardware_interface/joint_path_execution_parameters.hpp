@@ -6,14 +6,14 @@
 
 #include <lcm/lcm_coretypes.h>
 
-#ifndef __wiktor_hardware_interface_path_execution_parameters_hpp__
-#define __wiktor_hardware_interface_path_execution_parameters_hpp__
+#ifndef __wiktor_hardware_interface_joint_path_execution_parameters_hpp__
+#define __wiktor_hardware_interface_joint_path_execution_parameters_hpp__
 
 
 namespace wiktor_hardware_interface
 {
 
-class path_execution_parameters
+class joint_path_execution_parameters
 {
     public:
         double     joint_relative_velocity;
@@ -58,7 +58,7 @@ class path_execution_parameters
         inline static int64_t getHash();
 
         /**
-         * Returns "path_execution_parameters"
+         * Returns "joint_path_execution_parameters"
          */
         inline static const char* getTypeName();
 
@@ -69,7 +69,7 @@ class path_execution_parameters
         inline static uint64_t _computeHash(const __lcm_hash_ptr *p);
 };
 
-int path_execution_parameters::encode(void *buf, int offset, int maxlen) const
+int joint_path_execution_parameters::encode(void *buf, int offset, int maxlen) const
 {
     int pos = 0, tlen;
     int64_t hash = (int64_t)getHash();
@@ -83,7 +83,7 @@ int path_execution_parameters::encode(void *buf, int offset, int maxlen) const
     return pos;
 }
 
-int path_execution_parameters::decode(const void *buf, int offset, int maxlen)
+int joint_path_execution_parameters::decode(const void *buf, int offset, int maxlen)
 {
     int pos = 0, thislen;
 
@@ -98,23 +98,23 @@ int path_execution_parameters::decode(const void *buf, int offset, int maxlen)
     return pos;
 }
 
-int path_execution_parameters::getEncodedSize() const
+int joint_path_execution_parameters::getEncodedSize() const
 {
     return 8 + _getEncodedSizeNoHash();
 }
 
-int64_t path_execution_parameters::getHash()
+int64_t joint_path_execution_parameters::getHash()
 {
     static int64_t hash = _computeHash(NULL);
     return hash;
 }
 
-const char* path_execution_parameters::getTypeName()
+const char* joint_path_execution_parameters::getTypeName()
 {
-    return "path_execution_parameters";
+    return "joint_path_execution_parameters";
 }
 
-int path_execution_parameters::_encodeNoHash(void *buf, int offset, int maxlen) const
+int joint_path_execution_parameters::_encodeNoHash(void *buf, int offset, int maxlen) const
 {
     int pos = 0, tlen;
 
@@ -130,7 +130,7 @@ int path_execution_parameters::_encodeNoHash(void *buf, int offset, int maxlen) 
     return pos;
 }
 
-int path_execution_parameters::_decodeNoHash(const void *buf, int offset, int maxlen)
+int joint_path_execution_parameters::_decodeNoHash(const void *buf, int offset, int maxlen)
 {
     int pos = 0, tlen;
 
@@ -146,7 +146,7 @@ int path_execution_parameters::_decodeNoHash(const void *buf, int offset, int ma
     return pos;
 }
 
-int path_execution_parameters::_getEncodedSizeNoHash() const
+int joint_path_execution_parameters::_getEncodedSizeNoHash() const
 {
     int enc_size = 0;
     enc_size += __double_encoded_array_size(NULL, 1);
@@ -155,7 +155,7 @@ int path_execution_parameters::_getEncodedSizeNoHash() const
     return enc_size;
 }
 
-uint64_t path_execution_parameters::_computeHash(const __lcm_hash_ptr *)
+uint64_t joint_path_execution_parameters::_computeHash(const __lcm_hash_ptr *)
 {
     uint64_t hash = 0x31db436c85aab16cLL;
     return (hash<<1) + ((hash>>63)&1);
