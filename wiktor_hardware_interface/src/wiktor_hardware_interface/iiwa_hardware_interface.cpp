@@ -104,7 +104,7 @@ namespace iiwa_hardware_interface
         lcm_command.cartesian_pose = ConvertCVQfromROStoLCM(motion_command.cartesian_pose);
         lcm_command.joint_position = ConvertJVQfromROStoLCM(motion_command.joint_position);
         lcm_command.joint_velocity = ConvertJVQfromROStoLCM(motion_command.joint_velocity);
-        lcm_command.command_type = (int8_t)motion_command.command_type;
+        lcm_command.control_mode = (int8_t)motion_command.control_mode;
         lcm_command.timestamp = motion_command.header.stamp.toSec();
         return lcm_command;
     }
@@ -120,7 +120,7 @@ namespace iiwa_hardware_interface
         ros_status.measured_joint_position = ConvertJVQfromLCMtoROS(motion_status.measured_joint_position);
         ros_status.measured_joint_torque = ConvertJVQfromLCMtoROS(motion_status.measured_joint_torque);
         ros_status.measured_joint_velocity = ConvertJVQfromLCMtoROS(motion_status.measured_joint_velocity);
-        ros_status.active_command_type = (uint8_t)motion_status.active_command_type;
+        ros_status.active_control_mode = (uint8_t)motion_status.active_control_mode;
         ros_status.header.stamp = ros::Time(motion_status.timestamp);
         return ros_status;
     }

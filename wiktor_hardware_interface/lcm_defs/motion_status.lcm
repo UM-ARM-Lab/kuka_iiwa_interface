@@ -12,10 +12,11 @@ struct motion_status
     wiktor_hardware_interface.cartesian_value_quantity estimated_external_wrench;
     double timestamp;
     const int8_t IS_POSITION_MOTION=0; // Flag to bitmask
-    const int8_t IS_VELOCITY_MOTION=2; // Flag to bitmask
     const int8_t IS_CARTESIAN_MOTION=1; // Flag to bitmask
+    const int8_t IS_IMPEDANCE_CONTROL=2; // Flag to bitmask
     const int8_t JOINT_POSITION=0;
-    const int8_t JOINT_POSITION_VELOCITY=2;
+    const int8_t JOINT_IMPEDANCE=2;
     const int8_t CARTESIAN_POSE=1;
-    int8_t active_command_type;
+    const int8_t CARTESIAN_IMPEDANCE=3;
+    int8_t active_control_mode;
 }

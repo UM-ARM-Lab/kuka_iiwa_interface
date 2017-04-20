@@ -636,16 +636,12 @@ namespace wiktor_hardware_interface
         if (active_control_mode_.Valid())
         {
             const uint8_t active_control_type = active_control_mode_.GetImmutable().active_control_mode;
-            const uint8_t command_motion_type = command.command_type;
+            const uint8_t command_motion_type = command.control_mode;
             if (active_control_type == wiktor_hardware_interface::ControlModeCommand::JOINT_POSITION)
             {
                 if (command_motion_type == wiktor_hardware_interface::MotionCommand::JOINT_POSITION)
                 {
                     return SafetyCheckPositions(command.joint_position);
-                }
-                else if (command_motion_type == wiktor_hardware_interface::MotionCommand::JOINT_POSITION_VELOCITY)
-                {
-                    return SafetyCheckPositionsVelocities(command.joint_position, command.joint_velocity);
                 }
                 else
                 {
@@ -663,9 +659,20 @@ namespace wiktor_hardware_interface
                     return false;
                 }
             }
-            else if (active_control_type == wiktor_hardware_interface::ControlModeCommand::CARTESIAN_POSE || active_control_type == wiktor_hardware_interface::ControlModeCommand::CARTESIAN_IMPEDANCE)
+            else if (active_control_type == wiktor_hardware_interface::ControlModeCommand::CARTESIAN_POSE)
             {
                 if (command_motion_type == wiktor_hardware_interface::MotionCommand::CARTESIAN_POSE)
+                {
+                    return SafetyCheckCartesianPose(command.cartesian_pose);
+                }
+                else
+                {
+                    return false;
+                }
+            }
+            else if (active_control_type == wiktor_hardware_interface::ControlModeCommand::CARTESIAN_IMPEDANCE)
+            {
+                if (command_motion_type == wiktor_hardware_interface::MotionCommand::CARTESIAN_IMPEDANCE)
                 {
                     return SafetyCheckCartesianPose(command.cartesian_pose);
                 }
