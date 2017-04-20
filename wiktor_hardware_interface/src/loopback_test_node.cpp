@@ -237,7 +237,7 @@ public:
         command.joint_position = MakeJVQ(0.125, 0.25, 0.375, 0.5, 0.625, 0.75, 0.875);
         command.joint_velocity = MakeJVQ(0.875, 0.75, 0.625, 0.5, 0.375, 0.25, 0.125);
         command.cartesian_pose = MakeCVQ(1.0, 2.0, 3.0, 4.0, 5.0, 6.0);
-        command.command_type = 0x00;
+        command.control_mode = 0x00;
         command.header.stamp = ros::Time::now();
         const bool sent = iiwa_ptr_->SendMotionCommandMessage(command);
         assert(sent);
@@ -249,7 +249,7 @@ public:
         const bool jpmatch = JVQMatch(command.joint_position, status.measured_joint_position);
         const bool jvmatch = JVQMatch(command.joint_velocity, status.measured_joint_velocity);
         const bool cpmatch = CVQMatch(command.cartesian_pose, status.measured_cartesian_pose);
-        const bool ctmatch = (command.command_type == status.active_command_type);
+        const bool ctmatch = (command.control_mode == status.active_control_mode);
         if (jpmatch && jvmatch && cpmatch && ctmatch)
         {
             return true;
