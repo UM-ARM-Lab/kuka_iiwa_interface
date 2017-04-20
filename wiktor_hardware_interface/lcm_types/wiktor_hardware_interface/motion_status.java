@@ -20,21 +20,22 @@ public final class motion_status implements lcm.lcm.LCMEncodable
     public wiktor_hardware_interface.cartesian_value_quantity commanded_cartesian_pose;
     public wiktor_hardware_interface.cartesian_value_quantity estimated_external_wrench;
     public double timestamp;
-    public byte active_command_type;
+    public byte active_control_mode;
  
     public motion_status()
     {
     }
  
     public static final long LCM_FINGERPRINT;
-    public static final long LCM_FINGERPRINT_BASE = 0x54f626e8ca598243L;
+    public static final long LCM_FINGERPRINT_BASE = 0x76f416e8bc4561d8L;
  
     public static final byte IS_POSITION_MOTION = (byte) 0;
-    public static final byte IS_VELOCITY_MOTION = (byte) 2;
     public static final byte IS_CARTESIAN_MOTION = (byte) 1;
+    public static final byte IS_IMPEDANCE_CONTROL = (byte) 2;
     public static final byte JOINT_POSITION = (byte) 0;
-    public static final byte JOINT_POSITION_VELOCITY = (byte) 2;
+    public static final byte JOINT_IMPEDANCE = (byte) 2;
     public static final byte CARTESIAN_POSE = (byte) 1;
+    public static final byte CARTESIAN_IMPEDANCE = (byte) 3;
 
     static {
         LCM_FINGERPRINT = _hashRecursive(new ArrayList<Class<?>>());
@@ -86,7 +87,7 @@ public final class motion_status implements lcm.lcm.LCMEncodable
  
         outs.writeDouble(this.timestamp); 
  
-        outs.writeByte(this.active_command_type); 
+        outs.writeByte(this.active_control_mode); 
  
     }
  
@@ -130,7 +131,7 @@ public final class motion_status implements lcm.lcm.LCMEncodable
  
         this.timestamp = ins.readDouble();
  
-        this.active_command_type = ins.readByte();
+        this.active_control_mode = ins.readByte();
  
     }
  
@@ -155,7 +156,7 @@ public final class motion_status implements lcm.lcm.LCMEncodable
  
         outobj.timestamp = this.timestamp;
  
-        outobj.active_command_type = this.active_command_type;
+        outobj.active_control_mode = this.active_control_mode;
  
         return outobj;
     }

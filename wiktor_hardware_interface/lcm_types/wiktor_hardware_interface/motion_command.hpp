@@ -27,15 +27,16 @@ class motion_command
 
         double     timestamp;
 
-        int8_t     command_type;
+        int8_t     control_mode;
 
     public:
         static constexpr int8_t   IS_POSITION_MOTION = 0;
-        static constexpr int8_t   IS_VELOCITY_MOTION = 2;
         static constexpr int8_t   IS_CARTESIAN_MOTION = 1;
+        static constexpr int8_t   IS_IMPEDANCE_CONTROL = 2;
         static constexpr int8_t   JOINT_POSITION = 0;
-        static constexpr int8_t   JOINT_POSITION_VELOCITY = 2;
+        static constexpr int8_t   JOINT_IMPEDANCE = 2;
         static constexpr int8_t   CARTESIAN_POSE = 1;
+        static constexpr int8_t   CARTESIAN_IMPEDANCE = 3;
 
     public:
         /**
@@ -145,7 +146,7 @@ int motion_command::_encodeNoHash(void *buf, int offset, int maxlen) const
     tlen = __double_encode_array(buf, offset + pos, maxlen - pos, &this->timestamp, 1);
     if(tlen < 0) return tlen; else pos += tlen;
 
-    tlen = __int8_t_encode_array(buf, offset + pos, maxlen - pos, &this->command_type, 1);
+    tlen = __int8_t_encode_array(buf, offset + pos, maxlen - pos, &this->control_mode, 1);
     if(tlen < 0) return tlen; else pos += tlen;
 
     return pos;
@@ -167,7 +168,7 @@ int motion_command::_decodeNoHash(const void *buf, int offset, int maxlen)
     tlen = __double_decode_array(buf, offset + pos, maxlen - pos, &this->timestamp, 1);
     if(tlen < 0) return tlen; else pos += tlen;
 
-    tlen = __int8_t_decode_array(buf, offset + pos, maxlen - pos, &this->command_type, 1);
+    tlen = __int8_t_decode_array(buf, offset + pos, maxlen - pos, &this->control_mode, 1);
     if(tlen < 0) return tlen; else pos += tlen;
 
     return pos;
@@ -192,7 +193,7 @@ uint64_t motion_command::_computeHash(const __lcm_hash_ptr *p)
             return 0;
     const __lcm_hash_ptr cp = { p, (void*)motion_command::getHash };
 
-    uint64_t hash = 0xf94aa07f1e8be95cLL +
+    uint64_t hash = 0xe589b07f2c77fd42LL +
          wiktor_hardware_interface::joint_value_quantity::_computeHash(&cp) +
          wiktor_hardware_interface::joint_value_quantity::_computeHash(&cp) +
          wiktor_hardware_interface::cartesian_value_quantity::_computeHash(&cp);

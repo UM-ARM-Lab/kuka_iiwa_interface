@@ -15,21 +15,22 @@ public final class motion_command implements lcm.lcm.LCMEncodable
     public wiktor_hardware_interface.joint_value_quantity joint_velocity;
     public wiktor_hardware_interface.cartesian_value_quantity cartesian_pose;
     public double timestamp;
-    public byte command_type;
+    public byte control_mode;
  
     public motion_command()
     {
     }
  
     public static final long LCM_FINGERPRINT;
-    public static final long LCM_FINGERPRINT_BASE = 0xf94aa07f1e8be95cL;
+    public static final long LCM_FINGERPRINT_BASE = 0xe589b07f2c77fd42L;
  
     public static final byte IS_POSITION_MOTION = (byte) 0;
-    public static final byte IS_VELOCITY_MOTION = (byte) 2;
     public static final byte IS_CARTESIAN_MOTION = (byte) 1;
+    public static final byte IS_IMPEDANCE_CONTROL = (byte) 2;
     public static final byte JOINT_POSITION = (byte) 0;
-    public static final byte JOINT_POSITION_VELOCITY = (byte) 2;
+    public static final byte JOINT_IMPEDANCE = (byte) 2;
     public static final byte CARTESIAN_POSE = (byte) 1;
+    public static final byte CARTESIAN_IMPEDANCE = (byte) 3;
 
     static {
         LCM_FINGERPRINT = _hashRecursive(new ArrayList<Class<?>>());
@@ -66,7 +67,7 @@ public final class motion_command implements lcm.lcm.LCMEncodable
  
         outs.writeDouble(this.timestamp); 
  
-        outs.writeByte(this.command_type); 
+        outs.writeByte(this.control_mode); 
  
     }
  
@@ -100,7 +101,7 @@ public final class motion_command implements lcm.lcm.LCMEncodable
  
         this.timestamp = ins.readDouble();
  
-        this.command_type = ins.readByte();
+        this.control_mode = ins.readByte();
  
     }
  
@@ -115,7 +116,7 @@ public final class motion_command implements lcm.lcm.LCMEncodable
  
         outobj.timestamp = this.timestamp;
  
-        outobj.command_type = this.command_type;
+        outobj.control_mode = this.control_mode;
  
         return outobj;
     }
