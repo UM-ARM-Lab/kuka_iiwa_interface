@@ -68,9 +68,9 @@ class WiktorJointStatePublisher:
 
     def set_gripper_position_values(self, gripper_status, offset):
         with self.joint_state_lock:
-            self.joint_state_msg.position[offset + 0] = gripper_status.finger_a_status.position
-            self.joint_state_msg.position[offset + 4] = gripper_status.finger_b_status.position
-            self.joint_state_msg.position[offset + 8] = gripper_status.finger_c_status.position
+            self.joint_state_msg.position[offset + 0] = gripper_status.finger_a_status.position*2.0
+            self.joint_state_msg.position[offset + 4] = gripper_status.finger_b_status.position*2.0
+            self.joint_state_msg.position[offset + 8] = gripper_status.finger_c_status.position*2.0
             # self.joint_state_msg.position[offset + 3] = gripper_status.scissor_status.position
             # self.joint_state_msg.position[offset + 7] = gripper_status.scissor_status.position
 
