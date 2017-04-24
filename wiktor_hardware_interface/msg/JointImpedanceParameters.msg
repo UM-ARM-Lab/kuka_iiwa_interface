@@ -1,2 +1,0 @@
-wiktor_hardware_interface/JointValueQuantity joint_stiffness
-wiktor_hardware_interface/JointValueQuantity joint_damping
