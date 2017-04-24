@@ -41,7 +41,7 @@ int main(int argc, char** argv)
     const std::string DEFAULT_GRIPPER_STATUS_TOPIC("gripper_status");
     // Default LCM parameters
     const std::string DEFAULT_SEND_LCM_URL("udp://10.10.10.11:30000");
-    const std::string DEFAULT_RECV_LCM_URL("udp://10.10.10.99:30001");
+    const std::string DEFAULT_RECV_LCM_URL("udp://10.10.10.100:30001");
     const std::string DEFAULT_MOTION_COMMAND_CHANNEL("motion_command");
     const std::string DEFAULT_MOTION_STATUS_CHANNEL("motion_status");
     const std::string DEFAULT_CONTROL_MODE_COMMAND_CHANNEL("control_mode_command");

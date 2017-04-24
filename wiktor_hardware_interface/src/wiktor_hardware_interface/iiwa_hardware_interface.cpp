@@ -98,6 +98,26 @@ namespace iiwa_hardware_interface
         return lcm_pexp;
     }
 
+    wiktor_hardware_interface::CartesianControlModeLimits IIWAHardwareInterface::ConvertCartesianControlModeLimits(const wiktor_hardware_interface::cartesian_control_mode_limits& cartesian_control_mode_limits) const
+    {
+        wiktor_hardware_interface::CartesianControlModeLimits ros_ccml;
+        ros_ccml.max_cartesian_velocity = ConvertCVQfromLCMtoROS(cartesian_control_mode_limits.max_cartesian_velocity);
+        ros_ccml.max_path_deviation = ConvertCVQfromLCMtoROS(cartesian_control_mode_limits.max_path_deviation);
+        ros_ccml.max_control_force = ConvertCVQfromLCMtoROS(cartesian_control_mode_limits.max_control_force);
+        ros_ccml.stop_on_max_control_force = cartesian_control_mode_limits.stop_on_max_control_force;
+        return ros_ccml;
+    }
+
+    wiktor_hardware_interface::cartesian_control_mode_limits IIWAHardwareInterface::ConvertCartesianControlModeLimits(const wiktor_hardware_interface::CartesianControlModeLimits& cartesian_control_mode_limits) const
+    {
+        wiktor_hardware_interface::cartesian_control_mode_limits lcm_ccml;
+        lcm_ccml.max_cartesian_velocity = ConvertCVQfromROStoLCM(cartesian_control_mode_limits.max_cartesian_velocity);
+        lcm_ccml.max_path_deviation = ConvertCVQfromROStoLCM(cartesian_control_mode_limits.max_path_deviation);
+        lcm_ccml.max_control_force = ConvertCVQfromROStoLCM(cartesian_control_mode_limits.max_control_force);
+        lcm_ccml.stop_on_max_control_force = cartesian_control_mode_limits.stop_on_max_control_force;
+        return lcm_ccml;
+    }
+
     wiktor_hardware_interface::motion_command IIWAHardwareInterface::ConvertMotionCommand(const wiktor_hardware_interface::MotionCommand& motion_command) const
     {
         wiktor_hardware_interface::motion_command lcm_command;
@@ -128,6 +148,7 @@ namespace iiwa_hardware_interface
     wiktor_hardware_interface::control_mode_command IIWAHardwareInterface::ConvertControlModeCommand(const wiktor_hardware_interface::ControlModeCommand& control_mode_command) const
     {
         wiktor_hardware_interface::control_mode_command lcm_command;
+        lcm_command.cartesian_control_mode_limits = ConvertCartesianControlModeLimits(control_mode_command.cartesian_control_mode_limits);
         lcm_command.cartesian_impedance_params = ConvertCartesianImpedanceParameters(control_mode_command.cartesian_impedance_params);
         lcm_command.joint_impedance_params = ConvertJointImpedanceParameters(control_mode_command.joint_impedance_params);
         lcm_command.joint_path_execution_params = ConvertJointPathExecutionParameters(control_mode_command.joint_path_execution_params);
@@ -140,6 +161,7 @@ namespace iiwa_hardware_interface
     wiktor_hardware_interface::ControlModeStatus IIWAHardwareInterface::ConvertControlModeStatus(const wiktor_hardware_interface::control_mode_status& control_mode_status) const
     {
         wiktor_hardware_interface::ControlModeStatus ros_status;
+        ros_status.cartesian_control_mode_limits = ConvertCartesianControlModeLimits(control_mode_status.cartesian_control_mode_limits);
         ros_status.cartesian_impedance_params = ConvertCartesianImpedanceParameters(control_mode_status.cartesian_impedance_params);
         ros_status.joint_impedance_params = ConvertJointImpedanceParameters(control_mode_status.joint_impedance_params);
         ros_status.joint_path_execution_params = ConvertJointPathExecutionParameters(control_mode_status.joint_path_execution_params);

@@ -53,6 +53,10 @@ namespace iiwa_hardware_interface
 
         wiktor_hardware_interface::cartesian_path_execution_parameters ConvertCartesianPathExecutionParameters(const wiktor_hardware_interface::CartesianPathExecutionParameters& path_execution_params) const;
 
+        wiktor_hardware_interface::CartesianControlModeLimits ConvertCartesianControlModeLimits(const wiktor_hardware_interface::cartesian_control_mode_limits& cartesian_control_mode_limits) const;
+
+        wiktor_hardware_interface::cartesian_control_mode_limits ConvertCartesianControlModeLimits(const wiktor_hardware_interface::CartesianControlModeLimits& cartesian_control_mode_limits) const;
+
         wiktor_hardware_interface::motion_command ConvertMotionCommand(const wiktor_hardware_interface::MotionCommand& motion_command) const;
 
         wiktor_hardware_interface::MotionStatus ConvertMotionStatus(const wiktor_hardware_interface::motion_status& motion_status) const;

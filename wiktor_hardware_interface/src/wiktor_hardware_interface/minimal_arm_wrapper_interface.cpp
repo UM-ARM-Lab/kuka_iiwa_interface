@@ -64,6 +64,7 @@ namespace wiktor_hardware_interface
 
     void MinimalArmWrapperInterface::LCMLoop()
     {
+        ROS_INFO_STREAM_NAMED(ros::this_node::getName(), "Starting LCM spin loop...");
         // Run LCM
         bool lcm_ok = true;
         while (ros::ok() && lcm_ok)
@@ -92,7 +93,7 @@ namespace wiktor_hardware_interface
 
     bool MinimalArmWrapperInterface::CheckControlModeCommandAndStatusMatch(const wiktor_hardware_interface::ControlModeCommand& command, const wiktor_hardware_interface::ControlModeStatus& status) const
     {
-        std::cout << "ControlModeCommand:\n" << command << "\nControlModeStatus:\n" << status << std::endl;
+        //std::cout << "ControlModeCommand:\n" << command << "\nControlModeStatus:\n" << status << std::endl;
         const bool cdmatch = CVQMatch(command.cartesian_impedance_params.cartesian_damping, status.cartesian_impedance_params.cartesian_damping);
         const bool ndmatch = (command.cartesian_impedance_params.nullspace_damping == status.cartesian_impedance_params.nullspace_damping);
         const bool csmatch = CVQMatch(command.cartesian_impedance_params.cartesian_stiffness, status.cartesian_impedance_params.cartesian_stiffness);
@@ -554,7 +555,8 @@ namespace wiktor_hardware_interface
         if (active_control_mode_.Valid())
         {
             const wiktor_hardware_interface::ControlModeCommand merged_command = MergeControlModeCommand(active_control_mode_.GetImmutable(), req.new_control_mode);
-            const std::pair<bool, std::string> safety_check = SafetyCheckControlMode(req.new_control_mode);
+            //std::cout << "++++++++++++++++++++++++++++++++++++++++\nMerged control mode:\n" << merged_command << std::endl;
+            const std::pair<bool, std::string> safety_check = SafetyCheckControlMode(merged_command);
             if (safety_check.first)
             {
                 iiwa_ptr_->SendControlModeCommandMessage(merged_command);
@@ -756,6 +758,10 @@ namespace wiktor_hardware_interface
     void MinimalArmWrapperInterface::ControlModeStatusLCMCallback(const wiktor_hardware_interface::ControlModeStatus& control_mode_status)
     {
         control_mode_status_mutex_.lock();
+        if (active_control_mode_.Valid() == false)
+        {
+            std::cout << "Initializing active_control_mode for the first time" << std::endl;
+        }
         active_control_mode_ = control_mode_status;
         control_mode_status_mutex_.unlock();
         control_mode_status_pub_.publish(control_mode_status);
