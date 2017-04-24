@@ -1,9 +1,0 @@
-package wiktor_hardware_interface;
-
-struct cartesian_control_mode_limits
-{
-    wiktor_hardware_interface.cartesian_value_quantity max_path_deviation;
-    wiktor_hardware_interface.cartesian_value_quantity max_cartesian_velocity;
-    wiktor_hardware_interface.cartesian_value_quantity max_control_force;
-    boolean stop_on_max_control_force;
-}
