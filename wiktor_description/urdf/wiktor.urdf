@@ -977,6 +977,22 @@
       <material name="DarkGray"/>
     </collision>
   </link>
+  <!-- Palm surface aligned with the gripper axis -->
+  <joint name="wiktor_left_gripper_palm_surface_joint" type="fixed">
+    <parent link="wiktor_left_gripper_palm"/>
+    <child link="wiktor_left_gripper_palm_surface"/>
+    <origin rpy="0 0 0" xyz="0 0 0.092075"/>
+  </joint>
+  <link name="wiktor_left_gripper_palm_surface">
+        </link>
+  <!-- Palm surface aligned with the gripper axis -->
+  <joint name="wiktor_left_gripper_palm_surface_kuka_joint" type="fixed">
+    <parent link="wiktor_left_gripper_palm"/>
+    <child link="wiktor_left_gripper_palm_surface_kuka"/>
+    <origin rpy="0 0 -0.78539816339" xyz="0 0 0.092075"/>
+  </joint>
+  <link name="wiktor_left_gripper_palm_surface_kuka">
+        </link>
   <!-- Finger A -->
   <joint name="wiktor_left_gripper_fingerA_knuckle" type="fixed">
     <origin rpy="0 0 0" xyz="0.02225040 0 0.06111875"/>
@@ -1371,6 +1387,22 @@
       <material name="DarkGray"/>
     </collision>
   </link>
+  <!-- Palm surface aligned with the gripper axis -->
+  <joint name="wiktor_right_gripper_palm_surface_joint" type="fixed">
+    <parent link="wiktor_right_gripper_palm"/>
+    <child link="wiktor_right_gripper_palm_surface"/>
+    <origin rpy="0 0 0" xyz="0 0 0.092075"/>
+  </joint>
+  <link name="wiktor_right_gripper_palm_surface">
+        </link>
+  <!-- Palm surface aligned with the gripper axis -->
+  <joint name="wiktor_right_gripper_palm_surface_kuka_joint" type="fixed">
+    <parent link="wiktor_right_gripper_palm"/>
+    <child link="wiktor_right_gripper_palm_surface_kuka"/>
+    <origin rpy="0 0 -0.78539816339" xyz="0 0 0.092075"/>
+  </joint>
+  <link name="wiktor_right_gripper_palm_surface_kuka">
+        </link>
   <!-- Finger A -->
   <joint name="wiktor_right_gripper_fingerA_knuckle" type="fixed">
     <origin rpy="0 0 0" xyz="0.02225040 0 0.06111875"/>
@@ -1740,4 +1772,3 @@
     </collision>
   </link>
 </robot>
-

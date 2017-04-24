@@ -34,6 +34,24 @@
 
         </link>
 
+        <!-- Palm surface aligned with the gripper axis -->
+        <joint name="${prefix}_palm_surface_joint" type="fixed">
+            <parent link="${prefix}_palm"/>
+            <child link="${prefix}_palm_surface"/>
+            <origin xyz="0 0 0.092075" rpy="0 0 0"/>
+        </joint>
+        <link name="${prefix}_palm_surface">
+        </link>
+
+        <!-- Palm surface aligned with the gripper axis -->
+        <joint name="${prefix}_palm_surface_kuka_joint" type="fixed">
+            <parent link="${prefix}_palm"/>
+            <child link="${prefix}_palm_surface_kuka"/>
+            <origin xyz="0 0 0.092075" rpy="0 0 -0.78539816339"/>
+        </joint>
+        <link name="${prefix}_palm_surface_kuka">
+        </link>
+
         <!-- Finger A -->
         <joint name="${prefix}_fingerA_knuckle" type="fixed">
             <origin xyz="0.02225040 0 0.06111875" rpy="0 0 0"/>
