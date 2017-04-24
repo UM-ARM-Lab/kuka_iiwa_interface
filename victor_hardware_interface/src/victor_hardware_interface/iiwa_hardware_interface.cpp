@@ -147,12 +147,8 @@ namespace iiwa_hardware_interface
 
     victor_hardware_interface::control_mode_command IIWAHardwareInterface::ConvertControlModeCommand(const victor_hardware_interface::ControlModeCommand& control_mode_command) const
     {
-<<<<<<< HEAD:wiktor_hardware_interface/src/wiktor_hardware_interface/iiwa_hardware_interface.cpp
-        wiktor_hardware_interface::control_mode_command lcm_command;
-        lcm_command.cartesian_control_mode_limits = ConvertCartesianControlModeLimits(control_mode_command.cartesian_control_mode_limits);
-=======
         victor_hardware_interface::control_mode_command lcm_command;
->>>>>>> 0a6507fe9816b416f132bec7369ea2d7227ccb05:victor_hardware_interface/src/victor_hardware_interface/iiwa_hardware_interface.cpp
+        lcm_command.cartesian_control_mode_limits = ConvertCartesianControlModeLimits(control_mode_command.cartesian_control_mode_limits);
         lcm_command.cartesian_impedance_params = ConvertCartesianImpedanceParameters(control_mode_command.cartesian_impedance_params);
         lcm_command.joint_impedance_params = ConvertJointImpedanceParameters(control_mode_command.joint_impedance_params);
         lcm_command.joint_path_execution_params = ConvertJointPathExecutionParameters(control_mode_command.joint_path_execution_params);
@@ -164,12 +160,8 @@ namespace iiwa_hardware_interface
 
     victor_hardware_interface::ControlModeStatus IIWAHardwareInterface::ConvertControlModeStatus(const victor_hardware_interface::control_mode_status& control_mode_status) const
     {
-<<<<<<< HEAD:wiktor_hardware_interface/src/wiktor_hardware_interface/iiwa_hardware_interface.cpp
-        wiktor_hardware_interface::ControlModeStatus ros_status;
-        ros_status.cartesian_control_mode_limits = ConvertCartesianControlModeLimits(control_mode_status.cartesian_control_mode_limits);
-=======
         victor_hardware_interface::ControlModeStatus ros_status;
->>>>>>> 0a6507fe9816b416f132bec7369ea2d7227ccb05:victor_hardware_interface/src/victor_hardware_interface/iiwa_hardware_interface.cpp
+        ros_status.cartesian_control_mode_limits = ConvertCartesianControlModeLimits(control_mode_status.cartesian_control_mode_limits);
         ros_status.cartesian_impedance_params = ConvertCartesianImpedanceParameters(control_mode_status.cartesian_impedance_params);
         ros_status.joint_impedance_params = ConvertJointImpedanceParameters(control_mode_status.joint_impedance_params);
         ros_status.joint_path_execution_params = ConvertJointPathExecutionParameters(control_mode_status.joint_path_execution_params);
