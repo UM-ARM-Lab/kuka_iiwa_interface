@@ -1,6 +1,6 @@
 victor_hardware_interface/JointValueQuantity joint_position
 victor_hardware_interface/JointValueQuantity joint_velocity
-victor_hardware_interface/CartesianValueQuantity cartesian_pose
+geometry_msgs/Pose cartesian_pose
 std_msgs/Header header
 uint8 IS_POSITION_MOTION=0
 uint8 IS_CARTESIAN_MOTION=1

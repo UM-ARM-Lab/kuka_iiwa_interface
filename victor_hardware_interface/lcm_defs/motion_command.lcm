@@ -4,7 +4,7 @@ struct motion_command
 {
     victor_hardware_interface.joint_value_quantity joint_position;
     victor_hardware_interface.joint_value_quantity joint_velocity;
-    victor_hardware_interface.cartesian_value_quantity cartesian_pose;
+    victor_hardware_interface.cartesian_pose cartesian_pose;
     double timestamp;
     const int8_t IS_POSITION_MOTION=0; // Flag to bitmask
     const int8_t IS_CARTESIAN_MOTION=1; // Flag to bitmask
