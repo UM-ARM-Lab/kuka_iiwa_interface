@@ -31,8 +31,12 @@
 
 namespace victor_hardware_interface
 {
-    MinimalArmWrapperInterface::MinimalArmWrapperInterface(ros::NodeHandle& nh, const std::string& motion_command_topic, const std::string& motion_status_topic, const std::string& control_mode_status_topic, const std::string& get_control_mode_service, const std::string& set_control_mode_service, const std::string& gripper_command_topic, const std::string& gripper_status_topic, const std::shared_ptr<lcm::LCM>& send_lcm_ptr, const std::shared_ptr<lcm::LCM>& recv_lcm_ptr, const std::string& motion_command_channel, const std::string& motion_status_channel, const std::string& control_mode_command_channel, const std::string& control_mode_status_channel, const std::string& gripper_command_channel, const std::string& gripper_status_channel, const double set_control_mode_timeout) : nh_(nh), set_control_mode_timeout_(set_control_mode_timeout), send_lcm_ptr_(send_lcm_ptr), recv_lcm_ptr_(recv_lcm_ptr)
+    MinimalArmWrapperInterface::MinimalArmWrapperInterface(ros::NodeHandle& nh, const std::string& cartesian_control_frame, const std::string& motion_command_topic, const std::string& motion_status_topic, const std::string& control_mode_status_topic, const std::string& get_control_mode_service, const std::string& set_control_mode_service, const std::string& gripper_command_topic, const std::string& gripper_status_topic, const std::shared_ptr<lcm::LCM>& send_lcm_ptr, const std::shared_ptr<lcm::LCM>& recv_lcm_ptr, const std::string& motion_command_channel, const std::string& motion_status_channel, const std::string& control_mode_command_channel, const std::string& control_mode_status_channel, const std::string& gripper_command_channel, const std::string& gripper_status_channel, const double set_control_mode_timeout) : nh_(nh), cartesian_control_frame_(cartesian_control_frame), set_control_mode_timeout_(set_control_mode_timeout), send_lcm_ptr_(send_lcm_ptr), recv_lcm_ptr_(recv_lcm_ptr)
     {
+        if (cartesian_control_frame_ == "")
+        {
+            throw std::invalid_argument("Cartesian control frame [""] is not valid");
+        }
         nh_.setCallbackQueue(&ros_callback_queue_);
         // Set up IIWA LCM interface
         std::function<void(const victor_hardware_interface::MotionStatus&)> motion_status_callback_fn = [&] (const victor_hardware_interface::MotionStatus& motion_status) { return MotionStatusLCMCallback(motion_status); };
@@ -626,9 +630,27 @@ namespace victor_hardware_interface
         return true;
     }
 
-    bool MinimalArmWrapperInterface::SafetyCheckCartesianPose(const victor_hardware_interface::CartesianValueQuantity& pose) const
+    bool MinimalArmWrapperInterface::SafetyCheckCartesianPose(const geometry_msgs::Pose& pose, const std::string& frame) const
     {
-        UNUSED(pose);
+        // Check to make sure the frame is correct!
+        if (frame != cartesian_control_frame_)
+        {
+            ROS_ERROR_NAMED(ros::this_node::getName(), "Commanded cartesian pose has the wrong frame, %s given, %s expected", frame.c_str(), cartesian_control_frame_.c_str());
+            return false;
+        }
+        else
+        {
+            const double quat_squared_norm = (pose.orientation.w * pose.orientation.w)
+                                             + (pose.orientation.x * pose.orientation.x)
+                                             + (pose.orientation.y * pose.orientation.y)
+                                             + (pose.orientation.z * pose.orientation.z);
+            const double error = std::abs(1.0 - quat_squared_norm);
+            if (error > 1e-6)
+            {
+                ROS_ERROR_NAMED(ros::this_node::getName(), "Commanded cartesian pose quaternion is not normalized, squared norm = %f", quat_squared_norm);
+                return false;
+            }
+        }
         return true;
     }
 
@@ -665,7 +687,7 @@ namespace victor_hardware_interface
             {
                 if (command_motion_type == victor_hardware_interface::MotionCommand::CARTESIAN_POSE)
                 {
-                    return SafetyCheckCartesianPose(command.cartesian_pose);
+                    return SafetyCheckCartesianPose(command.cartesian_pose, command.header.frame_id);
                 }
                 else
                 {
@@ -676,7 +698,7 @@ namespace victor_hardware_interface
             {
                 if (command_motion_type == victor_hardware_interface::MotionCommand::CARTESIAN_IMPEDANCE)
                 {
-                    return SafetyCheckCartesianPose(command.cartesian_pose);
+                    return SafetyCheckCartesianPose(command.cartesian_pose, command.header.frame_id);
                 }
                 else
                 {

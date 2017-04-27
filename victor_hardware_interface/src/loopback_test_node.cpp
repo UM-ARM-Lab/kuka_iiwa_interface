@@ -6,6 +6,7 @@
 #include <string>
 #include <iostream>
 #include <arc_utilities/arc_helpers.hpp>
+#include <arc_utilities/eigen_helpers_conversions.hpp>
 #include <victor_hardware_interface/iiwa_hardware_interface.hpp>
 #include <victor_hardware_interface/robotiq_3finger_hardware_interface.hpp>
 // ROS message headers
@@ -144,6 +145,42 @@ public:
         }
     }
 
+    static inline bool CartPoseMatch(const geometry_msgs::Pose& pose1, const geometry_msgs::Pose& pose2)
+    {
+        if (pose1.position.x != pose2.position.x)
+        {
+            return false;
+        }
+        else if (pose1.position.y != pose2.position.y)
+        {
+            return false;
+        }
+        else if (pose1.position.z != pose2.position.z)
+        {
+            return false;
+        }
+        else if (pose1.orientation.w != pose2.orientation.w)
+        {
+            return false;
+        }
+        else if (pose1.orientation.x != pose2.orientation.x)
+        {
+            return false;
+        }
+        else if (pose1.orientation.y != pose2.orientation.y)
+        {
+            return false;
+        }
+        else if (pose1.orientation.z != pose2.orientation.z)
+        {
+            return false;
+        }
+        else
+        {
+            return true;
+        }
+    }
+
     static inline bool JointPExPMatch(const victor_hardware_interface::JointPathExecutionParameters& pexp1, const victor_hardware_interface::JointPathExecutionParameters& pexp2)
     {
         if (pexp1.joint_relative_acceleration != pexp2.joint_relative_acceleration)
@@ -236,7 +273,7 @@ public:
         victor_hardware_interface::MotionCommand command;
         command.joint_position = MakeJVQ(0.125, 0.25, 0.375, 0.5, 0.625, 0.75, 0.875);
         command.joint_velocity = MakeJVQ(0.875, 0.75, 0.625, 0.5, 0.375, 0.25, 0.125);
-        command.cartesian_pose = MakeCVQ(1.0, 2.0, 3.0, 4.0, 5.0, 6.0);
+        command.cartesian_pose = EigenHelpersConversions::EigenAffine3dToGeometryPose(Eigen::Affine3d::Identity());
         command.control_mode = 0x00;
         command.header.stamp = ros::Time::now();
         const bool sent = iiwa_ptr_->SendMotionCommandMessage(command);
@@ -248,7 +285,7 @@ public:
     {
         const bool jpmatch = JVQMatch(command.joint_position, status.measured_joint_position);
         const bool jvmatch = JVQMatch(command.joint_velocity, status.measured_joint_velocity);
-        const bool cpmatch = CVQMatch(command.cartesian_pose, status.measured_cartesian_pose);
+        const bool cpmatch = CartPoseMatch(command.cartesian_pose, status.measured_cartesian_pose);
         const bool ctmatch = (command.control_mode == status.active_control_mode);
         if (jpmatch && jvmatch && cpmatch && ctmatch)
         {

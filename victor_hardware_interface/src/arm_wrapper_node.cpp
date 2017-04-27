@@ -31,6 +31,8 @@
 
 int main(int argc, char** argv)
 {
+    // Default ROS params
+    const std::string DEFAULT_CARTESIAN_POSE_FRAME = "base";
     // Default ROS topic / service names
     const std::string DEFAULT_MOTION_COMMAND_TOPIC("motion_command");
     const std::string DEFAULT_MOTION_STATUS_TOPIC("motion_status");
@@ -53,6 +55,8 @@ int main(int argc, char** argv)
     ros::init(argc, argv, "right_arm_node");
     ros::NodeHandle nh;
     ros::NodeHandle nhp("~");
+    // Get params
+    const std::string cartesian_pose_frame = nhp.param(std::string("cartesian_pose_frame"), DEFAULT_CARTESIAN_POSE_FRAME);
     // Get topic & service names
     const std::string motion_command_topic = nhp.param(std::string("motion_command_topic"), DEFAULT_MOTION_COMMAND_TOPIC);
     const std::string motion_status_topic = nhp.param(std::string("motion_status_topic"), DEFAULT_MOTION_STATUS_TOPIC);
@@ -76,7 +80,7 @@ int main(int argc, char** argv)
     {
         std::shared_ptr<lcm::LCM> lcm_ptr(new lcm::LCM(send_lcm_url));
         ROS_INFO_NAMED(ros::this_node::getName(), "Starting with shared send/receive LCM [%s]...", send_lcm_url.c_str());
-        victor_hardware_interface::MinimalArmWrapperInterface interface(nh, motion_command_topic, motion_status_topic, control_mode_status_topic, get_control_mode_service, set_control_mode_service, gripper_command_topic, gripper_status_topic, lcm_ptr, lcm_ptr, motion_command_channel, motion_status_channel, control_mode_command_channel, control_mode_status_channel, gripper_command_channel, gripper_status_channel, set_control_mode_timeout);
+        victor_hardware_interface::MinimalArmWrapperInterface interface(nh, cartesian_pose_frame, motion_command_topic, motion_status_topic, control_mode_status_topic, get_control_mode_service, set_control_mode_service, gripper_command_topic, gripper_status_topic, lcm_ptr, lcm_ptr, motion_command_channel, motion_status_channel, control_mode_command_channel, control_mode_status_channel, gripper_command_channel, gripper_status_channel, set_control_mode_timeout);
         interface.LCMLoop();
         return 0;
     }
@@ -85,7 +89,7 @@ int main(int argc, char** argv)
         std::shared_ptr<lcm::LCM> send_lcm_ptr(new lcm::LCM(send_lcm_url));
         std::shared_ptr<lcm::LCM> recv_lcm_ptr(new lcm::LCM(recv_lcm_url));
         ROS_INFO_NAMED(ros::this_node::getName(), "Starting with separate send [%s] and receive [%s] LCM...", send_lcm_url.c_str(), recv_lcm_url.c_str());
-        victor_hardware_interface::MinimalArmWrapperInterface interface(nh, motion_command_topic, motion_status_topic, control_mode_status_topic, get_control_mode_service, set_control_mode_service, gripper_command_topic, gripper_status_topic, send_lcm_ptr, recv_lcm_ptr, motion_command_channel, motion_status_channel, control_mode_command_channel, control_mode_status_channel, gripper_command_channel, gripper_status_channel, set_control_mode_timeout);
+        victor_hardware_interface::MinimalArmWrapperInterface interface(nh, cartesian_pose_frame, motion_command_topic, motion_status_topic, control_mode_status_topic, get_control_mode_service, set_control_mode_service, gripper_command_topic, gripper_status_topic, send_lcm_ptr, recv_lcm_ptr, motion_command_channel, motion_status_channel, control_mode_command_channel, control_mode_status_channel, gripper_command_channel, gripper_status_channel, set_control_mode_timeout);
         interface.LCMLoop();
         return 0;
     }

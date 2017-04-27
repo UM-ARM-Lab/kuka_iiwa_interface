@@ -121,6 +121,32 @@ namespace iiwa_hardware_interface
             return ros_cvq;
         }
 
+        static inline victor_hardware_interface::cartesian_pose ConvertPosefromROStoLCM(const geometry_msgs::Pose& ros_pose)
+        {
+            victor_hardware_interface::cartesian_pose lcm_pose;
+            lcm_pose.xt = ros_pose.position.x;
+            lcm_pose.yt = ros_pose.position.y;
+            lcm_pose.zt = ros_pose.position.z;
+            lcm_pose.wr = ros_pose.orientation.w;
+            lcm_pose.xr = ros_pose.orientation.x;
+            lcm_pose.yr = ros_pose.orientation.y;
+            lcm_pose.zr = ros_pose.orientation.z;
+            return lcm_pose;
+        }
+
+        static inline geometry_msgs::Pose ConvertPosefromLCMtoROS(const victor_hardware_interface::cartesian_pose& lcm_pose)
+        {
+            geometry_msgs::Pose ros_pose;
+            ros_pose.position.x = lcm_pose.xt;
+            ros_pose.position.y = lcm_pose.yt;
+            ros_pose.position.z = lcm_pose.zt;
+            ros_pose.orientation.w = lcm_pose.wr;
+            ros_pose.orientation.x = lcm_pose.xr;
+            ros_pose.orientation.y = lcm_pose.yr;
+            ros_pose.orientation.z = lcm_pose.zr;
+            return ros_pose;
+        }
+
         IIWAHardwareInterface(const std::shared_ptr<lcm::LCM>& send_lcm_ptr, const std::shared_ptr<lcm::LCM>& recv_lcm_ptr, const std::string& motion_command_channel_name, const std::string& motion_status_channel_name, const std::function<void(const victor_hardware_interface::MotionStatus&)>& motion_status_callback_fn, const std::string& control_mode_command_channel_name, const std::string& control_mode_status_channel_name, const std::function<void(const victor_hardware_interface::ControlModeStatus&)>& control_mode_status_callback_fn);
 
         bool SendMotionCommandMessage(const victor_hardware_interface::MotionCommand& command);

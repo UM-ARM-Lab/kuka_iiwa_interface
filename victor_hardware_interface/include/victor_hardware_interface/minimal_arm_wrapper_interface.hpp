@@ -38,6 +38,7 @@ namespace victor_hardware_interface
     protected:
 
         ros::NodeHandle nh_;
+        std::string cartesian_control_frame_;
         ros::Publisher motion_status_pub_;
         ros::Publisher control_mode_status_pub_;
         ros::Publisher gripper_status_pub_;
@@ -59,7 +60,7 @@ namespace victor_hardware_interface
 
     public:
 
-        MinimalArmWrapperInterface(ros::NodeHandle& nh, const std::string& motion_command_topic, const std::string& motion_status_topic, const std::string& control_mode_status_topic, const std::string& get_control_mode_service, const std::string& set_control_mode_service, const std::string& gripper_command_topic, const std::string& gripper_status_topic, const std::shared_ptr<lcm::LCM>& send_lcm_ptr, const std::shared_ptr<lcm::LCM>& recv_lcm_ptr, const std::string& motion_command_channel, const std::string& motion_status_channel, const std::string& control_mode_command_channel, const std::string& control_mode_status_channel, const std::string& gripper_command_channel, const std::string& gripper_status_channel, const double set_control_mode_timeout);
+        MinimalArmWrapperInterface(ros::NodeHandle& nh, const std::string& cartesian_control_frame, const std::string& motion_command_topic, const std::string& motion_status_topic, const std::string& control_mode_status_topic, const std::string& get_control_mode_service, const std::string& set_control_mode_service, const std::string& gripper_command_topic, const std::string& gripper_status_topic, const std::shared_ptr<lcm::LCM>& send_lcm_ptr, const std::shared_ptr<lcm::LCM>& recv_lcm_ptr, const std::string& motion_command_channel, const std::string& motion_status_channel, const std::string& control_mode_command_channel, const std::string& control_mode_status_channel, const std::string& gripper_command_channel, const std::string& gripper_status_channel, const double set_control_mode_timeout);
 
         void ROSCallbackThread();
 
@@ -201,7 +202,7 @@ namespace victor_hardware_interface
 
         bool SafetyCheckPositionsVelocities(const victor_hardware_interface::JointValueQuantity& positions, const victor_hardware_interface::JointValueQuantity& velocities) const;
 
-        bool SafetyCheckCartesianPose(const victor_hardware_interface::CartesianValueQuantity& pose) const;
+        bool SafetyCheckCartesianPose(const geometry_msgs::Pose& pose, const std::string& frame) const;
 
         bool SafetyCheckMotionCommand(const victor_hardware_interface::MotionCommand& command);
 

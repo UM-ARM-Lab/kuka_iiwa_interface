@@ -121,7 +121,7 @@ namespace iiwa_hardware_interface
     victor_hardware_interface::motion_command IIWAHardwareInterface::ConvertMotionCommand(const victor_hardware_interface::MotionCommand& motion_command) const
     {
         victor_hardware_interface::motion_command lcm_command;
-        lcm_command.cartesian_pose = ConvertCVQfromROStoLCM(motion_command.cartesian_pose);
+        lcm_command.cartesian_pose = ConvertPosefromROStoLCM(motion_command.cartesian_pose);
         lcm_command.joint_position = ConvertJVQfromROStoLCM(motion_command.joint_position);
         lcm_command.joint_velocity = ConvertJVQfromROStoLCM(motion_command.joint_velocity);
         lcm_command.control_mode = (int8_t)motion_command.control_mode;
@@ -132,11 +132,13 @@ namespace iiwa_hardware_interface
     victor_hardware_interface::MotionStatus IIWAHardwareInterface::ConvertMotionStatus(const victor_hardware_interface::motion_status& motion_status) const
     {
         victor_hardware_interface::MotionStatus ros_status;
-        ros_status.commanded_cartesian_pose = ConvertCVQfromLCMtoROS(motion_status.commanded_cartesian_pose);
+        ros_status.commanded_cartesian_pose = ConvertPosefromLCMtoROS(motion_status.commanded_cartesian_pose);
+        ros_status.commanded_cartesian_pose_raw = ConvertCVQfromLCMtoROS(motion_status.commanded_cartesian_pose_raw);
         ros_status.commanded_joint_position = ConvertJVQfromLCMtoROS(motion_status.commanded_joint_position);
         ros_status.estimated_external_torque = ConvertJVQfromLCMtoROS(motion_status.estimated_external_torque);
         ros_status.estimated_external_wrench = ConvertCVQfromLCMtoROS(motion_status.estimated_external_wrench);
-        ros_status.measured_cartesian_pose = ConvertCVQfromLCMtoROS(motion_status.measured_cartesian_pose);
+        ros_status.measured_cartesian_pose = ConvertPosefromLCMtoROS(motion_status.measured_cartesian_pose);
+        ros_status.measured_cartesian_pose_raw = ConvertCVQfromLCMtoROS(motion_status.measured_cartesian_pose_raw);
         ros_status.measured_joint_position = ConvertJVQfromLCMtoROS(motion_status.measured_joint_position);
         ros_status.measured_joint_torque = ConvertJVQfromLCMtoROS(motion_status.measured_joint_torque);
         ros_status.measured_joint_velocity = ConvertJVQfromLCMtoROS(motion_status.measured_joint_velocity);
