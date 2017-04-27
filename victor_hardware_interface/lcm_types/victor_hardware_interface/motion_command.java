@@ -13,7 +13,7 @@ public final class motion_command implements lcm.lcm.LCMEncodable
 {
     public victor_hardware_interface.joint_value_quantity joint_position;
     public victor_hardware_interface.joint_value_quantity joint_velocity;
-    public victor_hardware_interface.cartesian_value_quantity cartesian_pose;
+    public victor_hardware_interface.cartesian_pose cartesian_pose;
     public double timestamp;
     public byte control_mode;
  
@@ -45,7 +45,7 @@ public final class motion_command implements lcm.lcm.LCMEncodable
         long hash = LCM_FINGERPRINT_BASE
              + victor_hardware_interface.joint_value_quantity._hashRecursive(classes)
              + victor_hardware_interface.joint_value_quantity._hashRecursive(classes)
-             + victor_hardware_interface.cartesian_value_quantity._hashRecursive(classes)
+             + victor_hardware_interface.cartesian_pose._hashRecursive(classes)
             ;
         classes.remove(classes.size() - 1);
         return (hash<<1) + ((hash>>63)&1);
@@ -97,7 +97,7 @@ public final class motion_command implements lcm.lcm.LCMEncodable
  
         this.joint_velocity = victor_hardware_interface.joint_value_quantity._decodeRecursiveFactory(ins);
  
-        this.cartesian_pose = victor_hardware_interface.cartesian_value_quantity._decodeRecursiveFactory(ins);
+        this.cartesian_pose = victor_hardware_interface.cartesian_pose._decodeRecursiveFactory(ins);
  
         this.timestamp = ins.readDouble();
  
