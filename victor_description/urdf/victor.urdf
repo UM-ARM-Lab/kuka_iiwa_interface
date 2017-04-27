@@ -1119,8 +1119,8 @@
     <parent link="victor_left_gripper_palm"/>
     <child link="victor_left_gripper_fingerB_base"/>
     <axis xyz="-1 0 0"/>
-    <limit effort="300" lower="-1" upper="1" velocity="10"/>
-    <safety_controller k_position="100" k_velocity="2" soft_lower_limit="-2.93215314335" soft_upper_limit="2.93215314335"/>
+    <limit effort="300" lower="-0.279252680319" upper="0.174532925199" velocity="10"/>
+    <safety_controller k_position="100" k_velocity="2" soft_lower_limit="-0.244346095279" soft_upper_limit="0.13962634016"/>
     <dynamics damping="0.5"/>
   </joint>
   <link name="victor_left_gripper_fingerB_base">
@@ -1243,8 +1243,8 @@
     <parent link="victor_left_gripper_palm"/>
     <child link="victor_left_gripper_fingerC_base"/>
     <axis xyz="1 0 0"/>
-    <limit effort="300" lower="-1" upper="1" velocity="10"/>
-    <safety_controller k_position="100" k_velocity="2" soft_lower_limit="-2.93215314335" soft_upper_limit="2.93215314335"/>
+    <limit effort="300" lower="-0.279252680319" upper="0.174532925199" velocity="10"/>
+    <safety_controller k_position="100" k_velocity="2" soft_lower_limit="-0.244346095279" soft_upper_limit="0.13962634016"/>
     <dynamics damping="0.5"/>
   </joint>
   <link name="victor_left_gripper_fingerC_base">
@@ -1529,8 +1529,8 @@
     <parent link="victor_right_gripper_palm"/>
     <child link="victor_right_gripper_fingerB_base"/>
     <axis xyz="-1 0 0"/>
-    <limit effort="300" lower="-1" upper="1" velocity="10"/>
-    <safety_controller k_position="100" k_velocity="2" soft_lower_limit="-2.93215314335" soft_upper_limit="2.93215314335"/>
+    <limit effort="300" lower="-0.279252680319" upper="0.174532925199" velocity="10"/>
+    <safety_controller k_position="100" k_velocity="2" soft_lower_limit="-0.244346095279" soft_upper_limit="0.13962634016"/>
     <dynamics damping="0.5"/>
   </joint>
   <link name="victor_right_gripper_fingerB_base">
@@ -1653,8 +1653,8 @@
     <parent link="victor_right_gripper_palm"/>
     <child link="victor_right_gripper_fingerC_base"/>
     <axis xyz="1 0 0"/>
-    <limit effort="300" lower="-1" upper="1" velocity="10"/>
-    <safety_controller k_position="100" k_velocity="2" soft_lower_limit="-2.93215314335" soft_upper_limit="2.93215314335"/>
+    <limit effort="300" lower="-0.279252680319" upper="0.174532925199" velocity="10"/>
+    <safety_controller k_position="100" k_velocity="2" soft_lower_limit="-0.244346095279" soft_upper_limit="0.13962634016"/>
     <dynamics damping="0.5"/>
   </joint>
   <link name="victor_right_gripper_fingerC_base">

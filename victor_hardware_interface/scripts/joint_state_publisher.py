@@ -7,6 +7,35 @@ from victor_hardware_interface.msg import Robotiq3FingerStatus
 from threading import Lock
 from math import pi
 
+def computeFingerAngles(control):
+    # the control is from 0 to 1, however, the relationship takes 0 to 255
+    g = control * 255
+    max_angle = [70.0, 90.0, 43.0]
+    min_3 = -55.0
+    m1 = max_angle[0] / 140.0
+    m2 = max_angle[1] / 100.0
+    if g <= 110:
+        theta1 = m1 * g
+        theta2 = 0
+        theta3 = -m1 * g
+    elif 110 < g <= 140:
+        theta1 = m1 * g
+        theta2 = 0
+        theta3 = min_3
+    elif 140 < g <= 240:
+        theta1 = max_angle[0]
+        theta2 = m2 * (g-140)
+        theta3 = min_3
+    else:
+        theta1 = max_angle[0]
+        theta2 = max_angle[1]
+        theta3 = min_3
+    return [theta1 * pi / 180.0, theta2 * pi / 180.0, theta3 * pi / 180.0]
+
+def computeScissorAngle(control):
+    # 0 for fully open with -16, 1 for fully close with 10
+    return (26.0 * control - 16.0) * pi / 180.0
+
 class victorJointStatePublisher:
     def __init__(self, rate):
         self.joint_names = [
@@ -68,9 +97,24 @@ class victorJointStatePublisher:
 
     def set_gripper_position_values(self, gripper_status, offset):
         with self.joint_state_lock:
-            self.joint_state_msg.position[offset + 0] = gripper_status.finger_a_status.position*2.0
-            self.joint_state_msg.position[offset + 4] = gripper_status.finger_b_status.position*2.0
-            self.joint_state_msg.position[offset + 8] = gripper_status.finger_c_status.position*2.0
+            joint_a = computeFingerAngles(gripper_status.finger_a_status.position)
+            self.joint_state_msg.position[offset + 0] = joint_a[0]
+            self.joint_state_msg.position[offset + 1] = joint_a[1]
+            self.joint_state_msg.position[offset + 2] = joint_a[2]
+
+            self.joint_state_msg.position[offset + 3] = computeScissorAngle(gripper_status.scissor_status.position)
+            joint_b = computeFingerAngles(gripper_status.finger_b_status.position)
+            self.joint_state_msg.position[offset + 4] = joint_b[0]
+            self.joint_state_msg.position[offset + 5] = joint_b[1]
+            self.joint_state_msg.position[offset + 6] = joint_b[2]
+
+            self.joint_state_msg.position[offset + 7] = computeScissorAngle(gripper_status.scissor_status.position)
+            joint_c = computeFingerAngles(gripper_status.finger_c_status.position)
+            self.joint_state_msg.position[offset + 8] = joint_c[0]
+            self.joint_state_msg.position[offset + 9] = joint_c[1]
+            self.joint_state_msg.position[offset + 10] = joint_c[2]
+
+
             # self.joint_state_msg.position[offset + 3] = gripper_status.scissor_status.position
             # self.joint_state_msg.position[offset + 7] = gripper_status.scissor_status.position
 
