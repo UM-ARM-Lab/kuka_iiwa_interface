@@ -22,7 +22,7 @@ set(GLib_LIBRARIES ${GLib_LIBRARY})
 ## LIBRARIES: libraries you create in this project that dependent projects also need
 ## CATKIN_DEPENDS: catkin_packages dependent projects also need
 ## DEPENDS: system dependencies of this project that dependent projects also need
-catkin_package(INCLUDE_DIRS include LIBRARIES ${PROJECT_NAME} DEPENDS system_lib GLib)
+catkin_package(INCLUDE_DIRS include LIBRARIES ${PROJECT_NAME} DEPENDS GLib)
 
 ###########
 ## Build ##
