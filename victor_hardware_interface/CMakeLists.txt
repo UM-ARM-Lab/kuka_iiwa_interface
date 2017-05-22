@@ -111,7 +111,18 @@ generate_messages(DEPENDENCIES diagnostic_msgs geometry_msgs sensor_msgs std_msg
 ## LIBRARIES: libraries you create in this project that dependent projects also need
 ## CATKIN_DEPENDS: catkin_packages dependent projects also need
 ## DEPENDS: system dependencies of this project that dependent projects also need
-catkin_package(INCLUDE_DIRS include LIBRARIES ${PROJECT_NAME} CATKIN_DEPENDS arc_utilities diagnostic_msgs geometry_msgs message_runtime roscpp sensor_msgs std_msgs lcm DEPENDS system_lib Eigen3)
+catkin_package(
+    INCLUDE_DIRS    include 
+    LIBRARIES       ${PROJECT_NAME} 
+    CATKIN_DEPENDS  arc_utilities 
+                    diagnostic_msgs 
+                    geometry_msgs 
+                    message_runtime 
+                    roscpp 
+                    sensor_msgs 
+                    std_msgs 
+                    lcm 
+    DEPENDS         Eigen3)
 
 ###########
 ## Build ##
