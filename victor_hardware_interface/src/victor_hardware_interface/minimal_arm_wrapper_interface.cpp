@@ -1,50 +1,82 @@
-#include <stdlib.h>
-#include <stdio.h>
-#include <math.h>
-#include <vector>
-#include <map>
-#include <atomic>
-#include <thread>
-#include <chrono>
-#include <string>
-#include <iostream>
-#include <mutex>
-#include <arc_utilities/arc_helpers.hpp>
-#include <arc_utilities/maybe.hpp>
-#include <victor_hardware_interface/iiwa_hardware_interface.hpp>
-#include <victor_hardware_interface/robotiq_3finger_hardware_interface.hpp>
-#include <victor_hardware_interface/minimal_arm_wrapper_interface.hpp>
-// ROS message headers
-#include <victor_hardware_interface/ControlModeCommand.h>
-#include <victor_hardware_interface/ControlModeStatus.h>
-#include <victor_hardware_interface/MotionCommand.h>
-#include <victor_hardware_interface/MotionStatus.h>
-#include <victor_hardware_interface/Robotiq3FingerCommand.h>
-#include <victor_hardware_interface/Robotiq3FingerStatus.h>
-#include <victor_hardware_interface/SetControlMode.h>
-#include <victor_hardware_interface/GetControlMode.h>
+#include "victor_hardware_interface/minimal_arm_wrapper_interface.hpp"
+
 // ROS
-#include <ros/ros.h>
 #include <ros/callback_queue.h>
+
+// ROS message headers
+#include "victor_hardware_interface/ControlModeCommand.h"
+#include "victor_hardware_interface/ControlModeStatus.h"
+#include "victor_hardware_interface/MotionCommand.h"
+#include "victor_hardware_interface/MotionStatus.h"
+#include "victor_hardware_interface/Robotiq3FingerCommand.h"
+#include "victor_hardware_interface/Robotiq3FingerStatus.h"
+#include "victor_hardware_interface/SetControlMode.h"
+#include "victor_hardware_interface/GetControlMode.h"
+
 // LCM
-#include <lcm/lcm-cpp.hpp>
+#include "victor_hardware_interface/iiwa_hardware_interface.hpp"
+#include "victor_hardware_interface/robotiq_3finger_hardware_interface.hpp"
 
 namespace victor_hardware_interface
 {
-    MinimalArmWrapperInterface::MinimalArmWrapperInterface(ros::NodeHandle& nh, const std::string& cartesian_control_frame, const std::string& motion_command_topic, const std::string& motion_status_topic, const std::string& control_mode_status_topic, const std::string& get_control_mode_service, const std::string& set_control_mode_service, const std::string& gripper_command_topic, const std::string& gripper_status_topic, const std::shared_ptr<lcm::LCM>& send_lcm_ptr, const std::shared_ptr<lcm::LCM>& recv_lcm_ptr, const std::string& motion_command_channel, const std::string& motion_status_channel, const std::string& control_mode_command_channel, const std::string& control_mode_status_channel, const std::string& gripper_command_channel, const std::string& gripper_status_channel, const double set_control_mode_timeout) : nh_(nh), cartesian_control_frame_(cartesian_control_frame), set_control_mode_timeout_(set_control_mode_timeout), send_lcm_ptr_(send_lcm_ptr), recv_lcm_ptr_(recv_lcm_ptr)
+    MinimalArmWrapperInterface::MinimalArmWrapperInterface(
+            ros::NodeHandle& nh,
+            const std::shared_ptr<lcm::LCM>& send_lcm_ptr,
+            const std::shared_ptr<lcm::LCM>& recv_lcm_ptr,
+            const std::string& cartesian_control_frame,
+            const double set_control_mode_timeout,
+            // ROS Topics
+            const std::string& motion_command_topic,
+            const std::string& motion_status_topic,
+            const std::string& control_mode_status_topic,
+            const std::string& get_control_mode_service,
+            const std::string& set_control_mode_service,
+            const std::string& gripper_command_topic,
+            const std::string& gripper_status_topic,
+            // LCM channels
+            const std::string& motion_command_channel,
+            const std::string& motion_status_channel,
+            const std::string& control_mode_command_channel,
+            const std::string& control_mode_status_channel,
+            const std::string& gripper_command_channel,
+            const std::string& gripper_status_channel)
+        : nh_(nh)
+        , cartesian_control_frame_(cartesian_control_frame)
+        , set_control_mode_timeout_(set_control_mode_timeout)
+        , send_lcm_ptr_(send_lcm_ptr)
+        , recv_lcm_ptr_(recv_lcm_ptr)
     {
         if (cartesian_control_frame_ == "")
         {
             throw std::invalid_argument("Cartesian control frame [""] is not valid");
         }
         nh_.setCallbackQueue(&ros_callback_queue_);
+
         // Set up IIWA LCM interface
-        std::function<void(const victor_hardware_interface::MotionStatus&)> motion_status_callback_fn = [&] (const victor_hardware_interface::MotionStatus& motion_status) { return MotionStatusLCMCallback(motion_status); };
-        std::function<void(const victor_hardware_interface::ControlModeStatus&)> control_mode_status_callback_fn = [&] (const victor_hardware_interface::ControlModeStatus& control_mode_status) { return ControlModeStatusLCMCallback(control_mode_status); };
-        iiwa_ptr_ = std::unique_ptr<iiwa_hardware_interface::IIWAHardwareInterface>(new iiwa_hardware_interface::IIWAHardwareInterface(send_lcm_ptr_, recv_lcm_ptr_, motion_command_channel, motion_status_channel, motion_status_callback_fn, control_mode_command_channel, control_mode_status_channel, control_mode_status_callback_fn));
+        const auto motion_status_callback_fn = [&] (const victor_hardware_interface::MotionStatus& motion_status)
+        {
+            return MotionStatusLCMCallback(motion_status);
+        };
+        const auto control_mode_status_callback_fn = [&] (const victor_hardware_interface::ControlModeStatus& control_mode_status)
+        {
+            return ControlModeStatusLCMCallback(control_mode_status);
+        };
+        iiwa_ptr_ = std::unique_ptr<iiwa_hardware_interface::IIWAHardwareInterface>(
+                    new iiwa_hardware_interface::IIWAHardwareInterface(
+                        send_lcm_ptr_, recv_lcm_ptr_,
+                        motion_command_channel, motion_status_channel, motion_status_callback_fn,
+                        control_mode_command_channel, control_mode_status_channel, control_mode_status_callback_fn));
+
         // Set up Robotiq LCM interface
-        std::function<void(const victor_hardware_interface::Robotiq3FingerStatus&)> gripper_status_callback_fn = [&] (const victor_hardware_interface::Robotiq3FingerStatus& gripper_status) { return GripperStatusLCMCallback(gripper_status); };
-        robotiq_ptr_ = std::unique_ptr<robotiq_3finger_hardware_interface::Robotiq3FingerHardwareInterface>(new robotiq_3finger_hardware_interface::Robotiq3FingerHardwareInterface(send_lcm_ptr_, recv_lcm_ptr_, gripper_command_channel, gripper_status_channel, gripper_status_callback_fn));
+        const auto gripper_status_callback_fn = [&] (const victor_hardware_interface::Robotiq3FingerStatus& gripper_status)
+        {
+            return GripperStatusLCMCallback(gripper_status);
+        };
+        robotiq_ptr_ = std::unique_ptr<robotiq_3finger_hardware_interface::Robotiq3FingerHardwareInterface>(
+                    new robotiq_3finger_hardware_interface::Robotiq3FingerHardwareInterface(
+                        send_lcm_ptr_, recv_lcm_ptr_,
+                        gripper_command_channel, gripper_status_channel, gripper_status_callback_fn));
+
         // Set up ROS interfaces
         motion_status_pub_ = nh_.advertise<victor_hardware_interface::MotionStatus>(motion_status_topic, 1, false);
         control_mode_status_pub_ = nh_.advertise<victor_hardware_interface::ControlModeStatus>(control_mode_status_topic, 1, false);
@@ -53,6 +85,7 @@ namespace victor_hardware_interface
         gripper_command_sub_ = nh_.subscribe(gripper_command_topic, 1, &MinimalArmWrapperInterface::GripperCommandROSCallback, this);;
         set_control_mode_server_ = nh_.advertiseService(set_control_mode_service, &MinimalArmWrapperInterface::SetControlModeCallback, this);
         get_control_mode_server_ = nh_.advertiseService(get_control_mode_service, &MinimalArmWrapperInterface::GetControlModeCallback, this);
+
         // Start ROS thread
         ros_callback_thread_ = std::thread(std::bind(&MinimalArmWrapperInterface::ROSCallbackThread, this));
     }
@@ -95,7 +128,119 @@ namespace victor_hardware_interface
         }
     }
 
-    bool MinimalArmWrapperInterface::CheckControlModeCommandAndStatusMatch(const victor_hardware_interface::ControlModeCommand& command, const victor_hardware_interface::ControlModeStatus& status) const
+    bool MinimalArmWrapperInterface::JVQMatch(const victor_hardware_interface::JointValueQuantity& jvq1, const victor_hardware_interface::JointValueQuantity& jvq2)
+    {
+        if (jvq1.joint_1 != jvq2.joint_1)
+        {
+            return false;
+        }
+        else if (jvq1.joint_2 != jvq2.joint_2)
+        {
+            return false;
+        }
+        else if (jvq1.joint_3 != jvq2.joint_3)
+        {
+            return false;
+        }
+        else if (jvq1.joint_4 != jvq2.joint_4)
+        {
+            return false;
+        }
+        else if (jvq1.joint_5 != jvq2.joint_5)
+        {
+            return false;
+        }
+        else if (jvq1.joint_6 != jvq2.joint_6)
+        {
+            return false;
+        }
+        else if (jvq1.joint_7 != jvq2.joint_7)
+        {
+            return false;
+        }
+        else
+        {
+            return true;
+        }
+    }
+
+    bool MinimalArmWrapperInterface::CVQMatch(const victor_hardware_interface::CartesianValueQuantity& cvq1, const victor_hardware_interface::CartesianValueQuantity& cvq2)
+    {
+        if (cvq1.x != cvq2.x)
+        {
+            return false;
+        }
+        else if (cvq1.y != cvq2.y)
+        {
+            return false;
+        }
+        else if (cvq1.z != cvq2.z)
+        {
+            return false;
+        }
+        else if (cvq1.a != cvq2.a)
+        {
+            return false;
+        }
+        else if (cvq1.b != cvq2.b)
+        {
+            return false;
+        }
+        else if (cvq1.c != cvq2.c)
+        {
+            return false;
+        }
+        else
+        {
+            return true;
+        }
+    }
+
+    bool MinimalArmWrapperInterface::JointPExPMatch(const victor_hardware_interface::JointPathExecutionParameters& pexp1, const victor_hardware_interface::JointPathExecutionParameters& pexp2)
+    {
+        if (pexp1.joint_relative_acceleration != pexp2.joint_relative_acceleration)
+        {
+            return false;
+        }
+        else if (pexp1.joint_relative_velocity != pexp2.joint_relative_velocity)
+        {
+            return false;
+        }
+        else if (pexp1.override_joint_acceleration != pexp2.override_joint_acceleration)
+        {
+            return false;
+        }
+        else
+        {
+            return true;
+        }
+    }
+
+    bool MinimalArmWrapperInterface::CartesianPExPMatch(const victor_hardware_interface::CartesianPathExecutionParameters& pexp1, const victor_hardware_interface::CartesianPathExecutionParameters& pexp2)
+    {
+        if (CVQMatch(pexp1.max_velocity, pexp2.max_velocity) == false)
+        {
+            return false;
+        }
+        else if (CVQMatch(pexp1.max_acceleration, pexp2.max_acceleration) == false)
+        {
+            return false;
+        }
+        else if (pexp1.max_nullspace_velocity != pexp2.max_nullspace_velocity)
+        {
+            return false;
+        }
+        else if (pexp1.max_nullspace_acceleration != pexp2.max_nullspace_acceleration)
+        {
+            return false;
+        }
+        else
+        {
+            return true;
+        }
+    }
+
+    bool MinimalArmWrapperInterface::CheckControlModeCommandAndStatusMatch(const victor_hardware_interface::ControlModeCommand& command, const victor_hardware_interface::ControlModeStatus& status)
     {
         //std::cout << "ControlModeCommand:\n" << command << "\nControlModeStatus:\n" << status << std::endl;
         const bool cdmatch = CVQMatch(command.cartesian_impedance_params.cartesian_damping, status.cartesian_impedance_params.cartesian_damping);

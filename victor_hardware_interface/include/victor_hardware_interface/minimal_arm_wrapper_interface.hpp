@@ -1,18 +1,11 @@
-#include <stdlib.h>
-#include <stdio.h>
-#include <math.h>
-#include <vector>
-#include <map>
-#include <atomic>
 #include <thread>
-#include <chrono>
 #include <string>
-#include <iostream>
 #include <mutex>
-#include <arc_utilities/arc_helpers.hpp>
 #include <arc_utilities/maybe.hpp>
-#include <victor_hardware_interface/iiwa_hardware_interface.hpp>
-#include <victor_hardware_interface/robotiq_3finger_hardware_interface.hpp>
+
+// ROS
+#include <ros/ros.h>
+#include <ros/callback_queue.h>
 // ROS message headers
 #include <victor_hardware_interface/ControlModeCommand.h>
 #include <victor_hardware_interface/ControlModeStatus.h>
@@ -22,11 +15,13 @@
 #include <victor_hardware_interface/Robotiq3FingerStatus.h>
 #include <victor_hardware_interface/SetControlMode.h>
 #include <victor_hardware_interface/GetControlMode.h>
-// ROS
-#include <ros/ros.h>
-#include <ros/callback_queue.h>
+
 // LCM
 #include <lcm/lcm-cpp.hpp>
+
+// Classes to speak to each invididual hardware element
+#include <victor_hardware_interface/iiwa_hardware_interface.hpp>
+#include <victor_hardware_interface/robotiq_3finger_hardware_interface.hpp>
 
 #ifndef MINIMAL_ARM_WRAPPER_INTERFACE_HPP
 #define MINIMAL_ARM_WRAPPER_INTERFACE_HPP
@@ -38,7 +33,7 @@ namespace victor_hardware_interface
     protected:
 
         ros::NodeHandle nh_;
-        std::string cartesian_control_frame_;
+        const std::string cartesian_control_frame_;
         ros::Publisher motion_status_pub_;
         ros::Publisher control_mode_status_pub_;
         ros::Publisher gripper_status_pub_;
@@ -60,125 +55,41 @@ namespace victor_hardware_interface
 
     public:
 
-        MinimalArmWrapperInterface(ros::NodeHandle& nh, const std::string& cartesian_control_frame, const std::string& motion_command_topic, const std::string& motion_status_topic, const std::string& control_mode_status_topic, const std::string& get_control_mode_service, const std::string& set_control_mode_service, const std::string& gripper_command_topic, const std::string& gripper_status_topic, const std::shared_ptr<lcm::LCM>& send_lcm_ptr, const std::shared_ptr<lcm::LCM>& recv_lcm_ptr, const std::string& motion_command_channel, const std::string& motion_status_channel, const std::string& control_mode_command_channel, const std::string& control_mode_status_channel, const std::string& gripper_command_channel, const std::string& gripper_status_channel, const double set_control_mode_timeout);
+        MinimalArmWrapperInterface(
+                ros::NodeHandle& nh,
+                const std::shared_ptr<lcm::LCM>& send_lcm_ptr,
+                const std::shared_ptr<lcm::LCM>& recv_lcm_ptr,
+                const std::string& cartesian_control_frame,
+                const double set_control_mode_timeout,
+                // ROS Topics
+                const std::string& motion_command_topic,
+                const std::string& motion_status_topic,
+                const std::string& control_mode_status_topic,
+                const std::string& get_control_mode_service,
+                const std::string& set_control_mode_service,
+                const std::string& gripper_command_topic,
+                const std::string& gripper_status_topic,
+                // LCM channels
+                const std::string& motion_command_channel,
+                const std::string& motion_status_channel,
+                const std::string& control_mode_command_channel,
+                const std::string& control_mode_status_channel,
+                const std::string& gripper_command_channel,
+                const std::string& gripper_status_channel);
 
         void ROSCallbackThread();
 
         void LCMLoop();
 
-        static inline bool JVQMatch(const victor_hardware_interface::JointValueQuantity& jvq1, const victor_hardware_interface::JointValueQuantity& jvq2)
-        {
-            if (jvq1.joint_1 != jvq2.joint_1)
-            {
-                return false;
-            }
-            else if (jvq1.joint_2 != jvq2.joint_2)
-            {
-                return false;
-            }
-            else if (jvq1.joint_3 != jvq2.joint_3)
-            {
-                return false;
-            }
-            else if (jvq1.joint_4 != jvq2.joint_4)
-            {
-                return false;
-            }
-            else if (jvq1.joint_5 != jvq2.joint_5)
-            {
-                return false;
-            }
-            else if (jvq1.joint_6 != jvq2.joint_6)
-            {
-                return false;
-            }
-            else if (jvq1.joint_7 != jvq2.joint_7)
-            {
-                return false;
-            }
-            else
-            {
-                return true;
-            }
-        }
+        static bool JVQMatch(const victor_hardware_interface::JointValueQuantity& jvq1, const victor_hardware_interface::JointValueQuantity& jvq2);
 
-        static inline bool CVQMatch(const victor_hardware_interface::CartesianValueQuantity& cvq1, const victor_hardware_interface::CartesianValueQuantity& cvq2)
-        {
-            if (cvq1.x != cvq2.x)
-            {
-                return false;
-            }
-            else if (cvq1.y != cvq2.y)
-            {
-                return false;
-            }
-            else if (cvq1.z != cvq2.z)
-            {
-                return false;
-            }
-            else if (cvq1.a != cvq2.a)
-            {
-                return false;
-            }
-            else if (cvq1.b != cvq2.b)
-            {
-                return false;
-            }
-            else if (cvq1.c != cvq2.c)
-            {
-                return false;
-            }
-            else
-            {
-                return true;
-            }
-        }
+        static bool CVQMatch(const victor_hardware_interface::CartesianValueQuantity& cvq1, const victor_hardware_interface::CartesianValueQuantity& cvq2);
 
-        static inline bool JointPExPMatch(const victor_hardware_interface::JointPathExecutionParameters& pexp1, const victor_hardware_interface::JointPathExecutionParameters& pexp2)
-        {
-            if (pexp1.joint_relative_acceleration != pexp2.joint_relative_acceleration)
-            {
-                return false;
-            }
-            else if (pexp1.joint_relative_velocity != pexp2.joint_relative_velocity)
-            {
-                return false;
-            }
-            else if (pexp1.override_joint_acceleration != pexp2.override_joint_acceleration)
-            {
-                return false;
-            }
-            else
-            {
-                return true;
-            }
-        }
+        static bool JointPExPMatch(const victor_hardware_interface::JointPathExecutionParameters& pexp1, const victor_hardware_interface::JointPathExecutionParameters& pexp2);
 
-        static inline bool CartesianPExPMatch(const victor_hardware_interface::CartesianPathExecutionParameters& pexp1, const victor_hardware_interface::CartesianPathExecutionParameters& pexp2)
-        {
-            if (CVQMatch(pexp1.max_velocity, pexp2.max_velocity) == false)
-            {
-                return false;
-            }
-            else if (CVQMatch(pexp1.max_acceleration, pexp2.max_acceleration) == false)
-            {
-                return false;
-            }
-            else if (pexp1.max_nullspace_velocity != pexp2.max_nullspace_velocity)
-            {
-                return false;
-            }
-            else if (pexp1.max_nullspace_acceleration != pexp2.max_nullspace_acceleration)
-            {
-                return false;
-            }
-            else
-            {
-                return true;
-            }
-        }
+        static bool CartesianPExPMatch(const victor_hardware_interface::CartesianPathExecutionParameters& pexp1, const victor_hardware_interface::CartesianPathExecutionParameters& pexp2);
 
-        bool CheckControlModeCommandAndStatusMatch(const victor_hardware_interface::ControlModeCommand& command, const victor_hardware_interface::ControlModeStatus& status) const;
+        static bool CheckControlModeCommandAndStatusMatch(const victor_hardware_interface::ControlModeCommand& command, const victor_hardware_interface::ControlModeStatus& status);
 
         std::pair<bool, std::string> SafetyCheckJointPathExecutionParams(const victor_hardware_interface::JointPathExecutionParameters& params) const;
 

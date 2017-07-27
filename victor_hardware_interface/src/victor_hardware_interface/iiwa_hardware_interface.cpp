@@ -1,16 +1,25 @@
-#include <stdlib.h>
-#include <stdio.h>
-#include <math.h>
-#include <vector>
-#include <map>
-#include <string>
-#include <iostream>
+#include "victor_hardware_interface/iiwa_hardware_interface.hpp"
+
 #include <arc_utilities/arc_helpers.hpp>
-#include <victor_hardware_interface/iiwa_hardware_interface.hpp>
 
 namespace iiwa_hardware_interface
 {
-    IIWAHardwareInterface::IIWAHardwareInterface(const std::shared_ptr<lcm::LCM>& send_lcm_ptr, const std::shared_ptr<lcm::LCM>& recv_lcm_ptr, const std::string& motion_command_channel_name, const std::string& motion_status_channel_name, const std::function<void(const victor_hardware_interface::MotionStatus&)>& motion_status_callback_fn, const std::string& control_mode_command_channel_name, const std::string& control_mode_status_channel_name, const std::function<void(const victor_hardware_interface::ControlModeStatus&)>& control_mode_status_callback_fn) : send_lcm_ptr_(send_lcm_ptr), recv_lcm_ptr_(recv_lcm_ptr), motion_command_channel_name_(motion_command_channel_name), motion_status_channel_name_(motion_status_channel_name), motion_status_callback_fn_(motion_status_callback_fn), control_mode_command_channel_name_(control_mode_command_channel_name), control_mode_status_channel_name_(control_mode_status_channel_name), control_mode_status_callback_fn_(control_mode_status_callback_fn)
+    IIWAHardwareInterface::IIWAHardwareInterface(
+            const std::shared_ptr<lcm::LCM>& send_lcm_ptr,
+            const std::shared_ptr<lcm::LCM>& recv_lcm_ptr,
+            const std::string& motion_command_channel_name,
+            const std::string& motion_status_channel_name,
+            const std::function<void(const victor_hardware_interface::MotionStatus&)>& motion_status_callback_fn,
+            const std::string& control_mode_command_channel_name,
+            const std::string& control_mode_status_channel_name,
+            const std::function<void(const victor_hardware_interface::ControlModeStatus&)>& control_mode_status_callback_fn)
+        : send_lcm_ptr_(send_lcm_ptr), recv_lcm_ptr_(recv_lcm_ptr)
+        , motion_command_channel_name_(motion_command_channel_name)
+        , motion_status_channel_name_(motion_status_channel_name)
+        , motion_status_callback_fn_(motion_status_callback_fn)
+        , control_mode_command_channel_name_(control_mode_command_channel_name)
+        , control_mode_status_channel_name_(control_mode_status_channel_name)
+        , control_mode_status_callback_fn_(control_mode_status_callback_fn)
     {
         if (send_lcm_ptr_->good() != true)
         {
@@ -24,7 +33,8 @@ namespace iiwa_hardware_interface
         recv_lcm_ptr_->subscribe(control_mode_status_channel_name_, &IIWAHardwareInterface::InternalControlModeStatusLCMCallback, this);
     }
 
-    victor_hardware_interface::JointImpedanceParameters IIWAHardwareInterface::ConvertJointImpedanceParameters(const victor_hardware_interface::joint_impedance_parameters& joint_impedance_params) const
+    victor_hardware_interface::JointImpedanceParameters IIWAHardwareInterface::ConvertJointImpedanceParameters(
+            const victor_hardware_interface::joint_impedance_parameters& joint_impedance_params) const
     {
         victor_hardware_interface::JointImpedanceParameters ros_jip;
         ros_jip.joint_damping = ConvertJVQfromLCMtoROS(joint_impedance_params.joint_damping);
@@ -32,7 +42,8 @@ namespace iiwa_hardware_interface
         return ros_jip;
     }
 
-    victor_hardware_interface::joint_impedance_parameters IIWAHardwareInterface::ConvertJointImpedanceParameters(const victor_hardware_interface::JointImpedanceParameters& joint_impedance_params) const
+    victor_hardware_interface::joint_impedance_parameters IIWAHardwareInterface::ConvertJointImpedanceParameters(
+            const victor_hardware_interface::JointImpedanceParameters& joint_impedance_params) const
     {
         victor_hardware_interface::joint_impedance_parameters lcm_jip;
         lcm_jip.joint_damping = ConvertJVQfromROStoLCM(joint_impedance_params.joint_damping);
@@ -40,7 +51,8 @@ namespace iiwa_hardware_interface
         return lcm_jip;
     }
 
-    victor_hardware_interface::CartesianImpedanceParameters IIWAHardwareInterface::ConvertCartesianImpedanceParameters(const victor_hardware_interface::cartesian_impedance_parameters& cartesian_impedance_params) const
+    victor_hardware_interface::CartesianImpedanceParameters IIWAHardwareInterface::ConvertCartesianImpedanceParameters(
+            const victor_hardware_interface::cartesian_impedance_parameters& cartesian_impedance_params) const
     {
         victor_hardware_interface::CartesianImpedanceParameters ros_cip;
         ros_cip.cartesian_damping = ConvertCVQfromLCMtoROS(cartesian_impedance_params.cartesian_damping);
@@ -50,7 +62,8 @@ namespace iiwa_hardware_interface
         return ros_cip;
     }
 
-    victor_hardware_interface::cartesian_impedance_parameters IIWAHardwareInterface::ConvertCartesianImpedanceParameters(const victor_hardware_interface::CartesianImpedanceParameters& cartesian_impedance_params) const
+    victor_hardware_interface::cartesian_impedance_parameters IIWAHardwareInterface::ConvertCartesianImpedanceParameters(
+            const victor_hardware_interface::CartesianImpedanceParameters& cartesian_impedance_params) const
     {
         victor_hardware_interface::cartesian_impedance_parameters lcm_cip;
         lcm_cip.cartesian_damping = ConvertCVQfromROStoLCM(cartesian_impedance_params.cartesian_damping);
@@ -60,7 +73,8 @@ namespace iiwa_hardware_interface
         return lcm_cip;
     }
 
-    victor_hardware_interface::JointPathExecutionParameters IIWAHardwareInterface::ConvertJointPathExecutionParameters(const victor_hardware_interface::joint_path_execution_parameters& path_execution_params) const
+    victor_hardware_interface::JointPathExecutionParameters IIWAHardwareInterface::ConvertJointPathExecutionParameters(
+            const victor_hardware_interface::joint_path_execution_parameters& path_execution_params) const
     {
         victor_hardware_interface::JointPathExecutionParameters ros_pexp;
         ros_pexp.joint_relative_acceleration = path_execution_params.joint_relative_acceleration;
@@ -69,7 +83,8 @@ namespace iiwa_hardware_interface
         return ros_pexp;
     }
 
-    victor_hardware_interface::joint_path_execution_parameters IIWAHardwareInterface::ConvertJointPathExecutionParameters(const victor_hardware_interface::JointPathExecutionParameters& path_execution_params) const
+    victor_hardware_interface::joint_path_execution_parameters IIWAHardwareInterface::ConvertJointPathExecutionParameters(
+            const victor_hardware_interface::JointPathExecutionParameters& path_execution_params) const
     {
         victor_hardware_interface::joint_path_execution_parameters lcm_pexp;
         lcm_pexp.joint_relative_acceleration = path_execution_params.joint_relative_acceleration;
@@ -78,7 +93,8 @@ namespace iiwa_hardware_interface
         return lcm_pexp;
     }
 
-    victor_hardware_interface::CartesianPathExecutionParameters IIWAHardwareInterface::ConvertCartesianPathExecutionParameters(const victor_hardware_interface::cartesian_path_execution_parameters& path_execution_params) const
+    victor_hardware_interface::CartesianPathExecutionParameters IIWAHardwareInterface::ConvertCartesianPathExecutionParameters(
+            const victor_hardware_interface::cartesian_path_execution_parameters& path_execution_params) const
     {
         victor_hardware_interface::CartesianPathExecutionParameters ros_pexp;
         ros_pexp.max_velocity = ConvertCVQfromLCMtoROS(path_execution_params.max_velocity);
@@ -88,7 +104,8 @@ namespace iiwa_hardware_interface
         return ros_pexp;
     }
 
-    victor_hardware_interface::cartesian_path_execution_parameters IIWAHardwareInterface::ConvertCartesianPathExecutionParameters(const victor_hardware_interface::CartesianPathExecutionParameters& path_execution_params) const
+    victor_hardware_interface::cartesian_path_execution_parameters IIWAHardwareInterface::ConvertCartesianPathExecutionParameters(
+            const victor_hardware_interface::CartesianPathExecutionParameters& path_execution_params) const
     {
         victor_hardware_interface::cartesian_path_execution_parameters lcm_pexp;
         lcm_pexp.max_velocity = ConvertCVQfromROStoLCM(path_execution_params.max_velocity);
@@ -98,7 +115,8 @@ namespace iiwa_hardware_interface
         return lcm_pexp;
     }
 
-    victor_hardware_interface::CartesianControlModeLimits IIWAHardwareInterface::ConvertCartesianControlModeLimits(const victor_hardware_interface::cartesian_control_mode_limits& cartesian_control_mode_limits) const
+    victor_hardware_interface::CartesianControlModeLimits IIWAHardwareInterface::ConvertCartesianControlModeLimits(
+            const victor_hardware_interface::cartesian_control_mode_limits& cartesian_control_mode_limits) const
     {
         victor_hardware_interface::CartesianControlModeLimits ros_ccml;
         ros_ccml.max_cartesian_velocity = ConvertCVQfromLCMtoROS(cartesian_control_mode_limits.max_cartesian_velocity);
@@ -108,7 +126,8 @@ namespace iiwa_hardware_interface
         return ros_ccml;
     }
 
-    victor_hardware_interface::cartesian_control_mode_limits IIWAHardwareInterface::ConvertCartesianControlModeLimits(const victor_hardware_interface::CartesianControlModeLimits& cartesian_control_mode_limits) const
+    victor_hardware_interface::cartesian_control_mode_limits IIWAHardwareInterface::ConvertCartesianControlModeLimits(
+            const victor_hardware_interface::CartesianControlModeLimits& cartesian_control_mode_limits) const
     {
         victor_hardware_interface::cartesian_control_mode_limits lcm_ccml;
         lcm_ccml.max_cartesian_velocity = ConvertCVQfromROStoLCM(cartesian_control_mode_limits.max_cartesian_velocity);
@@ -118,7 +137,8 @@ namespace iiwa_hardware_interface
         return lcm_ccml;
     }
 
-    victor_hardware_interface::motion_command IIWAHardwareInterface::ConvertMotionCommand(const victor_hardware_interface::MotionCommand& motion_command) const
+    victor_hardware_interface::motion_command IIWAHardwareInterface::ConvertMotionCommand(
+            const victor_hardware_interface::MotionCommand& motion_command) const
     {
         victor_hardware_interface::motion_command lcm_command;
         lcm_command.cartesian_pose = ConvertPosefromROStoLCM(motion_command.cartesian_pose);
@@ -129,7 +149,8 @@ namespace iiwa_hardware_interface
         return lcm_command;
     }
 
-    victor_hardware_interface::MotionStatus IIWAHardwareInterface::ConvertMotionStatus(const victor_hardware_interface::motion_status& motion_status) const
+    victor_hardware_interface::MotionStatus IIWAHardwareInterface::ConvertMotionStatus(
+            const victor_hardware_interface::motion_status& motion_status) const
     {
         victor_hardware_interface::MotionStatus ros_status;
         ros_status.commanded_cartesian_pose = ConvertPosefromLCMtoROS(motion_status.commanded_cartesian_pose);
@@ -147,7 +168,8 @@ namespace iiwa_hardware_interface
         return ros_status;
     }
 
-    victor_hardware_interface::control_mode_command IIWAHardwareInterface::ConvertControlModeCommand(const victor_hardware_interface::ControlModeCommand& control_mode_command) const
+    victor_hardware_interface::control_mode_command IIWAHardwareInterface::ConvertControlModeCommand(
+            const victor_hardware_interface::ControlModeCommand& control_mode_command) const
     {
         victor_hardware_interface::control_mode_command lcm_command;
         lcm_command.cartesian_control_mode_limits = ConvertCartesianControlModeLimits(control_mode_command.cartesian_control_mode_limits);
@@ -160,7 +182,8 @@ namespace iiwa_hardware_interface
         return lcm_command;
     }
 
-    victor_hardware_interface::ControlModeStatus IIWAHardwareInterface::ConvertControlModeStatus(const victor_hardware_interface::control_mode_status& control_mode_status) const
+    victor_hardware_interface::ControlModeStatus IIWAHardwareInterface::ConvertControlModeStatus(
+            const victor_hardware_interface::control_mode_status& control_mode_status) const
     {
         victor_hardware_interface::ControlModeStatus ros_status;
         ros_status.cartesian_control_mode_limits = ConvertCartesianControlModeLimits(control_mode_status.cartesian_control_mode_limits);
@@ -201,7 +224,10 @@ namespace iiwa_hardware_interface
         }
     }
 
-    void IIWAHardwareInterface::InternalMotionStatusLCMCallback(const lcm::ReceiveBuffer* buffer, const std::string& channel, const victor_hardware_interface::motion_status* status_msg)
+    void IIWAHardwareInterface::InternalMotionStatusLCMCallback(
+            const lcm::ReceiveBuffer* buffer,
+            const std::string& channel,
+            const victor_hardware_interface::motion_status* status_msg)
     {
         UNUSED(buffer);
         UNUSED(channel);
@@ -209,7 +235,10 @@ namespace iiwa_hardware_interface
         motion_status_callback_fn_(ros_status);
     }
 
-    void IIWAHardwareInterface::InternalControlModeStatusLCMCallback(const lcm::ReceiveBuffer* buffer, const std::string& channel, const victor_hardware_interface::control_mode_status* status_msg)
+    void IIWAHardwareInterface::InternalControlModeStatusLCMCallback(
+            const lcm::ReceiveBuffer* buffer,
+            const std::string& channel,
+            const victor_hardware_interface::control_mode_status* status_msg)
     {
         UNUSED(buffer);
         UNUSED(channel);

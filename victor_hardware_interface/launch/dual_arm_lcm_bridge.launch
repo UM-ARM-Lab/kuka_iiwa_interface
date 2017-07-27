@@ -1,14 +1,15 @@
 <launch>
-    <arg name="arm_gui" default="true"/>
+    <arg name="model"                        default="$(find victor_description)/urdf/victor.urdf.xacro"/>
+    <arg name="arm_command_gui"              default="true"/>
     <arg name="left_arm_recv_url_override"   default="false"/>
     <arg name="right_arm_recv_url_override"  default="false"/>
     <arg name="left_arm_recv_url"            if="$(arg left_arm_recv_url_override)"/>
     <arg name="right_arm_recv_url"           if="$(arg right_arm_recv_url_override)"/>
 
-    <include file="$(find victor_description)/launch/visualize_victor.launch">
-        <arg name="gui" value="false"/>
-        <arg name="joint_state_publisher" value="false"/>
-        <arg name="rviz" value="false"/>
+    <param name="robot_description" command="$(find xacro)/xacro --xacro-ns --inorder $(arg model)"/>
+
+    <include file="$(find victor_hardware_interface)/launch/mocap_world_to_victor_and_kinect_static_transforms.launch">
+        <arg name="use_sim_time" value="false"/>
     </include>
 
     <group ns="left_arm">
@@ -28,6 +29,8 @@
     </group>
 
     <node pkg="victor_hardware_interface" type="joint_state_publisher.py" name="joint_state_publisher"/>
-    <node pkg="victor_hardware_interface" type="arm_gui.py" name="arm_gui" if="$(arg arm_gui)"/>
+    <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher"/>
+    
+    <node pkg="victor_hardware_interface" type="arm_command_gui.py" name="arm_command_gui" if="$(arg arm_command_gui)"/>
 </launch>
 
