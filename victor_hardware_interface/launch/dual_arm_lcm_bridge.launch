@@ -1,25 +1,29 @@
 <launch>
-
     <arg name="arm_gui" default="true"/>
-    <arg name="rviz" default="true"/>
+    <arg name="left_arm_recv_url_override"   default="false"/>
+    <arg name="right_arm_recv_url_override"  default="false"/>
+    <arg name="left_arm_recv_url"            if="$(arg left_arm_recv_url_override)"/>
+    <arg name="right_arm_recv_url"           if="$(arg right_arm_recv_url_override)"/>
 
     <include file="$(find victor_description)/launch/visualize_victor.launch">
         <arg name="gui" value="false"/>
         <arg name="joint_state_publisher" value="false"/>
-        <arg name="rviz" value="$(arg rviz)"/>
+        <arg name="rviz" value="false"/>
     </include>
 
     <group ns="left_arm">
-        <node pkg="victor_hardware_interface" type="victor_hardware_interface_arm_wrapper_node" name="left_arm_lcm_bridge_node" required="true" output="screen" >
+        <node pkg="victor_hardware_interface" type="victor_hardware_interface_arm_wrapper_node" name="left_arm_lcm_bridge_node" required="true" output="screen">
             <param name="send_lcm_url" type="string" value="udp://10.10.10.12:30000" />
-            <param name="recv_lcm_url" type="string" value="udp://10.10.10.10:30002" />
+            <param name="recv_lcm_url" type="string" value="udp://10.10.10.10:30002"   unless="$(arg left_arm_recv_url_override)"/>
+            <param name="recv_lcm_url" type="string" value="$(arg left_arm_recv_url)"      if="$(arg left_arm_recv_url_override)"/>
         </node>
     </group>
 
     <group ns="right_arm">
-        <node pkg="victor_hardware_interface" type="victor_hardware_interface_arm_wrapper_node" name="right_arm_lcm_bridge_node" required="true" output="screen" >
-            <param name="send_lcm_url" type="string" value="udp://10.10.10.11:30000" />
-            <param name="recv_lcm_url" type="string" value="udp://10.10.10.10:30001" />
+        <node pkg="victor_hardware_interface" type="victor_hardware_interface_arm_wrapper_node" name="right_arm_lcm_bridge_node" required="true" output="screen">
+            <param name="send_lcm_url" type="string" value="udp://10.10.10.11:30000"/>
+            <param name="recv_lcm_url" type="string" value="udp://10.10.10.10:30001"   unless="$(arg right_arm_recv_url_override)"/>
+            <param name="recv_lcm_url" type="string" value="$(arg right_arm_recv_url)"     if="$(arg right_arm_recv_url_override)"/>
         </node>
     </group>
 
