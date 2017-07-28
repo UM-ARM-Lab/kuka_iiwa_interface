@@ -1,6 +1,6 @@
 <launch>
     <arg name="model"                        default="$(find victor_description)/urdf/victor.urdf.xacro"/>
-    <arg name="arm_command_gui"              default="true"/>
+    <arg name="arm_command_gui"              default="false"/>
     <arg name="left_arm_recv_url_override"   default="false"/>
     <arg name="right_arm_recv_url_override"  default="false"/>
     <arg name="left_arm_recv_url"            if="$(arg left_arm_recv_url_override)"/>
