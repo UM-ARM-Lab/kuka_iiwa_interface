@@ -7,6 +7,10 @@
     <arg name="right_arm_recv_url"           if="$(arg right_arm_recv_url_override)"/>
 
     <param name="robot_description" command="$(find xacro)/xacro --xacro-ns --inorder $(arg model)"/>
+    <node pkg="victor_hardware_interface" type="joint_state_publisher.py" name="joint_state_publisher"/>
+    <node pkg="robot_state_publisher"     type="robot_state_publisher"    name="robot_state_publisher"/>
+    <node pkg="victor_hardware_interface" type="arm_command_gui.py" name="arm_command_gui" if="$(arg arm_command_gui)"/>
+    
 
     <include file="$(find victor_hardware_interface)/launch/mocap_world_to_victor_and_kinect_static_transforms.launch">
         <arg name="use_sim_time" value="false"/>
@@ -28,9 +32,5 @@
         </node>
     </group>
 
-    <node pkg="victor_hardware_interface" type="joint_state_publisher.py" name="joint_state_publisher"/>
-    <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher"/>
-    
-    <node pkg="victor_hardware_interface" type="arm_command_gui.py" name="arm_command_gui" if="$(arg arm_command_gui)"/>
 </launch>
 
