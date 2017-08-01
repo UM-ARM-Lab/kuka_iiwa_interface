@@ -60,7 +60,7 @@ class victorJointStatePublisher:
         self.joint_state_msg.name = self.joint_names
         self.joint_state_msg.position = [0] * 36
         self.joint_state_msg.velocity = []
-        self.joint_state_msg.effort = []
+        self.joint_state_msg.effort = [0] * 36
 
         # Set the default values for the left arm, just in case it is not publishing data
         self.joint_state_msg.position[0] = pi / 2
@@ -74,16 +74,17 @@ class victorJointStatePublisher:
 
     def left_arm_motion_status_callback(self, motion_status):
         self.set_arm_position_values(motion_status, offset = 0)
+        self.set_arm_effort_values(motion_status, offset = 0)
 
     def right_arm_motion_status_callback(self, motion_status):
         self.set_arm_position_values(motion_status, offset = 7)
+        self.set_arm_effort_values(motion_status, offset = 7)
 
     def left_gripper_motion_status_callback(self, gripper_status):
         self.set_gripper_position_values(gripper_status, offset = 14)
 
     def right_gripper_motion_status_callback(self, gripper_status):
         self.set_gripper_position_values(gripper_status, offset = 25)
-
 
     def set_arm_position_values(self, motion_status, offset):
         with self.joint_state_lock:
@@ -117,7 +118,15 @@ class victorJointStatePublisher:
 
             # self.joint_state_msg.position[offset + 3] = gripper_status.scissor_status.position
             # self.joint_state_msg.position[offset + 7] = gripper_status.scissor_status.position
-
+    def set_arm_effort_values(self, motion_status, offset):
+        ## We use measured joint torque for now. As Kuka mentioned, it is the currently measured "raw" torque sensor data. There is an estimated_external_torque messange, which is the current external torque sensor data for this robot.
+        with self.joint_state_lock:
+            self.joint_state_msg.effort[offset + 0] = motion_status.measured_joint_torque.joint_1
+            self.joint_state_msg.effort[offset + 1] = motion_status.measured_joint_torque.joint_2
+            self.joint_state_msg.effort[offset + 2] = motion_status.measured_joint_torque.joint_3
+            self.joint_state_msg.effort[offset + 3] = motion_status.measured_joint_torque.joint_4
+            self.joint_state_msg.effort[offset + 4] = motion_status.measured_joint_torque.joint_5
+            self.joint_state_msg.effort[offset + 5] = motion_status.measured_joint_torque.joint_6
 
     def publish_joint_values(self):
         with self.joint_state_lock:
