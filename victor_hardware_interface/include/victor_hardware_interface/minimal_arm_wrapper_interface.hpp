@@ -85,51 +85,50 @@ namespace victor_hardware_interface
 
         static bool CVQMatch(const victor_hardware_interface::CartesianValueQuantity& cvq1, const victor_hardware_interface::CartesianValueQuantity& cvq2);
 
-        static bool JointPExPMatch(const victor_hardware_interface::JointPathExecutionParameters& pexp1, const victor_hardware_interface::JointPathExecutionParameters& pexp2);
+        static bool jointPExPMatch(const victor_hardware_interface::JointPathExecutionParameters& pexp1, const victor_hardware_interface::JointPathExecutionParameters& pexp2);
 
-        static bool CartesianPExPMatch(const victor_hardware_interface::CartesianPathExecutionParameters& pexp1, const victor_hardware_interface::CartesianPathExecutionParameters& pexp2);
+        static bool cartesianPExPMatch(const victor_hardware_interface::CartesianPathExecutionParameters& pexp1, const victor_hardware_interface::CartesianPathExecutionParameters& pexp2);
 
-        static bool CheckControlModeCommandAndStatusMatch(const victor_hardware_interface::ControlModeCommand& command, const victor_hardware_interface::ControlModeStatus& status);
+        static bool checkControlModeCommandAndStatusMatch(const victor_hardware_interface::ControlModeCommand& command, const victor_hardware_interface::ControlModeStatus& status);
 
-        std::pair<bool, std::string> SafetyCheckJointPathExecutionParams(const victor_hardware_interface::JointPathExecutionParameters& params) const;
+        std::pair<bool, std::string> safetyCheckJointPathExecutionParams(const victor_hardware_interface::JointPathExecutionParameters& params) const;
 
-        std::pair<bool, std::string> SafetyCheckCartesianPathExecutionParams(const victor_hardware_interface::CartesianPathExecutionParameters& params) const;
+        std::pair<bool, std::string> safetyCheckCartesianPathExecutionParams(const victor_hardware_interface::CartesianPathExecutionParameters& params) const;
 
-        std::pair<bool, std::string> SafetyCheckJointImpedanceParameters(const victor_hardware_interface::JointImpedanceParameters& params) const;
+        std::pair<bool, std::string> safetyCheckJointImpedanceParams(const victor_hardware_interface::JointImpedanceParameters& params) const;
 
-        std::pair<bool, std::string> SafetyCheckCartesianImpedanceParameters(const victor_hardware_interface::CartesianImpedanceParameters& params) const;
+        std::pair<bool, std::string> safetyCheckCartesianImpedanceParams(const victor_hardware_interface::CartesianImpedanceParameters& params) const;
 
-        std::pair<bool, std::string> SafetyCheckCartesianControlModeLimits(const victor_hardware_interface::CartesianControlModeLimits& params) const;
+        std::pair<bool, std::string> safetyCheckCartesianControlModeLimits(const victor_hardware_interface::CartesianControlModeLimits& params) const;
 
-        std::pair<bool, std::string> SafetyCheckControlMode(const victor_hardware_interface::ControlModeCommand& control_mode) const;
+        std::pair<bool, std::string> safetyCheckControlMode(const victor_hardware_interface::ControlModeCommand& control_mode) const;
 
-        victor_hardware_interface::ControlModeCommand MergeControlModeCommand(const victor_hardware_interface::ControlModeStatus& active_control_mode, const victor_hardware_interface::ControlModeCommand& new_control_mode) const;
+        bool setControlModeCallback(victor_hardware_interface::SetControlMode::Request& req, victor_hardware_interface::SetControlMode::Response& res);
 
-        bool SetControlModeCallback(victor_hardware_interface::SetControlMode::Request& req, victor_hardware_interface::SetControlMode::Response& res);
+        bool getControlModeCallback(victor_hardware_interface::GetControlMode::Request& req, victor_hardware_interface::GetControlMode::Response& res);
 
-        bool GetControlModeCallback(victor_hardware_interface::GetControlMode::Request& req, victor_hardware_interface::GetControlMode::Response& res);
+        bool safetyCheckPositions(const victor_hardware_interface::JointValueQuantity& positions) const;
 
-        bool SafetyCheckPositions(const victor_hardware_interface::JointValueQuantity& positions) const;
+        bool safetyCheckPositionsVelocities(const victor_hardware_interface::JointValueQuantity& positions, const victor_hardware_interface::JointValueQuantity& velocities) const;
 
-        bool SafetyCheckPositionsVelocities(const victor_hardware_interface::JointValueQuantity& positions, const victor_hardware_interface::JointValueQuantity& velocities) const;
+        bool safetyCheckCartesianPose(const geometry_msgs::Pose& pose, const std::string& frame) const;
 
-        bool SafetyCheckCartesianPose(const geometry_msgs::Pose& pose, const std::string& frame) const;
+        bool safetyCheckMotionCommand(const victor_hardware_interface::MotionCommand& command);
 
-        bool SafetyCheckMotionCommand(const victor_hardware_interface::MotionCommand& command);
+        void motionCommandROSCallback(victor_hardware_interface::MotionCommand command);
 
-        void MotionCommandROSCallback(victor_hardware_interface::MotionCommand command);
+        bool safetyCheckFingerCommand(const victor_hardware_interface::Robotiq3FingerActuatorCommand& command) const;
 
-        bool SafetyCheckFingerCommand(const victor_hardware_interface::Robotiq3FingerActuatorCommand& command) const;
+        bool safetyCheckGripperCommand(const victor_hardware_interface::Robotiq3FingerCommand& command) const;
 
-        bool SafetyCheckGripperCommand(const victor_hardware_interface::Robotiq3FingerCommand& command) const;
+        void gripperCommandROSCallback(victor_hardware_interface::Robotiq3FingerCommand command);
 
-        void GripperCommandROSCallback(victor_hardware_interface::Robotiq3FingerCommand command);
+        void motionStatusLCMCallback(const victor_hardware_interface::MotionStatus& motion_status);
 
-        void MotionStatusLCMCallback(const victor_hardware_interface::MotionStatus& motion_status);
+        void controlModeStatusLCMCallback(const victor_hardware_interface::ControlModeStatus& control_mode_status);
 
-        void ControlModeStatusLCMCallback(const victor_hardware_interface::ControlModeStatus& control_mode_status);
+        void gripperStatusLCMCallback(const victor_hardware_interface::Robotiq3FingerStatus& gripper_status);
 
-        void GripperStatusLCMCallback(const victor_hardware_interface::Robotiq3FingerStatus& gripper_status);
     };
 }
 
