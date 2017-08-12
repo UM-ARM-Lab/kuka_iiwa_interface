@@ -63,14 +63,14 @@ int main(int argc, char** argv)
     // Create only one lcm object if the send and recieve addresses are the same (used for udpm protocol)
     if (send_lcm_url == recv_lcm_url)
     {
-        ROS_INFO("Starting with shared send/receive LCM [%s]...", send_lcm_url.c_str());
+        ROS_INFO_NAMED(ros::this_node::getName(), "Starting with shared send/receive LCM [%s]...", send_lcm_url.c_str());
         send_lcm_ptr = std::make_shared<lcm::LCM>(send_lcm_url);
         recv_lcm_ptr = send_lcm_ptr;
     }
     // Create seperate lcm objects if the send and recieve addresses are different (used for udp and tcp protocols)
     else
     {
-        ROS_INFO("Starting with separate send [%s] and receive [%s] LCM...", send_lcm_url.c_str(), recv_lcm_url.c_str());
+        ROS_INFO_NAMED(ros::this_node::getName(), "Starting with separate send [%s] and receive [%s] LCM...", send_lcm_url.c_str(), recv_lcm_url.c_str());
         send_lcm_ptr = std::make_shared<lcm::LCM>(send_lcm_url);
         recv_lcm_ptr = std::make_shared<lcm::LCM>(recv_lcm_url);
     }

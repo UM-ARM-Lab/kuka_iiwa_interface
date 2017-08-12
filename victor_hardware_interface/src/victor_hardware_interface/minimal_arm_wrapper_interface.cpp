@@ -268,10 +268,10 @@ namespace victor_hardware_interface
     {
         // Start ROS thread - this must happen *after* the LCM objects have been initialized as they use iiwa_ptr_ and
         // robotiq_ptr_, so we do so here instead of in the constructor
-        ROS_INFO("Starting ROS spin loop.");
+        ROS_INFO_NAMED(ros::this_node::getName(), "Starting ROS spin loop.");
         ros_callback_thread_ = std::thread(std::bind(&MinimalArmWrapperInterface::ROSSpinThread, this));
 
-        ROS_INFO("Starting LCM spin loop.");
+        ROS_INFO_NAMED(ros::this_node::getName(), "Starting LCM spin loop.");
         bool lcm_ok = true;
         // Continue to loop so long as both ROS and LCM have no un-recoverable errors or SIGINT style interruptions
         while (ros::ok() && lcm_ok)
@@ -280,7 +280,7 @@ namespace victor_hardware_interface
             if (ret < 0)
             {
                 lcm_ok = false;
-                ROS_ERROR_STREAM("LCM error: " << ret);
+                ROS_ERROR_STREAM_NAMED(ros::this_node::getName(), "LCM error: " << ret);
             }
         }
     }
@@ -807,7 +807,7 @@ namespace victor_hardware_interface
             std::lock_guard<std::mutex> lock(control_mode_status_mutex_);
             if (active_control_mode_.Valid() == false)
             {
-                ROS_INFO("Initializing active_control_mode for the first time");
+                ROS_INFO_NAMED(ros::this_node::getName(), "Initializing active_control_mode for the first time");
             }
             active_control_mode_ = control_mode_status;
         }
@@ -909,7 +909,7 @@ namespace victor_hardware_interface
         }
         else
         {
-            ROS_ERROR_STREAM("Arm motion command failed validity checks: " << validity_check_results.second);
+            ROS_ERROR_STREAM_NAMED(ros::this_node::getName(), "Arm motion command failed validity checks: " << validity_check_results.second);
         }
     }
 
@@ -980,7 +980,7 @@ namespace victor_hardware_interface
         }
         else
         {
-            ROS_WARN_STREAM("Gripper command failed validity checks: " << validity_check_results.second);
+            ROS_WARN_STREAM_NAMED(ros::this_node::getName(), "Gripper command failed validity checks: " << validity_check_results.second);
         }
     }
 
@@ -1079,15 +1079,15 @@ namespace victor_hardware_interface
 
             if(!cartesianImpedanceParamsIsDefault(new_control_mode.cartesian_impedance_params))
             {
-                ROS_WARN("The cartesian impedance parameters are specified but ignored in JOINT_IMPEDANCE mode.");
+                ROS_WARN_NAMED(ros::this_node::getName(), "The cartesian impedance parameters are specified but ignored in JOINT_IMPEDANCE mode.");
             }
             if(!cartesianControlModeLimitsIsDefault(new_control_mode.cartesian_control_mode_limits))
             {
-                ROS_WARN("The cartesian control mode limits are specified but ignored in JOINT_IMPEDANCE mode.");
+                ROS_WARN_NAMED(ros::this_node::getName(), "The cartesian control mode limits are specified but ignored in JOINT_IMPEDANCE mode.");
             }
             if(!cartesianPathExecutionParamsIsDefault(new_control_mode.cartesian_path_execution_params))
             {
-                ROS_WARN("The cartesian path execution parameters are specified but ignored in JOINT_IMPEDANCE mode.");
+                ROS_WARN_NAMED(ros::this_node::getName(), "The cartesian path execution parameters are specified but ignored in JOINT_IMPEDANCE mode.");
             }
         }
         else if (new_control_mode.control_mode == ControlModeCommand::CARTESIAN_IMPEDANCE)
@@ -1099,11 +1099,11 @@ namespace victor_hardware_interface
 
             if(!jointPathExecutionParamsIsDefault(new_control_mode.joint_path_execution_params))
             {
-                ROS_WARN("The joint path execution parameters are specified but ignored in CASRTESIAN_IMPEDANCE mode.");
+                ROS_WARN_NAMED(ros::this_node::getName(), "The joint path execution parameters are specified but ignored in CASRTESIAN_IMPEDANCE mode.");
             }
             if(!jointImpedanceParamsIsDefault(new_control_mode.joint_impedance_params))
             {
-                ROS_WARN("The joint impedance parameters are specified but ignored in CASRTESIAN_IMPEDANCE mode.");
+                ROS_WARN_NAMED(ros::this_node::getName(), "The joint impedance parameters are specified but ignored in CASRTESIAN_IMPEDANCE mode.");
             }
         }
         else if (new_control_mode.control_mode == ControlModeCommand::JOINT_POSITION)
@@ -1113,19 +1113,19 @@ namespace victor_hardware_interface
             
             if(!jointImpedanceParamsIsDefault(new_control_mode.joint_impedance_params))
             {
-                ROS_WARN("The joint impedance parameters are specified but ignored in JOINT_POSITION mode.");
+                ROS_WARN_NAMED(ros::this_node::getName(), "The joint impedance parameters are specified but ignored in JOINT_POSITION mode.");
             }
             if(!cartesianImpedanceParamsIsDefault(new_control_mode.cartesian_impedance_params))
             {
-                ROS_WARN("The cartesian impedance parameters are specified but ignored in JOINT_POSITION mode.");
+                ROS_WARN_NAMED(ros::this_node::getName(), "The cartesian impedance parameters are specified but ignored in JOINT_POSITION mode.");
             }
             if(!cartesianControlModeLimitsIsDefault(new_control_mode.cartesian_control_mode_limits))
             {
-                ROS_WARN("The cartesian control mode limits are specified but ignored in JOINT_POSITION mode.");
+                ROS_WARN_NAMED(ros::this_node::getName(), "The cartesian control mode limits are specified but ignored in JOINT_POSITION mode.");
             }
             if(!cartesianPathExecutionParamsIsDefault(new_control_mode.cartesian_path_execution_params))
             {
-                ROS_WARN("The cartesian path execution parameters are specified but ignored in JOINT_POSITION mode.");
+                ROS_WARN_NAMED(ros::this_node::getName(), "The cartesian path execution parameters are specified but ignored in JOINT_POSITION mode.");
             }
         }
         else if (new_control_mode.control_mode == ControlModeCommand::CARTESIAN_POSE)
@@ -1135,24 +1135,24 @@ namespace victor_hardware_interface
 
             if(!jointPathExecutionParamsIsDefault(new_control_mode.joint_path_execution_params))
             {
-                ROS_WARN("The joint path execution parameters are specified but ignored in CARTESIAN_POSE mode.");
+                ROS_WARN_NAMED(ros::this_node::getName(), "The joint path execution parameters are specified but ignored in CARTESIAN_POSE mode.");
             }
             if(!jointImpedanceParamsIsDefault(new_control_mode.joint_impedance_params))
             {
-                ROS_WARN("The joint impedance parameters are specified but ignored in CARTESIAN_POSE mode.");
+                ROS_WARN_NAMED(ros::this_node::getName(), "The joint impedance parameters are specified but ignored in CARTESIAN_POSE mode.");
             }
             if(!cartesianImpedanceParamsIsDefault(new_control_mode.cartesian_impedance_params))
             {
-                ROS_WARN("The cartesian impedance parameters are specified but ignored in CARTESIAN_POSE mode.");
+                ROS_WARN_NAMED(ros::this_node::getName(), "The cartesian impedance parameters are specified but ignored in CARTESIAN_POSE mode.");
             }
             if(!cartesianControlModeLimitsIsDefault(new_control_mode.cartesian_control_mode_limits))
             {
-                ROS_WARN("The cartesian control mode limits are specified but ignored in CARTESIAN_POSE mode.");
+                ROS_WARN_NAMED(ros::this_node::getName(), "The cartesian control mode limits are specified but ignored in CARTESIAN_POSE mode.");
             }
         }
         else
         {
-            ROS_INFO_STREAM("Invalid control mode: " << new_control_mode.control_mode << ".");
+            ROS_INFO_STREAM_NAMED(ros::this_node::getName(), "Invalid control mode: " << new_control_mode.control_mode << ".");
             assert(false);
         }
         return merged_control_mode;
