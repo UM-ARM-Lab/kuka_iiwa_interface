@@ -36,17 +36,25 @@ def computeScissorAngle(control):
     # 0 for fully open with -16, 1 for fully close with 10
     return (26.0 * control - 16.0) * pi / 180.0
 
-class victorJointStatePublisher:
+
+class VictorJointStatePublisher:
     def __init__(self, rate):
         self.joint_names = [
                 'victor_left_arm_joint_1',  'victor_left_arm_joint_2',  'victor_left_arm_joint_3',  'victor_left_arm_joint_4',  'victor_left_arm_joint_5',  'victor_left_arm_joint_6',  'victor_left_arm_joint_7',
                 'victor_right_arm_joint_1', 'victor_right_arm_joint_2', 'victor_right_arm_joint_3', 'victor_right_arm_joint_4', 'victor_right_arm_joint_5', 'victor_right_arm_joint_6', 'victor_right_arm_joint_7',
-                'victor_left_gripper_fingerA_joint_2', 'victor_left_gripper_fingerA_joint_3', 'victor_left_gripper_fingerA_joint_4',
-                'victor_left_gripper_fingerB_knuckle', 'victor_left_gripper_fingerB_joint_2', 'victor_left_gripper_fingerB_joint_3', 'victor_left_gripper_fingerB_joint_4',
-                'victor_left_gripper_fingerC_knuckle', 'victor_left_gripper_fingerC_joint_2', 'victor_left_gripper_fingerC_joint_3', 'victor_left_gripper_fingerC_joint_4',
-                'victor_right_gripper_fingerA_joint_2', 'victor_right_gripper_fingerA_joint_3', 'victor_right_gripper_fingerA_joint_4',
+                                                        'victor_left_gripper_fingerA_joint_2',  'victor_left_gripper_fingerA_joint_3',  'victor_left_gripper_fingerA_joint_4',
+                'victor_left_gripper_fingerB_knuckle',  'victor_left_gripper_fingerB_joint_2',  'victor_left_gripper_fingerB_joint_3',  'victor_left_gripper_fingerB_joint_4',
+                'victor_left_gripper_fingerC_knuckle',  'victor_left_gripper_fingerC_joint_2',  'victor_left_gripper_fingerC_joint_3',  'victor_left_gripper_fingerC_joint_4',
+                                                        'victor_right_gripper_fingerA_joint_2', 'victor_right_gripper_fingerA_joint_3', 'victor_right_gripper_fingerA_joint_4',
                 'victor_right_gripper_fingerB_knuckle', 'victor_right_gripper_fingerB_joint_2', 'victor_right_gripper_fingerB_joint_3', 'victor_right_gripper_fingerB_joint_4',
                 'victor_right_gripper_fingerC_knuckle', 'victor_right_gripper_fingerC_joint_2', 'victor_right_gripper_fingerC_joint_3', 'victor_right_gripper_fingerC_joint_4']
+
+        self.joint_state_lock = Lock()
+        self.joint_state_msg = JointState()
+        self.joint_state_msg.name = self.joint_names
+        self.joint_state_msg.position = [0] * len(self.joint_names)
+        self.joint_state_msg.velocity = []
+        self.joint_state_msg.effort = [0] * len(self.joint_names)
 
         self.rate = rate
         self.joint_state_pub    = rospy.Publisher("joint_states", JointState, queue_size = 1)
@@ -55,18 +63,7 @@ class victorJointStatePublisher:
         self.left_gripper_sub   = rospy.Subscriber("left_arm/gripper_status", Robotiq3FingerStatus, self.left_gripper_motion_status_callback)
         self.right_gripper_sub  = rospy.Subscriber("right_arm/gripper_status", Robotiq3FingerStatus, self.right_gripper_motion_status_callback)
 
-        self.joint_state_lock = Lock()
-        self.joint_state_msg = JointState()
-        self.joint_state_msg.name = self.joint_names
-        self.joint_state_msg.position = [0] * 36
-        self.joint_state_msg.velocity = []
-        self.joint_state_msg.effort = [0] * 36
-
-        # Set the default values for the left arm, just in case it is not publishing data
-        self.joint_state_msg.position[0] = pi / 2
-        self.joint_state_msg.position[1] = -pi / 2
-
-
+    def run(self):
         rate = rospy.Rate(self.rate)
         while not rospy.is_shutdown():
             self.publish_joint_values()
@@ -139,4 +136,5 @@ if __name__ == '__main__':
     rospy.loginfo('Starting the victor joint state broadcaster...')
     #Get the parameters from the server
     rate = rospy.get_param("~rate", 10.0)
-    victorJointStatePublisher(rate)
+    pub = VictorJointStatePublisher(rate)
+    pub.run()
