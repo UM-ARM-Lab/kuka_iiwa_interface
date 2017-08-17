@@ -292,7 +292,7 @@ namespace victor_hardware_interface
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     // Internal helper function used to process ROS callbacks
-    void MinimalArmWrapperInterface::ROSSpinThread()
+    void MinimalArmWrapperInterface::rosSpinThread()
     {
         const ros::WallDuration timeout(ROS_SPIN_PERIOD);
         while (nh_.ok())
