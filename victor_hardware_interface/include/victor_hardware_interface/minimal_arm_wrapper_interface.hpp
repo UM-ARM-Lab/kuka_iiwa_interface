@@ -7,8 +7,7 @@
 #include <ros/ros.h>
 #include <ros/callback_queue.h>
 // ROS message headers
-#include <victor_hardware_interface/ControlModeCommand.h>
-#include <victor_hardware_interface/ControlModeStatus.h>
+#include <victor_hardware_interface/ControlModeParameters.h>
 #include <victor_hardware_interface/MotionCommand.h>
 #include <victor_hardware_interface/MotionStatus.h>
 #include <victor_hardware_interface/Robotiq3FingerCommand.h>
@@ -40,7 +39,7 @@ namespace victor_hardware_interface
 
     bool cartesianPexpEqual(const CartesianPathExecutionParameters& pexp1, const CartesianPathExecutionParameters& pexp2);
 
-    bool controlModeCommandAndStatusEqual(const ControlModeCommand& command, const ControlModeStatus& status);
+    bool controlModeParamsEqual(const ControlModeParameters& params1, const ControlModeParameters& params2);
 
 
     /**
@@ -92,7 +91,7 @@ namespace victor_hardware_interface
         ros::CallbackQueue ros_callback_queue_;
 
         mutable std::mutex control_mode_status_mutex_;
-        Maybe::Maybe<ControlModeStatus> active_control_mode_;
+        Maybe::Maybe<ControlModeParameters> active_control_mode_;
         const double set_control_mode_timeout_; // measured in seconds
 
         std::shared_ptr<lcm::LCM> send_lcm_ptr_;
@@ -120,7 +119,7 @@ namespace victor_hardware_interface
 
         static std::pair<bool, std::string> validateCartesianControlModeLimits(const CartesianControlModeLimits& params);
 
-        static std::pair<bool, std::string> validateControlMode(const ControlModeCommand& control_mode);
+        static std::pair<bool, std::string> validateControlMode(const ControlModeParameters& params);
 
         //// ROS Callbacks to get and set the control mode as service calls ////////////////////////////////////////////
 
@@ -132,7 +131,7 @@ namespace victor_hardware_interface
          * Callback function used by the LCM subsystem when a control_mode_status message is received. Caches the value
          * in active_control_mode_ for use by setControlModeCallback(...) and getControlModeCallback(...)
          */
-        void controlModeStatusLCMCallback(const ControlModeStatus& control_mode_status);
+        void controlModeStatusLCMCallback(const ControlModeParameters& control_mode_status);
 
         ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         // Arm movement/control and feedback functionality

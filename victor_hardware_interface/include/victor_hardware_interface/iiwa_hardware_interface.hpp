@@ -1,13 +1,11 @@
 #include <string>
 #include <lcm/lcm-cpp.hpp>
 // ROS message headers
-#include "victor_hardware_interface/ControlModeCommand.h"
-#include "victor_hardware_interface/ControlModeStatus.h"
+#include "victor_hardware_interface/ControlModeParameters.h"
 #include "victor_hardware_interface/MotionCommand.h"
 #include "victor_hardware_interface/MotionStatus.h"
 // LCM type headers
-#include "victor_hardware_interface/control_mode_command.hpp"
-#include "victor_hardware_interface/control_mode_status.hpp"
+#include "victor_hardware_interface/control_mode_parameters.hpp"
 #include "victor_hardware_interface/motion_command.hpp"
 #include "victor_hardware_interface/motion_status.hpp"
 
@@ -44,11 +42,14 @@ namespace victor_hardware_interface
     CartesianControlModeLimits cartesianControlModeLimitsLcmToRos(const cartesian_control_mode_limits& lcm_ccml);
     cartesian_control_mode_limits cartesianControlModeLimitsRosToLcm(const CartesianControlModeLimits& ros_ccml);
 
+    ControlMode controlModeLcmToRos(const control_mode& lcm_cm);
+    control_mode controlModeRosToLcm(const ControlMode& ros_cm);
+
     MotionStatus motionStatusLcmToRos(const motion_status& lcm_status);
     motion_command motionCommandRosToLcm(const MotionCommand& ros_command);
 
-    ControlModeStatus controlModeStatusLcmToRos(const control_mode_status& lcm_status);
-    control_mode_command controlModeCommandRosToLcm(const ControlModeCommand& ros_command);
+    ControlModeParameters controlModeParamsLcmToRos(const control_mode_parameters& lcm_cmp);
+    control_mode_parameters controlModeParamsRosToLcm(const ControlModeParameters& ros_cmp);
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // The class that does the actual communication
@@ -65,7 +66,7 @@ namespace victor_hardware_interface
         std::function<void(const MotionStatus&)> motion_status_callback_fn_;
         std::string control_mode_command_channel_name_;
         std::string control_mode_status_channel_name_;
-        std::function<void(const ControlModeStatus&)> control_mode_status_callback_fn_;
+        std::function<void(const ControlModeParameters&)> control_mode_status_callback_fn_;
 
         void InternalMotionStatusLCMCallback(
                 const lcm::ReceiveBuffer* buffer,
@@ -75,7 +76,7 @@ namespace victor_hardware_interface
         void InternalControlModeStatusLCMCallback(
                 const lcm::ReceiveBuffer* buffer,
                 const std::string& channel,
-                const control_mode_status* status_msg);
+                const control_mode_parameters* status_msg);
 
     public:
 
@@ -87,11 +88,11 @@ namespace victor_hardware_interface
                 const std::function<void(const MotionStatus&)>& motion_status_callback_fn,
                 const std::string& control_mode_command_channel_name,
                 const std::string& control_mode_status_channel_name,
-                const std::function<void(const ControlModeStatus&)>& control_mode_status_callback_fn);
+                const std::function<void(const ControlModeParameters&)>& control_mode_status_callback_fn);
 
         bool SendMotionCommandMessage(const MotionCommand& command);
 
-        bool SendControlModeCommandMessage(const ControlModeCommand& command);
+        bool SendControlModeCommandMessage(const ControlModeParameters& command);
     };
 }
 
