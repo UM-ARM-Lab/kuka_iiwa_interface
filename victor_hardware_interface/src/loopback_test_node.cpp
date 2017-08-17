@@ -31,7 +31,7 @@ protected:
     std::shared_ptr<lcm::LCM> send_lcm_ptr_;
     std::shared_ptr<lcm::LCM> recv_lcm_ptr_;
     std::unique_ptr<victor_hardware_interface::IIWAHardwareInterface> iiwa_ptr_;
-    std::unique_ptr<robotiq_3finger_hardware_interface::Robotiq3FingerHardwareInterface> robotiq_ptr_;
+    std::unique_ptr<victor_hardware_interface::Robotiq3FingerHardwareInterface> robotiq_ptr_;
 
     std::vector<victor_hardware_interface::MotionCommand> motion_command_queue_;
     std::vector<victor_hardware_interface::MotionStatus> motion_status_queue_;
@@ -56,7 +56,7 @@ public:
         std::function<void(const victor_hardware_interface::ControlModeStatus&)> control_mode_status_callback_fn = [&] (const victor_hardware_interface::ControlModeStatus& control_mode_status) { return ControlModeStatusCallback(control_mode_status); };
         iiwa_ptr_ = std::unique_ptr<victor_hardware_interface::IIWAHardwareInterface>(new victor_hardware_interface::IIWAHardwareInterface(send_lcm_ptr_, recv_lcm_ptr_, motion_command_channel, motion_status_channel, motion_status_callback_fn, control_mode_command_channel, control_mode_status_channel, control_mode_status_callback_fn));
         std::function<void(const victor_hardware_interface::Robotiq3FingerStatus&)> gripper_status_callback_fn = [&] (const victor_hardware_interface::Robotiq3FingerStatus& gripper_status) { return GripperStatusCallback(gripper_status); };
-        robotiq_ptr_ = std::unique_ptr<robotiq_3finger_hardware_interface::Robotiq3FingerHardwareInterface>(new robotiq_3finger_hardware_interface::Robotiq3FingerHardwareInterface(send_lcm_ptr_, recv_lcm_ptr_, gripper_command_channel, gripper_status_channel, gripper_status_callback_fn));
+        robotiq_ptr_ = std::unique_ptr<victor_hardware_interface::Robotiq3FingerHardwareInterface>(new victor_hardware_interface::Robotiq3FingerHardwareInterface(send_lcm_ptr_, recv_lcm_ptr_, gripper_command_channel, gripper_status_channel, gripper_status_callback_fn));
     }
 
     void MotionStatusCallback(const victor_hardware_interface::MotionStatus& motion_status)
@@ -351,7 +351,7 @@ public:
         command.finger_b_command.header.stamp = command.header.stamp;
         command.finger_c_command.header.stamp = command.header.stamp;
         command.scissor_command.header.stamp = command.header.stamp;
-        const bool sent = robotiq_ptr_->SendCommandMessage(command);
+        const bool sent = robotiq_ptr_->sendCommandMessage(command);
         assert(sent);
         gripper_command_queue_.push_back(command);
     }
