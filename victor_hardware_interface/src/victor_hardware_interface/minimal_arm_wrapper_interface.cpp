@@ -236,8 +236,8 @@ namespace victor_hardware_interface
         {
             return controlModeStatusLCMCallback(control_mode_status);
         };
-        iiwa_ptr_ = std::unique_ptr<iiwa_hardware_interface::IIWAHardwareInterface>(
-                    new iiwa_hardware_interface::IIWAHardwareInterface(
+        iiwa_ptr_ = std::unique_ptr<IIWAHardwareInterface>(
+                    new IIWAHardwareInterface(
                         send_lcm_ptr_, recv_lcm_ptr_,
                         motion_command_channel, motion_status_channel, motion_status_callback_fn,
                         control_mode_command_channel, control_mode_status_channel, control_mode_status_callback_fn));

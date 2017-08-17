@@ -134,7 +134,7 @@ catkin_package(
 include_directories(include lcm_types SYSTEM ${catkin_INCLUDE_DIRS} ${Eigen3_INCLUDE_DIRS})
 
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Wextra -Werror -Wconversion")
-set(CMAKE_CXX_FLAGS "-std=c++0x ${CMAKE_CXX_FLAGS} -Wall -Wextra -Werror -Wconversion -O3 -g")
+set(CMAKE_CXX_FLAGS "-std=c++0x ${CMAKE_CXX_FLAGS} -Wall -Wextra -Werror -Wconversion -O3 -g -flto")
 
 ## Declare C++ executables
 add_library(${PROJECT_NAME} include/${PROJECT_NAME}/iiwa_hardware_interface.hpp

@@ -1,5 +1,4 @@
 #include <string>
-#include <iostream>
 #include <lcm/lcm-cpp.hpp>
 // ROS message headers
 #include "victor_hardware_interface/ControlModeCommand.h"
@@ -15,8 +14,46 @@
 #ifndef IIWA_HARDWARE_INTERFACE_HPP
 #define IIWA_HARDWARE_INTERFACE_HPP
 
-namespace iiwa_hardware_interface
+namespace victor_hardware_interface
 {
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // LCM to ROS and ROS to LCM message converters
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    JointValueQuantity jvqLcmToRos(const joint_value_quantity& lcm_jvq);
+    joint_value_quantity jvqRosToLcm( const JointValueQuantity& ros_jvq);
+
+    CartesianValueQuantity cvqLcmToRos(const cartesian_value_quantity& lcm_cvq);
+    cartesian_value_quantity cvqRosToLcm(const CartesianValueQuantity& ros_cvq);
+
+    geometry_msgs::Pose poseLcmToRos(const cartesian_pose& lcm_pose);
+    cartesian_pose poseRosToLcm(const geometry_msgs::Pose& ros_pose);
+
+    JointImpedanceParameters jointImpedanceParamsLcmToRos(const joint_impedance_parameters& lcm_jip);
+    joint_impedance_parameters jointImpedanceParamsRosToLcm(const JointImpedanceParameters& ros_jip);
+
+    CartesianImpedanceParameters cartesianImpedanceParamsLcmToRos(const cartesian_impedance_parameters& lcm_cip);
+    cartesian_impedance_parameters cartesianImpedanceParamsRosToLcm(const CartesianImpedanceParameters& ros_cip);
+
+    JointPathExecutionParameters jointPexpLcmToRos(const joint_path_execution_parameters& path_execution_params);
+    joint_path_execution_parameters jointPexpRosToLcm(const JointPathExecutionParameters& path_execution_params);
+
+    CartesianPathExecutionParameters cartesianPexpLcmToRos(const cartesian_path_execution_parameters& lcm_pexp);
+    cartesian_path_execution_parameters cartesianPexpRosToLcm(const CartesianPathExecutionParameters& ros_pexp);
+
+    CartesianControlModeLimits cartesianControlModeLimitsLcmToRos(const cartesian_control_mode_limits& lcm_ccml);
+    cartesian_control_mode_limits cartesianControlModeLimitsRosToLcm(const CartesianControlModeLimits& ros_ccml);
+
+    MotionStatus motionStatusLcmToRos(const motion_status& lcm_status);
+    motion_command motionCommandRosToLcm(const MotionCommand& ros_command);
+
+    ControlModeStatus controlModeStatusLcmToRos(const control_mode_status& lcm_status);
+    control_mode_command controlModeCommandRosToLcm(const ControlModeCommand& ros_command);
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // The class that does the actual communication
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
     class IIWAHardwareInterface
     {
     protected:
@@ -25,160 +62,36 @@ namespace iiwa_hardware_interface
         std::shared_ptr<lcm::LCM> recv_lcm_ptr_;
         std::string motion_command_channel_name_;
         std::string motion_status_channel_name_;
-        std::function<void(const victor_hardware_interface::MotionStatus&)> motion_status_callback_fn_;
+        std::function<void(const MotionStatus&)> motion_status_callback_fn_;
         std::string control_mode_command_channel_name_;
         std::string control_mode_status_channel_name_;
-        std::function<void(const victor_hardware_interface::ControlModeStatus&)> control_mode_status_callback_fn_;
-
-        victor_hardware_interface::JointImpedanceParameters ConvertJointImpedanceParameters(
-                const victor_hardware_interface::joint_impedance_parameters& joint_impedance_params) const;
-
-        victor_hardware_interface::joint_impedance_parameters ConvertJointImpedanceParameters(
-                const victor_hardware_interface::JointImpedanceParameters& joint_impedance_params) const;
-
-        victor_hardware_interface::CartesianImpedanceParameters ConvertCartesianImpedanceParameters(
-                const victor_hardware_interface::cartesian_impedance_parameters& cartesian_impedance_params) const;
-
-        victor_hardware_interface::cartesian_impedance_parameters ConvertCartesianImpedanceParameters(
-                const victor_hardware_interface::CartesianImpedanceParameters& cartesian_impedance_params) const;
-
-        victor_hardware_interface::JointPathExecutionParameters ConvertJointPathExecutionParameters(
-                const victor_hardware_interface::joint_path_execution_parameters& path_execution_params) const;
-
-        victor_hardware_interface::joint_path_execution_parameters ConvertJointPathExecutionParameters(
-                const victor_hardware_interface::JointPathExecutionParameters& path_execution_params) const;
-
-        victor_hardware_interface::CartesianPathExecutionParameters ConvertCartesianPathExecutionParameters(
-                const victor_hardware_interface::cartesian_path_execution_parameters& path_execution_params) const;
-
-        victor_hardware_interface::cartesian_path_execution_parameters ConvertCartesianPathExecutionParameters(
-                const victor_hardware_interface::CartesianPathExecutionParameters& path_execution_params) const;
-
-        victor_hardware_interface::CartesianControlModeLimits ConvertCartesianControlModeLimits(
-                const victor_hardware_interface::cartesian_control_mode_limits& cartesian_control_mode_limits) const;
-
-        victor_hardware_interface::cartesian_control_mode_limits ConvertCartesianControlModeLimits(
-                const victor_hardware_interface::CartesianControlModeLimits& cartesian_control_mode_limits) const;
-
-        victor_hardware_interface::motion_command ConvertMotionCommand(
-                const victor_hardware_interface::MotionCommand& motion_command) const;
-
-        victor_hardware_interface::MotionStatus ConvertMotionStatus(
-                const victor_hardware_interface::motion_status& motion_status) const;
-
-        victor_hardware_interface::control_mode_command ConvertControlModeCommand(
-                const victor_hardware_interface::ControlModeCommand& control_mode_command) const;
-
-        victor_hardware_interface::ControlModeStatus ConvertControlModeStatus(
-                const victor_hardware_interface::control_mode_status& control_mode_status) const;
+        std::function<void(const ControlModeStatus&)> control_mode_status_callback_fn_;
 
         void InternalMotionStatusLCMCallback(
                 const lcm::ReceiveBuffer* buffer,
                 const std::string& channel,
-                const victor_hardware_interface::motion_status* status_msg);
+                const motion_status* status_msg);
 
         void InternalControlModeStatusLCMCallback(
                 const lcm::ReceiveBuffer* buffer,
                 const std::string& channel,
-                const victor_hardware_interface::control_mode_status* status_msg);
+                const control_mode_status* status_msg);
 
     public:
-
-        static inline victor_hardware_interface::joint_value_quantity ConvertJVQfromROStoLCM(
-                const victor_hardware_interface::JointValueQuantity& ros_jvq)
-        {
-            victor_hardware_interface::joint_value_quantity lcm_jvq;
-            lcm_jvq.joint_1 = ros_jvq.joint_1;
-            lcm_jvq.joint_2 = ros_jvq.joint_2;
-            lcm_jvq.joint_3 = ros_jvq.joint_3;
-            lcm_jvq.joint_4 = ros_jvq.joint_4;
-            lcm_jvq.joint_5 = ros_jvq.joint_5;
-            lcm_jvq.joint_6 = ros_jvq.joint_6;
-            lcm_jvq.joint_7 = ros_jvq.joint_7;
-            return lcm_jvq;
-        }
-
-        static inline victor_hardware_interface::JointValueQuantity ConvertJVQfromLCMtoROS(
-                const victor_hardware_interface::joint_value_quantity& lcm_jvq)
-        {
-            victor_hardware_interface::JointValueQuantity ros_jvq;
-            ros_jvq.joint_1 = lcm_jvq.joint_1;
-            ros_jvq.joint_2 = lcm_jvq.joint_2;
-            ros_jvq.joint_3 = lcm_jvq.joint_3;
-            ros_jvq.joint_4 = lcm_jvq.joint_4;
-            ros_jvq.joint_5 = lcm_jvq.joint_5;
-            ros_jvq.joint_6 = lcm_jvq.joint_6;
-            ros_jvq.joint_7 = lcm_jvq.joint_7;
-            return ros_jvq;
-        }
-
-        static inline victor_hardware_interface::cartesian_value_quantity ConvertCVQfromROStoLCM(
-                const victor_hardware_interface::CartesianValueQuantity& ros_cvq)
-        {
-            victor_hardware_interface::cartesian_value_quantity lcm_cvq;
-            lcm_cvq.x = ros_cvq.x;
-            lcm_cvq.y = ros_cvq.y;
-            lcm_cvq.z = ros_cvq.z;
-            lcm_cvq.a = ros_cvq.a;
-            lcm_cvq.b = ros_cvq.b;
-            lcm_cvq.c = ros_cvq.c;
-            return lcm_cvq;
-        }
-
-        static inline victor_hardware_interface::CartesianValueQuantity ConvertCVQfromLCMtoROS(
-                const victor_hardware_interface::cartesian_value_quantity& lcm_cvq)
-        {
-            victor_hardware_interface::CartesianValueQuantity ros_cvq;
-            ros_cvq.x = lcm_cvq.x;
-            ros_cvq.y = lcm_cvq.y;
-            ros_cvq.z = lcm_cvq.z;
-            ros_cvq.a = lcm_cvq.a;
-            ros_cvq.b = lcm_cvq.b;
-            ros_cvq.c = lcm_cvq.c;
-            return ros_cvq;
-        }
-
-        static inline victor_hardware_interface::cartesian_pose ConvertPosefromROStoLCM(
-                const geometry_msgs::Pose& ros_pose)
-        {
-            victor_hardware_interface::cartesian_pose lcm_pose;
-            lcm_pose.xt = ros_pose.position.x;
-            lcm_pose.yt = ros_pose.position.y;
-            lcm_pose.zt = ros_pose.position.z;
-            lcm_pose.wr = ros_pose.orientation.w;
-            lcm_pose.xr = ros_pose.orientation.x;
-            lcm_pose.yr = ros_pose.orientation.y;
-            lcm_pose.zr = ros_pose.orientation.z;
-            return lcm_pose;
-        }
-
-        static inline geometry_msgs::Pose ConvertPosefromLCMtoROS(
-                const victor_hardware_interface::cartesian_pose& lcm_pose)
-        {
-            geometry_msgs::Pose ros_pose;
-            ros_pose.position.x = lcm_pose.xt;
-            ros_pose.position.y = lcm_pose.yt;
-            ros_pose.position.z = lcm_pose.zt;
-            ros_pose.orientation.w = lcm_pose.wr;
-            ros_pose.orientation.x = lcm_pose.xr;
-            ros_pose.orientation.y = lcm_pose.yr;
-            ros_pose.orientation.z = lcm_pose.zr;
-            return ros_pose;
-        }
 
         IIWAHardwareInterface(
                 const std::shared_ptr<lcm::LCM>& send_lcm_ptr,
                 const std::shared_ptr<lcm::LCM>& recv_lcm_ptr,
                 const std::string& motion_command_channel_name,
                 const std::string& motion_status_channel_name,
-                const std::function<void(const victor_hardware_interface::MotionStatus&)>& motion_status_callback_fn,
+                const std::function<void(const MotionStatus&)>& motion_status_callback_fn,
                 const std::string& control_mode_command_channel_name,
                 const std::string& control_mode_status_channel_name,
-                const std::function<void(const victor_hardware_interface::ControlModeStatus&)>& control_mode_status_callback_fn);
+                const std::function<void(const ControlModeStatus&)>& control_mode_status_callback_fn);
 
-        bool SendMotionCommandMessage(const victor_hardware_interface::MotionCommand& command);
+        bool SendMotionCommandMessage(const MotionCommand& command);
 
-        bool SendControlModeCommandMessage(const victor_hardware_interface::ControlModeCommand& command);
+        bool SendControlModeCommandMessage(const ControlModeCommand& command);
     };
 }
 
