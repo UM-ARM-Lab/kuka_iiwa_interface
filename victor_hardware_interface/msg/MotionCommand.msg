@@ -1,12 +1,5 @@
 victor_hardware_interface/JointValueQuantity joint_position
 victor_hardware_interface/JointValueQuantity joint_velocity
+victor_hardware_interface/ControlMode control_mode
 geometry_msgs/Pose cartesian_pose
 std_msgs/Header header
-uint8 IS_POSITION_MOTION=0
-uint8 IS_CARTESIAN_MOTION=1
-uint8 IS_IMPEDANCE_CONTROL=2
-uint8 JOINT_POSITION=0
-uint8 JOINT_IMPEDANCE=2
-uint8 CARTESIAN_POSE=1
-uint8 CARTESIAN_IMPEDANCE=3
-uint8 control_mode

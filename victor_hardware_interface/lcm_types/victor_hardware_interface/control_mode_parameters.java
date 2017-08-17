@@ -9,47 +9,40 @@ import java.io.*;
 import java.util.*;
 import lcm.lcm.*;
  
-public final class control_mode_command implements lcm.lcm.LCMEncodable
+public final class control_mode_parameters implements lcm.lcm.LCMEncodable
 {
     public victor_hardware_interface.joint_impedance_parameters joint_impedance_params;
     public victor_hardware_interface.cartesian_impedance_parameters cartesian_impedance_params;
     public victor_hardware_interface.cartesian_control_mode_limits cartesian_control_mode_limits;
     public victor_hardware_interface.joint_path_execution_parameters joint_path_execution_params;
     public victor_hardware_interface.cartesian_path_execution_parameters cartesian_path_execution_params;
+    public victor_hardware_interface.control_mode control_mode;
     public double timestamp;
-    public byte control_mode;
  
-    public control_mode_command()
+    public control_mode_parameters()
     {
     }
  
     public static final long LCM_FINGERPRINT;
-    public static final long LCM_FINGERPRINT_BASE = 0x9697ed1b5b3d7921L;
+    public static final long LCM_FINGERPRINT_BASE = 0x6405e1de1a319e2dL;
  
-    public static final byte IS_POSITION_MOTION = (byte) 0;
-    public static final byte IS_CARTESIAN_MOTION = (byte) 1;
-    public static final byte IS_IMPEDANCE_CONTROL = (byte) 2;
-    public static final byte JOINT_POSITION = (byte) 0;
-    public static final byte JOINT_IMPEDANCE = (byte) 2;
-    public static final byte CARTESIAN_POSE = (byte) 1;
-    public static final byte CARTESIAN_IMPEDANCE = (byte) 3;
-
     static {
         LCM_FINGERPRINT = _hashRecursive(new ArrayList<Class<?>>());
     }
  
     public static long _hashRecursive(ArrayList<Class<?>> classes)
     {
-        if (classes.contains(victor_hardware_interface.control_mode_command.class))
+        if (classes.contains(victor_hardware_interface.control_mode_parameters.class))
             return 0L;
  
-        classes.add(victor_hardware_interface.control_mode_command.class);
+        classes.add(victor_hardware_interface.control_mode_parameters.class);
         long hash = LCM_FINGERPRINT_BASE
              + victor_hardware_interface.joint_impedance_parameters._hashRecursive(classes)
              + victor_hardware_interface.cartesian_impedance_parameters._hashRecursive(classes)
              + victor_hardware_interface.cartesian_control_mode_limits._hashRecursive(classes)
              + victor_hardware_interface.joint_path_execution_parameters._hashRecursive(classes)
              + victor_hardware_interface.cartesian_path_execution_parameters._hashRecursive(classes)
+             + victor_hardware_interface.control_mode._hashRecursive(classes)
             ;
         classes.remove(classes.size() - 1);
         return (hash<<1) + ((hash>>63)&1);
@@ -73,18 +66,18 @@ public final class control_mode_command implements lcm.lcm.LCMEncodable
  
         this.cartesian_path_execution_params._encodeRecursive(outs); 
  
-        outs.writeDouble(this.timestamp); 
+        this.control_mode._encodeRecursive(outs); 
  
-        outs.writeByte(this.control_mode); 
+        outs.writeDouble(this.timestamp); 
  
     }
  
-    public control_mode_command(byte[] data) throws IOException
+    public control_mode_parameters(byte[] data) throws IOException
     {
         this(new LCMDataInputStream(data));
     }
  
-    public control_mode_command(DataInput ins) throws IOException
+    public control_mode_parameters(DataInput ins) throws IOException
     {
         if (ins.readLong() != LCM_FINGERPRINT)
             throw new IOException("LCM Decode error: bad fingerprint");
@@ -92,9 +85,9 @@ public final class control_mode_command implements lcm.lcm.LCMEncodable
         _decodeRecursive(ins);
     }
  
-    public static victor_hardware_interface.control_mode_command _decodeRecursiveFactory(DataInput ins) throws IOException
+    public static victor_hardware_interface.control_mode_parameters _decodeRecursiveFactory(DataInput ins) throws IOException
     {
-        victor_hardware_interface.control_mode_command o = new victor_hardware_interface.control_mode_command();
+        victor_hardware_interface.control_mode_parameters o = new victor_hardware_interface.control_mode_parameters();
         o._decodeRecursive(ins);
         return o;
     }
@@ -111,15 +104,15 @@ public final class control_mode_command implements lcm.lcm.LCMEncodable
  
         this.cartesian_path_execution_params = victor_hardware_interface.cartesian_path_execution_parameters._decodeRecursiveFactory(ins);
  
-        this.timestamp = ins.readDouble();
+        this.control_mode = victor_hardware_interface.control_mode._decodeRecursiveFactory(ins);
  
-        this.control_mode = ins.readByte();
+        this.timestamp = ins.readDouble();
  
     }
  
-    public victor_hardware_interface.control_mode_command copy()
+    public victor_hardware_interface.control_mode_parameters copy()
     {
-        victor_hardware_interface.control_mode_command outobj = new victor_hardware_interface.control_mode_command();
+        victor_hardware_interface.control_mode_parameters outobj = new victor_hardware_interface.control_mode_parameters();
         outobj.joint_impedance_params = this.joint_impedance_params.copy();
  
         outobj.cartesian_impedance_params = this.cartesian_impedance_params.copy();
@@ -130,9 +123,9 @@ public final class control_mode_command implements lcm.lcm.LCMEncodable
  
         outobj.cartesian_path_execution_params = this.cartesian_path_execution_params.copy();
  
-        outobj.timestamp = this.timestamp;
+        outobj.control_mode = this.control_mode.copy();
  
-        outobj.control_mode = this.control_mode;
+        outobj.timestamp = this.timestamp;
  
         return outobj;
     }
