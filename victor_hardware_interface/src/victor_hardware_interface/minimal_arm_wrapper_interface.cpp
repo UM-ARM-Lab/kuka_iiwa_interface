@@ -27,7 +27,7 @@ namespace victor_hardware_interface
     // Helpers to test if two messages are equivalent
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    bool JVQEqual(const JointValueQuantity& jvq1, const JointValueQuantity& jvq2)
+    bool jvqEqual(const JointValueQuantity& jvq1, const JointValueQuantity& jvq2)
     {
         if (jvq1.joint_1 != jvq2.joint_1)
         {
@@ -63,7 +63,7 @@ namespace victor_hardware_interface
         }
     }
 
-    bool CVQEqual(const CartesianValueQuantity& cvq1, const CartesianValueQuantity& cvq2)
+    bool cvqEqual(const CartesianValueQuantity& cvq1, const CartesianValueQuantity& cvq2)
     {
         if (cvq1.x != cvq2.x)
         {
@@ -95,7 +95,7 @@ namespace victor_hardware_interface
         }
     }
 
-    bool jointPExPEqual(const JointPathExecutionParameters& pexp1, const JointPathExecutionParameters& pexp2)
+    bool jointPexpEqual(const JointPathExecutionParameters& pexp1, const JointPathExecutionParameters& pexp2)
     {
         if (pexp1.joint_relative_acceleration != pexp2.joint_relative_acceleration)
         {
@@ -115,13 +115,13 @@ namespace victor_hardware_interface
         }
     }
 
-    bool cartesianPExPEqual(const CartesianPathExecutionParameters& pexp1, const CartesianPathExecutionParameters& pexp2)
+    bool cartesianPexpEqual(const CartesianPathExecutionParameters& pexp1, const CartesianPathExecutionParameters& pexp2)
     {
-        if (CVQEqual(pexp1.max_velocity, pexp2.max_velocity) == false)
+        if (cvqEqual(pexp1.max_velocity, pexp2.max_velocity) == false)
         {
             return false;
         }
-        else if (CVQEqual(pexp1.max_acceleration, pexp2.max_acceleration) == false)
+        else if (cvqEqual(pexp1.max_acceleration, pexp2.max_acceleration) == false)
         {
             return false;
         }
@@ -145,23 +145,23 @@ namespace victor_hardware_interface
         const bool cm_equal    = (command.control_mode == status.active_control_mode);
 
         // Path Execuition mode parameters
-        const bool jpexp_equal = jointPExPEqual(command.joint_path_execution_params, status.joint_path_execution_params);
-        const bool cpexp_equal = cartesianPExPEqual(command.cartesian_path_execution_params, status.cartesian_path_execution_params);
+        const bool jpexp_equal = jointPexpEqual(command.joint_path_execution_params, status.joint_path_execution_params);
+        const bool cpexp_equal = cartesianPexpEqual(command.cartesian_path_execution_params, status.cartesian_path_execution_params);
 
         // Joint Impedance mode parameters
-        const bool jd_equal    = JVQEqual(command.joint_impedance_params.joint_damping, status.joint_impedance_params.joint_damping);
-        const bool js_equal    = JVQEqual(command.joint_impedance_params.joint_stiffness, status.joint_impedance_params.joint_stiffness);
+        const bool jd_equal    = jvqEqual(command.joint_impedance_params.joint_damping, status.joint_impedance_params.joint_damping);
+        const bool js_equal    = jvqEqual(command.joint_impedance_params.joint_stiffness, status.joint_impedance_params.joint_stiffness);
 
         // Cartesian Impedance mode parameters
-        const bool cd_equal    = CVQEqual(command.cartesian_impedance_params.cartesian_damping, status.cartesian_impedance_params.cartesian_damping);
+        const bool cd_equal    = cvqEqual(command.cartesian_impedance_params.cartesian_damping, status.cartesian_impedance_params.cartesian_damping);
         const bool nd_equal    = (command.cartesian_impedance_params.nullspace_damping == status.cartesian_impedance_params.nullspace_damping);
-        const bool cs_equal    = CVQEqual(command.cartesian_impedance_params.cartesian_stiffness, status.cartesian_impedance_params.cartesian_stiffness);
+        const bool cs_equal    = cvqEqual(command.cartesian_impedance_params.cartesian_stiffness, status.cartesian_impedance_params.cartesian_stiffness);
         const bool ns_equal    = (command.cartesian_impedance_params.nullspace_stiffness == status.cartesian_impedance_params.nullspace_stiffness);
 
         // Cartesian control mode limits parameters
-        const bool mpd_equal   = CVQEqual(command.cartesian_control_mode_limits.max_path_deviation, status.cartesian_control_mode_limits.max_path_deviation);
-        const bool mcv_equal   = CVQEqual(command.cartesian_control_mode_limits.max_cartesian_velocity, status.cartesian_control_mode_limits.max_cartesian_velocity);
-        const bool mcf_equal   = CVQEqual(command.cartesian_control_mode_limits.max_control_force, status.cartesian_control_mode_limits.max_control_force);
+        const bool mpd_equal   = cvqEqual(command.cartesian_control_mode_limits.max_path_deviation, status.cartesian_control_mode_limits.max_path_deviation);
+        const bool mcv_equal   = cvqEqual(command.cartesian_control_mode_limits.max_cartesian_velocity, status.cartesian_control_mode_limits.max_cartesian_velocity);
+        const bool mcf_equal   = cvqEqual(command.cartesian_control_mode_limits.max_control_force, status.cartesian_control_mode_limits.max_control_force);
         const bool smcf_equal  = (command.cartesian_control_mode_limits.stop_on_max_control_force == status.cartesian_control_mode_limits.stop_on_max_control_force);
 
         if (cm_equal &&
@@ -269,7 +269,7 @@ namespace victor_hardware_interface
         // Start ROS thread - this must happen *after* the LCM objects have been initialized as they use iiwa_ptr_ and
         // robotiq_ptr_, so we do so here instead of in the constructor
         ROS_INFO_NAMED(ros::this_node::getName(), "Starting ROS spin loop.");
-        ros_callback_thread_ = std::thread(std::bind(&MinimalArmWrapperInterface::ROSSpinThread, this));
+        auto ros_callback_thread = std::thread(std::bind(&MinimalArmWrapperInterface::rosSpinThread, this));
 
         ROS_INFO_NAMED(ros::this_node::getName(), "Starting LCM spin loop.");
         bool lcm_ok = true;
@@ -283,6 +283,9 @@ namespace victor_hardware_interface
                 ROS_ERROR_STREAM_NAMED(ros::this_node::getName(), "LCM error: " << ret);
             }
         }
+
+        ros::shutdown();
+        ros_callback_thread.join();
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

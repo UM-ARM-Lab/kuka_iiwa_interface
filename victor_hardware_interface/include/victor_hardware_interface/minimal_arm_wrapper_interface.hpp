@@ -32,13 +32,13 @@ namespace victor_hardware_interface
     // Helpers to test if two messages are equivalent
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    bool JVQEqual(const JointValueQuantity& jvq1, const JointValueQuantity& jvq2);
+    bool jvqEqual(const JointValueQuantity& jvq1, const JointValueQuantity& jvq2);
 
-    bool CVQEqual(const CartesianValueQuantity& cvq1, const CartesianValueQuantity& cvq2);
+    bool cvqEqual(const CartesianValueQuantity& cvq1, const CartesianValueQuantity& cvq2);
 
-    bool jointPExPEqual(const JointPathExecutionParameters& pexp1, const JointPathExecutionParameters& pexp2);
+    bool jointPexpEqual(const JointPathExecutionParameters& pexp1, const JointPathExecutionParameters& pexp2);
 
-    bool cartesianPExPEqual(const CartesianPathExecutionParameters& pexp1, const CartesianPathExecutionParameters& pexp2);
+    bool cartesianPexpEqual(const CartesianPathExecutionParameters& pexp1, const CartesianPathExecutionParameters& pexp2);
 
     bool controlModeCommandAndStatusEqual(const ControlModeCommand& command, const ControlModeStatus& status);
 
@@ -90,7 +90,6 @@ namespace victor_hardware_interface
         ros::ServiceServer set_control_mode_server_;
         ros::ServiceServer get_control_mode_server_;
         ros::CallbackQueue ros_callback_queue_;
-        std::thread ros_callback_thread_;
 
         mutable std::mutex control_mode_status_mutex_;
         Maybe::Maybe<ControlModeStatus> active_control_mode_;
@@ -103,7 +102,7 @@ namespace victor_hardware_interface
 
 
         // Internal helper function used to process ROS callbacks
-        void ROSSpinThread();
+        void rosSpinThread();
 
         ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         // Get/Set Control Mode functionality

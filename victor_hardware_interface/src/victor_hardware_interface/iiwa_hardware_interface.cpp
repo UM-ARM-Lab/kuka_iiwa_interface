@@ -263,6 +263,7 @@ namespace victor_hardware_interface
         , control_mode_status_channel_name_(control_mode_status_channel_name)
         , control_mode_status_callback_fn_(control_mode_status_callback_fn)
     {
+        // Check that the LCM objects are ready to communicate before using them
         if (send_lcm_ptr_->good() != true)
         {
             throw std::invalid_argument("Send LCM interface is not good");
