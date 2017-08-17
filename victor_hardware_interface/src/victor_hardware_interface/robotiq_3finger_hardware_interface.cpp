@@ -1,4 +1,3 @@
-#include <arc_utilities/arc_helpers.hpp>
 #include <victor_hardware_interface/robotiq_3finger_hardware_interface.hpp>
 
 namespace victor_hardware_interface
