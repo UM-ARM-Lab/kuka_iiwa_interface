@@ -16,29 +16,21 @@ public final class motion_status implements lcm.lcm.LCMEncodable
     public victor_hardware_interface.joint_value_quantity measured_joint_velocity;
     public victor_hardware_interface.joint_value_quantity measured_joint_torque;
     public victor_hardware_interface.joint_value_quantity estimated_external_torque;
+    public victor_hardware_interface.cartesian_value_quantity estimated_external_wrench;
     public victor_hardware_interface.cartesian_value_quantity measured_cartesian_pose_raw;
     public victor_hardware_interface.cartesian_value_quantity commanded_cartesian_pose_raw;
     public victor_hardware_interface.cartesian_pose measured_cartesian_pose;
     public victor_hardware_interface.cartesian_pose commanded_cartesian_pose;
-    public victor_hardware_interface.cartesian_value_quantity estimated_external_wrench;
+    public victor_hardware_interface.control_mode active_control_mode;
     public double timestamp;
-    public byte active_control_mode;
  
     public motion_status()
     {
     }
  
     public static final long LCM_FINGERPRINT;
-    public static final long LCM_FINGERPRINT_BASE = 0x84bc3bfa9e031750L;
+    public static final long LCM_FINGERPRINT_BASE = 0x9a36a4297801ddf6L;
  
-    public static final byte IS_POSITION_MOTION = (byte) 0;
-    public static final byte IS_CARTESIAN_MOTION = (byte) 1;
-    public static final byte IS_IMPEDANCE_CONTROL = (byte) 2;
-    public static final byte JOINT_POSITION = (byte) 0;
-    public static final byte JOINT_IMPEDANCE = (byte) 2;
-    public static final byte CARTESIAN_POSE = (byte) 1;
-    public static final byte CARTESIAN_IMPEDANCE = (byte) 3;
-
     static {
         LCM_FINGERPRINT = _hashRecursive(new ArrayList<Class<?>>());
     }
@@ -57,9 +49,10 @@ public final class motion_status implements lcm.lcm.LCMEncodable
              + victor_hardware_interface.joint_value_quantity._hashRecursive(classes)
              + victor_hardware_interface.cartesian_value_quantity._hashRecursive(classes)
              + victor_hardware_interface.cartesian_value_quantity._hashRecursive(classes)
-             + victor_hardware_interface.cartesian_pose._hashRecursive(classes)
-             + victor_hardware_interface.cartesian_pose._hashRecursive(classes)
              + victor_hardware_interface.cartesian_value_quantity._hashRecursive(classes)
+             + victor_hardware_interface.cartesian_pose._hashRecursive(classes)
+             + victor_hardware_interface.cartesian_pose._hashRecursive(classes)
+             + victor_hardware_interface.control_mode._hashRecursive(classes)
             ;
         classes.remove(classes.size() - 1);
         return (hash<<1) + ((hash>>63)&1);
@@ -83,6 +76,8 @@ public final class motion_status implements lcm.lcm.LCMEncodable
  
         this.estimated_external_torque._encodeRecursive(outs); 
  
+        this.estimated_external_wrench._encodeRecursive(outs); 
+ 
         this.measured_cartesian_pose_raw._encodeRecursive(outs); 
  
         this.commanded_cartesian_pose_raw._encodeRecursive(outs); 
@@ -91,11 +86,9 @@ public final class motion_status implements lcm.lcm.LCMEncodable
  
         this.commanded_cartesian_pose._encodeRecursive(outs); 
  
-        this.estimated_external_wrench._encodeRecursive(outs); 
+        this.active_control_mode._encodeRecursive(outs); 
  
         outs.writeDouble(this.timestamp); 
- 
-        outs.writeByte(this.active_control_mode); 
  
     }
  
@@ -131,6 +124,8 @@ public final class motion_status implements lcm.lcm.LCMEncodable
  
         this.estimated_external_torque = victor_hardware_interface.joint_value_quantity._decodeRecursiveFactory(ins);
  
+        this.estimated_external_wrench = victor_hardware_interface.cartesian_value_quantity._decodeRecursiveFactory(ins);
+ 
         this.measured_cartesian_pose_raw = victor_hardware_interface.cartesian_value_quantity._decodeRecursiveFactory(ins);
  
         this.commanded_cartesian_pose_raw = victor_hardware_interface.cartesian_value_quantity._decodeRecursiveFactory(ins);
@@ -139,11 +134,9 @@ public final class motion_status implements lcm.lcm.LCMEncodable
  
         this.commanded_cartesian_pose = victor_hardware_interface.cartesian_pose._decodeRecursiveFactory(ins);
  
-        this.estimated_external_wrench = victor_hardware_interface.cartesian_value_quantity._decodeRecursiveFactory(ins);
+        this.active_control_mode = victor_hardware_interface.control_mode._decodeRecursiveFactory(ins);
  
         this.timestamp = ins.readDouble();
- 
-        this.active_control_mode = ins.readByte();
  
     }
  
@@ -160,6 +153,8 @@ public final class motion_status implements lcm.lcm.LCMEncodable
  
         outobj.estimated_external_torque = this.estimated_external_torque.copy();
  
+        outobj.estimated_external_wrench = this.estimated_external_wrench.copy();
+ 
         outobj.measured_cartesian_pose_raw = this.measured_cartesian_pose_raw.copy();
  
         outobj.commanded_cartesian_pose_raw = this.commanded_cartesian_pose_raw.copy();
@@ -168,11 +163,9 @@ public final class motion_status implements lcm.lcm.LCMEncodable
  
         outobj.commanded_cartesian_pose = this.commanded_cartesian_pose.copy();
  
-        outobj.estimated_external_wrench = this.estimated_external_wrench.copy();
+        outobj.active_control_mode = this.active_control_mode.copy();
  
         outobj.timestamp = this.timestamp;
- 
-        outobj.active_control_mode = this.active_control_mode;
  
         return outobj;
     }
