@@ -989,43 +989,56 @@ namespace victor_hardware_interface
 
     inline bool jointPathExecutionParamsIsDefault(const JointPathExecutionParameters& params)
     {
-        return (params.joint_relative_velocity == 0 && params.joint_relative_acceleration == 0 && params.override_joint_acceleration == 0);
+        return (params.joint_relative_velocity == 0 && 
+                params.joint_relative_acceleration == 0 && 
+                params.override_joint_acceleration == 0);
     }
 
     inline bool cartesianPathExecutionParamsIsDefault(const CartesianPathExecutionParameters& params)
     {
-        return (params.max_velocity.x == 0 && params.max_velocity.y == 0 && params.max_velocity.z == 0 && 
-                params.max_velocity.a == 0 && params.max_velocity.b == 0 && params.max_velocity.c == 0 &&
-                params.max_acceleration.x == 0 && params.max_acceleration.y == 0 && params.max_acceleration.z == 0 && 
-                params.max_acceleration.a == 0 && params.max_acceleration.b == 0 && params.max_acceleration.c == 0 &&
+        return (params.max_velocity.x == 0 && params.max_velocity.y == 0 && 
+                params.max_velocity.z == 0 && params.max_velocity.a == 0 && 
+                params.max_velocity.b == 0 && params.max_velocity.c == 0 &&
+                params.max_acceleration.x == 0 && params.max_acceleration.y == 0 &&
+                params.max_acceleration.z == 0 && params.max_acceleration.a == 0 && 
+                params.max_acceleration.b == 0 && params.max_acceleration.c == 0 &&
                 params.max_nullspace_velocity == 0 && params.max_nullspace_acceleration == 0);
     }
 
     inline bool jointImpedanceParamsIsDefault(const JointImpedanceParameters& params)
     {
-        return (params.joint_stiffness.joint_1 == 0 && params.joint_stiffness.joint_2 == 0 && params.joint_stiffness.joint_3 == 0 && params.joint_stiffness.joint_4 == 0 &&
-                params.joint_stiffness.joint_5 == 0 && params.joint_stiffness.joint_6 == 0 && params.joint_stiffness.joint_7 == 0 &&
-                params.joint_damping.joint_1 == 0 && params.joint_damping.joint_2 == 0 && params.joint_damping.joint_3 == 0 && params.joint_damping.joint_4 == 0 &&
-                params.joint_damping.joint_5 == 0 && params.joint_damping.joint_6 == 0 && params.joint_damping.joint_7 == 0);
+        return (params.joint_stiffness.joint_1 == 0 && params.joint_stiffness.joint_2 == 0 && 
+                params.joint_stiffness.joint_3 == 0 && params.joint_stiffness.joint_4 == 0 &&
+                params.joint_stiffness.joint_5 == 0 && params.joint_stiffness.joint_6 == 0 && 
+                params.joint_stiffness.joint_7 == 0 &&
+                params.joint_damping.joint_1 == 0 && params.joint_damping.joint_2 == 0 && 
+                params.joint_damping.joint_3 == 0 && params.joint_damping.joint_4 == 0 &&
+                params.joint_damping.joint_5 == 0 && params.joint_damping.joint_6 == 0 && 
+                params.joint_damping.joint_7 == 0);
     }
 
     inline bool cartesianImpedanceParamsIsDefault(const CartesianImpedanceParameters& params)
     {
-        return (params.cartesian_stiffness.x == 0 && params.cartesian_stiffness.y == 0 && params.cartesian_stiffness.z == 0 && 
-                params.cartesian_stiffness.a == 0 && params.cartesian_stiffness.b == 0 && params.cartesian_stiffness.c == 0 &&
-                params.cartesian_damping.x == 0 && params.cartesian_damping.y == 0 && params.cartesian_damping.z == 0 && 
-                params.cartesian_damping.a == 0 && params.cartesian_damping.b == 0 && params.cartesian_damping.c == 0 &&
+        return (params.cartesian_stiffness.x == 0 && params.cartesian_stiffness.y == 0 && 
+                params.cartesian_stiffness.z == 0 && params.cartesian_stiffness.a == 0 && 
+                params.cartesian_stiffness.b == 0 && params.cartesian_stiffness.c == 0 &&
+                params.cartesian_damping.x == 0 && params.cartesian_damping.y == 0 && 
+                params.cartesian_damping.z == 0 && params.cartesian_damping.a == 0 && 
+                params.cartesian_damping.b == 0 && params.cartesian_damping.c == 0 &&
                 params.nullspace_stiffness == 0 && params.nullspace_damping == 0);
     }
 
     inline bool cartesianControlModeLimitsIsDefault(const CartesianControlModeLimits& params)
     {
-        return (params.max_path_deviation.x == 0 && params.max_path_deviation.y == 0 && params.max_path_deviation.z == 0 && 
-                params.max_path_deviation.a == 0 && params.max_path_deviation.b == 0 && params.max_path_deviation.c == 0 &&
-                params.max_cartesian_velocity.x == 0 && params.max_cartesian_velocity.y == 0 && params.max_cartesian_velocity.z == 0 && 
-                params.max_cartesian_velocity.a == 0 && params.max_cartesian_velocity.b == 0 && params.max_cartesian_velocity.c == 0 &&
-                params.max_control_force.x == 0 && params.max_control_force.y == 0 && params.max_control_force.z == 0 && 
-                params.max_control_force.a == 0 && params.max_control_force.b == 0 && params.max_control_force.c == 0 &&
+        return (params.max_path_deviation.x == 0 && params.max_path_deviation.y == 0 && 
+                params.max_path_deviation.z == 0 && params.max_path_deviation.a == 0 && 
+                params.max_path_deviation.b == 0 && params.max_path_deviation.c == 0 &&
+                params.max_cartesian_velocity.x == 0 && params.max_cartesian_velocity.y == 0 && 
+                params.max_cartesian_velocity.z == 0 && params.max_cartesian_velocity.a == 0 && 
+                params.max_cartesian_velocity.b == 0 && params.max_cartesian_velocity.c == 0 &&
+                params.max_control_force.x == 0 && params.max_control_force.y == 0 && 
+                params.max_control_force.z == 0 && params.max_control_force.a == 0 && 
+                params.max_control_force.b == 0 && params.max_control_force.c == 0 &&
                 params.stop_on_max_control_force == false);
     }
 
@@ -1055,90 +1068,97 @@ namespace victor_hardware_interface
         // Copy manadatory members
         merged_control_mode.control_mode = new_control_mode.control_mode;
         // Copy mode-dependant members
-        if (new_control_mode.control_mode.mode == ControlMode::JOINT_IMPEDANCE)
+        switch (new_control_mode.control_mode.mode)
         {
-            // From the new
-            merged_control_mode.joint_path_execution_params = new_control_mode.joint_path_execution_params;
-            merged_control_mode.joint_impedance_params = new_control_mode.joint_impedance_params;
+            case ControlMode::JOINT_IMPEDANCE:
+                merged_control_mode.joint_path_execution_params = new_control_mode.joint_path_execution_params;
+                merged_control_mode.joint_impedance_params = new_control_mode.joint_impedance_params;
 
-            if(!cartesianImpedanceParamsIsDefault(new_control_mode.cartesian_impedance_params))
-            {
-                ROS_WARN_NAMED(ros::this_node::getName(), "The cartesian impedance parameters are specified but ignored in JOINT_IMPEDANCE mode.");
-            }
-            if(!cartesianControlModeLimitsIsDefault(new_control_mode.cartesian_control_mode_limits))
-            {
-                ROS_WARN_NAMED(ros::this_node::getName(), "The cartesian control mode limits are specified but ignored in JOINT_IMPEDANCE mode.");
-            }
-            if(!cartesianPathExecutionParamsIsDefault(new_control_mode.cartesian_path_execution_params))
-            {
-                ROS_WARN_NAMED(ros::this_node::getName(), "The cartesian path execution parameters are specified but ignored in JOINT_IMPEDANCE mode.");
-            }
-        }
-        else if (new_control_mode.control_mode.mode == ControlMode::CARTESIAN_IMPEDANCE)
-        {
-            // From the new
-            merged_control_mode.cartesian_impedance_params = new_control_mode.cartesian_impedance_params;
-            merged_control_mode.cartesian_control_mode_limits = new_control_mode.cartesian_control_mode_limits;
-            merged_control_mode.cartesian_path_execution_params = new_control_mode.cartesian_path_execution_params;
+                if(!cartesianImpedanceParamsIsDefault(new_control_mode.cartesian_impedance_params))
+                {
+                    ROS_WARN_NAMED(ros::this_node::getName(), "The cartesian impedance parameters are specified but ignored in JOINT_IMPEDANCE mode.");
+                }
+                if(!cartesianControlModeLimitsIsDefault(new_control_mode.cartesian_control_mode_limits))
+                {
+                    ROS_WARN_NAMED(ros::this_node::getName(), "The cartesian control mode limits are specified but ignored in JOINT_IMPEDANCE mode.");
+                }
+                if(!cartesianPathExecutionParamsIsDefault(new_control_mode.cartesian_path_execution_params))
+                {
+                    ROS_WARN_NAMED(ros::this_node::getName(), "The cartesian path execution parameters are specified but ignored in JOINT_IMPEDANCE mode.");
+                }
 
-            if(!jointPathExecutionParamsIsDefault(new_control_mode.joint_path_execution_params))
-            {
-                ROS_WARN_NAMED(ros::this_node::getName(), "The joint path execution parameters are specified but ignored in CASRTESIAN_IMPEDANCE mode.");
-            }
-            if(!jointImpedanceParamsIsDefault(new_control_mode.joint_impedance_params))
-            {
-                ROS_WARN_NAMED(ros::this_node::getName(), "The joint impedance parameters are specified but ignored in CASRTESIAN_IMPEDANCE mode.");
-            }
-        }
-        else if (new_control_mode.control_mode.mode == ControlMode::JOINT_POSITION)
-        {
-            // From the new
-            merged_control_mode.joint_path_execution_params = new_control_mode.joint_path_execution_params;
-            
-            if(!jointImpedanceParamsIsDefault(new_control_mode.joint_impedance_params))
-            {
-                ROS_WARN_NAMED(ros::this_node::getName(), "The joint impedance parameters are specified but ignored in JOINT_POSITION mode.");
-            }
-            if(!cartesianImpedanceParamsIsDefault(new_control_mode.cartesian_impedance_params))
-            {
-                ROS_WARN_NAMED(ros::this_node::getName(), "The cartesian impedance parameters are specified but ignored in JOINT_POSITION mode.");
-            }
-            if(!cartesianControlModeLimitsIsDefault(new_control_mode.cartesian_control_mode_limits))
-            {
-                ROS_WARN_NAMED(ros::this_node::getName(), "The cartesian control mode limits are specified but ignored in JOINT_POSITION mode.");
-            }
-            if(!cartesianPathExecutionParamsIsDefault(new_control_mode.cartesian_path_execution_params))
-            {
-                ROS_WARN_NAMED(ros::this_node::getName(), "The cartesian path execution parameters are specified but ignored in JOINT_POSITION mode.");
-            }
-        }
-        else if (new_control_mode.control_mode.mode == ControlMode::CARTESIAN_POSE)
-        {
-            // From the new
-            merged_control_mode.cartesian_path_execution_params = new_control_mode.cartesian_path_execution_params;
+                break;
 
-            if(!jointPathExecutionParamsIsDefault(new_control_mode.joint_path_execution_params))
-            {
-                ROS_WARN_NAMED(ros::this_node::getName(), "The joint path execution parameters are specified but ignored in CARTESIAN_POSE mode.");
-            }
-            if(!jointImpedanceParamsIsDefault(new_control_mode.joint_impedance_params))
-            {
-                ROS_WARN_NAMED(ros::this_node::getName(), "The joint impedance parameters are specified but ignored in CARTESIAN_POSE mode.");
-            }
-            if(!cartesianImpedanceParamsIsDefault(new_control_mode.cartesian_impedance_params))
-            {
-                ROS_WARN_NAMED(ros::this_node::getName(), "The cartesian impedance parameters are specified but ignored in CARTESIAN_POSE mode.");
-            }
-            if(!cartesianControlModeLimitsIsDefault(new_control_mode.cartesian_control_mode_limits))
-            {
-                ROS_WARN_NAMED(ros::this_node::getName(), "The cartesian control mode limits are specified but ignored in CARTESIAN_POSE mode.");
-            }
+            case ControlMode::CARTESIAN_IMPEDANCE:
+                merged_control_mode.cartesian_impedance_params = new_control_mode.cartesian_impedance_params;
+                merged_control_mode.cartesian_control_mode_limits = new_control_mode.cartesian_control_mode_limits;
+                merged_control_mode.cartesian_path_execution_params = new_control_mode.cartesian_path_execution_params;
+
+                if(!jointPathExecutionParamsIsDefault(new_control_mode.joint_path_execution_params))
+                {
+                    ROS_WARN_NAMED(ros::this_node::getName(), "The joint path execution parameters are specified but ignored in CASRTESIAN_IMPEDANCE mode.");
+                }
+                if(!jointImpedanceParamsIsDefault(new_control_mode.joint_impedance_params))
+                {
+                    ROS_WARN_NAMED(ros::this_node::getName(), "The joint impedance parameters are specified but ignored in CASRTESIAN_IMPEDANCE mode.");
+                }
+
+                break;
+
+            case ControlMode::JOINT_POSITION:
+                // From the new
+                merged_control_mode.joint_path_execution_params = new_control_mode.joint_path_execution_params;
+                
+                if(!jointImpedanceParamsIsDefault(new_control_mode.joint_impedance_params))
+                {
+                    ROS_WARN_NAMED(ros::this_node::getName(), "The joint impedance parameters are specified but ignored in JOINT_POSITION mode.");
+                }
+                if(!cartesianImpedanceParamsIsDefault(new_control_mode.cartesian_impedance_params))
+                {
+                    ROS_WARN_NAMED(ros::this_node::getName(), "The cartesian impedance parameters are specified but ignored in JOINT_POSITION mode.");
+                }
+                if(!cartesianControlModeLimitsIsDefault(new_control_mode.cartesian_control_mode_limits))
+                {
+                    ROS_WARN_NAMED(ros::this_node::getName(), "The cartesian control mode limits are specified but ignored in JOINT_POSITION mode.");
+                }
+                if(!cartesianPathExecutionParamsIsDefault(new_control_mode.cartesian_path_execution_params))
+                {
+                    ROS_WARN_NAMED(ros::this_node::getName(), "The cartesian path execution parameters are specified but ignored in JOINT_POSITION mode.");
+                }
+
+                break;
+
+            case ControlMode::CARTESIAN_POSE:
+                // From the new
+                merged_control_mode.cartesian_path_execution_params = new_control_mode.cartesian_path_execution_params;
+
+                if(!jointPathExecutionParamsIsDefault(new_control_mode.joint_path_execution_params))
+                {
+                    ROS_WARN_NAMED(ros::this_node::getName(), "The joint path execution parameters are specified but ignored in CARTESIAN_POSE mode.");
+                }
+                if(!jointImpedanceParamsIsDefault(new_control_mode.joint_impedance_params))
+                {
+                    ROS_WARN_NAMED(ros::this_node::getName(), "The joint impedance parameters are specified but ignored in CARTESIAN_POSE mode.");
+                }
+                if(!cartesianImpedanceParamsIsDefault(new_control_mode.cartesian_impedance_params))
+                {
+                    ROS_WARN_NAMED(ros::this_node::getName(), "The cartesian impedance parameters are specified but ignored in CARTESIAN_POSE mode.");
+                }
+                if(!cartesianControlModeLimitsIsDefault(new_control_mode.cartesian_control_mode_limits))
+                {
+                    ROS_WARN_NAMED(ros::this_node::getName(), "The cartesian control mode limits are specified but ignored in CARTESIAN_POSE mode.");
+                }
+
+                break;
+
+            default:
+                ROS_INFO_STREAM_NAMED(ros::this_node::getName(), "Invalid control mode: " << new_control_mode.control_mode << ".");
+                assert(false);
+
+                break;
+
         }
-        else
-        {
-            ROS_INFO_STREAM_NAMED(ros::this_node::getName(), "Invalid control mode: " << new_control_mode.control_mode << ".");
-            assert(false);
-        }
+
         return merged_control_mode;
     }
 }

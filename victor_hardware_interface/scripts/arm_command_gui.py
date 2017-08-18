@@ -23,8 +23,7 @@ from victor_hardware_interface.srv import SetControlMode, GetControlMode
 
 finger_range_discretization = 1000
 arm_joint_limit_margin = 1
-deg_to_rad = math.pi / 180.0
-rad_to_deg = 180.0 / math.pi
+block_command = False
 
 
 class Widget(QWidget):
@@ -315,40 +314,44 @@ class Arm:
     def reset_arm_slider_to_current_value(self):
         local_arm_status = copy.deepcopy(self.arm_status)
 
+        block_command = True
+
         joint_1_degrees = min(
-            max(-170 + arm_joint_limit_margin, round(local_arm_status.measured_joint_position.joint_1 * rad_to_deg)),
+            max(-170 + arm_joint_limit_margin, round(math.degrees(local_arm_status.measured_joint_position.joint_1))),
             170 - arm_joint_limit_margin)
         self.joint_1_slider.setValue(joint_1_degrees)
 
         joint_2_degrees = min(
-            max(-120 + arm_joint_limit_margin, round(local_arm_status.measured_joint_position.joint_2 * rad_to_deg)),
+            max(-120 + arm_joint_limit_margin, round(math.degrees(local_arm_status.measured_joint_position.joint_2))),
             120 - arm_joint_limit_margin)
         self.joint_2_slider.setValue(joint_2_degrees)
 
         joint_3_degrees = min(
-            max(-170 + arm_joint_limit_margin, round(local_arm_status.measured_joint_position.joint_3 * rad_to_deg)),
+            max(-170 + arm_joint_limit_margin, round(math.degrees(local_arm_status.measured_joint_position.joint_3))),
             170 - arm_joint_limit_margin)
         self.joint_3_slider.setValue(joint_3_degrees)
 
         joint_4_degrees = min(
-            max(-120 + arm_joint_limit_margin, round(local_arm_status.measured_joint_position.joint_4 * rad_to_deg)),
+            max(-120 + arm_joint_limit_margin, round(math.degrees(local_arm_status.measured_joint_position.joint_4))),
             120 - arm_joint_limit_margin)
         self.joint_4_slider.setValue(joint_4_degrees)
 
         joint_5_degrees = min(
-            max(-170 + arm_joint_limit_margin, round(local_arm_status.measured_joint_position.joint_5 * rad_to_deg)),
+            max(-170 + arm_joint_limit_margin, round(math.degrees(local_arm_status.measured_joint_position.joint_5))),
             170 - arm_joint_limit_margin)
         self.joint_5_slider.setValue(joint_5_degrees)
 
         joint_6_degrees = min(
-            max(-120 + arm_joint_limit_margin, round(local_arm_status.measured_joint_position.joint_6 * rad_to_deg)),
+            max(-120 + arm_joint_limit_margin, round(math.degrees(local_arm_status.measured_joint_position.joint_6))),
             120 - arm_joint_limit_margin)
         self.joint_6_slider.setValue(joint_6_degrees)
 
         joint_7_degrees = min(
-            max(-170 + arm_joint_limit_margin, round(local_arm_status.measured_joint_position.joint_7 * rad_to_deg)),
+            max(-170 + arm_joint_limit_margin, round(math.degrees(local_arm_status.measured_joint_position.joint_7))),
             170 - arm_joint_limit_margin)
         self.joint_7_slider.setValue(joint_7_degrees)
+
+        block_command = False
 
         self.arm_command.joint_position.joint_1 = local_arm_status.measured_joint_position.joint_1
         self.arm_command.joint_position.joint_2 = local_arm_status.measured_joint_position.joint_2
@@ -423,15 +426,21 @@ class Arm:
     def reset_gripper_position_slider_to_current_value(self):
         local_gripper_status = copy.deepcopy(self.gripper_status)
 
-        self.finger_a_pos_slider.setValue(local_gripper_status.finger_a_status.position)
-        self.finger_b_pos_slider.setValue(local_gripper_status.finger_b_status.position)
-        self.finger_c_pos_slider.setValue(local_gripper_status.finger_c_status.position)
-        self.scissor_pos_slider.setValue(local_gripper_status.scissor_status.position)
+        global block_command
 
-        self.finger_a_pos_textbox.setText('%5.3f' % local_gripper_status.finger_a_status.position)
-        self.finger_b_pos_textbox.setText('%5.3f' % local_gripper_status.finger_b_status.position)
-        self.finger_c_pos_textbox.setText('%5.3f' % local_gripper_status.finger_c_status.position)
-        self.scissor_pos_textbox.setText('%5.3f' % local_gripper_status.scissor_status.position)
+        block_command = True
+        
+        self.finger_a_pos_slider.setValue(int(round(local_gripper_status.finger_a_status.position * finger_range_discretization)))
+        self.finger_b_pos_slider.setValue(int(round(local_gripper_status.finger_b_status.position * finger_range_discretization)))
+        self.finger_c_pos_slider.setValue(int(round(local_gripper_status.finger_c_status.position * finger_range_discretization)))
+        self.scissor_pos_slider.setValue(int(round(local_gripper_status.scissor_status.position * finger_range_discretization)))
+
+        # self.finger_a_pos_textbox.setText('%5.3f' % round(local_gripper_status.finger_a_status.position,3))
+        # self.finger_b_pos_textbox.setText('%5.3f' % round(local_gripper_status.finger_b_status.position,3))
+        # self.finger_c_pos_textbox.setText('%5.3f' % round(local_gripper_status.finger_c_status.position,3))
+        # self.scissor_pos_textbox.setText('%5.3f' % round(local_gripper_status.scissor_status.position,3))
+
+        block_command = False
 
         self.finger_command.finger_a_command.position = local_gripper_status.finger_a_status.position
         self.finger_command.finger_b_command.position = local_gripper_status.finger_b_status.position
@@ -547,7 +556,8 @@ class Arm:
             self.finger_a_pos_textbox.setText('%5.3f' % value)
             self.finger_a_pos_slider.setValue(position)
             self.finger_command.finger_a_command.position = value
-            self.finger_command_publisher.publish(self.finger_command)
+            if(not block_command):
+                self.finger_command_publisher.publish(self.finger_command)
 
     def finger_a_spe_slider_moved(self, position):
         if self.fingers_same_speed:
@@ -559,7 +569,8 @@ class Arm:
             self.finger_a_spe_textbox.setText('%5.3f' % value)
             self.finger_a_spe_slider.setValue(position)
             self.finger_command.finger_a_command.speed = value
-            self.finger_command_publisher.publish(self.finger_command)
+            if(not block_command):
+                self.finger_command_publisher.publish(self.finger_command)
 
     def finger_a_frc_slider_moved(self, position):
         if self.fingers_same_force:
@@ -571,7 +582,8 @@ class Arm:
             self.finger_a_frc_textbox.setText('%5.3f' % value)
             self.finger_a_frc_slider.setValue(position)
             self.finger_command.finger_a_command.force = value
-            self.finger_command_publisher.publish(self.finger_command)
+            if(not block_command):
+                self.finger_command_publisher.publish(self.finger_command)
 
     def finger_b_pos_slider_moved(self, position):
         if self.fingers_same_position:
@@ -583,7 +595,8 @@ class Arm:
             self.finger_b_pos_textbox.setText('%5.3f' % value)
             self.finger_b_pos_slider.setValue(position)
             self.finger_command.finger_b_command.position = value
-            self.finger_command_publisher.publish(self.finger_command)
+            if(not block_command):
+                self.finger_command_publisher.publish(self.finger_command)
 
     def finger_b_spe_slider_moved(self, position):
         if self.fingers_same_speed:
@@ -595,7 +608,8 @@ class Arm:
             self.finger_b_spe_textbox.setText('%5.3f' % value)
             self.finger_b_spe_slider.setValue(position)
             self.finger_command.finger_b_command.speed = value
-            self.finger_command_publisher.publish(self.finger_command)
+            if(not block_command):
+                self.finger_command_publisher.publish(self.finger_command)
 
     def finger_b_frc_slider_moved(self, position):
         if self.fingers_same_force:
@@ -607,7 +621,8 @@ class Arm:
             self.finger_b_frc_textbox.setText('%5.3f' % value)
             self.finger_b_frc_slider.setValue(position)
             self.finger_command.finger_b_command.force = value
-            self.finger_command_publisher.publish(self.finger_command)
+            if(not block_command):
+                self.finger_command_publisher.publish(self.finger_command)
 
     def finger_c_pos_slider_moved(self, position):
         if self.fingers_same_position:
@@ -619,7 +634,8 @@ class Arm:
             self.finger_c_pos_textbox.setText('%5.3f' % value)
             self.finger_c_pos_slider.setValue(position)
             self.finger_command.finger_c_command.position = value
-            self.finger_command_publisher.publish(self.finger_command)
+            if(not block_command):
+                self.finger_command_publisher.publish(self.finger_command)
 
     def finger_c_spe_slider_moved(self, position):
         if self.fingers_same_speed:
@@ -631,7 +647,8 @@ class Arm:
             self.finger_c_spe_textbox.setText('%5.3f' % value)
             self.finger_c_spe_slider.setValue(position)
             self.finger_command.finger_c_command.speed = value
-            self.finger_command_publisher.publish(self.finger_command)
+            if(not block_command):
+                self.finger_command_publisher.publish(self.finger_command)
 
     def finger_c_frc_slider_moved(self, position):
         if self.fingers_same_force:
@@ -643,7 +660,8 @@ class Arm:
             self.finger_c_frc_textbox.setText('%5.3f' % value)
             self.finger_c_frc_slider.setValue(position)
             self.finger_command.finger_c_command.force = value
-            self.finger_command_publisher.publish(self.finger_command)
+            if(not block_command):
+                self.finger_command_publisher.publish(self.finger_command)
 
     def scissor_pos_slider_moved(self, position):
         value = float(position) / finger_range_discretization
@@ -652,7 +670,8 @@ class Arm:
         self.scissor_pos_textbox.setText('%5.3f' % value)
         self.scissor_pos_slider.setValue(position)
         self.finger_command.scissor_command.position = value
-        self.finger_command_publisher.publish(self.finger_command)
+        if(not block_command):
+            self.finger_command_publisher.publish(self.finger_command)
 
     def scissor_spe_slider_moved(self, position):
         value = float(position) / finger_range_discretization
@@ -661,7 +680,8 @@ class Arm:
         self.scissor_spe_textbox.setText('%5.3f' % value)
         self.scissor_spe_slider.setValue(position)
         self.finger_command.scissor_command.speed = value
-        self.finger_command_publisher.publish(self.finger_command)
+        if(not block_command):
+            self.finger_command_publisher.publish(self.finger_command)
 
     def scissor_frc_slider_moved(self, position):
         value = float(position) / finger_range_discretization
@@ -670,7 +690,8 @@ class Arm:
         self.scissor_frc_textbox.setText('%5.3f' % value)
         self.scissor_frc_slider.setValue(position)
         self.finger_command.scissor_command.force = value
-        self.finger_command_publisher.publish(self.finger_command)
+        if(not block_command):
+            self.finger_command_publisher.publish(self.finger_command)
 
     def joint_1_textbox_modified(self):
         value = int(self.joint_1_textbox.displayText())
@@ -710,44 +731,51 @@ class Arm:
     def joint_1_slider_moved(self, position):
         self.joint_1_textbox.setText(str(position))
         self.joint_1_slider.setValue(position)
-        self.arm_command.joint_position.joint_1 = position * deg_to_rad
-        self.arm_command_publisher.publish(self.arm_command)
+        self.arm_command.joint_position.joint_1 = math.radians(position)
+        if(not block_command):
+            self.arm_command_publisher.publish(self.arm_command)
 
     def joint_2_slider_moved(self, position):
         self.joint_2_textbox.setText(str(position))
         self.joint_2_slider.setValue(position)
-        self.arm_command.joint_position.joint_2 = position * deg_to_rad
-        self.arm_command_publisher.publish(self.arm_command)
+        self.arm_command.joint_position.joint_2 = math.radians(position)
+        if(not block_command):
+            self.arm_command_publisher.publish(self.arm_command)
 
     def joint_3_slider_moved(self, position):
         self.joint_3_textbox.setText(str(position))
         self.joint_3_slider.setValue(position)
-        self.arm_command.joint_position.joint_3 = position * deg_to_rad
-        self.arm_command_publisher.publish(self.arm_command)
+        self.arm_command.joint_position.joint_3 = math.radians(position)
+        if(not block_command):
+            self.arm_command_publisher.publish(self.arm_command)
 
     def joint_4_slider_moved(self, position):
         self.joint_4_textbox.setText(str(position))
         self.joint_4_slider.setValue(position)
-        self.arm_command.joint_position.joint_4 = position * deg_to_rad
-        self.arm_command_publisher.publish(self.arm_command)
+        self.arm_command.joint_position.joint_4 = math.radians(position)
+        if(not block_command):
+            self.arm_command_publisher.publish(self.arm_command)
 
     def joint_5_slider_moved(self, position):
         self.joint_5_textbox.setText(str(position))
         self.joint_5_slider.setValue(position)
-        self.arm_command.joint_position.joint_5 = position * deg_to_rad
-        self.arm_command_publisher.publish(self.arm_command)
+        self.arm_command.joint_position.joint_5 = math.radians(position)
+        if(not block_command):
+            self.arm_command_publisher.publish(self.arm_command)
 
     def joint_6_slider_moved(self, position):
         self.joint_6_textbox.setText(str(position))
         self.joint_6_slider.setValue(position)
-        self.arm_command.joint_position.joint_6 = position * deg_to_rad
-        self.arm_command_publisher.publish(self.arm_command)
+        self.arm_command.joint_position.joint_6 = math.radians(position)
+        if(not block_command):
+            self.arm_command_publisher.publish(self.arm_command)
 
     def joint_7_slider_moved(self, position):
         self.joint_7_textbox.setText(str(position))
         self.joint_7_slider.setValue(position)
-        self.arm_command.joint_position.joint_7 = position * deg_to_rad
-        self.arm_command_publisher.publish(self.arm_command)
+        self.arm_command.joint_position.joint_7 = math.radians(position)
+        if(not block_command):
+            self.arm_command_publisher.publish(self.arm_command)
 
     def change_control_mode(self, control_mode):
         # rospy.wait_for_service('set_control_mode_service')
