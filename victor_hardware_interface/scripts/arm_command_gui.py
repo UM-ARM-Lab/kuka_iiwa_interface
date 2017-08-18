@@ -759,10 +759,10 @@ class Arm:
             new_control_mode.joint_path_execution_params.joint_relative_velocity = 0.1
             new_control_mode.joint_path_execution_params.joint_relative_acceleration = 0.1
             self.enable_arm_sliders()
-            print('Switch to JOINT_POSITION mode.')
+            print('Switching to JOINT_POSITION mode.')
         elif control_mode == ControlMode.CARTESIAN_POSE:
             self.disable_arm_sliders()
-            print('Switch to CARTESIAN_POSE mode.')
+            print('Switching to CARTESIAN_POSE mode.')
         elif control_mode == ControlMode.JOINT_IMPEDANCE:
             print('JOINT_IMPEDANCE mode switch is not implemented yet.')
             return
@@ -771,6 +771,11 @@ class Arm:
             return
 
         result = send_new_control_mode(new_control_mode)
+        if result.success:
+            print "Control mode switch success."
+        else:
+            print "Control mode switch failure."
+            print result.message
 
 
 def main():
