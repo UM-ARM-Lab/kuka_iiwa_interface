@@ -192,7 +192,7 @@ namespace victor_hardware_interface
             const std::string& motion_status_topic,
             const std::string& control_mode_status_topic,
             const std::string& get_control_mode_service,
-            const std::string& set_control_mode_seif (rvice,
+            const std::string& set_control_mode_service,
             const std::string& gripper_command_topic,
             const std::string& gripper_status_topic,
             // LCM channels
@@ -1074,15 +1074,15 @@ namespace victor_hardware_interface
                 merged_control_mode.joint_path_execution_params = new_control_mode.joint_path_execution_params;
                 merged_control_mode.joint_impedance_params = new_control_mode.joint_impedance_params;
 
-                if (!cartesianImpedanceParamsIsDefault(new_control_mode.cartesian_impedance_params))
+                if(!cartesianImpedanceParamsIsDefault(new_control_mode.cartesian_impedance_params))
                 {
                     ROS_WARN_NAMED(ros::this_node::getName(), "The cartesian impedance parameters are specified but ignored in JOINT_IMPEDANCE mode.");
                 }
-                if (!cartesianControlModeLimitsIsDefault(new_control_mode.cartesian_control_mode_limits))
+                if(!cartesianControlModeLimitsIsDefault(new_control_mode.cartesian_control_mode_limits))
                 {
                     ROS_WARN_NAMED(ros::this_node::getName(), "The cartesian control mode limits are specified but ignored in JOINT_IMPEDANCE mode.");
                 }
-                if (!cartesianPathExecutionParamsIsDefault(new_control_mode.cartesian_path_execution_params))
+                if(!cartesianPathExecutionParamsIsDefault(new_control_mode.cartesian_path_execution_params))
                 {
                     ROS_WARN_NAMED(ros::this_node::getName(), "The cartesian path execution parameters are specified but ignored in JOINT_IMPEDANCE mode.");
                 }
@@ -1094,11 +1094,11 @@ namespace victor_hardware_interface
                 merged_control_mode.cartesian_control_mode_limits = new_control_mode.cartesian_control_mode_limits;
                 merged_control_mode.cartesian_path_execution_params = new_control_mode.cartesian_path_execution_params;
 
-                if (!jointPathExecutionParamsIsDefault(new_control_mode.joint_path_execution_params))
+                if(!jointPathExecutionParamsIsDefault(new_control_mode.joint_path_execution_params))
                 {
                     ROS_WARN_NAMED(ros::this_node::getName(), "The joint path execution parameters are specified but ignored in CASRTESIAN_IMPEDANCE mode.");
                 }
-                if (!jointImpedanceParamsIsDefault(new_control_mode.joint_impedance_params))
+                if(!jointImpedanceParamsIsDefault(new_control_mode.joint_impedance_params))
                 {
                     ROS_WARN_NAMED(ros::this_node::getName(), "The joint impedance parameters are specified but ignored in CASRTESIAN_IMPEDANCE mode.");
                 }
@@ -1109,19 +1109,19 @@ namespace victor_hardware_interface
                 // From the new
                 merged_control_mode.joint_path_execution_params = new_control_mode.joint_path_execution_params;
                 
-                if (!jointImpedanceParamsIsDefault(new_control_mode.joint_impedance_params))
+                if(!jointImpedanceParamsIsDefault(new_control_mode.joint_impedance_params))
                 {
                     ROS_WARN_NAMED(ros::this_node::getName(), "The joint impedance parameters are specified but ignored in JOINT_POSITION mode.");
                 }
-                if (!cartesianImpedanceParamsIsDefault(new_control_mode.cartesian_impedance_params))
+                if(!cartesianImpedanceParamsIsDefault(new_control_mode.cartesian_impedance_params))
                 {
                     ROS_WARN_NAMED(ros::this_node::getName(), "The cartesian impedance parameters are specified but ignored in JOINT_POSITION mode.");
                 }
-                if (!cartesianControlModeLimitsIsDefault(new_control_mode.cartesian_control_mode_limits))
+                if(!cartesianControlModeLimitsIsDefault(new_control_mode.cartesian_control_mode_limits))
                 {
                     ROS_WARN_NAMED(ros::this_node::getName(), "The cartesian control mode limits are specified but ignored in JOINT_POSITION mode.");
                 }
-                if (!cartesianPathExecutionParamsIsDefault(new_control_mode.cartesian_path_execution_params))
+                if(!cartesianPathExecutionParamsIsDefault(new_control_mode.cartesian_path_execution_params))
                 {
                     ROS_WARN_NAMED(ros::this_node::getName(), "The cartesian path execution parameters are specified but ignored in JOINT_POSITION mode.");
                 }
@@ -1132,19 +1132,19 @@ namespace victor_hardware_interface
                 // From the new
                 merged_control_mode.cartesian_path_execution_params = new_control_mode.cartesian_path_execution_params;
 
-                if (!jointPathExecutionParamsIsDefault(new_control_mode.joint_path_execution_params))
+                if(!jointPathExecutionParamsIsDefault(new_control_mode.joint_path_execution_params))
                 {
                     ROS_WARN_NAMED(ros::this_node::getName(), "The joint path execution parameters are specified but ignored in CARTESIAN_POSE mode.");
                 }
-                if (!jointImpedanceParamsIsDefault(new_control_mode.joint_impedance_params))
+                if(!jointImpedanceParamsIsDefault(new_control_mode.joint_impedance_params))
                 {
                     ROS_WARN_NAMED(ros::this_node::getName(), "The joint impedance parameters are specified but ignored in CARTESIAN_POSE mode.");
                 }
-                if (!cartesianImpedanceParamsIsDefault(new_control_mode.cartesian_impedance_params))
+                if(!cartesianImpedanceParamsIsDefault(new_control_mode.cartesian_impedance_params))
                 {
                     ROS_WARN_NAMED(ros::this_node::getName(), "The cartesian impedance parameters are specified but ignored in CARTESIAN_POSE mode.");
                 }
-                if (!cartesianControlModeLimitsIsDefault(new_control_mode.cartesian_control_mode_limits))
+                if(!cartesianControlModeLimitsIsDefault(new_control_mode.cartesian_control_mode_limits))
                 {
                     ROS_WARN_NAMED(ros::this_node::getName(), "The cartesian control mode limits are specified but ignored in CARTESIAN_POSE mode.");
                 }
