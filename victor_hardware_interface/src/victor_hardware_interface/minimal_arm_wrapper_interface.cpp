@@ -234,8 +234,8 @@ namespace victor_hardware_interface
         {
             return gripperStatusLCMCallback(gripper_status);
         };
-        robotiq_ptr_ = std::unique_ptr<robotiq_3finger_hardware_interface::Robotiq3FingerHardwareInterface>(
-                    new robotiq_3finger_hardware_interface::Robotiq3FingerHardwareInterface(
+        robotiq_ptr_ = std::unique_ptr<Robotiq3FingerHardwareInterface>(
+                    new Robotiq3FingerHardwareInterface(
                         send_lcm_ptr_, recv_lcm_ptr_,
                         gripper_command_channel, gripper_status_channel, gripper_status_callback_fn));
 
@@ -965,7 +965,7 @@ namespace victor_hardware_interface
         const auto validity_check_results = validateGripperCommand(command);
         if (validity_check_results.first)
         {
-            robotiq_ptr_->SendCommandMessage(command);
+            robotiq_ptr_->sendCommandMessage(command);
         }
         else
         {

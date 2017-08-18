@@ -97,7 +97,7 @@ namespace victor_hardware_interface
         std::shared_ptr<lcm::LCM> send_lcm_ptr_;
         std::shared_ptr<lcm::LCM> recv_lcm_ptr_;
         std::unique_ptr<IIWAHardwareInterface> iiwa_ptr_;
-        std::unique_ptr<robotiq_3finger_hardware_interface::Robotiq3FingerHardwareInterface> robotiq_ptr_;
+        std::unique_ptr<Robotiq3FingerHardwareInterface> robotiq_ptr_;
 
 
         // Internal helper function used to process ROS callbacks
