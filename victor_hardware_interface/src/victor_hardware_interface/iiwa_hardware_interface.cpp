@@ -186,6 +186,21 @@ namespace victor_hardware_interface
     }
 
 
+    ControlMode controlModeLcmToRos(const control_mode& lcm_cm)
+    {
+        ControlMode ros_cm;
+        ros_cm.mode = (uint8_t)lcm_cm.mode;
+        return ros_cm;
+    }
+
+    control_mode controlModeRosToLcm(const ControlMode& ros_cm)
+    {
+        control_mode lcm_cm;
+        lcm_cm.mode = (int8_t)ros_cm.mode;
+        return lcm_cm;
+    }
+
+
     MotionStatus motionStatusLcmToRos(const motion_status& lcm_status)
     {
         MotionStatus ros_status;
@@ -199,7 +214,7 @@ namespace victor_hardware_interface
         ros_status.measured_joint_position = jvqLcmToRos(lcm_status.measured_joint_position);
         ros_status.measured_joint_torque = jvqLcmToRos(lcm_status.measured_joint_torque);
         ros_status.measured_joint_velocity = jvqLcmToRos(lcm_status.measured_joint_velocity);
-        ros_status.active_control_mode = (uint8_t)lcm_status.active_control_mode;
+        ros_status.active_control_mode = controlModeLcmToRos(lcm_status.active_control_mode);
         ros_status.header.stamp = ros::Time(lcm_status.timestamp);
         return ros_status;
     }
@@ -210,36 +225,36 @@ namespace victor_hardware_interface
         lcm_command.cartesian_pose = poseRosToLcm(ros_command.cartesian_pose);
         lcm_command.joint_position = jvqRosToLcm(ros_command.joint_position);
         lcm_command.joint_velocity = jvqRosToLcm(ros_command.joint_velocity);
-        lcm_command.control_mode = (int8_t)ros_command.control_mode;
+        lcm_command.control_mode = controlModeRosToLcm(ros_command.control_mode);
         lcm_command.timestamp = ros_command.header.stamp.toSec();
         return lcm_command;
     }
 
 
-    ControlModeStatus controlModeStatusLcmToRos(const control_mode_status& lcm_status)
+    ControlModeParameters controlModeParamsLcmToRos(const control_mode_parameters& lcm_cmp)
     {
-        ControlModeStatus ros_status;
-        ros_status.cartesian_control_mode_limits = cartesianControlModeLimitsLcmToRos(lcm_status.cartesian_control_mode_limits);
-        ros_status.cartesian_impedance_params = cartesianImpedanceParamsLcmToRos(lcm_status.cartesian_impedance_params);
-        ros_status.joint_impedance_params = jointImpedanceParamsLcmToRos(lcm_status.joint_impedance_params);
-        ros_status.joint_path_execution_params = jointPexpLcmToRos(lcm_status.joint_path_execution_params);
-        ros_status.cartesian_path_execution_params = cartesianPexpLcmToRos(lcm_status.cartesian_path_execution_params);
-        ros_status.active_control_mode = (uint8_t)lcm_status.active_control_mode;
-        ros_status.header.stamp = ros::Time(lcm_status.timestamp);
-        return ros_status;
+        ControlModeParameters ros_cmp;
+        ros_cmp.cartesian_control_mode_limits = cartesianControlModeLimitsLcmToRos(lcm_cmp.cartesian_control_mode_limits);
+        ros_cmp.cartesian_impedance_params = cartesianImpedanceParamsLcmToRos(lcm_cmp.cartesian_impedance_params);
+        ros_cmp.joint_impedance_params = jointImpedanceParamsLcmToRos(lcm_cmp.joint_impedance_params);
+        ros_cmp.joint_path_execution_params = jointPexpLcmToRos(lcm_cmp.joint_path_execution_params);
+        ros_cmp.cartesian_path_execution_params = cartesianPexpLcmToRos(lcm_cmp.cartesian_path_execution_params);
+        ros_cmp.control_mode = controlModeLcmToRos(lcm_cmp.control_mode);
+        ros_cmp.header.stamp = ros::Time(lcm_cmp.timestamp);
+        return ros_cmp;
     }
 
-    control_mode_command controlModeCommandRosToLcm(const ControlModeCommand& ros_command)
+    control_mode_parameters controlModeParamsRosToLcm(const ControlModeParameters& ros_cmp)
     {
-        control_mode_command lcm_command;
-        lcm_command.cartesian_control_mode_limits = cartesianControlModeLimitsRosToLcm(ros_command.cartesian_control_mode_limits);
-        lcm_command.cartesian_impedance_params = cartesianImpedanceParamsRosToLcm(ros_command.cartesian_impedance_params);
-        lcm_command.joint_impedance_params = jointImpedanceParamsRosToLcm(ros_command.joint_impedance_params);
-        lcm_command.joint_path_execution_params = jointPexpRosToLcm(ros_command.joint_path_execution_params);
-        lcm_command.cartesian_path_execution_params = cartesianPexpRosToLcm(ros_command.cartesian_path_execution_params);
-        lcm_command.control_mode = (int8_t)ros_command.control_mode;
-        lcm_command.timestamp = ros_command.header.stamp.toSec();
-        return lcm_command;
+        control_mode_parameters lcm_cmp;
+        lcm_cmp.cartesian_control_mode_limits = cartesianControlModeLimitsRosToLcm(ros_cmp.cartesian_control_mode_limits);
+        lcm_cmp.cartesian_impedance_params = cartesianImpedanceParamsRosToLcm(ros_cmp.cartesian_impedance_params);
+        lcm_cmp.joint_impedance_params = jointImpedanceParamsRosToLcm(ros_cmp.joint_impedance_params);
+        lcm_cmp.joint_path_execution_params = jointPexpRosToLcm(ros_cmp.joint_path_execution_params);
+        lcm_cmp.cartesian_path_execution_params = cartesianPexpRosToLcm(ros_cmp.cartesian_path_execution_params);
+        lcm_cmp.control_mode = controlModeRosToLcm(ros_cmp.control_mode);
+        lcm_cmp.timestamp = ros_cmp.header.stamp.toSec();
+        return lcm_cmp;
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -254,7 +269,7 @@ namespace victor_hardware_interface
             const std::function<void(const MotionStatus&)>& motion_status_callback_fn,
             const std::string& control_mode_command_channel_name,
             const std::string& control_mode_status_channel_name,
-            const std::function<void(const ControlModeStatus&)>& control_mode_status_callback_fn)
+            const std::function<void(const ControlModeParameters&)>& control_mode_status_callback_fn)
         : send_lcm_ptr_(send_lcm_ptr), recv_lcm_ptr_(recv_lcm_ptr)
         , motion_command_channel_name_(motion_command_channel_name)
         , motion_status_channel_name_(motion_status_channel_name)
@@ -290,9 +305,9 @@ namespace victor_hardware_interface
         }
     }
 
-    bool IIWAHardwareInterface::SendControlModeCommandMessage(const ControlModeCommand& command)
+    bool IIWAHardwareInterface::SendControlModeCommandMessage(const ControlModeParameters& command)
     {
-        const control_mode_command lcm_command = controlModeCommandRosToLcm(command);
+        const control_mode_parameters lcm_command = controlModeParamsRosToLcm(command);
         const int ret = send_lcm_ptr_->publish(control_mode_command_channel_name_, &lcm_command);
         if (ret == 0)
         {
@@ -318,11 +333,11 @@ namespace victor_hardware_interface
     void IIWAHardwareInterface::InternalControlModeStatusLCMCallback(
             const lcm::ReceiveBuffer* buffer,
             const std::string& channel,
-            const control_mode_status* status_msg)
+            const control_mode_parameters* status_msg)
     {
         UNUSED(buffer);
         UNUSED(channel);
-        const ControlModeStatus ros_status = controlModeStatusLcmToRos(*status_msg);
+        const ControlModeParameters ros_status = controlModeParamsLcmToRos(*status_msg);
         control_mode_status_callback_fn_(ros_status);
     }
 }

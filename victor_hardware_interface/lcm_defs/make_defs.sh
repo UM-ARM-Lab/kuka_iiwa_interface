@@ -3,9 +3,9 @@
 for lcmdef in *.lcm
 do
     echo "Generating C++11 type for LCM def $lcmdef"
-    ~/lcm/lcmgen/lcm-gen -x --cpp-std c++11 $lcmdef
+    lcm-gen -x --cpp-std c++11 $lcmdef
     echo "Generating Java type for LCM def $lcmdef"
-    ~/lcm/lcmgen/lcm-gen -j $lcmdef
+    lcm-gen -j $lcmdef
 done
 
 echo "Removing previously generated types"
