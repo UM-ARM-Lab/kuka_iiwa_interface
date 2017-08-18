@@ -10,8 +10,7 @@
 #include <victor_hardware_interface/iiwa_hardware_interface.hpp>
 #include <victor_hardware_interface/robotiq_3finger_hardware_interface.hpp>
 // ROS message headers
-#include <victor_hardware_interface/ControlModeCommand.h>
-#include <victor_hardware_interface/ControlModeStatus.h>
+#include <victor_hardware_interface/ControlModeParameters.h>
 #include <victor_hardware_interface/MotionCommand.h>
 #include <victor_hardware_interface/MotionStatus.h>
 #include <victor_hardware_interface/Robotiq3FingerCommand.h>
@@ -30,13 +29,13 @@ protected:
     ros::NodeHandle nh_;
     std::shared_ptr<lcm::LCM> send_lcm_ptr_;
     std::shared_ptr<lcm::LCM> recv_lcm_ptr_;
-    std::unique_ptr<iiwa_hardware_interface::IIWAHardwareInterface> iiwa_ptr_;
-    std::unique_ptr<robotiq_3finger_hardware_interface::Robotiq3FingerHardwareInterface> robotiq_ptr_;
+    std::unique_ptr<victor_hardware_interface::IIWAHardwareInterface> iiwa_ptr_;
+    std::unique_ptr<victor_hardware_interface::Robotiq3FingerHardwareInterface> robotiq_ptr_;
 
     std::vector<victor_hardware_interface::MotionCommand> motion_command_queue_;
     std::vector<victor_hardware_interface::MotionStatus> motion_status_queue_;
-    std::vector<victor_hardware_interface::ControlModeCommand> control_mode_command_queue_;
-    std::vector<victor_hardware_interface::ControlModeStatus> control_mode_status_queue_;
+    std::vector<victor_hardware_interface::ControlModeParameters> control_mode_command_queue_;
+    std::vector<victor_hardware_interface::ControlModeParameters> control_mode_status_queue_;
     std::vector<victor_hardware_interface::Robotiq3FingerCommand> gripper_command_queue_;
     std::vector<victor_hardware_interface::Robotiq3FingerStatus> gripper_status_queue_;
 
@@ -46,17 +45,28 @@ protected:
 
 public:
 
-    LoopbackTester(ros::NodeHandle& nh, const std::shared_ptr<lcm::LCM>& send_lcm_ptr, const std::shared_ptr<lcm::LCM>& recv_lcm_ptr, const std::string& motion_command_channel, const std::string& motion_status_channel, const std::string& control_mode_command_channel, const std::string& control_mode_status_channel, const std::string& gripper_command_channel, const std::string& gripper_status_channel) : nh_(nh), send_lcm_ptr_(send_lcm_ptr), recv_lcm_ptr_(recv_lcm_ptr)
+    LoopbackTester(
+            ros::NodeHandle& nh,
+            const std::shared_ptr<lcm::LCM>& send_lcm_ptr,
+            const std::shared_ptr<lcm::LCM>& recv_lcm_ptr,
+            const std::string& motion_command_channel,
+            const std::string& motion_status_channel,
+            const std::string& control_mode_command_channel,
+            const std::string& control_mode_status_channel,
+            const std::string& gripper_command_channel,
+            const std::string& gripper_status_channel)
+        : nh_(nh), send_lcm_ptr_(send_lcm_ptr)
+        , recv_lcm_ptr_(recv_lcm_ptr)
     {
         motion_command_rtt_.reserve(RTT_CHECK_COUNT);
         control_mode_command_rtt_.reserve(RTT_CHECK_COUNT);
         gripper_command_rtt_.reserve(RTT_CHECK_COUNT);
         //
-        std::function<void(const victor_hardware_interface::MotionStatus&)> motion_status_callback_fn = [&] (const victor_hardware_interface::MotionStatus& motion_status) { return MotionStatusCallback(motion_status); };
-        std::function<void(const victor_hardware_interface::ControlModeStatus&)> control_mode_status_callback_fn = [&] (const victor_hardware_interface::ControlModeStatus& control_mode_status) { return ControlModeStatusCallback(control_mode_status); };
-        iiwa_ptr_ = std::unique_ptr<iiwa_hardware_interface::IIWAHardwareInterface>(new iiwa_hardware_interface::IIWAHardwareInterface(send_lcm_ptr_, recv_lcm_ptr_, motion_command_channel, motion_status_channel, motion_status_callback_fn, control_mode_command_channel, control_mode_status_channel, control_mode_status_callback_fn));
-        std::function<void(const victor_hardware_interface::Robotiq3FingerStatus&)> gripper_status_callback_fn = [&] (const victor_hardware_interface::Robotiq3FingerStatus& gripper_status) { return GripperStatusCallback(gripper_status); };
-        robotiq_ptr_ = std::unique_ptr<robotiq_3finger_hardware_interface::Robotiq3FingerHardwareInterface>(new robotiq_3finger_hardware_interface::Robotiq3FingerHardwareInterface(send_lcm_ptr_, recv_lcm_ptr_, gripper_command_channel, gripper_status_channel, gripper_status_callback_fn));
+        const auto motion_status_callback_fn = [&] (const victor_hardware_interface::MotionStatus& motion_status) { return MotionStatusCallback(motion_status); };
+        const auto control_mode_status_callback_fn = [&] (const victor_hardware_interface::ControlModeParameters& control_mode_status) { return ControlModeStatusCallback(control_mode_status); };
+        iiwa_ptr_ = std::unique_ptr<victor_hardware_interface::IIWAHardwareInterface>(new victor_hardware_interface::IIWAHardwareInterface(send_lcm_ptr_, recv_lcm_ptr_, motion_command_channel, motion_status_channel, motion_status_callback_fn, control_mode_command_channel, control_mode_status_channel, control_mode_status_callback_fn));
+        const auto gripper_status_callback_fn = [&] (const victor_hardware_interface::Robotiq3FingerStatus& gripper_status) { return GripperStatusCallback(gripper_status); };
+        robotiq_ptr_ = std::unique_ptr<victor_hardware_interface::Robotiq3FingerHardwareInterface>(new victor_hardware_interface::Robotiq3FingerHardwareInterface(send_lcm_ptr_, recv_lcm_ptr_, gripper_command_channel, gripper_status_channel, gripper_status_callback_fn));
     }
 
     void MotionStatusCallback(const victor_hardware_interface::MotionStatus& motion_status)
@@ -65,7 +75,7 @@ public:
         motion_status_queue_.push_back(motion_status);
     }
 
-    void ControlModeStatusCallback(const victor_hardware_interface::ControlModeStatus& control_mode_status)
+    void ControlModeStatusCallback(const victor_hardware_interface::ControlModeParameters& control_mode_status)
     {
         ROS_DEBUG_STREAM_NAMED(ros::this_node::getName(), "Got control mode status " << control_mode_status);
         control_mode_status_queue_.push_back(control_mode_status);
@@ -274,7 +284,7 @@ public:
         command.joint_position = MakeJVQ(0.125, 0.25, 0.375, 0.5, 0.625, 0.75, 0.875);
         command.joint_velocity = MakeJVQ(0.875, 0.75, 0.625, 0.5, 0.375, 0.25, 0.125);
         command.cartesian_pose = EigenHelpersConversions::EigenAffine3dToGeometryPose(Eigen::Affine3d::Identity());
-        command.control_mode = 0x00;
+        command.control_mode.mode = victor_hardware_interface::ControlMode::JOINT_POSITION;
         command.header.stamp = ros::Time::now();
         const bool sent = iiwa_ptr_->SendMotionCommandMessage(command);
         assert(sent);
@@ -286,7 +296,7 @@ public:
         const bool jpmatch = JVQMatch(command.joint_position, status.measured_joint_position);
         const bool jvmatch = JVQMatch(command.joint_velocity, status.measured_joint_velocity);
         const bool cpmatch = CartPoseMatch(command.cartesian_pose, status.measured_cartesian_pose);
-        const bool ctmatch = (command.control_mode == status.active_control_mode);
+        const bool ctmatch = (command.control_mode.mode == status.active_control_mode.mode);
         if (jpmatch && jvmatch && cpmatch && ctmatch)
         {
             return true;
@@ -299,7 +309,7 @@ public:
 
     void SendControlModeCommand()
     {
-        victor_hardware_interface::ControlModeCommand command;
+        victor_hardware_interface::ControlModeParameters command;
         command.joint_impedance_params.joint_damping = MakeJVQ(0.125, 0.25, 0.375, 0.5, 0.625, 0.75, 0.875);
         command.joint_impedance_params.joint_stiffness = MakeJVQ(0.875, 0.75, 0.625, 0.5, 0.375, 0.25, 0.125);
         command.cartesian_impedance_params.cartesian_damping = MakeCVQ(1.0, 2.0, 3.0, 4.0, 5.0, 6.0);
@@ -311,14 +321,14 @@ public:
         command.cartesian_path_execution_params.max_acceleration = MakeCVQ(7.0, 6.0, 5.0, 4.0, 3.0, 2.0);
         command.cartesian_path_execution_params.max_nullspace_velocity = 7.0;
         command.cartesian_path_execution_params.max_nullspace_acceleration = 1.0;
-        command.control_mode = 0x00;
+        command.control_mode.mode = victor_hardware_interface::ControlMode::JOINT_POSITION;
         command.header.stamp = ros::Time::now();
         const bool sent = iiwa_ptr_->SendControlModeCommandMessage(command);
         assert(sent);
         control_mode_command_queue_.push_back(command);
     }
 
-    bool CheckControlModeCommandAndStatusMatch(const victor_hardware_interface::ControlModeCommand& command, const victor_hardware_interface::ControlModeStatus& status) const
+    bool CheckControlModeCommandAndStatusMatch(const victor_hardware_interface::ControlModeParameters& command, const victor_hardware_interface::ControlModeParameters& status) const
     {
         const bool cdmatch = CVQMatch(command.cartesian_impedance_params.cartesian_damping, status.cartesian_impedance_params.cartesian_damping);
         const bool ndmatch = (command.cartesian_impedance_params.nullspace_damping == status.cartesian_impedance_params.nullspace_damping);
@@ -328,7 +338,7 @@ public:
         const bool jsmatch = JVQMatch(command.joint_impedance_params.joint_stiffness, status.joint_impedance_params.joint_stiffness);
         const bool jpexpmatch = JointPExPMatch(command.joint_path_execution_params, status.joint_path_execution_params);
         const bool cpexpmatch = CartesianPExPMatch(command.cartesian_path_execution_params, status.cartesian_path_execution_params);
-        const bool cmmatch = (command.control_mode == status.active_control_mode);
+        const bool cmmatch = (command.control_mode.mode == status.control_mode.mode);
         if (cdmatch && ndmatch && csmatch && nsmatch && jdmatch && jsmatch && jpexpmatch && cpexpmatch && cmmatch)
         {
             return true;
@@ -351,7 +361,7 @@ public:
         command.finger_b_command.header.stamp = command.header.stamp;
         command.finger_c_command.header.stamp = command.header.stamp;
         command.scissor_command.header.stamp = command.header.stamp;
-        const bool sent = robotiq_ptr_->SendCommandMessage(command);
+        const bool sent = robotiq_ptr_->sendCommandMessage(command);
         assert(sent);
         gripper_command_queue_.push_back(command);
     }

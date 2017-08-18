@@ -4,16 +4,16 @@ project(victor_hardware_interface)
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
-find_package(catkin REQUIRED COMPONENTS
-  arc_utilities
-  diagnostic_msgs
-  geometry_msgs
-  message_generation
-  roscpp
-  sensor_msgs
-  std_msgs
-  lcm
-)
+set(CATKIN_PACKAGES
+    arc_utilities
+    diagnostic_msgs
+    geometry_msgs
+    roscpp
+    sensor_msgs
+    std_msgs
+    lcm)
+
+find_package(catkin REQUIRED COMPONENTS ${CATKIN_PACKAGES} message_generation)
 find_package(cmake_modules REQUIRED)
 find_package(Eigen3 REQUIRED)
 set(Eigen3_INCLUDE_DIRS ${EIGEN3_INCLUDE_DIR})
@@ -52,25 +52,28 @@ set(Eigen3_INCLUDE_DIRS ${EIGEN3_INCLUDE_DIR})
 ##   * add every package in MSG_DEP_SET to generate_messages(DEPENDENCIES ...)
 
 ## Generate messages in the 'msg' folder
-add_message_files(DIRECTORY msg FILES CartesianImpedanceParameters.msg
-                                      CartesianControlModeLimits.msg
-                                      MotionStatus.msg
-                                      CartesianValueQuantity.msg
-                                      JointPathExecutionParameters.msg
-                                      CartesianPathExecutionParameters.msg
-                                      ControlModeCommand.msg
-                                      Robotiq3FingerActuatorCommand.msg
-                                      ControlModeStatus.msg
-                                      Robotiq3FingerActuatorStatus.msg
-                                      JointImpedanceParameters.msg
-                                      Robotiq3FingerCommand.msg
-                                      JointValueQuantity.msg
-                                      Robotiq3FingerObjectStatus.msg
-                                      MotionCommand.msg
-                                      Robotiq3FingerStatus.msg)
+add_message_files(DIRECTORY msg FILES
+    CartesianControlModeLimits.msg
+    CartesianImpedanceParameters.msg
+    CartesianPathExecutionParameters.msg
+    CartesianValueQuantity.msg
+    ControlMode.msg
+    ControlModeParameters.msg
+    JointImpedanceParameters.msg
+    JointPathExecutionParameters.msg
+    JointValueQuantity.msg
+    MotionCommand.msg
+    MotionStatus.msg
+    Robotiq3FingerActuatorCommand.msg
+    Robotiq3FingerActuatorStatus.msg
+    Robotiq3FingerCommand.msg
+    Robotiq3FingerObjectStatus.msg
+    Robotiq3FingerStatus.msg)
 
 ## Generate services in the 'srv' folder
-add_service_files(DIRECTORY srv FILES SetControlMode.srv GetControlMode.srv)
+add_service_files(DIRECTORY srv FILES
+    SetControlMode.srv
+    GetControlMode.srv)
 
 ## Generate actions in the 'action' folder
 # add_action_files(
@@ -80,7 +83,11 @@ add_service_files(DIRECTORY srv FILES SetControlMode.srv GetControlMode.srv)
 # )
 
 ## Generate added messages and services with any dependencies listed here
-generate_messages(DEPENDENCIES diagnostic_msgs geometry_msgs sensor_msgs std_msgs)
+generate_messages(DEPENDENCIES
+    diagnostic_msgs
+    geometry_msgs
+    sensor_msgs
+    std_msgs)
 
 ################################################
 ## Declare ROS dynamic reconfigure parameters ##
@@ -114,15 +121,8 @@ generate_messages(DEPENDENCIES diagnostic_msgs geometry_msgs sensor_msgs std_msg
 catkin_package(
     INCLUDE_DIRS    include 
     LIBRARIES       ${PROJECT_NAME} 
-    CATKIN_DEPENDS  arc_utilities 
-                    diagnostic_msgs 
-                    geometry_msgs 
-                    message_runtime 
-                    roscpp 
-                    sensor_msgs 
-                    std_msgs 
-                    lcm 
-    DEPENDS         Eigen3)
+    CATKIN_DEPENDS  ${CATKIN_PACKAGES}
+                    message_runtime)
 
 ###########
 ## Build ##
@@ -134,19 +134,20 @@ catkin_package(
 include_directories(include lcm_types SYSTEM ${catkin_INCLUDE_DIRS} ${Eigen3_INCLUDE_DIRS})
 
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Wextra -Werror -Wconversion")
-set(CMAKE_CXX_FLAGS "-std=c++0x ${CMAKE_CXX_FLAGS} -Wall -Wextra -Werror -Wconversion -O3 -g")
+set(CMAKE_CXX_FLAGS "-std=c++0x ${CMAKE_CXX_FLAGS} -Wall -Wextra -Werror -Wconversion -O3 -g -flto")
 
 ## Declare C++ executables
-add_library(${PROJECT_NAME} include/${PROJECT_NAME}/iiwa_hardware_interface.hpp
-                            include/${PROJECT_NAME}/robotiq_3finger_hardware_interface.hpp
-                            include/${PROJECT_NAME}/wrist_force_torque_hardware_interface.hpp
-                            include/${PROJECT_NAME}/takktile_hardware_interface.hpp
-                            include/${PROJECT_NAME}/minimal_arm_wrapper_interface.hpp
-                            src/${PROJECT_NAME}/iiwa_hardware_interface.cpp
-                            src/${PROJECT_NAME}/robotiq_3finger_hardware_interface.cpp
-                            src/${PROJECT_NAME}/wrist_force_torque_hardware_interface.cpp
-                            src/${PROJECT_NAME}/takktile_hardware_interface.cpp
-                            src/${PROJECT_NAME}/minimal_arm_wrapper_interface.cpp)
+add_library(${PROJECT_NAME}
+    include/${PROJECT_NAME}/iiwa_hardware_interface.hpp
+    include/${PROJECT_NAME}/robotiq_3finger_hardware_interface.hpp
+    include/${PROJECT_NAME}/wrist_force_torque_hardware_interface.hpp
+    include/${PROJECT_NAME}/takktile_hardware_interface.hpp
+    include/${PROJECT_NAME}/minimal_arm_wrapper_interface.hpp
+    src/${PROJECT_NAME}/iiwa_hardware_interface.cpp
+    src/${PROJECT_NAME}/robotiq_3finger_hardware_interface.cpp
+    src/${PROJECT_NAME}/wrist_force_torque_hardware_interface.cpp
+    src/${PROJECT_NAME}/takktile_hardware_interface.cpp
+    src/${PROJECT_NAME}/minimal_arm_wrapper_interface.cpp)
 add_dependencies(${PROJECT_NAME} ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES})
 

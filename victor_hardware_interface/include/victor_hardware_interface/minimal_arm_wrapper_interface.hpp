@@ -7,8 +7,7 @@
 #include <ros/ros.h>
 #include <ros/callback_queue.h>
 // ROS message headers
-#include <victor_hardware_interface/ControlModeCommand.h>
-#include <victor_hardware_interface/ControlModeStatus.h>
+#include <victor_hardware_interface/ControlModeParameters.h>
 #include <victor_hardware_interface/MotionCommand.h>
 #include <victor_hardware_interface/MotionStatus.h>
 #include <victor_hardware_interface/Robotiq3FingerCommand.h>
@@ -28,31 +27,26 @@
 
 namespace victor_hardware_interface
 {
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Helpers to test if two messages are equivalent
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    bool jvqEqual(const JointValueQuantity& jvq1, const JointValueQuantity& jvq2);
+
+    bool cvqEqual(const CartesianValueQuantity& cvq1, const CartesianValueQuantity& cvq2);
+
+    bool jointPexpEqual(const JointPathExecutionParameters& pexp1, const JointPathExecutionParameters& pexp2);
+
+    bool cartesianPexpEqual(const CartesianPathExecutionParameters& pexp1, const CartesianPathExecutionParameters& pexp2);
+
+    bool controlModeParamsEqual(const ControlModeParameters& params1, const ControlModeParameters& params2);
+
+
+    /**
+     * @brief The MinimalArmWrapperInterface class
+     */
     class MinimalArmWrapperInterface
     {
-    protected:
-
-        ros::NodeHandle nh_;
-        const std::string cartesian_control_frame_;
-        ros::Publisher motion_status_pub_;
-        ros::Publisher control_mode_status_pub_;
-        ros::Publisher gripper_status_pub_;
-        ros::Subscriber motion_command_sub_;
-        ros::Subscriber gripper_command_sub_;
-        ros::ServiceServer set_control_mode_server_;
-        ros::ServiceServer get_control_mode_server_;
-        ros::CallbackQueue ros_callback_queue_;
-        std::thread ros_callback_thread_;
-
-        Maybe::Maybe<victor_hardware_interface::ControlModeStatus> active_control_mode_;
-        std::mutex control_mode_status_mutex_;
-        const double set_control_mode_timeout_;
-
-        std::shared_ptr<lcm::LCM> send_lcm_ptr_;
-        std::shared_ptr<lcm::LCM> recv_lcm_ptr_;
-        std::unique_ptr<iiwa_hardware_interface::IIWAHardwareInterface> iiwa_ptr_;
-        std::unique_ptr<robotiq_3finger_hardware_interface::Robotiq3FingerHardwareInterface> robotiq_ptr_;
-
     public:
 
         MinimalArmWrapperInterface(
@@ -77,59 +71,112 @@ namespace victor_hardware_interface
                 const std::string& gripper_command_channel,
                 const std::string& gripper_status_channel);
 
-        void ROSCallbackThread();
+        // The one function called externally
+        void spin();
 
-        void LCMLoop();
+    protected:
 
-        static bool JVQMatch(const victor_hardware_interface::JointValueQuantity& jvq1, const victor_hardware_interface::JointValueQuantity& jvq2);
+        constexpr static double ROS_SPIN_PERIOD = 0.001;   // measured in seconds
+        constexpr static int LCM_HANDLE_TIMEOUT = 1;       // measured in milliseconds
 
-        static bool CVQMatch(const victor_hardware_interface::CartesianValueQuantity& cvq1, const victor_hardware_interface::CartesianValueQuantity& cvq2);
+        ros::NodeHandle nh_;
+        const std::string cartesian_control_frame_;
+        ros::Publisher motion_status_pub_;
+        ros::Publisher control_mode_status_pub_;
+        ros::Publisher gripper_status_pub_;
+        ros::Subscriber motion_command_sub_;
+        ros::Subscriber gripper_command_sub_;
+        ros::ServiceServer set_control_mode_server_;
+        ros::ServiceServer get_control_mode_server_;
+        ros::CallbackQueue ros_callback_queue_;
 
-        static bool JointPExPMatch(const victor_hardware_interface::JointPathExecutionParameters& pexp1, const victor_hardware_interface::JointPathExecutionParameters& pexp2);
+        mutable std::mutex control_mode_status_mutex_;
+        Maybe::Maybe<ControlModeParameters> active_control_mode_;
+        const double set_control_mode_timeout_; // measured in seconds
 
-        static bool CartesianPExPMatch(const victor_hardware_interface::CartesianPathExecutionParameters& pexp1, const victor_hardware_interface::CartesianPathExecutionParameters& pexp2);
+        std::shared_ptr<lcm::LCM> send_lcm_ptr_;
+        std::shared_ptr<lcm::LCM> recv_lcm_ptr_;
+        std::unique_ptr<IIWAHardwareInterface> iiwa_ptr_;
+        std::unique_ptr<Robotiq3FingerHardwareInterface> robotiq_ptr_;
 
-        static bool CheckControlModeCommandAndStatusMatch(const victor_hardware_interface::ControlModeCommand& command, const victor_hardware_interface::ControlModeStatus& status);
 
-        std::pair<bool, std::string> SafetyCheckJointPathExecutionParams(const victor_hardware_interface::JointPathExecutionParameters& params) const;
+        // Internal helper function used to process ROS callbacks
+        void rosSpinThread();
 
-        std::pair<bool, std::string> SafetyCheckCartesianPathExecutionParams(const victor_hardware_interface::CartesianPathExecutionParameters& params) const;
+        ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        // Get/Set Control Mode functionality
+        ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-        std::pair<bool, std::string> SafetyCheckJointImpedanceParameters(const victor_hardware_interface::JointImpedanceParameters& params) const;
+        //// Static helpers to check parameters for being in valid ranges for the control mode /////////////////////////
 
-        std::pair<bool, std::string> SafetyCheckCartesianImpedanceParameters(const victor_hardware_interface::CartesianImpedanceParameters& params) const;
+        static std::pair<bool, std::string> validateJointPathExecutionParams(const JointPathExecutionParameters& params);
 
-        std::pair<bool, std::string> SafetyCheckCartesianControlModeLimits(const victor_hardware_interface::CartesianControlModeLimits& params) const;
+        static std::pair<bool, std::string> validateCartesianPathExecutionParams(const CartesianPathExecutionParameters& params);
 
-        std::pair<bool, std::string> SafetyCheckControlMode(const victor_hardware_interface::ControlModeCommand& control_mode) const;
+        static std::pair<bool, std::string> validateJointImpedanceParams(const JointImpedanceParameters& params);
 
-        victor_hardware_interface::ControlModeCommand MergeControlModeCommand(const victor_hardware_interface::ControlModeStatus& active_control_mode, const victor_hardware_interface::ControlModeCommand& new_control_mode) const;
+        static std::pair<bool, std::string> validateCartesianImpedanceParams(const CartesianImpedanceParameters& params);
 
-        bool SetControlModeCallback(victor_hardware_interface::SetControlMode::Request& req, victor_hardware_interface::SetControlMode::Response& res);
+        static std::pair<bool, std::string> validateCartesianControlModeLimits(const CartesianControlModeLimits& params);
 
-        bool GetControlModeCallback(victor_hardware_interface::GetControlMode::Request& req, victor_hardware_interface::GetControlMode::Response& res);
+        static std::pair<bool, std::string> validateControlMode(const ControlModeParameters& params);
 
-        bool SafetyCheckPositions(const victor_hardware_interface::JointValueQuantity& positions) const;
+        //// ROS Callbacks to get and set the control mode as service calls ////////////////////////////////////////////
 
-        bool SafetyCheckPositionsVelocities(const victor_hardware_interface::JointValueQuantity& positions, const victor_hardware_interface::JointValueQuantity& velocities) const;
+        bool setControlModeCallback(SetControlMode::Request& req, SetControlMode::Response& res);
 
-        bool SafetyCheckCartesianPose(const geometry_msgs::Pose& pose, const std::string& frame) const;
+        bool getControlModeCallback(GetControlMode::Request& req, GetControlMode::Response& res);
 
-        bool SafetyCheckMotionCommand(const victor_hardware_interface::MotionCommand& command);
+        /*
+         * Callback function used by the LCM subsystem when a control_mode_status message is received. Caches the value
+         * in active_control_mode_ for use by setControlModeCallback(...) and getControlModeCallback(...)
+         */
+        void controlModeStatusLCMCallback(const ControlModeParameters& control_mode_status);
 
-        void MotionCommandROSCallback(victor_hardware_interface::MotionCommand command);
+        ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        // Arm movement/control and feedback functionality
+        ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-        bool SafetyCheckFingerCommand(const victor_hardware_interface::Robotiq3FingerActuatorCommand& command) const;
+        //// Static helpers to check parameters for being in valid ranges for the motion command ///////////////////////
 
-        bool SafetyCheckGripperCommand(const victor_hardware_interface::Robotiq3FingerCommand& command) const;
+        static std::pair<bool, std::string> validateJointPositions(const JointValueQuantity& positions);
 
-        void GripperCommandROSCallback(victor_hardware_interface::Robotiq3FingerCommand command);
+        std::pair<bool, std::string> validateCartesianPose(const geometry_msgs::Pose& pose, const std::string& frame) const;
 
-        void MotionStatusLCMCallback(const victor_hardware_interface::MotionStatus& motion_status);
+        std::pair<bool, std::string> validateMotionCommand(const MotionCommand& command) const;
 
-        void ControlModeStatusLCMCallback(const victor_hardware_interface::ControlModeStatus& control_mode_status);
+        /*
+         * ROS callback to parse a arm motion command, and pass it along to the LCM subsystem
+         */
+        void motionCommandROSCallback(const MotionCommand& command);
 
-        void GripperStatusLCMCallback(const victor_hardware_interface::Robotiq3FingerStatus& gripper_status);
+        /*
+         * LCM callback used by the LCM subsystem when a LCM status message is recieved. Republishes the motion status
+         * on the correct ROS topic
+         */
+        void motionStatusLCMCallback(const MotionStatus& motion_status);
+
+        ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        // Gripper movement/control and feedback functionality
+        ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+        //// Static helpers to check parameters for being in valid ranges for the gripper command //////////////////////
+
+        static std::pair<bool, std::string> validateFingerCommand(const Robotiq3FingerActuatorCommand& command);
+
+        static std::pair<bool, std::string> validateGripperCommand(const Robotiq3FingerCommand& command);
+
+        /*
+         * ROS callback to parse a gripper motion command, and pass it along to the LCM subsystem
+         */
+        void gripperCommandROSCallback(const Robotiq3FingerCommand& command);
+
+        /*
+         * LCM callback used by the LCM subsystem when a LCM status message is recieved. Republishes the motion status
+         * on the correct ROS topic
+         */
+        void gripperStatusLCMCallback(const Robotiq3FingerStatus& gripper_status);
+
     };
 }
 
