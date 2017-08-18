@@ -40,14 +40,6 @@ class Widget(QWidget):
 
 
 class Arm:
-    def arm_status_callback(self, data):
-        self.arm_status = data
-        self.arm_status_updated = True
-
-    def gripper_status_callback(self, data):
-        self.gripper_status = data
-        self.gripper_status_updated = True
-
     def __init__(self, parent_layout, arm_name, box_row):
         self.name = arm_name
 
@@ -70,48 +62,39 @@ class Arm:
         self.finger_same_force_checkbox = self.init_checkbox('', 8, self.finger_same_force_checkbox_changed, 1)
 
         self.joint_1_label = self.init_label('Joint 1 Command', 0)
-        self.joint_1_slider = self.init_slider((-170 + arm_joint_limit_margin, 170 - arm_joint_limit_margin), 0,
-                                               self.joint_1_slider_moved)
+        self.joint_1_slider = self.init_slider((-170 + arm_joint_limit_margin, 170 - arm_joint_limit_margin), 0, self.joint_1_slider_moved)
         self.joint_1_textbox = self.init_textbox('0', 1, self.joint_1_textbox_modified, 1)
 
         self.joint_2_label = self.init_label('Joint 2 Command', 0)
-        self.joint_2_slider = self.init_slider((-120 + arm_joint_limit_margin, 120 - arm_joint_limit_margin), 0,
-                                               self.joint_2_slider_moved)
+        self.joint_2_slider = self.init_slider((-120 + arm_joint_limit_margin, 120 - arm_joint_limit_margin), 0, self.joint_2_slider_moved)
         self.joint_2_textbox = self.init_textbox('0', 1, self.joint_2_textbox_modified, 1)
 
         self.joint_3_label = self.init_label('Joint 3 Command', 0)
-        self.joint_3_slider = self.init_slider((-170 + arm_joint_limit_margin, 170 - arm_joint_limit_margin), 0,
-                                               self.joint_3_slider_moved)
+        self.joint_3_slider = self.init_slider((-170 + arm_joint_limit_margin, 170 - arm_joint_limit_margin), 0, self.joint_3_slider_moved)
         self.joint_3_textbox = self.init_textbox('0', 1, self.joint_3_textbox_modified, 1)
 
         self.joint_4_label = self.init_label('Joint 4 Command', 0)
-        self.joint_4_slider = self.init_slider((-120 + arm_joint_limit_margin, 120 - arm_joint_limit_margin), 0,
-                                               self.joint_4_slider_moved)
+        self.joint_4_slider = self.init_slider((-120 + arm_joint_limit_margin, 120 - arm_joint_limit_margin), 0, self.joint_4_slider_moved)
         self.joint_4_textbox = self.init_textbox('0', 1, self.joint_4_textbox_modified, 1)
 
         self.joint_5_label = self.init_label('Joint 5 Command', 0)
-        self.joint_5_slider = self.init_slider((-170 + arm_joint_limit_margin, 170 - arm_joint_limit_margin), 0,
-                                               self.joint_5_slider_moved)
+        self.joint_5_slider = self.init_slider((-170 + arm_joint_limit_margin, 170 - arm_joint_limit_margin), 0, self.joint_5_slider_moved)
         self.joint_5_textbox = self.init_textbox('0', 1, self.joint_5_textbox_modified, 1)
 
         self.joint_6_label = self.init_label('Joint 6 Command', 0)
-        self.joint_6_slider = self.init_slider((-120 + arm_joint_limit_margin, 120 - arm_joint_limit_margin), 0,
-                                               self.joint_6_slider_moved)
+        self.joint_6_slider = self.init_slider((-120 + arm_joint_limit_margin, 120 - arm_joint_limit_margin), 0, self.joint_6_slider_moved)
         self.joint_6_textbox = self.init_textbox('0', 1, self.joint_6_textbox_modified, 1)
 
         self.joint_7_label = self.init_label('Joint 7 Command', 0)
-        self.joint_7_slider = self.init_slider((-175 + arm_joint_limit_margin, 175 - arm_joint_limit_margin), 0,
-                                               self.joint_7_slider_moved)
+        self.joint_7_slider = self.init_slider((-175 + arm_joint_limit_margin, 175 - arm_joint_limit_margin), 0, self.joint_7_slider_moved)
         self.joint_7_textbox = self.init_textbox('0', 1, self.joint_7_textbox_modified, 1)
 
         self.finger_a_pos_label = self.init_label('Finger A Command Position', 2)
         self.finger_a_pos_slider = self.init_slider((0, finger_range_discretization), 2, self.finger_a_pos_slider_moved)
         self.finger_a_spe_label = self.init_label('Finger A Command Speed', 2)
-        self.finger_a_spe_slider = self.init_slider((0, finger_range_discretization), 2, self.finger_a_spe_slider_moved,
-                                                    finger_range_discretization)
+        self.finger_a_spe_slider = self.init_slider((0, finger_range_discretization), 2, self.finger_a_spe_slider_moved, finger_range_discretization)
         self.finger_a_frc_label = self.init_label('Finger A Command Force', 2)
-        self.finger_a_frc_slider = self.init_slider((0, finger_range_discretization), 2, self.finger_a_frc_slider_moved,
-                                                    finger_range_discretization)
+        self.finger_a_frc_slider = self.init_slider((0, finger_range_discretization), 2, self.finger_a_frc_slider_moved, finger_range_discretization)
         self.finger_a_pos_textbox = self.init_textbox('0.000', 3, self.finger_a_pos_textbox_modified, 2)
         self.finger_a_spe_textbox = self.init_textbox('1.000', 3, self.finger_a_spe_textbox_modified, 1)
         self.finger_a_frc_textbox = self.init_textbox('1.000', 3, self.finger_a_frc_textbox_modified, 1)
@@ -119,11 +102,9 @@ class Arm:
         self.finger_b_pos_label = self.init_label('Finger B Command Position', 4)
         self.finger_b_pos_slider = self.init_slider((0, finger_range_discretization), 4, self.finger_b_pos_slider_moved)
         self.finger_b_spe_label = self.init_label('Finger B Command Speed', 4)
-        self.finger_b_spe_slider = self.init_slider((0, finger_range_discretization), 4, self.finger_b_spe_slider_moved,
-                                                    finger_range_discretization)
+        self.finger_b_spe_slider = self.init_slider((0, finger_range_discretization), 4, self.finger_b_spe_slider_moved, finger_range_discretization)
         self.finger_b_frc_label = self.init_label('Finger B Command Force', 4)
-        self.finger_b_frc_slider = self.init_slider((0, finger_range_discretization), 4, self.finger_b_frc_slider_moved,
-                                                    finger_range_discretization)
+        self.finger_b_frc_slider = self.init_slider((0, finger_range_discretization), 4, self.finger_b_frc_slider_moved, finger_range_discretization)
         self.finger_b_pos_textbox = self.init_textbox('0.000', 5, self.finger_b_pos_textbox_modified, 2)
         self.finger_b_spe_textbox = self.init_textbox('1.000', 5, self.finger_b_spe_textbox_modified, 1)
         self.finger_b_frc_textbox = self.init_textbox('1.000', 5, self.finger_b_frc_textbox_modified, 1)
@@ -131,11 +112,9 @@ class Arm:
         self.finger_c_pos_label = self.init_label('Finger C Command Position', 6)
         self.finger_c_pos_slider = self.init_slider((0, finger_range_discretization), 6, self.finger_c_pos_slider_moved)
         self.finger_c_spe_label = self.init_label('Finger C Command Speed', 6)
-        self.finger_c_spe_slider = self.init_slider((0, finger_range_discretization), 6, self.finger_c_spe_slider_moved,
-                                                    finger_range_discretization)
+        self.finger_c_spe_slider = self.init_slider((0, finger_range_discretization), 6, self.finger_c_spe_slider_moved, finger_range_discretization)
         self.finger_c_frc_label = self.init_label('Finger C Command Force', 6)
-        self.finger_c_frc_slider = self.init_slider((0, finger_range_discretization), 6, self.finger_c_frc_slider_moved,
-                                                    finger_range_discretization)
+        self.finger_c_frc_slider = self.init_slider((0, finger_range_discretization), 6, self.finger_c_frc_slider_moved, finger_range_discretization)
         self.finger_c_pos_textbox = self.init_textbox('0.000', 7, self.finger_c_pos_textbox_modified, 2)
         self.finger_c_spe_textbox = self.init_textbox('1.000', 7, self.finger_c_spe_textbox_modified, 1)
         self.finger_c_frc_textbox = self.init_textbox('1.000', 7, self.finger_c_frc_textbox_modified, 1)
@@ -153,9 +132,7 @@ class Arm:
         self.scissor_frc_textbox = self.init_textbox('1.000', 10, self.scissor_frc_textbox_modified, 1)
 
         self.control_mode_label = self.init_label('Control Mode', 2, 1)
-        self.control_mode_combobox = self.init_combobox(
-            ['JOINT_POSITION', 'CARTESIAN_POSE', 'JOINT_IMPEDANCE', 'CARTESIAN_IMPEDANCE'], 2, self.change_control_mode,
-            0)
+        self.control_mode_combobox = self.init_combobox(['JOINT_POSITION', 'CARTESIAN_POSE', 'JOINT_IMPEDANCE', 'CARTESIAN_IMPEDANCE'], 2, self.change_control_mode, 0)
 
         self.finger_command = Robotiq3FingerCommand()
         self.arm_command = MotionCommand()
@@ -170,14 +147,11 @@ class Arm:
         self.finger_command.finger_c_command.speed = 1.0
         self.finger_command.scissor_command.speed = 1.0
 
-        self.finger_command_publisher = rospy.Publisher(self.name + '/gripper_command', Robotiq3FingerCommand,
-                                                        queue_size=10)
+        self.finger_command_publisher = rospy.Publisher(self.name + '/gripper_command', Robotiq3FingerCommand, queue_size=10)
         self.arm_command_publisher = rospy.Publisher(self.name + '/motion_command', MotionCommand, queue_size=10)
 
-        self.gripper_status_subscriber = rospy.Subscriber(self.name + '/gripper_status', Robotiq3FingerStatus,
-                                                          self.gripper_status_callback)
-        self.arm_status_subscriber = rospy.Subscriber(self.name + '/motion_status', MotionStatus,
-                                                      self.arm_status_callback)
+        self.gripper_status_subscriber = rospy.Subscriber(self.name + '/gripper_status', Robotiq3FingerStatus, self.gripper_status_callback)
+        self.arm_status_subscriber = rospy.Subscriber(self.name + '/motion_status', MotionStatus, self.arm_status_callback)
 
         self.fingers_same_position = False
         self.fingers_same_speed = False
@@ -188,16 +162,29 @@ class Arm:
         self.groupbox.setFlat(False)
         parent_layout.addWidget(self.groupbox, box_row, 0)
 
-        # print('Getting ' + self.name +  ' current joint values...')
+        print 'Getting', self.name, 'current joint values ...',
+        sys.stdout.flush()
         while (not self.arm_status_updated) or (not self.gripper_status_updated):
             time.sleep(0.01)
+        print 'Done'
 
         self.reset_arm_slider_to_current_value()
         self.reset_gripper_position_slider_to_current_value()
 
+        print 'Getting', self.name, 'current control mode ...',
+        sys.stdout.flush()
         get_current_control_mode = rospy.ServiceProxy('/' + self.name + '/get_control_mode_service', GetControlMode)
         control_mode = get_current_control_mode()
-        self.control_mode_combobox.setCurrentIndex(control_mode.active_control_mode.active_control_mode)
+        self.control_mode_combobox.setCurrentIndex(control_mode.active_control_mode.control_mode.mode)
+        print 'Done'
+
+    def arm_status_callback(self, data):
+        self.arm_status = data
+        self.arm_status_updated = True
+
+    def gripper_status_callback(self, data):
+        self.gripper_status = data
+        self.gripper_status_updated = True
 
     def skip_rows(self, col, num_rows):
         self.row_count[col] = self.row_count[col] + num_rows
@@ -788,7 +775,6 @@ class Arm:
 
 def main():
     rospy.init_node('arm_command_widget')
-
     signal.signal(signal.SIGINT, signal.SIG_DFL)
 
     app = QApplication(sys.argv)
