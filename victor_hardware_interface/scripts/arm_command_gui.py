@@ -37,6 +37,8 @@ joint_limits_with_margin = {joint_name: (lower + arm_joint_limit_margin,
                                       upper - arm_joint_limit_margin)
                          for (joint_name, (lower, upper)) in joint_limits.iteritems()}
 
+joint_names = [joint_name for (joint_name, _) in joint_limits.iteritems()]
+
 def clip(value, joint_name):
     min_lim, max_lim = joint_limits_with_margin[joint_name]
     return min(max(value, min_lim), max_lim)
@@ -76,33 +78,37 @@ class Arm:
         self.finger_same_speed_checkbox = self.init_checkbox('', 8, self.finger_same_speed_checkbox_changed, 1)
         self.finger_same_force_checkbox = self.init_checkbox('', 8, self.finger_same_force_checkbox_changed, 1)
 
-        self.joint_1_label = self.init_label('Joint 1 Command', 0)
-        self.joint_1_slider = self.init_slider(joint_limits_with_margin['joint_1'], 0, self.joint_1_slider_moved)
-        self.joint_1_textbox = self.init_textbox('0', 1, self.joint_1_textbox_modified, 1)
+        self.joint_labels = {}
+        self.joint_sliders = {}
+        self.joint_textboxes = {}
 
-        self.joint_2_label = self.init_label('Joint 2 Command', 0)
-        self.joint_2_slider = self.init_slider(joint_limits_with_margin['joint_2'], 0, self.joint_2_slider_moved)
-        self.joint_2_textbox = self.init_textbox('0', 1, self.joint_2_textbox_modified, 1)
+        self.joint_labels['joint_1'] = self.init_label('Joint 1 Command', 0)
+        self.joint_sliders['joint_1'] = self.init_slider(joint_limits_with_margin['joint_1'], 0, self.joint_1_slider_moved)
+        self.joint_textboxes['joint_1'] = self.init_textbox('0', 1, self.joint_1_textbox_modified, 1)
 
-        self.joint_3_label = self.init_label('Joint 3 Command', 0)
-        self.joint_3_slider = self.init_slider(joint_limits_with_margin['joint_3'], 0, self.joint_3_slider_moved)
-        self.joint_3_textbox = self.init_textbox('0', 1, self.joint_3_textbox_modified, 1)
+        self.joint_labels['joint_2'] = self.init_label('Joint 2 Command', 0)
+        self.joint_sliders['joint_2'] = self.init_slider(joint_limits_with_margin['joint_2'], 0, self.joint_2_slider_moved)
+        self.joint_textboxes['joint_2'] = self.init_textbox('0', 1, self.joint_2_textbox_modified, 1)
 
-        self.joint_4_label = self.init_label('Joint 4 Command', 0)
-        self.joint_4_slider = self.init_slider(joint_limits_with_margin['joint_4'], 0, self.joint_4_slider_moved)
-        self.joint_4_textbox = self.init_textbox('0', 1, self.joint_4_textbox_modified, 1)
+        self.joint_labels['joint_3'] = self.init_label('Joint 3 Command', 0)
+        self.joint_sliders['joint_3'] = self.init_slider(joint_limits_with_margin['joint_3'], 0, self.joint_3_slider_moved)
+        self.joint_textboxes['joint_3'] = self.init_textbox('0', 1, self.joint_3_textbox_modified, 1)
 
-        self.joint_5_label = self.init_label('Joint 5 Command', 0)
-        self.joint_5_slider = self.init_slider(joint_limits_with_margin['joint_5'], 0, self.joint_5_slider_moved)
-        self.joint_5_textbox = self.init_textbox('0', 1, self.joint_5_textbox_modified, 1)
+        self.joint_labels['joint_4'] = self.init_label('Joint 4 Command', 0)
+        self.joint_sliders['joint_4'] = self.init_slider(joint_limits_with_margin['joint_4'], 0, self.joint_4_slider_moved)
+        self.joint_textboxes['joint_4'] = self.init_textbox('0', 1, self.joint_4_textbox_modified, 1)
 
-        self.joint_6_label = self.init_label('Joint 6 Command', 0)
-        self.joint_6_slider = self.init_slider(joint_limits_with_margin['joint_6'], 0, self.joint_6_slider_moved)
-        self.joint_6_textbox = self.init_textbox('0', 1, self.joint_6_textbox_modified, 1)
+        self.joint_labels['joint_5'] = self.init_label('Joint 5 Command', 0)
+        self.joint_sliders['joint_5'] = self.init_slider(joint_limits_with_margin['joint_5'], 0, self.joint_5_slider_moved)
+        self.joint_textboxes['joint_5'] = self.init_textbox('0', 1, self.joint_5_textbox_modified, 1)
 
-        self.joint_7_label = self.init_label('Joint 7 Command', 0)
-        self.joint_7_slider = self.init_slider(joint_limits_with_margin['joint_7'], 0, self.joint_7_slider_moved)
-        self.joint_7_textbox = self.init_textbox('0', 1, self.joint_7_textbox_modified, 1)
+        self.joint_labels['joint_6'] = self.init_label('Joint 6 Command', 0)
+        self.joint_sliders['joint_6'] = self.init_slider(joint_limits_with_margin['joint_6'], 0, self.joint_6_slider_moved)
+        self.joint_textboxes['joint_6'] = self.init_textbox('0', 1, self.joint_6_textbox_modified, 1)
+
+        self.joint_labels['joint_7'] = self.init_label('Joint 7 Command', 0)
+        self.joint_sliders['joint_7'] = self.init_slider(joint_limits_with_margin['joint_7'], 0, self.joint_7_slider_moved)
+        self.joint_textboxes['joint_7'] = self.init_textbox('0', 1, self.joint_7_textbox_modified, 1)
 
         self.finger_a_pos_label = self.init_label('Finger A Command Position', 2)
         self.finger_a_pos_slider = self.init_slider((0, finger_range_discretization), 2, self.finger_a_pos_slider_moved)
@@ -301,13 +307,8 @@ class Arm:
         self.finger_command_publisher.publish(self.finger_command)
 
     def reset_arm_command_to_zero(self):
-        self.joint_1_slider.setValue(0)
-        self.joint_2_slider.setValue(0)
-        self.joint_3_slider.setValue(0)
-        self.joint_4_slider.setValue(0)
-        self.joint_5_slider.setValue(0)
-        self.joint_6_slider.setValue(0)
-        self.joint_7_slider.setValue(0)
+        for joint in joint_names:
+            self.joint_sliders[joint].setValue(0)
 
         self.arm_command.joint_position.joint_1 = 0
         self.arm_command.joint_position.joint_2 = 0
@@ -334,26 +335,10 @@ class Arm:
 
         meas_pos = local_arm_status.measured_joint_position
 
-        joint_1_degrees = clip(math.degrees(meas_pos.joint_1), 'joint_1')
-        self.joint_1_slider.setValue(joint_1_degrees)
-
-        joint_2_degrees = clip(math.degrees(meas_pos.joint_2), 'joint_2')
-        self.joint_2_slider.setValue(joint_2_degrees)
-
-        joint_3_degrees = clip(math.degrees(meas_pos.joint_3), 'joint_3')
-        self.joint_3_slider.setValue(joint_3_degrees)
-
-        joint_4_degrees = clip(math.degrees(meas_pos.joint_4), 'joint_4')
-        self.joint_4_slider.setValue(joint_4_degrees)
-
-        joint_5_degrees = clip(math.degrees(meas_pos.joint_5), 'joint_5')
-        self.joint_5_slider.setValue(joint_5_degrees)
-
-        joint_6_degrees = clip(math.degrees(meas_pos.joint_6), 'joint_6')
-        self.joint_6_slider.setValue(joint_6_degrees)
-
-        joint_7_degrees = clip(math.degrees(meas_pos.joint_7), 'joint_7')
-        self.joint_7_slider.setValue(joint_7_degrees)
+        for joint in joint_names:
+            pos_rad = getattr(meas_pos, joint)
+            pos_deg = clip(math.degrees(pos_rad), joint)
+            self.joint_sliders[joint].setValue(pos_deg)
 
         block_command = False
 
@@ -374,38 +359,14 @@ class Arm:
         self.arm_command.joint_velocity.joint_7 = local_arm_status.measured_joint_velocity.joint_7
 
     def disable_arm_sliders(self):
-        self.joint_1_slider.setEnabled(False)
-        self.joint_2_slider.setEnabled(False)
-        self.joint_3_slider.setEnabled(False)
-        self.joint_4_slider.setEnabled(False)
-        self.joint_5_slider.setEnabled(False)
-        self.joint_6_slider.setEnabled(False)
-        self.joint_7_slider.setEnabled(False)
-
-        self.joint_1_textbox.setReadOnly(True)
-        self.joint_2_textbox.setReadOnly(True)
-        self.joint_3_textbox.setReadOnly(True)
-        self.joint_4_textbox.setReadOnly(True)
-        self.joint_5_textbox.setReadOnly(True)
-        self.joint_6_textbox.setReadOnly(True)
-        self.joint_7_textbox.setReadOnly(True)
+        for joint in joint_names:
+            self.joint_sliders[joint].setEnabled(False)
+            self.joint_textboxes[joint].setReadOnly(True)
 
     def enable_arm_sliders(self):
-        self.joint_1_slider.setEnabled(True)
-        self.joint_2_slider.setEnabled(True)
-        self.joint_3_slider.setEnabled(True)
-        self.joint_4_slider.setEnabled(True)
-        self.joint_5_slider.setEnabled(True)
-        self.joint_6_slider.setEnabled(True)
-        self.joint_7_slider.setEnabled(True)
-
-        self.joint_1_textbox.setReadOnly(False)
-        self.joint_2_textbox.setReadOnly(False)
-        self.joint_3_textbox.setReadOnly(False)
-        self.joint_4_textbox.setReadOnly(False)
-        self.joint_5_textbox.setReadOnly(False)
-        self.joint_6_textbox.setReadOnly(False)
-        self.joint_7_textbox.setReadOnly(False)
+        for joint in joint_names:
+            self.joint_sliders[joint].setEnabled(True)
+            self.joint_textboxes[joint].setReadOnly(False)
 
     def reset_speed_force_command(self):
         self.finger_a_spe_slider.setValue(finger_range_discretization)
@@ -701,85 +662,85 @@ class Arm:
             self.finger_command_publisher.publish(self.finger_command)
 
     def joint_1_textbox_modified(self):
-        value = int(self.joint_1_textbox.displayText())
+        value = int(self.joint_textboxes['joint_1'].displayText())
         value = clip(value, 'joint_1')
         self.joint_1_slider_moved(value)
 
     def joint_2_textbox_modified(self):
-        value = int(self.joint_2_textbox.displayText())
+        value = int(self.joint_textboxes['joint_2'].displayText())
         value = clip(value, 'joint_2')
         self.joint_2_slider_moved(value)
 
     def joint_3_textbox_modified(self):
-        value = int(self.joint_3_textbox.displayText())
+        value = int(self.joint_textboxes['joint_3'].displayText())
         value = clip(value, 'joint_3')
         self.joint_3_slider_moved(value)
 
     def joint_4_textbox_modified(self):
-        value = int(self.joint_4_textbox.displayText())
+        value = int(self.joint_textboxes['joint_4'].displayText())
         value = clip(value, 'joint_4')
         self.joint_4_slider_moved(value)
 
     def joint_5_textbox_modified(self):
-        value = int(self.joint_5_textbox.displayText())
+        value = int(self.joint_textboxes['joint_5'].displayText())
         value = clip(value, 'joint_5')
         self.joint_5_slider_moved(value)
 
     def joint_6_textbox_modified(self):
-        value = int(self.joint_6_textbox.displayText())
+        value = int(self.joint_textboxes['joint_6'].displayText())
         value = clip(value, 'joint_6')
         self.joint_6_slider_moved(value)
 
     def joint_7_textbox_modified(self):
-        value = int(self.joint_7_textbox.displayText())
+        value = int(self.joint_textboxes['joint_7'].displayText())
         value = clip(value, 'joint_7')
         self.joint_7_slider_moved(value)
 
     def joint_1_slider_moved(self, position):
-        self.joint_1_textbox.setText(str(position))
-        self.joint_1_slider.setValue(position)
+        self.joint_textboxes['joint_1'].setText(str(position))
+        self.joint_sliders['joint_1'].setValue(position)
         self.arm_command.joint_position.joint_1 = math.radians(position)
         if not block_command:
             self.arm_command_publisher.publish(self.arm_command)
 
     def joint_2_slider_moved(self, position):
-        self.joint_2_textbox.setText(str(position))
-        self.joint_2_slider.setValue(position)
+        self.joint_textboxes['joint_2'].setText(str(position))
+        self.joint_sliders['joint_2'].setValue(position)
         self.arm_command.joint_position.joint_2 = math.radians(position)
         if not block_command:
             self.arm_command_publisher.publish(self.arm_command)
 
     def joint_3_slider_moved(self, position):
-        self.joint_3_textbox.setText(str(position))
-        self.joint_3_slider.setValue(position)
+        self.joint_textboxes['joint_3'].setText(str(position))
+        self.joint_sliders['joint_3'].setValue(position)
         self.arm_command.joint_position.joint_3 = math.radians(position)
         if not block_command:
             self.arm_command_publisher.publish(self.arm_command)
 
     def joint_4_slider_moved(self, position):
-        self.joint_4_textbox.setText(str(position))
-        self.joint_4_slider.setValue(position)
+        self.joint_textboxes['joint_4'].setText(str(position))
+        self.joint_sliders['joint_4'].setValue(position)
         self.arm_command.joint_position.joint_4 = math.radians(position)
         if not block_command:
             self.arm_command_publisher.publish(self.arm_command)
 
     def joint_5_slider_moved(self, position):
-        self.joint_5_textbox.setText(str(position))
-        self.joint_5_slider.setValue(position)
+        self.joint_textboxes['joint_5'].setText(str(position))
+        self.joint_sliders['joint_5'].setValue(position)
         self.arm_command.joint_position.joint_5 = math.radians(position)
         if not block_command:
             self.arm_command_publisher.publish(self.arm_command)
 
     def joint_6_slider_moved(self, position):
-        self.joint_6_textbox.setText(str(position))
-        self.joint_6_slider.setValue(position)
+        self.joint_textboxes['joint_6'].setText(str(position))
+        self.joint_sliders['joint_6'].setValue(position)
         self.arm_command.joint_position.joint_6 = math.radians(position)
         if not block_command:
             self.arm_command_publisher.publish(self.arm_command)
 
     def joint_7_slider_moved(self, position):
-        self.joint_7_textbox.setText(str(position))
-        self.joint_7_slider.setValue(position)
+        self.joint_textboxes['joint_7'].setText(str(position))
+        self.joint_sliders['joint_7'].setValue(position)
         self.arm_command.joint_position.joint_7 = math.radians(position)
         if not block_command:
             self.arm_command_publisher.publish(self.arm_command)
