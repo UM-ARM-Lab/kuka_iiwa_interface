@@ -41,6 +41,7 @@ joint_limits_with_margin = {joint_name: (lower + arm_joint_limit_margin,
 joint_names = ['joint_' + str(i) for i in range(1,8)]
 
 def clip(value, joint_name):
+    """Clips 'value' between the joint limits of string 'joint_name'"""
     min_lim, max_lim = joint_limits_with_margin[joint_name]
     return min(max(value, min_lim), max_lim)
 
@@ -79,12 +80,10 @@ class Arm:
         self.finger_same_speed_checkbox = self.init_checkbox('', 8, self.finger_same_speed_checkbox_changed, 1)
         self.finger_same_force_checkbox = self.init_checkbox('', 8, self.finger_same_force_checkbox_changed, 1)
 
+        ## Create all joint sliders, textboxes, and labels
         self.joint_labels = {}
         self.joint_sliders = {}
         self.joint_textboxes = {}
-
-
-
 
         for joint_name in joint_names:
             slider_cb = partial(self.joint_slider_moved, joint_name = joint_name)
@@ -300,22 +299,8 @@ class Arm:
     def reset_arm_command_to_zero(self):
         for joint in joint_names:
             self.joint_sliders[joint].setValue(0)
-
-        self.arm_command.joint_position.joint_1 = 0
-        self.arm_command.joint_position.joint_2 = 0
-        self.arm_command.joint_position.joint_3 = 0
-        self.arm_command.joint_position.joint_4 = 0
-        self.arm_command.joint_position.joint_5 = 0
-        self.arm_command.joint_position.joint_6 = 0
-        self.arm_command.joint_position.joint_7 = 0
-
-        self.arm_command.joint_velocity.joint_1 = 0
-        self.arm_command.joint_velocity.joint_2 = 0
-        self.arm_command.joint_velocity.joint_3 = 0
-        self.arm_command.joint_velocity.joint_4 = 0
-        self.arm_command.joint_velocity.joint_5 = 0
-        self.arm_command.joint_velocity.joint_6 = 0
-        self.arm_command.joint_velocity.joint_7 = 0
+            setattr(self.arm_command.joint_position, joint, 0)
+            setattr(self.arm_command.joint_velocity, joint, 0)
 
         self.arm_command_publisher.publish(self.arm_command)
 
@@ -325,30 +310,18 @@ class Arm:
         global block_command
         block_command = True
 
-        meas_pos = local_arm_status.measured_joint_position
-
         for joint in joint_names:
-            pos_rad = getattr(meas_pos, joint)
+            pos_rad = getattr(local_arm_status.measured_joint_position, joint)
             pos_deg = round(clip(math.degrees(pos_rad), joint))
             self.joint_sliders[joint].setValue(pos_deg)
 
         block_command = False
 
-        self.arm_command.joint_position.joint_1 = local_arm_status.measured_joint_position.joint_1
-        self.arm_command.joint_position.joint_2 = local_arm_status.measured_joint_position.joint_2
-        self.arm_command.joint_position.joint_3 = local_arm_status.measured_joint_position.joint_3
-        self.arm_command.joint_position.joint_4 = local_arm_status.measured_joint_position.joint_4
-        self.arm_command.joint_position.joint_5 = local_arm_status.measured_joint_position.joint_5
-        self.arm_command.joint_position.joint_6 = local_arm_status.measured_joint_position.joint_6
-        self.arm_command.joint_position.joint_7 = local_arm_status.measured_joint_position.joint_7
-
-        self.arm_command.joint_velocity.joint_1 = local_arm_status.measured_joint_velocity.joint_1
-        self.arm_command.joint_velocity.joint_2 = local_arm_status.measured_joint_velocity.joint_2
-        self.arm_command.joint_velocity.joint_3 = local_arm_status.measured_joint_velocity.joint_3
-        self.arm_command.joint_velocity.joint_4 = local_arm_status.measured_joint_velocity.joint_4
-        self.arm_command.joint_velocity.joint_5 = local_arm_status.measured_joint_velocity.joint_5
-        self.arm_command.joint_velocity.joint_6 = local_arm_status.measured_joint_velocity.joint_6
-        self.arm_command.joint_velocity.joint_7 = local_arm_status.measured_joint_velocity.joint_7
+        for joint in joint_names:
+            pos = getattr(local_arm_status.measured_joint_position, joint)
+            vel = getattr(local_arm_status.measured_joint_velocity, joint)
+            setattr(self.arm_command.joint_position, joint, pos)
+            setattr(self.arm_command.joint_velocity, joint, vel)
 
     def disable_arm_sliders(self):
         for joint in joint_names:
