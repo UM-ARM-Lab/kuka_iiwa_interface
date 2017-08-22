@@ -25,6 +25,22 @@ finger_range_discretization = 1000
 arm_joint_limit_margin = 1
 block_command = False
 
+joint_limits = {'joint_1': (-170, 170),
+                'joint_2': (-120, 120),
+                'joint_3': (-170, 170),
+                'joint_4': (-120, 120),
+                'joint_5': (-170, 170),
+                'joint_6': (-120, 120),
+                'joint_7': (-170, 170)}
+
+joint_limits_with_margin = {joint_name: (lower + arm_joint_limit_margin,
+                                      upper - arm_joint_limit_margin)
+                         for (joint_name, (lower, upper)) in joint_limits.iteritems()}
+
+def clip(value, joint_name):
+    min_lim, max_lim = joint_limits_with_margin[joint_name]
+    return min(max(value, min_lim), max_lim)
+
 
 class Widget(QWidget):
     def __init__(self, parent=None):
@@ -61,31 +77,31 @@ class Arm:
         self.finger_same_force_checkbox = self.init_checkbox('', 8, self.finger_same_force_checkbox_changed, 1)
 
         self.joint_1_label = self.init_label('Joint 1 Command', 0)
-        self.joint_1_slider = self.init_slider((-170 + arm_joint_limit_margin, 170 - arm_joint_limit_margin), 0, self.joint_1_slider_moved)
+        self.joint_1_slider = self.init_slider(joint_limits_with_margin['joint_1'], 0, self.joint_1_slider_moved)
         self.joint_1_textbox = self.init_textbox('0', 1, self.joint_1_textbox_modified, 1)
 
         self.joint_2_label = self.init_label('Joint 2 Command', 0)
-        self.joint_2_slider = self.init_slider((-120 + arm_joint_limit_margin, 120 - arm_joint_limit_margin), 0, self.joint_2_slider_moved)
+        self.joint_2_slider = self.init_slider(joint_limits_with_margin['joint_2'], 0, self.joint_2_slider_moved)
         self.joint_2_textbox = self.init_textbox('0', 1, self.joint_2_textbox_modified, 1)
 
         self.joint_3_label = self.init_label('Joint 3 Command', 0)
-        self.joint_3_slider = self.init_slider((-170 + arm_joint_limit_margin, 170 - arm_joint_limit_margin), 0, self.joint_3_slider_moved)
+        self.joint_3_slider = self.init_slider(joint_limits_with_margin['joint_3'], 0, self.joint_3_slider_moved)
         self.joint_3_textbox = self.init_textbox('0', 1, self.joint_3_textbox_modified, 1)
 
         self.joint_4_label = self.init_label('Joint 4 Command', 0)
-        self.joint_4_slider = self.init_slider((-120 + arm_joint_limit_margin, 120 - arm_joint_limit_margin), 0, self.joint_4_slider_moved)
+        self.joint_4_slider = self.init_slider(joint_limits_with_margin['joint_4'], 0, self.joint_4_slider_moved)
         self.joint_4_textbox = self.init_textbox('0', 1, self.joint_4_textbox_modified, 1)
 
         self.joint_5_label = self.init_label('Joint 5 Command', 0)
-        self.joint_5_slider = self.init_slider((-170 + arm_joint_limit_margin, 170 - arm_joint_limit_margin), 0, self.joint_5_slider_moved)
+        self.joint_5_slider = self.init_slider(joint_limits_with_margin['joint_5'], 0, self.joint_5_slider_moved)
         self.joint_5_textbox = self.init_textbox('0', 1, self.joint_5_textbox_modified, 1)
 
         self.joint_6_label = self.init_label('Joint 6 Command', 0)
-        self.joint_6_slider = self.init_slider((-120 + arm_joint_limit_margin, 120 - arm_joint_limit_margin), 0, self.joint_6_slider_moved)
+        self.joint_6_slider = self.init_slider(joint_limits_with_margin['joint_6'], 0, self.joint_6_slider_moved)
         self.joint_6_textbox = self.init_textbox('0', 1, self.joint_6_textbox_modified, 1)
 
         self.joint_7_label = self.init_label('Joint 7 Command', 0)
-        self.joint_7_slider = self.init_slider((-175 + arm_joint_limit_margin, 175 - arm_joint_limit_margin), 0, self.joint_7_slider_moved)
+        self.joint_7_slider = self.init_slider(joint_limits_with_margin['joint_7'], 0, self.joint_7_slider_moved)
         self.joint_7_textbox = self.init_textbox('0', 1, self.joint_7_textbox_modified, 1)
 
         self.finger_a_pos_label = self.init_label('Finger A Command Position', 2)
@@ -316,39 +332,27 @@ class Arm:
 
         block_command = True
 
-        joint_1_degrees = min(
-            max(-170 + arm_joint_limit_margin, round(math.degrees(local_arm_status.measured_joint_position.joint_1))),
-            170 - arm_joint_limit_margin)
+        meas_pos = local_arm_status.measured_joint_position
+
+        joint_1_degrees = clip(math.degrees(meas_pos.joint_1), 'joint_1')
         self.joint_1_slider.setValue(joint_1_degrees)
 
-        joint_2_degrees = min(
-            max(-120 + arm_joint_limit_margin, round(math.degrees(local_arm_status.measured_joint_position.joint_2))),
-            120 - arm_joint_limit_margin)
+        joint_2_degrees = clip(math.degrees(meas_pos.joint_2), 'joint_2')
         self.joint_2_slider.setValue(joint_2_degrees)
 
-        joint_3_degrees = min(
-            max(-170 + arm_joint_limit_margin, round(math.degrees(local_arm_status.measured_joint_position.joint_3))),
-            170 - arm_joint_limit_margin)
+        joint_3_degrees = clip(math.degrees(meas_pos.joint_3), 'joint_3')
         self.joint_3_slider.setValue(joint_3_degrees)
 
-        joint_4_degrees = min(
-            max(-120 + arm_joint_limit_margin, round(math.degrees(local_arm_status.measured_joint_position.joint_4))),
-            120 - arm_joint_limit_margin)
+        joint_4_degrees = clip(math.degrees(meas_pos.joint_4), 'joint_4')
         self.joint_4_slider.setValue(joint_4_degrees)
 
-        joint_5_degrees = min(
-            max(-170 + arm_joint_limit_margin, round(math.degrees(local_arm_status.measured_joint_position.joint_5))),
-            170 - arm_joint_limit_margin)
+        joint_5_degrees = clip(math.degrees(meas_pos.joint_5), 'joint_5')
         self.joint_5_slider.setValue(joint_5_degrees)
 
-        joint_6_degrees = min(
-            max(-120 + arm_joint_limit_margin, round(math.degrees(local_arm_status.measured_joint_position.joint_6))),
-            120 - arm_joint_limit_margin)
+        joint_6_degrees = clip(math.degrees(meas_pos.joint_6), 'joint_6')
         self.joint_6_slider.setValue(joint_6_degrees)
 
-        joint_7_degrees = min(
-            max(-170 + arm_joint_limit_margin, round(math.degrees(local_arm_status.measured_joint_position.joint_7))),
-            170 - arm_joint_limit_margin)
+        joint_7_degrees = clip(math.degrees(meas_pos.joint_7), 'joint_7')
         self.joint_7_slider.setValue(joint_7_degrees)
 
         block_command = False
@@ -698,37 +702,37 @@ class Arm:
 
     def joint_1_textbox_modified(self):
         value = int(self.joint_1_textbox.displayText())
-        value = min(max(-170 + arm_joint_limit_margin, value), 170 - arm_joint_limit_margin)
+        value = clip(value, 'joint_1')
         self.joint_1_slider_moved(value)
 
     def joint_2_textbox_modified(self):
         value = int(self.joint_2_textbox.displayText())
-        value = min(max(-120 + arm_joint_limit_margin, value), 120 - arm_joint_limit_margin)
+        value = clip(value, 'joint_2')
         self.joint_2_slider_moved(value)
 
     def joint_3_textbox_modified(self):
         value = int(self.joint_3_textbox.displayText())
-        value = min(max(-170 + arm_joint_limit_margin, value), 170 - arm_joint_limit_margin)
+        value = clip(value, 'joint_3')
         self.joint_3_slider_moved(value)
 
     def joint_4_textbox_modified(self):
         value = int(self.joint_4_textbox.displayText())
-        value = min(max(-120 + arm_joint_limit_margin, value), 120 - arm_joint_limit_margin)
+        value = clip(value, 'joint_4')
         self.joint_4_slider_moved(value)
 
     def joint_5_textbox_modified(self):
         value = int(self.joint_5_textbox.displayText())
-        value = min(max(-170 + arm_joint_limit_margin, value), 170 - arm_joint_limit_margin)
+        value = clip(value, 'joint_5')
         self.joint_5_slider_moved(value)
 
     def joint_6_textbox_modified(self):
         value = int(self.joint_6_textbox.displayText())
-        value = min(max(-120 + arm_joint_limit_margin, value), 120 - arm_joint_limit_margin)
+        value = clip(value, 'joint_6')
         self.joint_6_slider_moved(value)
 
     def joint_7_textbox_modified(self):
         value = int(self.joint_7_textbox.displayText())
-        value = min(max(-170 + arm_joint_limit_margin, value), 170 - arm_joint_limit_margin)
+        value = clip(value, 'joint_7')
         self.joint_7_slider_moved(value)
 
     def joint_1_slider_moved(self, position):
