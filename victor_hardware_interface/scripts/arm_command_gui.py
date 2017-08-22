@@ -322,13 +322,14 @@ class Arm:
     def reset_arm_slider_to_current_value(self):
         local_arm_status = copy.deepcopy(self.arm_status)
 
+        global block_command
         block_command = True
 
         meas_pos = local_arm_status.measured_joint_position
 
         for joint in joint_names:
             pos_rad = getattr(meas_pos, joint)
-            pos_deg = clip(math.degrees(pos_rad), joint)
+            pos_deg = round(clip(math.degrees(pos_rad), joint))
             self.joint_sliders[joint].setValue(pos_deg)
 
         block_command = False
