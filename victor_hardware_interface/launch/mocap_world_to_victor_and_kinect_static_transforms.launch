@@ -2,11 +2,15 @@
     <arg name="use_sim_time" default="false"/>
 
     <!-- Note that when specifying orientation with 3 numbers, it's yaw pitch roll -->
-    <node pkg="tf" type="static_transform_publisher" name="kinect2_tf_broadcaster_intermediary" required="true" args="-0.00 0.095 -0.065 -0.01 0.05 -0.01 /mocap_Kinect2BlockRoof_Kinect2BlockRoof /kinect2_intermediary_frame 100">
-        <param name="use_sim_time" value="$(arg use_sim_time)"/>
-    </node>
+    <!--<node pkg="tf" type="static_transform_publisher" name="kinect2_tf_broadcaster_intermediary" required="true" args="-0.00 0.095 -0.065 -0.01 0.05 -0.01 /mocap_Kinect2BlockRoof_Kinect2BlockRoof /kinect2_intermediary_frame 100">-->
+        <!--<param name="use_sim_time" value="$(arg use_sim_time)"/>-->
+    <!--</node>-->
     
-    <node pkg="tf" type="static_transform_publisher" name="kinect2_tf_broadcaster" required="true" args="0 0 0 -0.5 0.5 -0.5 0.5 /kinect2_intermediary_frame /kinect2_ir_optical_frame 100">
+    <!--<node pkg="tf" type="static_transform_publisher" name="kinect2_tf_broadcaster" required="true" args="0 0 0 -0.5 0.5 -0.5 0.5 /kinect2_intermediary_frame /kinect2_ir_optical_frame 100">-->
+        <!--<param name="use_sim_time" value="$(arg use_sim_time)"/>-->
+    <!--</node>-->
+
+    <node pkg="tf" type="static_transform_publisher" name="kinect2_tf_broadcaster" required="true" args="0.076951481000901  -0.077263832555614   1.622779861826974 -0.692935388982982  -0.720915512170930   0.007438990302292   0.008126034064077 /mocap_Kinect2BlockRoof /kinect2_ir_optical_frame 100">
         <param name="use_sim_time" value="$(arg use_sim_time)"/>
     </node>
 
