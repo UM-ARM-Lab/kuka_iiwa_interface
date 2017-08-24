@@ -37,11 +37,13 @@ joint_limits_with_margin = {joint_name: (lower + arm_joint_limit_margin,
                                       upper - arm_joint_limit_margin)
                          for (joint_name, (lower, upper)) in joint_limits.iteritems()}
 
-joint_names = ['joint_' + str(i) for i in range(1,8)]
+joint_names = ['joint_' + str(i) for i in range(1, 8)]
 
 finger_names = ['finger_a', 'finger_b', 'finger_c']
 finger_joint_names = ['finger_a', 'finger_b', 'finger_c', 'scissor']
 finger_column = {'finger_a':2, 'finger_b':4, 'finger_c':6, 'scissor':9}
+finger_joint_labels = {'finger_a':'Finger A', 'finger_b':'Finger B',
+                       'finger_c':'Finger C', 'scissor':'Scissor'}
 
 finger_command_names = ['position', 'speed', 'force']
 finger_command_default = {'position':0.0, 'speed':1.0, 'force':1.0}
@@ -92,7 +94,7 @@ class Arm:
             text_callback = partial(self.joint_textbox_modified, joint_name = joint_name)
 
             label = 'Joint ' + joint_name[-1] + ' Command'
-            
+
             self.joint_labels[joint_name] = self.init_label(label, 0)
             self.joint_sliders[joint_name] = self.init_slider(joint_limits_with_margin[joint_name],
                                                               0, slider_callback)
@@ -104,10 +106,14 @@ class Arm:
         self.finger_sliders = {}
         self.finger_textboxes = {}
 
+        # increment blank cell in the header row
+        for col in [3, 5, 7, 9, 10]:
+            self.row_count[col] += 1
+
         for finger_joint_name in finger_joint_names:
             col = finger_column[finger_joint_name]
 
-            for j,finger_command_name in enumerate(finger_command_names):
+            for j, finger_command_name in enumerate(finger_command_names):
                 slider_callback = partial(self.finger_joint_slider_moved, 
                                           finger_joint_name = finger_joint_name, 
                                           finger_command_name = finger_command_name)
@@ -115,36 +121,23 @@ class Arm:
                                         finger_joint_name = finger_joint_name, 
                                         finger_command_name = finger_command_name)
                 
-                label_row_skip = 0
-                slider_row_skip = 0
+                label = finger_joint_labels[finger_joint_name] + ' Command ' + finger_command_name[0].upper() + finger_command_name[1:]
 
-                if finger_joint_name not in finger_names:
-                    label = finger_joint_name[0].upper() + finger_joint_name[1:] + ' Command ' + finger_command_name[0].upper() + finger_command_name[1:]
-                    if j == 0:
-                        label_row_skip = 1
-                else:
-                    label = 'Finger ' + finger_joint_name[-1].upper() + ' Command ' + finger_command_name[0].upper() + finger_command_name[1:]
+                self.finger_labels[(finger_joint_name, finger_command_name)] = self.init_label(label, col)
                 
-                if j == 0:
-                    textbox_row_skip = 2
-                else:
-                    textbox_row_skip = 1
-
-                self.finger_labels[(finger_joint_name,finger_command_name)] = self.init_label(label, col, label_row_skip)
+                self.finger_sliders[(finger_joint_name, finger_command_name)] = \
+                self.init_slider((0, finger_range_discretization), col, slider_callback,
+                finger_command_default[finger_command_name]*finger_range_discretization)
                 
-                self.finger_sliders[(finger_joint_name,finger_command_name)] = \
-                self.init_slider((0, finger_range_discretization), col, slider_callback, 
-                finger_command_default[finger_command_name]*finger_range_discretization, slider_row_skip)
-                
-                self.finger_textboxes[(finger_joint_name,finger_command_name)] = \
-                self.init_textbox('%5.3f' % finger_command_default[finger_command_name], col+1, text_callback, textbox_row_skip)
+                self.finger_textboxes[(finger_joint_name, finger_command_name)] = \
+                self.init_textbox('%5.3f' % finger_command_default[finger_command_name], col+1, text_callback, 1)
 
 
         ## Create finger sychronization checkboxes
         self.finger_synchronization_checkboxes = {}
         self.synchonize_label = self.init_label('Synchronize', 8)
         
-        for j,finger_command_name in enumerate(finger_command_names):
+        for j, finger_command_name in enumerate(finger_command_names):
             if j == 0:
                 checkbox_row_skip = 0
             else:
@@ -176,10 +169,7 @@ class Arm:
         self.gripper_status_subscriber = rospy.Subscriber(self.name + '/gripper_status', Robotiq3FingerStatus, self.gripper_status_callback)
         self.arm_status_subscriber = rospy.Subscriber(self.name + '/motion_status', MotionStatus, self.arm_status_callback)
 
-        self.fingers_same_command = {}
-
-        for finger_command_name in finger_command_names:
-            self.fingers_same_command[finger_command_name] = False
+        self.fingers_same_command = {finger_command_name: False for finger_command_name in finger_command_names}
 
         self.groupbox = QGroupBox(self.name)
         self.groupbox.setLayout(self.v_layout)
@@ -280,30 +270,16 @@ class Arm:
             self.fingers_same_command[finger_command_name] = False
 
     def open_gripper_command(self):
-
         for finger_name in finger_names:
             self.finger_sliders[(finger_name, 'position')].setValue(0)
-            finger_command = getattr(self.finger_command, finger_name+'_command')
-            finger_command.position = 0
-        
-        self.finger_command_publisher.publish(self.finger_command)
 
     def close_gripper_command(self):
-
         for finger_name in finger_names:
             self.finger_sliders[(finger_name, 'position')].setValue(finger_range_discretization)
-            finger_command = getattr(self.finger_command, finger_name+'_command')
-            finger_command.position = 1
-        
-        self.finger_command_publisher.publish(self.finger_command)
 
     def reset_arm_command_to_zero(self):
         for joint in joint_names:
             self.joint_sliders[joint].setValue(0)
-            setattr(self.arm_command.joint_position, joint, 0)
-            setattr(self.arm_command.joint_velocity, joint, 0)
-
-        self.arm_command_publisher.publish(self.arm_command)
 
     def reset_arm_slider_to_current_value(self):
         local_arm_status = copy.deepcopy(self.arm_status)
@@ -337,12 +313,8 @@ class Arm:
         for finger_joint_name in finger_joint_names:
             finger_command = getattr(self.finger_command, finger_joint_name+'_command')
             
-            for finger_command_name in finger_command_names:
-                if finger_command_name == 'speed' or finger_command_name == 'force':
-                    self.finger_sliders[(finger_joint_name, finger_command_name)].setValue(finger_range_discretization)            
-                    setattr(finger_command, finger_command_name, 1)
-
-        self.finger_command_publisher.publish(self.finger_command)
+            for finger_command_name in ['speed', 'force']:
+                self.finger_sliders[(finger_joint_name, finger_command_name)].setValue(finger_range_discretization)            
 
     def reset_gripper_position_slider_to_current_value(self):
         local_gripper_status = copy.deepcopy(self.gripper_status)
@@ -360,25 +332,24 @@ class Arm:
             finger_command = getattr(self.finger_command, finger_joint_name+'_command')
             finger_command.position = finger_status.position
 
-
     def move_all_fingers(self, position, finger_command_name):
         value = float(position) / finger_range_discretization
         value = min(max(value, 0), 1)
         position = int(value * finger_range_discretization)
 
         for finger_name in finger_names:
-            self.finger_textboxes[(finger_name,finger_command_name)].setText('%5.3f' % value)
+            self.finger_textboxes[(finger_name, finger_command_name)].setText('%5.3f' % value)
             finger_command = getattr(self.finger_command, finger_name+'_command')
             setattr(finger_command, finger_command_name, value)
-            self.finger_sliders[(finger_name,finger_command_name)].setValue(position)
+            self.finger_sliders[(finger_name, finger_command_name)].setValue(position)
 
         if not self.block_command:
             self.finger_command_publisher.publish(self.finger_command)
 
-
     def finger_joint_textbox_modified(self, finger_joint_name, finger_command_name):
-        self.finger_joint_slider_moved(int(float(self.finger_textboxes[(finger_joint_name, finger_command_name)].displayText()) * finger_range_discretization),
-                                 finger_joint_name, finger_command_name)
+        textbox = self.finger_textboxes[(finger_joint_name, finger_command_name)]
+        slider_position = int(float(textbox.displayText()) * finger_range_discretization)
+        self.finger_sliders[(finger_joint_name, finger_command_name)].setValue(slider_position)
 
     def finger_joint_slider_moved(self, position, finger_joint_name, finger_command_name):
         if finger_joint_name != 'scissor' and self.fingers_same_command[finger_command_name]:
@@ -388,7 +359,6 @@ class Arm:
             value = min(max(value, 0), 1)
             position = int(value * finger_range_discretization)
             self.finger_textboxes[(finger_joint_name, finger_command_name)].setText('%5.3f' % value)
-            self.finger_sliders[(finger_joint_name, finger_command_name)].setValue(position)
             finger_command = getattr(self.finger_command, finger_joint_name+'_command')
             setattr(finger_command, finger_command_name, value)
             if not self.block_command:
@@ -418,22 +388,22 @@ class Arm:
             new_control_mode.joint_path_execution_params.joint_relative_velocity = 0.1
             new_control_mode.joint_path_execution_params.joint_relative_acceleration = 0.1
             self.enable_arm_sliders()
-            print('Switching to JOINT_POSITION mode.')
+            print 'Switching to JOINT_POSITION mode.'
         elif control_mode == ControlMode.CARTESIAN_POSE:
             self.disable_arm_sliders()
-            print('Switching to CARTESIAN_POSE mode.')
+            print 'Switching to CARTESIAN_POSE mode.'
         elif control_mode == ControlMode.JOINT_IMPEDANCE:
-            print('JOINT_IMPEDANCE mode switch is not implemented yet.')
+            print 'JOINT_IMPEDANCE mode switch is not implemented yet.'
             return
         elif control_mode == ControlMode.CARTESIAN_IMPEDANCE:
-            print('CARTESIAN_IMPEDANCE mode switch is not implemented yet.')
+            print 'CARTESIAN_IMPEDANCE mode switch is not implemented yet.'
             return
 
         result = send_new_control_mode(new_control_mode)
         if result.success:
-            print "Control mode switch success."
+            print 'Control mode switch success.'
         else:
-            print "Control mode switch failure."
+            print 'Control mode switch failure.'
             print result.message
 
 
