@@ -39,9 +39,9 @@ class motion_status
 
         victor_hardware_interface::cartesian_value_quantity estimated_external_wrench;
 
-        victor_hardware_interface::cartesian_value_quantity measured_cartesian_pose_raw;
+        victor_hardware_interface::cartesian_value_quantity measured_cartesian_pose_abc;
 
-        victor_hardware_interface::cartesian_value_quantity commanded_cartesian_pose_raw;
+        victor_hardware_interface::cartesian_value_quantity commanded_cartesian_pose_abc;
 
         victor_hardware_interface::cartesian_pose measured_cartesian_pose;
 
@@ -165,10 +165,10 @@ int motion_status::_encodeNoHash(void *buf, int offset, int maxlen) const
     tlen = this->estimated_external_wrench._encodeNoHash(buf, offset + pos, maxlen - pos);
     if(tlen < 0) return tlen; else pos += tlen;
 
-    tlen = this->measured_cartesian_pose_raw._encodeNoHash(buf, offset + pos, maxlen - pos);
+    tlen = this->measured_cartesian_pose_abc._encodeNoHash(buf, offset + pos, maxlen - pos);
     if(tlen < 0) return tlen; else pos += tlen;
 
-    tlen = this->commanded_cartesian_pose_raw._encodeNoHash(buf, offset + pos, maxlen - pos);
+    tlen = this->commanded_cartesian_pose_abc._encodeNoHash(buf, offset + pos, maxlen - pos);
     if(tlen < 0) return tlen; else pos += tlen;
 
     tlen = this->measured_cartesian_pose._encodeNoHash(buf, offset + pos, maxlen - pos);
@@ -208,10 +208,10 @@ int motion_status::_decodeNoHash(const void *buf, int offset, int maxlen)
     tlen = this->estimated_external_wrench._decodeNoHash(buf, offset + pos, maxlen - pos);
     if(tlen < 0) return tlen; else pos += tlen;
 
-    tlen = this->measured_cartesian_pose_raw._decodeNoHash(buf, offset + pos, maxlen - pos);
+    tlen = this->measured_cartesian_pose_abc._decodeNoHash(buf, offset + pos, maxlen - pos);
     if(tlen < 0) return tlen; else pos += tlen;
 
-    tlen = this->commanded_cartesian_pose_raw._decodeNoHash(buf, offset + pos, maxlen - pos);
+    tlen = this->commanded_cartesian_pose_abc._decodeNoHash(buf, offset + pos, maxlen - pos);
     if(tlen < 0) return tlen; else pos += tlen;
 
     tlen = this->measured_cartesian_pose._decodeNoHash(buf, offset + pos, maxlen - pos);
@@ -238,8 +238,8 @@ int motion_status::_getEncodedSizeNoHash() const
     enc_size += this->measured_joint_torque._getEncodedSizeNoHash();
     enc_size += this->estimated_external_torque._getEncodedSizeNoHash();
     enc_size += this->estimated_external_wrench._getEncodedSizeNoHash();
-    enc_size += this->measured_cartesian_pose_raw._getEncodedSizeNoHash();
-    enc_size += this->commanded_cartesian_pose_raw._getEncodedSizeNoHash();
+    enc_size += this->measured_cartesian_pose_abc._getEncodedSizeNoHash();
+    enc_size += this->commanded_cartesian_pose_abc._getEncodedSizeNoHash();
     enc_size += this->measured_cartesian_pose._getEncodedSizeNoHash();
     enc_size += this->commanded_cartesian_pose._getEncodedSizeNoHash();
     enc_size += this->active_control_mode._getEncodedSizeNoHash();
@@ -255,7 +255,7 @@ uint64_t motion_status::_computeHash(const __lcm_hash_ptr *p)
             return 0;
     const __lcm_hash_ptr cp = { p, (void*)motion_status::getHash };
 
-    uint64_t hash = 0x9a36a4297801ddf6LL +
+    uint64_t hash = 0x8d25644d75239c66LL +
          victor_hardware_interface::joint_value_quantity::_computeHash(&cp) +
          victor_hardware_interface::joint_value_quantity::_computeHash(&cp) +
          victor_hardware_interface::joint_value_quantity::_computeHash(&cp) +
