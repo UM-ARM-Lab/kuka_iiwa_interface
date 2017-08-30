@@ -8,7 +8,6 @@ import java.util.concurrent.TimeUnit;
 import javax.inject.Inject;
 //import javax.inject.Named;
 
-//import armlab.lcm.msgs.*;
 import armlab.lcm.msgs.cartesian_control_mode_limits;
 import armlab.lcm.msgs.cartesian_impedance_parameters;
 import armlab.lcm.msgs.cartesian_path_execution_parameters;
@@ -722,7 +721,7 @@ public class LCMRobotInterface extends RoboticsAPIApplication implements LCMSubs
             motion_status_msg_.commanded_joint_position = Conversions.jvqInitializer(0.0);
             motion_status_msg_.measured_joint_velocity = Conversions.jvqInitializer(0.0);
             motion_status_msg_.measured_joint_torque = Conversions.jvqInitializer(0.0);
-            motion_status_msg_.estimated_external_torque = Conversions.jvqInitializer(0.0);            
+            motion_status_msg_.estimated_external_torque = Conversions.jvqInitializer(0.0);
             motion_status_msg_.measured_cartesian_pose_abc = Conversions.cvqInitializer(0.0);
             motion_status_msg_.commanded_cartesian_pose_abc = Conversions.cvqInitializer(0.0);
             motion_status_msg_.measured_cartesian_pose = Conversions.identityPose();
