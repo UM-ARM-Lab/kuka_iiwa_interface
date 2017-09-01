@@ -205,12 +205,12 @@ namespace victor_hardware_interface
     {
         MotionStatus ros_status;
         ros_status.commanded_cartesian_pose = poseLcmToRos(lcm_status.commanded_cartesian_pose);
-        ros_status.commanded_cartesian_pose_raw = cvqLcmToRos(lcm_status.commanded_cartesian_pose_raw);
+        ros_status.commanded_cartesian_pose_abc = cvqLcmToRos(lcm_status.commanded_cartesian_pose_abc);
         ros_status.commanded_joint_position = jvqLcmToRos(lcm_status.commanded_joint_position);
         ros_status.estimated_external_torque = jvqLcmToRos(lcm_status.estimated_external_torque);
         ros_status.estimated_external_wrench = cvqLcmToRos(lcm_status.estimated_external_wrench);
         ros_status.measured_cartesian_pose = poseLcmToRos(lcm_status.measured_cartesian_pose);
-        ros_status.measured_cartesian_pose_raw = cvqLcmToRos(lcm_status.measured_cartesian_pose_raw);
+        ros_status.measured_cartesian_pose_abc = cvqLcmToRos(lcm_status.measured_cartesian_pose_abc);
         ros_status.measured_joint_position = jvqLcmToRos(lcm_status.measured_joint_position);
         ros_status.measured_joint_torque = jvqLcmToRos(lcm_status.measured_joint_torque);
         ros_status.measured_joint_velocity = jvqLcmToRos(lcm_status.measured_joint_velocity);
