@@ -1,0 +1,8 @@
+<launch>
+    <arg name="use_sim_time" default="false"/>
+
+    <!-- Note that when specifying orientation with 3 numbers, it's yaw pitch roll -->
+    <node pkg="tf" type="static_transform_publisher" name="victor_torso_tf_broadcaster" required="true" args="0 0 -0.863 0 0 0 /mocap_VictorTorso_VictorTorso /victor_root 100">
+        <param name="use_sim_time" value="$(arg use_sim_time)"/>
+    </node>
+</launch>

@@ -12,7 +12,7 @@
     <node pkg="victor_hardware_interface" type="arm_command_gui.py" name="arm_command_gui" if="$(arg arm_command_gui)"/>
     
 
-    <include file="$(find victor_hardware_interface)/launch/mocap_world_to_victor_and_kinect_static_transforms.launch">
+    <include file="$(find victor_hardware_interface)/launch/mocap_to_victor_static_transforms.launch">
         <arg name="use_sim_time" value="false"/>
     </include>
 
