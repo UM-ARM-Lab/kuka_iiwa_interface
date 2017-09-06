@@ -17,8 +17,8 @@ import rospy
 from victor_hardware_interface.msg import MotionStatus
 from geometry_msgs.msg import WrenchStamped, Wrench, Vector3
 
-hand_to_frame = {'left':  '/victor_left_gripper_palm_surface',
-                 'right': '/victor_right_gripper_palm_surface'}
+hand_to_frame = {'left':  'victor_left_gripper_palm_surface',
+                 'right': 'victor_right_gripper_palm_surface'}
 
 hand_wrench_pub = {'left':  rospy.Publisher('left_hand_wrench', WrenchStamped, queue_size=1),
                    'right': rospy.Publisher('right_hand_wrench', WrenchStamped, queue_size=1)}
