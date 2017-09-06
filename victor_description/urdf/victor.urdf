@@ -371,21 +371,21 @@
       <material name="Grey"/>
     </collision>
   </link>
-  <joint name="victor_left_arm_joint_ee" type="fixed">
+  <joint name="victor_left_arm_joint_flange" type="fixed">
     <parent link="victor_left_arm_link_7"/>
-    <child link="victor_left_arm_link_ee"/>
+    <child link="victor_left_arm_flange"/>
     <origin rpy="0 0 0" xyz="0 0 0.045"/>
   </joint>
-  <link name="victor_left_arm_link_ee">
+  <link name="victor_left_arm_flange">
         </link>
-  <!--<joint name="${robot_name}_joint_ee_kuka" type="fixed">-->
-  <!--<parent link="${robot_name}_link_7"/>-->
-  <!--<child link="${robot_name}_link_ee_kuka"/>-->
-  <!--<origin xyz="0 0 0.045" rpy="${PI} ${PI} ${PI}"/>-->
-  <!--<axis xyz="0 0 1"/>-->
-  <!--</joint>-->
-  <!--<link name="${robot_name}_link_ee_kuka">-->
-  <!--</link>-->
+  <!-- Our usage above has been tweaked to match Kuka's internal usage, so identity transform -->
+  <joint name="victor_left_arm_flange_kuka_joint" type="fixed">
+    <parent link="victor_left_arm_flange"/>
+    <child link="victor_left_arm_flange_kuka"/>
+    <origin rpy="0 0 0" xyz="0 0 0"/>
+  </joint>
+  <link name="victor_left_arm_flange_kuka">
+        </link>
   <!-- Load Gazebo lib and set the robot namespace -->
   <gazebo>
     <plugin filename="libgazebo_ros_control.so" name="gazebo_ros_control">
@@ -517,6 +517,13 @@
       <mechanicalReduction>1</mechanicalReduction>
     </actuator>
   </transmission>
+  <joint name="victor_joint_left_arm_world_frame_kuka" type="fixed">
+    <parent link="victor_left_arm_mount"/>
+    <child link="victor_left_arm_world_frame_kuka"/>
+    <origin rpy="1.57079632679 0 0" xyz="0 0 0"/>
+  </joint>
+  <link name="victor_left_arm_world_frame_kuka">
+    </link>
   <!--joint between {parent} and link_0-->
   <joint name="victor_right_arm_mount_victor_right_arm_joint" type="fixed">
     <origin rpy="0 0 0" xyz="0 0 0"/>
@@ -761,21 +768,21 @@
       <material name="Grey"/>
     </collision>
   </link>
-  <joint name="victor_right_arm_joint_ee" type="fixed">
+  <joint name="victor_right_arm_joint_flange" type="fixed">
     <parent link="victor_right_arm_link_7"/>
-    <child link="victor_right_arm_link_ee"/>
+    <child link="victor_right_arm_flange"/>
     <origin rpy="0 0 0" xyz="0 0 0.045"/>
   </joint>
-  <link name="victor_right_arm_link_ee">
+  <link name="victor_right_arm_flange">
         </link>
-  <!--<joint name="${robot_name}_joint_ee_kuka" type="fixed">-->
-  <!--<parent link="${robot_name}_link_7"/>-->
-  <!--<child link="${robot_name}_link_ee_kuka"/>-->
-  <!--<origin xyz="0 0 0.045" rpy="${PI} ${PI} ${PI}"/>-->
-  <!--<axis xyz="0 0 1"/>-->
-  <!--</joint>-->
-  <!--<link name="${robot_name}_link_ee_kuka">-->
-  <!--</link>-->
+  <!-- Our usage above has been tweaked to match Kuka's internal usage, so identity transform -->
+  <joint name="victor_right_arm_flange_kuka_joint" type="fixed">
+    <parent link="victor_right_arm_flange"/>
+    <child link="victor_right_arm_flange_kuka"/>
+    <origin rpy="0 0 0" xyz="0 0 0"/>
+  </joint>
+  <link name="victor_right_arm_flange_kuka">
+        </link>
   <!-- Load Gazebo lib and set the robot namespace -->
   <gazebo>
     <plugin filename="libgazebo_ros_control.so" name="gazebo_ros_control">
@@ -907,10 +914,17 @@
       <mechanicalReduction>1</mechanicalReduction>
     </actuator>
   </transmission>
+  <joint name="victor_joint_right_arm_world_frame_kuka" type="fixed">
+    <parent link="victor_right_arm_mount"/>
+    <child link="victor_right_arm_world_frame_kuka"/>
+    <origin rpy="-1.57079632679 0 0" xyz="0 0 0"/>
+  </joint>
+  <link name="victor_right_arm_world_frame_kuka">
+    </link>
   <!--joint between {parent} and link_0-->
-  <joint name="victor_left_arm_link_ee_victor_left_joint" type="fixed">
+  <joint name="victor_left_arm_flange_victor_left_joint" type="fixed">
     <origin rpy="0 0 0" xyz="0 0 0"/>
-    <parent link="victor_left_arm_link_ee"/>
+    <parent link="victor_left_arm_flange"/>
     <child link="victor_left_gripper_mounting_bracket"/>
   </joint>
   <link name="victor_left_gripper_mounting_bracket">
@@ -930,9 +944,9 @@
     </collision>
   </link>
   <!--joint between {parent} and link_0-->
-  <joint name="victor_right_arm_link_ee_victor_right_joint" type="fixed">
+  <joint name="victor_right_arm_flange_victor_right_joint" type="fixed">
     <origin rpy="0 0 0" xyz="0 0 0"/>
-    <parent link="victor_right_arm_link_ee"/>
+    <parent link="victor_right_arm_flange"/>
     <child link="victor_right_gripper_mounting_bracket"/>
   </joint>
   <link name="victor_right_gripper_mounting_bracket">
@@ -985,11 +999,11 @@
   </joint>
   <link name="victor_left_gripper_palm_surface">
         </link>
-  <!-- Palm surface aligned with the gripper axis -->
+  <!-- Kuka internal frame has been changed to match our external usage, so identity transform -->
   <joint name="victor_left_gripper_palm_surface_kuka_joint" type="fixed">
-    <parent link="victor_left_gripper_palm"/>
+    <parent link="victor_left_gripper_palm_surface"/>
     <child link="victor_left_gripper_palm_surface_kuka"/>
-    <origin rpy="0 0 -0.78539816339" xyz="0 0 0.092075"/>
+    <origin rpy="0 0 0" xyz="0 0 0"/>
   </joint>
   <link name="victor_left_gripper_palm_surface_kuka">
         </link>
@@ -1395,11 +1409,11 @@
   </joint>
   <link name="victor_right_gripper_palm_surface">
         </link>
-  <!-- Palm surface aligned with the gripper axis -->
+  <!-- Kuka internal frame has been changed to match our external usage, so identity transform -->
   <joint name="victor_right_gripper_palm_surface_kuka_joint" type="fixed">
-    <parent link="victor_right_gripper_palm"/>
+    <parent link="victor_right_gripper_palm_surface"/>
     <child link="victor_right_gripper_palm_surface_kuka"/>
-    <origin rpy="0 0 -0.78539816339" xyz="0 0 0.092075"/>
+    <origin rpy="0 0 0" xyz="0 0 0"/>
   </joint>
   <link name="victor_right_gripper_palm_surface_kuka">
         </link>
@@ -1772,3 +1786,4 @@
     </collision>
   </link>
 </robot>
+

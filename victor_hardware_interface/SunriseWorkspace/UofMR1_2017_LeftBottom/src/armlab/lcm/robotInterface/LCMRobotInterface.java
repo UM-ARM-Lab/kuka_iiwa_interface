@@ -6,13 +6,15 @@ import java.util.TimerTask;
 import java.util.concurrent.TimeUnit;
 
 import javax.inject.Inject;
-//import javax.inject.Named;
 
+import lcm.lcm.LCM;
+import lcm.lcm.LCMDataInputStream;
+import lcm.lcm.LCMSubscriber;
 import armlab.lcm.msgs.cartesian_control_mode_limits;
 import armlab.lcm.msgs.cartesian_impedance_parameters;
 import armlab.lcm.msgs.cartesian_path_execution_parameters;
-import armlab.lcm.msgs.control_mode_parameters;
 import armlab.lcm.msgs.control_mode;
+import armlab.lcm.msgs.control_mode_parameters;
 import armlab.lcm.msgs.joint_impedance_parameters;
 import armlab.lcm.msgs.joint_path_execution_parameters;
 import armlab.lcm.msgs.motion_command;
@@ -21,7 +23,6 @@ import armlab.lcm.msgs.robotiq_3finger_actuator_status;
 import armlab.lcm.msgs.robotiq_3finger_command;
 import armlab.lcm.msgs.robotiq_3finger_object_status;
 import armlab.lcm.msgs.robotiq_3finger_status;
-
 import armlab.robotiq.gripper.Robotiq3FingerGripper;
 import armlab.robotiq.gripper.Robotiq3FingerGripperCommand;
 import armlab.robotiq.gripper.Robotiq3FingerGripperStatus;
@@ -43,9 +44,6 @@ import com.kuka.roboticsAPI.motionModel.controlModeModel.IMotionControlMode;
 import com.kuka.roboticsAPI.motionModel.controlModeModel.JointImpedanceControlMode;
 import com.kuka.roboticsAPI.motionModel.controlModeModel.PositionControlMode;
 import com.kuka.roboticsAPI.persistenceModel.PersistenceException;
-
-
-import lcm.lcm.*;
 
 public class LCMRobotInterface extends RoboticsAPIApplication implements LCMSubscriber
 {
@@ -109,7 +107,7 @@ public class LCMRobotInterface extends RoboticsAPIApplication implements LCMSubs
         {
             tool_ = (Tool)getApplicationData().createFromTemplate("Robotiq3FingerGripper");
             tool_.attachTo(iiwa7_arm_.getFlange());
-            end_effector_frame_ = tool_.getFrame("Palm"); 
+            end_effector_frame_ = tool_.getFrame("PalmSurface");
         }
         catch (PersistenceException ex)
         {
@@ -359,7 +357,8 @@ public class LCMRobotInterface extends RoboticsAPIApplication implements LCMSubs
         return motion;
     }
     
-    public void messageReceived(LCM lcm, String channel, LCMDataInputStream ins)
+    @Override
+	public void messageReceived(LCM lcm, String channel, LCMDataInputStream ins)
     {
         try 
         {
@@ -447,12 +446,12 @@ public class LCMRobotInterface extends RoboticsAPIApplication implements LCMSubs
                                             cmd.cartesian_control_mode_limits.max_cartesian_velocity.b,
                                             cmd.cartesian_control_mode_limits.max_cartesian_velocity.c);
                 ccm.setMaxControlForce(cmd.cartesian_control_mode_limits.max_control_force.x,
-                                        cmd.cartesian_control_mode_limits.max_control_force.y,
-                                        cmd.cartesian_control_mode_limits.max_control_force.z,
-                                        cmd.cartesian_control_mode_limits.max_control_force.a,
-                                        cmd.cartesian_control_mode_limits.max_control_force.b,
-                                        cmd.cartesian_control_mode_limits.max_control_force.c,
-                                        cmd.cartesian_control_mode_limits.stop_on_max_control_force);
+                                       cmd.cartesian_control_mode_limits.max_control_force.y,
+                                       cmd.cartesian_control_mode_limits.max_control_force.z,
+                                       cmd.cartesian_control_mode_limits.max_control_force.a,
+                                       cmd.cartesian_control_mode_limits.max_control_force.b,
+                                       cmd.cartesian_control_mode_limits.max_control_force.c,
+                                       cmd.cartesian_control_mode_limits.stop_on_max_control_force);
                 cm = ccm;
                 break;
             }
@@ -608,10 +607,10 @@ public class LCMRobotInterface extends RoboticsAPIApplication implements LCMSubs
     
     private class ControlModePublisher
     {
-        private control_mode_parameters control_mode_status_msg_;
+        private final control_mode_parameters control_mode_status_msg_;
         
-        private Timer timer_;
-        private TimerTask feedback_loop_task_;
+        private final Timer timer_;
+        private final TimerTask feedback_loop_task_;
         
         public ControlModePublisher()
         {
@@ -709,10 +708,10 @@ public class LCMRobotInterface extends RoboticsAPIApplication implements LCMSubs
         
     private class MotionStatusPublisher
     {
-        private motion_status motion_status_msg_;
+        private final motion_status motion_status_msg_;
         
-        private Timer timer_;
-        private TimerTask feedback_loop_task_;
+        private final Timer timer_;
+        private final TimerTask feedback_loop_task_;
         
         public MotionStatusPublisher()
         {
@@ -772,10 +771,10 @@ public class LCMRobotInterface extends RoboticsAPIApplication implements LCMSubs
         
     private class Robotiq3FingerGripperPublisher
     {
-        private robotiq_3finger_status gripper_status_msg_;
+        private final robotiq_3finger_status gripper_status_msg_;
         
-        private Timer timer_;
-        private TimerTask feedback_loop_task_;
+        private final Timer timer_;
+        private final TimerTask feedback_loop_task_;
         
         public Robotiq3FingerGripperPublisher()
         {
@@ -848,6 +847,7 @@ public class LCMRobotInterface extends RoboticsAPIApplication implements LCMSubs
             timer_.cancel();
         }
     }
+
     /**
      * This class acts as a buffer to store control mode command message    
      * @author armlab
@@ -892,7 +892,7 @@ public class LCMRobotInterface extends RoboticsAPIApplication implements LCMSubs
     private class MotionCommandHandler
     {
         private ControlMode control_mode_ = null;
-        private JointPosition joint_position_target_ = new JointPosition(iiwa7_arm_.getJointCount());
+        private final JointPosition joint_position_target_ = new JointPosition(iiwa7_arm_.getJointCount());
         private Frame cartesian_pose_target_ = new Frame();
         private Boolean new_motion_command_ready_ = new Boolean(false);
         
