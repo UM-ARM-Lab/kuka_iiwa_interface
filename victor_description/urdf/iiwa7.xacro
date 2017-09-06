@@ -321,24 +321,22 @@
             </collision>
         </link>
 
-        <joint name="${robot_name}_joint_ee" type="fixed">
+        <joint name="${robot_name}_joint_flange" type="fixed">
             <parent link="${robot_name}_link_7"/>
-            <child link="${robot_name}_link_ee"/>
+            <child link="${robot_name}_flange"/>
             <origin xyz="0 0 0.045" rpy="0 0 0"/>
         </joint>
-
-        <link name="${robot_name}_link_ee">
+        <link name="${robot_name}_flange">
         </link>
 
-        <!--<joint name="${robot_name}_joint_ee_kuka" type="fixed">-->
-            <!--<parent link="${robot_name}_link_7"/>-->
-            <!--<child link="${robot_name}_link_ee_kuka"/>-->
-            <!--<origin xyz="0 0 0.045" rpy="${PI} ${PI} ${PI}"/>-->
-            <!--<axis xyz="0 0 1"/>-->
-        <!--</joint>-->
-
-        <!--<link name="${robot_name}_link_ee_kuka">-->
-        <!--</link>-->
+        <!-- Our usage above has been tweaked to match Kuka's internal usage, so identity transform -->
+        <joint name="${robot_name}_flange_kuka_joint" type="fixed">
+            <parent link="${robot_name}_flange"/>
+            <child link="${robot_name}_flange_kuka"/>
+            <origin xyz="0 0 0" rpy="0 0 0"/>
+        </joint>
+        <link name="${robot_name}_flange_kuka">
+        </link>
 
         <!--Extensions -->
         <xacro:iiwa_gazebo robot_name="${robot_name}"/>

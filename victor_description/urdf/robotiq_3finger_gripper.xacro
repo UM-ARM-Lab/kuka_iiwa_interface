@@ -43,11 +43,11 @@
         <link name="${prefix}_palm_surface">
         </link>
 
-        <!-- Palm surface aligned with the gripper axis -->
+        <!-- Kuka internal frame has been changed to match our external usage, so identity transform -->
         <joint name="${prefix}_palm_surface_kuka_joint" type="fixed">
-            <parent link="${prefix}_palm"/>
+            <parent link="${prefix}_palm_surface"/>
             <child link="${prefix}_palm_surface_kuka"/>
-            <origin xyz="0 0 0.092075" rpy="0 0 -0.78539816339"/>
+            <origin xyz="0 0 0" rpy="0 0 0"/>
         </joint>
         <link name="${prefix}_palm_surface_kuka">
         </link>
