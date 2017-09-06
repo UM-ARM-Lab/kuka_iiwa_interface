@@ -7,8 +7,8 @@ import armlab.lcm.msgs.joint_value_quantity;
 import com.kuka.roboticsAPI.deviceModel.JointPosition;
 import com.kuka.roboticsAPI.geometricModel.Frame;
 import com.kuka.roboticsAPI.geometricModel.math.Matrix;
-import com.kuka.roboticsAPI.geometricModel.math.MatrixRotation;
 import com.kuka.roboticsAPI.geometricModel.math.MatrixBuilder;
+import com.kuka.roboticsAPI.geometricModel.math.MatrixRotation;
 import com.kuka.roboticsAPI.geometricModel.math.Transformation;
 import com.kuka.roboticsAPI.geometricModel.math.Vector;
 import com.kuka.roboticsAPI.sensorModel.ForceSensorData;
@@ -161,7 +161,7 @@ public class Conversions
     
     public static Transformation cvqToTransformation(final cartesian_value_quantity cvq)
     {
-        return Transformation.ofRad(cvq.x*1000,cvq.y*1000,cvq.z*1000,cvq.a,cvq.b,cvq.c);
+        return Transformation.ofRad(cvq.x*1000, cvq.y*1000, cvq.z*1000, cvq.a, cvq.b, cvq.c);
     }
 
     public static Frame cvqToFrame(final cartesian_value_quantity cvq)
@@ -268,6 +268,7 @@ public class Conversions
     
     public static Frame poseToFrame(final cartesian_pose pose)
     {
+    	// The Kuka framework wants translations in mm, so we do the conversion here
         Vector translation = Vector.of(pose.xt * 1000.0, pose.yt * 1000.0, pose.zt * 1000.0);
         MatrixRotation rotMatrix = quatToMatrix(pose.wr, pose.xr, pose.yr, pose.zr);
         return new Frame(Transformation.of(translation, rotMatrix));    
