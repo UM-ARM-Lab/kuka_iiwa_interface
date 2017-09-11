@@ -1,8 +1,8 @@
 <launch>
     <arg name="use_sim_time" default="false"/>
 
-    <!-- Note that when specifying orientation with 3 numbers, it's yaw pitch roll -->
-    <node pkg="tf" type="static_transform_publisher" name="victor_torso_tf_broadcaster" required="true" args="0 0 -0.863 0 0 0 /mocap_VictorTorso_VictorTorso /victor_root 10">
+    <!--These numbers were calculated using the Matlab script in the scripts folder of this package -->
+    <node pkg="tf" type="static_transform_publisher" name="victor_torso_tf_broadcaster" required="true" args="0.019054157686541   0.003714452485092  -0.893404416219662       0.001354134240471  -0.012365797547978   0.015592627363226   0.999801041879520     /mocap_VictorTorso_VictorTorso /victor_root 10">
         <param name="use_sim_time" value="$(arg use_sim_time)"/>
     </node>
 </launch>
