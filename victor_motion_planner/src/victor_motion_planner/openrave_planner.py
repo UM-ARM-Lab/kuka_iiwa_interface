@@ -302,19 +302,18 @@ class Planner:
 
         return arm_traj
 
-    def plan_to_pose(self, target_pose, execute=False, use_fake_obstacle=False):
-        if use_fake_obstacle:
-            self.move_fake_obstacle_above_table()
+    def plan_to_relative_pose(self, relative_pose, execute=False):
+        current_pose = self.manip.GetEndEffectorTransform()
+        return(self.plan_to_pose(current_pose.dot(relative_pose), execute))
+
+    def plan_to_pose(self, target_pose, execute=False):
 
         target_config = self.manip.FindIKSolution(target_pose, rave.IkFilterOptions.CheckEnvCollisions)
-
-        if use_fake_obstacle:
-            self.move_fake_obstacle_away()
 
         if target_config is None:
             print "   --------   Plan to pose: unable to get IK solution"
             return None
-        return self.plan_to_configuration(target_config, execute = execute, use_fake_obstacle = use_fake_obstacle)
+        return self.plan_to_configuration(target_config, execute = execute)
 
     def get_close_ik(self, target_pose, allow_rotation_change=False, min_z_val=None):
         with self.env:
