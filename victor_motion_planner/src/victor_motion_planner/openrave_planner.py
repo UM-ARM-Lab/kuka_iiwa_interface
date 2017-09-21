@@ -32,6 +32,8 @@ from arc_utilities import numpy_conversions
 from or_ros_plugin_initializer import ros_argv_conversion
 
 
+ARM_NAMES = ["right_arm", "left_arm"]
+
 class Planner:
     def __init__(self):
         print "Initializing Planner"
@@ -117,6 +119,7 @@ class Planner:
             
         self.manip = self.robot.GetActiveManipulator()
         self.robot.SetActiveDOFs(self.manip.GetArmIndices())
+        self.manipulator_name = manipulator_name
 
 
     def load_robot(self):
@@ -141,7 +144,7 @@ class Planner:
         # Define which manipulator we are using
         # self.robot.SetActiveManipulator("right_arm")
 
-        for manipulator_name in ["right_arm", "left_arm"]:
+        for manipulator_name in ARM_NAMES:
             self.set_manipulator(manipulator_name)
 
             # Create an ik model to be used by move_object_callback
@@ -162,20 +165,26 @@ class Planner:
     # def initialize_control_mode_service_client(self):
     #     self.set_control_mode_client = rospy.ServiceProxy("/right_arm/set_control_mode_service", SetControlMode)
 
+    def default_gripper_command(self):
+        cmd = Robotiq3FingerCommand()
+        cmd.finger_a_command.speed = 0.5
+        cmd.finger_b_command.speed = 0.5
+        cmd.finger_c_command.speed = 0.5
+        cmd.scissor_command.speed = 1.0
+
+        cmd.finger_a_command.force = 1.0
+        cmd.finger_b_command.force = 1.0
+        cmd.finger_c_command.force = 1.0
+        cmd.scissor_command.force = 1.0
+
+        cmd.scissor_command.position = 1.0
+        return cmd
+
+
     def initialize_gripper_messages(self):
-        self.right_gripper_command = Robotiq3FingerCommand()
-
-        self.right_gripper_command.finger_a_command.speed = 0.5
-        self.right_gripper_command.finger_b_command.speed = 0.5
-        self.right_gripper_command.finger_c_command.speed = 0.5
-        self.right_gripper_command.scissor_command.speed = 1.0
-
-        self.right_gripper_command.finger_a_command.force = 1.0
-        self.right_gripper_command.finger_b_command.force = 1.0
-        self.right_gripper_command.finger_c_command.force = 1.0
-        self.right_gripper_command.scissor_command.force = 1.0
-
-        self.right_gripper_command.scissor_command.position = 1.0
+        self.right_gripper_command = self.default_gripper_command()
+        self.left_gripper_command = self.default_gripper_command()
+        
 
         self.gripper_input_lock = Lock()
         self.right_gripper_status = Robotiq3FingerStatus()
@@ -186,6 +195,12 @@ class Planner:
 
         self.left_gripper_status_subscriber = rospy.Subscriber("left_arm/gripper_status", Robotiq3FingerStatus, self.left_gripper_status_callback)
         self.left_gripper_command_publisher = rospy.Publisher("left_arm/gripper_command", Robotiq3FingerCommand, queue_size = 1)
+
+        while(self.right_gripper_command_publisher.get_num_connections() == 0 or
+              self.right_gripper_command_publisher.get_num_connections() == 0):
+            rospy.timer.Rate(100).sleep()
+            print "waiting for connection"
+
 
     def initialize_arm_motion_pubsub(self):
         self.motion_status_input_lock = Lock()
@@ -293,10 +308,13 @@ class Planner:
 
             data = []
             print "Moving to target"
+
             with self.env:
                 # print arm_traj
+
                 # for i in range(arm_traj.GetNumWaypoints()):
                 #     print np.array(arm_traj.GetWaypoint(i))*180/np.pi
+
                 self.robot.GetController().SetPath(arm_traj)
             self.wait_robot()
 
@@ -356,9 +374,11 @@ class Planner:
             self.left_gripper_status = status
 
     def wait_gripper(self):
+        """Waits for the gripper to close
+        TODO - actually use gripper feedback, dont hard code a time"""
         time.sleep(3)
 
-    def close_gripper(self, blocking=True):
+    def close_right_gripper(self, blocking=True):
         self.right_gripper_command.finger_a_command.position = 1
         self.right_gripper_command.finger_b_command.position = 1
         self.right_gripper_command.finger_c_command.position = 1
@@ -367,11 +387,29 @@ class Planner:
         if blocking:
             self.wait_gripper()
 
-    def open_gripper(self, blocking=True):
+    def open_right_gripper(self, blocking=True):
         self.right_gripper_command.finger_a_command.position = 0
         self.right_gripper_command.finger_b_command.position = 0
         self.right_gripper_command.finger_c_command.position = 0
         self.right_gripper_command_publisher.publish(self.right_gripper_command)
+
+        if blocking:
+            self.wait_gripper()
+
+    def close_left_gripper(self, blocking=True):
+        self.left_gripper_command.finger_a_command.position = 1
+        self.left_gripper_command.finger_b_command.position = 1
+        self.left_gripper_command.finger_c_command.position = 1
+        self.left_gripper_command_publisher.publish(self.left_gripper_command)
+
+        if blocking:
+            self.wait_gripper()
+
+    def open_left_gripper(self, blocking=True):
+        self.left_gripper_command.finger_a_command.position = 0
+        self.left_gripper_command.finger_b_command.position = 0
+        self.left_gripper_command.finger_c_command.position = 0
+        self.left_gripper_command_publisher.publish(self.left_gripper_command)
 
         if blocking:
             self.wait_gripper()
