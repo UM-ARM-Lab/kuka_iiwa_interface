@@ -140,12 +140,14 @@ class Planner:
 
         # Define which manipulator we are using
         # self.robot.SetActiveManipulator("right_arm")
-        self.set_manipulator("left_arm")
 
-        # Create an ik model to be used by move_object_callback
-        self.ikmodel = rave.databases.inversekinematics.InverseKinematicsModel(self.robot, iktype = rave.IkParameterizationType.Transform6D)
-        if not self.ikmodel.load():
-            self.ikmodel.autogenerate()
+        for manipulator_name in ["right_arm", "left_arm"]:
+            self.set_manipulator(manipulator_name)
+
+            # Create an ik model to be used by move_object_callback
+            ikmodel = rave.databases.inversekinematics.InverseKinematicsModel(self.robot, iktype = rave.IkParameterizationType.Transform6D)
+            if not ikmodel.load():
+                ikmodel.autogenerate()
 
         self.victor_right_arm_joint_names = ["victor_right_arm_joint_" + str(i) for i in range(1,7)]
         self.victor_left_arm_joint_names = ["victor_left_arm_joint_" + str(i) for i in range(1,7)]
@@ -250,14 +252,8 @@ class Planner:
     # moving_distance: moving distance in meters
     # step size: IK interpolation step size in meters
     def move_hand_straight(self, moving_direction, moving_distance, step_size=0.005, execute=False, waitrobot=False, disable_table_collision=True):
-        if disable_table_collision:
-            print "Disabling table collision"
-            with self.env:
-                table = self.env.GetKinBody("Table")
-                table.Enable(False)
-                table.SetVisible(False)
-
         print "Planning to target"
+        
         manip_problem = rave.interfaces.BaseManipulation(self.robot)
         try:
             traj = manip_problem.MoveHandStraight(direction=moving_direction,
@@ -275,13 +271,6 @@ class Planner:
 
         if execute and waitrobot:
             self.wait_robot()
-
-        if disable_table_collision:
-            print "Enabling table collision"
-            with self.env:
-                table = self.env.GetKinBody("Table")
-                table.Enable(True)
-                table.SetVisible(True)
 
         return traj
 
