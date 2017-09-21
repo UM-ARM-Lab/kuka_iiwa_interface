@@ -41,22 +41,8 @@ class Planner:
         # self.initialize_control_mode_service_client()
         self.initialize_arm_motion_pubsub()
         self.initialize_gripper_messages()
-        self.target_hover_dist = 0.15
-        self.max_beanbag_height = 0.04
+        
 
-        self.home_configuration = \
-            [1.3565332459566835, -0.1543670633363234, 2.071383692805881, 0.6187004711779157,
-             -2.8008742367028634, 0.2583977454503356, 0.0]
-            # [1.3565332459566835, -0.1543670633363234, 2.071383692805881, 0.6187004711779157,
-            #  -2.8008742367028634, 0.2583977454503356, 0.8361484796678826]
-        self.discard_configuration = \
-            [1.3565332459566835, -0.1543670633363234, 2.071383692805881, 0.6187004711779157,
-             -2.8008742367028634, 0.2583977454503356, 0.0]
-            # [0.3750264845221939, 1.8822339746966181, 1.3271608094866334, 0.8436332872949799,
-            #  -2.8008070291348237, 0.25860303522211214, 0.8362235607870603]
-        self.retrieve_configuration = \
-            [0.2713634783771453, 1.4629233822905152, 1.4476715985653201, 0.40624113597992717,
-             0.11436919727226655, -1.3930706908660768, -2.0555960944184037]
 
         self.marker_pub = rospy.Publisher("visualization_marker", Marker, queue_size = 10)
         # self.perception_srv_client = rospy.ServiceProxy("beanBagLocateService", GetPerception)
@@ -97,7 +83,6 @@ class Planner:
         # http://wiki.ros.org/Packages#Python
         rospack = rospkg.RosPack()
         path = rospack.get_path("victor_motion_planner")
-        print path
         self.env.Load(path + "/config/armlab_setup.env.xml")
         # Set the transform in OpenRAVE
 
@@ -119,6 +104,19 @@ class Planner:
             # basket.SetTransform(basket_transform)
 
             # self.move_fake_obstacle_away()
+
+    def set_manipulator(self, manipulator_name):
+        """Sets the active manipulator and updates the active DOFs
+        current, manipulator name is either left_arm or right_arm
+        """
+        try:
+            self.robot.SetActiveManipulator(manipulator_name)
+        except rave.openrave_exception as err:
+            print "\nINVALID MANIPULATOR NAME\n"
+            raise err
+            
+        self.manip = self.robot.GetActiveManipulator()
+        self.robot.SetActiveDOFs(self.manip.GetArmIndices())
 
 
     def load_robot(self):
@@ -142,9 +140,7 @@ class Planner:
 
         # Define which manipulator we are using
         # self.robot.SetActiveManipulator("right_arm")
-        self.robot.SetActiveManipulator("left_arm")
-        self.manip = self.robot.GetActiveManipulator()
-        self.robot.SetActiveDOFs(self.manip.GetArmIndices())
+        self.set_manipulator("left_arm")
 
         # Create an ik model to be used by move_object_callback
         self.ikmodel = rave.databases.inversekinematics.InverseKinematicsModel(self.robot, iktype = rave.IkParameterizationType.Transform6D)
@@ -156,8 +152,8 @@ class Planner:
         self.victor_right_arm_joint_indices = [self.robot.GetJoint(name).GetDOFIndex() for name in self.victor_right_arm_joint_names]
         self.victor_left_arm_joint_indices = [self.robot.GetJoint(name).GetDOFIndex() for name in self.victor_left_arm_joint_names]
 
-        print "left arm joint[0] index: " + str(self.victor_left_arm_joint_indices[0])
-        print "right arm joint[0] index: " + str(self.victor_right_arm_joint_indices[0])
+        # print "left arm joint[0] index: " + str(self.victor_left_arm_joint_indices[0])
+        # print "right arm joint[0] index: " + str(self.victor_right_arm_joint_indices[0])
 
         print "Robot loaded"
         
@@ -206,20 +202,21 @@ class Planner:
 
         # Start ROS action server
         self.move_object_as = actionlib.SimpleActionServer("move_object", MoveObjectAction, self.move_object_callback, auto_start = False)
+
         self.move_object_as.start()
         print "Ready for next target"
 
 
-    def plot_axes(self, trans, lengths=(0.25, 0.25, 0.25), thickness=0.005):
-        red = np.array([1, 0, 0, 1])
-        green = np.array([0, 1, 0, 1])
-        blue = np.array([0, 0, 1, 1])
-        plot_handles = [
-            self.env.drawarrow(trans[0:3, 3], trans[0:3, 3] + trans[0:3, 0] * lengths[0], thickness, red),
-            self.env.drawarrow(trans[0:3, 3], trans[0:3, 3] + trans[0:3, 1] * lengths[1], thickness, green),
-            self.env.drawarrow(trans[0:3, 3], trans[0:3, 3] + trans[0:3, 2] * lengths[2], thickness, blue)
-        ]
-        return plot_handles
+    # def plot_axes(self, trans, lengths=(0.25, 0.25, 0.25), thickness=0.005):
+    #     red = np.array([1, 0, 0, 1])
+    #     green = np.array([0, 1, 0, 1])
+    #     blue = np.array([0, 0, 1, 1])
+    #     plot_handles = [
+    #         self.env.drawarrow(trans[0:3, 3], trans[0:3, 3] + trans[0:3, 0] * lengths[0], thickness, red),
+    #         self.env.drawarrow(trans[0:3, 3], trans[0:3, 3] + trans[0:3, 1] * lengths[1], thickness, green),
+    #         self.env.drawarrow(trans[0:3, 3], trans[0:3, 3] + trans[0:3, 2] * lengths[2], thickness, blue)
+    #     ]
+    #     return plot_handles
 
     def get_tf_transform(self, parent, child, verbose=False):
         try:
@@ -252,14 +249,42 @@ class Planner:
     # moving_direction: 3D numpy array indicating the moving direction - specified in self.world_origin frame
     # moving_distance: moving distance in meters
     # step size: IK interpolation step size in meters
-    def move_hand_straight(self, moving_direction, moving_distance, step_size=0.005):
-        print 'Planning to target - move hand straight'
+    def move_hand_straight(self, moving_direction, moving_distance, step_size=0.005, execute=False, waitrobot=False, disable_table_collision=True):
+        if disable_table_collision:
+            print "Disabling table collision"
+            with self.env:
+                table = self.env.GetKinBody("Table")
+                table.Enable(False)
+                table.SetVisible(False)
+
+        print "Planning to target"
         manip_problem = rave.interfaces.BaseManipulation(self.robot)
-        manip_problem.MoveHandStraight(direction=moving_direction,
-                                       stepsize=step_size,
-                                       minsteps=1,
-                                       maxsteps=int(round(moving_distance / step_size)))
-        self.wait_robot()
+        try:
+            traj = manip_problem.MoveHandStraight(direction=moving_direction,
+                                                  stepsize=step_size,
+                                                  execute=execute,
+                                                  outputtraj=True,
+                                                  outputtrajobj=True,
+                                                  ignorefirstcollision=True,
+                                                  minsteps=1,
+                                                  maxsteps=int(round(moving_distance / step_size)))
+        except rave.PlanningError as ex:
+            print ex
+            IPython.embed()
+            traj = None
+
+        if execute and waitrobot:
+            self.wait_robot()
+
+        if disable_table_collision:
+            print "Enabling table collision"
+            with self.env:
+                table = self.env.GetKinBody("Table")
+                table.Enable(True)
+                table.SetVisible(True)
+
+        return traj
+
 
     def plan_to_configuration(self, target_config, execute=False, use_fake_obstacle=False):
         print "Planning to target configuration:"
@@ -280,9 +305,9 @@ class Planner:
             data = []
             print "Moving to target"
             with self.env:
-                print arm_traj
-                for i in range(arm_traj.GetNumWaypoints()):
-                    print np.array(arm_traj.GetWaypoint(i))*180/np.pi
+                # print arm_traj
+                # for i in range(arm_traj.GetNumWaypoints()):
+                #     print np.array(arm_traj.GetWaypoint(i))*180/np.pi
                 self.robot.GetController().SetPath(arm_traj)
             self.wait_robot()
 
