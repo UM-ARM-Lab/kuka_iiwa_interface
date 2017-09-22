@@ -59,7 +59,6 @@ class Planner:
         self.tf_listener = tf2_ros.TransformListener(self.tf_buffer)
         self.tf_broadcaster = tf2_ros.TransformBroadcaster()
         self.robot_base_transform = self.get_tf_transform(self.world_frame, "victor_root")
-        # self.manip_ee_to_palm_surface_transform = self.get_tf_transform("victor_right_arm_flange", "victor_right_gripper_palm_surface")
         self.palm_surface_to_fingertips_dist = 0.10667743
         # self.table_surface_transform = self.get_tf_transform(self.world_frame, "table_surface")
         # self.deposit_transform = self.get_tf_transform(self.world_frame, "deposit_location")
@@ -67,6 +66,7 @@ class Planner:
         # self.right_arm_kuka_world_frame = self.get_tf_transform(self.world_frame, "victor_right_arm_world_frame_kuka")
 
     def initialize_openrave(self):
+        """Creates the openrave environment"""
         # First create an environment so that we can load plugins
         rave.misc.InitOpenRAVELogging()
         self.env = rave.Environment()
@@ -88,28 +88,10 @@ class Planner:
         self.env.Load(path + "/config/armlab_setup.env.xml")
         # Set the transform in OpenRAVE
 
-
-        # with self.env:
-            # table = self.env.GetKinBody("Table")
-            # table.SetTransform(self.table_surface_transform)
-
-            # tray = self.env.GetKinBody("Tray")
-            # tray_transform = self.table_surface_transform
-            # tray_transform[1,3] += -0.3325
-            # tray_transform[2,3] += 0.017
-            # tray.SetTransform(tray_transform)
-            #
-            # basket = self.env.GetKinBody("Basket")
-            # basket_transform = basket.GetTransform()
-            # basket_transform[0:2, 3] = self.deposit_transform[0:2, 3]
-            # basket_transform[2, 3] = self.table_surface_transform[2, 3] + 0.03
-            # basket.SetTransform(basket_transform)
-
-            # self.move_fake_obstacle_away()
-
     def set_manipulator(self, manipulator_name):
         """Sets the active manipulator and updates the active DOFs
-        current, manipulator name is either left_arm or right_arm
+        current, 
+        manipulator_name: either "left_arm" or "right_arm"
         """
         try:
             self.robot.SetActiveManipulator(manipulator_name)
@@ -123,6 +105,10 @@ class Planner:
 
 
     def load_robot(self):
+        """
+        loads the openrave configuration files, builds the robot controller, and load (or generates) ik solutions for the manipulator
+        """
+        
         # Setup the C++ plugin ROS code
         plugin_argv = ros_argv_conversion.convert_argv_to_string(sys.argv, "_internal_plugin")
         ros_initializer = rave.RaveCreateModule(self.env, "orrosplugininitializer")
@@ -224,16 +210,6 @@ class Planner:
         print "Ready for next target"
 
 
-    # def plot_axes(self, trans, lengths=(0.25, 0.25, 0.25), thickness=0.005):
-    #     red = np.array([1, 0, 0, 1])
-    #     green = np.array([0, 1, 0, 1])
-    #     blue = np.array([0, 0, 1, 1])
-    #     plot_handles = [
-    #         self.env.drawarrow(trans[0:3, 3], trans[0:3, 3] + trans[0:3, 0] * lengths[0], thickness, red),
-    #         self.env.drawarrow(trans[0:3, 3], trans[0:3, 3] + trans[0:3, 1] * lengths[1], thickness, green),
-    #         self.env.drawarrow(trans[0:3, 3], trans[0:3, 3] + trans[0:3, 2] * lengths[2], thickness, blue)
-    #     ]
-    #     return plot_handles
 
     def get_tf_transform(self, parent, child, verbose=False):
         try:
@@ -262,11 +238,16 @@ class Planner:
         self.tf_broadcaster.sendTransform(t)
 
 
-    # example usage: self.plan_to_move_straight(np.array((0,0,-1)),0.1)
-    # moving_direction: 3D numpy array indicating the moving direction - specified in self.world_origin frame
-    # moving_distance: moving distance in meters
-    # step size: IK interpolation step size in meters
     def move_hand_straight(self, moving_direction, moving_distance, step_size=0.005, execute=False, waitrobot=False, disable_table_collision=True):
+        """
+        Wrapper around openrave's MoveHandStraight
+
+        moving_direction: [x,y,z] vector in world frame. 
+        moving_distance: moving distance in meters
+        step_size: IK interpolation step size in meters
+        execute: if True, will execute the path using the controller
+        wait_robot: if True will sleep until the robot controller to finish trajectory
+        """
         print "Planning to target"
         
         manip_problem = rave.interfaces.BaseManipulation(self.robot)
@@ -291,6 +272,14 @@ class Planner:
 
 
     def plan_to_configuration(self, target_config, execute=False, use_fake_obstacle=False):
+        """
+        Plans and optionally executes a path for the active manipulator to the specified target
+        
+        target_config: list of joint angles for the target_config
+        execute: if True, will execute the planned trajectory using the robot's controller
+        use_fake: depricated
+        """
+
         print "Planning to target configuration:"
         print np.array(target_config)*180/np.pi
         if use_fake_obstacle:
@@ -321,10 +310,22 @@ class Planner:
         return arm_traj
 
     def plan_to_relative_pose(self, relative_pose, execute=False):
+        """
+        plans and optionally executes the active manipulator to a pose relative to the current pose
+
+        relative_pose: The relative pose as a 4x4 matrix
+        execute: if True, will execute the planned trajectory using the robot's controller
+        """
         current_pose = self.manip.GetEndEffectorTransform()
         return(self.plan_to_pose(current_pose.dot(relative_pose), execute))
 
     def plan_to_pose(self, target_pose, execute=False):
+        """
+        Plans and optionally executes the active manipulator to the target_pose
+        
+        target_pose: The target pose for the planner as a 4x4 matrix
+        execute: if True, will execute the planned trajectory using the robot's controller
+        """
 
         target_config = self.manip.FindIKSolution(target_pose, rave.IkFilterOptions.CheckEnvCollisions)
 
@@ -332,6 +333,7 @@ class Planner:
             print "   --------   Plan to pose: unable to get IK solution"
             return None
         return self.plan_to_configuration(target_config, execute = execute)
+
 
     def get_close_ik(self, target_pose, allow_rotation_change=False, min_z_val=None):
         with self.env:
