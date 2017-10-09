@@ -183,7 +183,7 @@ class Planner:
         self.left_gripper_command_publisher = rospy.Publisher("left_arm/gripper_command", Robotiq3FingerCommand, queue_size = 1)
 
         while(self.right_gripper_command_publisher.get_num_connections() == 0 or
-              self.right_gripper_command_publisher.get_num_connections() == 0):
+              self.left_gripper_command_publisher.get_num_connections() == 0):
             rospy.timer.Rate(100).sleep()
             print "waiting for connection"
 
@@ -237,7 +237,7 @@ class Planner:
         execute: if True, will execute the path using the controller
         wait_robot: if True will sleep until the robot controller to finish trajectory
         """
-        print "Planning to target"
+        print "Planning " + self.manipulator_name + " to target"
         
         manip_problem = rave.interfaces.BaseManipulation(self.robot)
         try:
@@ -269,7 +269,7 @@ class Planner:
         use_fake: depricated
         """
 
-        print "Planning to target configuration:"
+        print "Planning " + self.manipulator_name + " to target configuration:"
         print np.array(target_config)*180/np.pi
         if use_fake_obstacle:
             self.move_fake_obstacle_above_table()
