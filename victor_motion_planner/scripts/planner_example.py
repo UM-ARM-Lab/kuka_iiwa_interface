@@ -1,49 +1,70 @@
 #! /usr/bin/env python
 
-import openrave_planner
+# import victor_motion_planner.openrave_planner as openrave_planner
+import victor_motion_planner.openrave_planner
 import rospy
 import numpy as np
 import time
-import tf.transformations 
+from tf.transformations import compose_matrix
+from math import pi
+import math
+from victor_hardware_interface.msg import *
 
-config1 = [1.3565332459566835, 0.2543670633363234, 2.071383692805881, 0.8187004711779157,
-             -2.0008742367028634, 0.9583977454503356, 0.0]
-config2 = [1.3565332459566835, 0.2543670633363234, 2.071383692805881, 0.8187004711779157,
-             -2.0008742367028634, 0.9583977454503356, .1]
+config1 = [1.60963234611, 0.533623140261, -0.742047506794, -1.16109858085, -0.323169964304, 1.09790965774, 0.219634110827]
 
-config3 = [1.3565332459566835, -0.2543670633363234, 2.071383692805881, 0.8187004711779157,
-             -2.0008742367028634, -0.8583977454503356, 1]
-config4 = [1.3565332459566835, -0.2543670633363234, 2.071383692805881, 0.8187004711779157,
-             -2.0008742367028634, -0.9583977454503356, 1]
+config3 = [1.3614709264, -1.17878472014, -1.00180420345, -1.20442928365, -0.917654439591, 1.39904650482, -1.04936635634]
+
+
+
+left_hand_start = compose_matrix(angles=[-pi/2, -pi/4, -pi],
+                                 translate=[.63, .33, .72]) 
+
+right_hand_start = compose_matrix(angles=[pi/2, pi/4, pi],
+                                  translate=[.63, -.33, .72])
+
+
+
 
 def run_planner():
-    global config1, config2
+    global config1, config2, log_one_data
     
     rospy.init_node("openrave_planner")
-    
-    planner = openrave_planner.Planner()
 
-    rospy.loginfo("moving left arm")
-    # planner.plan_to_configuration(config1, execute=True, use_fake_obstacle=False)
-    # time.sleep(1)
-    # planner.plan_to_configuration(config2, execute=True, use_fake_obstacle=False)
-    # time.sleep(1)
-
-    frame = planner.manip.GetEndEffectorTransform()
-    print frame
-    # planner.plan_to_pose(frame, execute = True)
-    # planner.move_hand_straight(np.array([0,0,-1]), .1, execute=True, waitrobot=True)
-    planner.plan_to_relative_pose(tf.transformations.translation_matrix([0,0,.1]), execute=True)
-    frame = planner.manip.GetEndEffectorTransform()
-    print frame
+    planner = victor_motion_planner.openrave_planner.Planner()
+    planner.open_left_gripper(blocking=False)
+    planner.open_right_gripper(blocking=False)
 
 
-    return
+    planner.set_manipulator("left_arm")
+    planner.plan_to_configuration(config1, execute=True)
+    planner.plan_to_pose(left_hand_start, execute=True)
+
     planner.set_manipulator("right_arm")
-    rospy.loginfo("moving right arm")
-    planner.plan_to_configuration(config3, execute=True, use_fake_obstacle=False)
-    planner.plan_to_configuration(config4, execute=True, use_fake_obstacle=False)
-    planner.move_hand_straight(np.array([0,0,-1]), .1, execute=True, waitrobot=True)
+    planner.plan_to_configuration(config3, execute=True)
+    planner.plan_to_pose(right_hand_start, execute=True)
+
+
+    raw_input()
+    print "You have 10 seconds"
+    time.sleep(10)
+    planner.close_left_gripper(blocking=False)
+    planner.close_right_gripper()
+
+
+    time.sleep(1)
+    log_one_data = True
+
+
+    for i in range(100):
+        planner.move_hand_straight([0, -1, 0], .001, step_size=0.001, execute=True, waitrobot=True)
+        time.sleep(1)
+        log_one_data = True
+        time.sleep(1)
+        print i
+
+    # planner.open_left_gripper(blocking=False)
+    # planner.open_right_gripper()
+    
 
 
 
