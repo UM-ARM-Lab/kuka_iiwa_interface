@@ -227,7 +227,7 @@ class Planner:
         self.tf_broadcaster.sendTransform(t)
 
 
-    def move_hand_straight(self, moving_direction, moving_distance, step_size=0.005, execute=False, waitrobot=False, disable_table_collision=True):
+    def move_hand_straight(self, moving_direction, moving_distance, step_size=0.005, execute=False, blocking=False, disable_table_collision=True):
         """
         Wrapper around openrave's MoveHandStraight
 
@@ -254,9 +254,38 @@ class Planner:
             IPython.embed()
             traj = None
 
-        if execute and waitrobot:
+        if execute and blocking:
             self.wait_robot()
 
+        return traj
+
+    def guarded_move_hand_straight(self, moving_direction, moving_distance, force_trigger=10, **kwargs):
+        self.change_control_mode(ControlMode.JOINT_IMPEDANCE)
+
+        with self.motion_status_input_lock:
+            ext_wrench = self.active_arm_motion_status().estimated_external_wrench
+            start_force = np.array([ext_wrench.x, ext_wrench.y, ext_wrench.z])
+        
+        traj = self.move_hand_straight(moving_direction, moving_distance,
+                                       execute=True, blocking=False, **kwargs)
+
+        while True:
+            with self.motion_status_input_lock:
+                active_motion_status = self.active_arm_motion_status()
+                ext_wrench = active_motion_status.estimated_external_wrench
+                cur_force = np.array([ext_wrench.x, ext_wrench.y, ext_wrench.z])
+                new_force = np.linalg.norm(start_force - cur_force)
+                print "new_force ", new_force
+                if self.robot.GetController().IsDone():
+                    break
+                if new_force > force_trigger:
+                    print "Stopping, collision detected"
+                    break
+        # self.robot.SetActiveDOFValues(current_measured_joints)
+        # time.sleep(0.3)
+        self.robot.GetController().Reset()
+        time.sleep(0.3)
+        self.change_control_mode(ControlMode.JOINT_POSITION)
         return traj
 
 
@@ -355,6 +384,13 @@ class Planner:
         with self.motion_status_input_lock:
             self.left_arm_motion_status = status
 
+    def active_arm_motion_status(self):
+        if self.manipulator_name == ARM_NAMES[0]:
+            return self.right_arm_motion_status
+        if self.manipulator_name == ARM_NAMES[1]:
+            return self.left_arm_motion_status
+        assert False, "Invalid manipulator name for motion status"
+
 
     def right_gripper_status_callback(self, status):
         with self.gripper_input_lock:
@@ -369,41 +405,37 @@ class Planner:
         TODO - actually use gripper feedback, dont hard code a time"""
         time.sleep(3)
 
-    def close_right_gripper(self, blocking=True):
-        self.right_gripper_command.finger_a_command.position = 1
-        self.right_gripper_command.finger_b_command.position = 1
-        self.right_gripper_command.finger_c_command.position = 1
+    def close_right_gripper(self, **kwargs):
+        self.set_right_gripper(1, 1, 1, **kwargs)
+
+    def open_right_gripper(self, **kwargs):
+        self.set_right_gripper(0, 0, 0, **kwargs)
+
+    def set_right_gripper(self, a, b, c, blocking=True):
+        self.right_gripper_command.finger_a_command.position = a
+        self.right_gripper_command.finger_b_command.position = b
+        self.right_gripper_command.finger_c_command.position = c
         self.right_gripper_command_publisher.publish(self.right_gripper_command)
 
         if blocking:
             self.wait_gripper()
 
-    def open_right_gripper(self, blocking=True):
-        self.right_gripper_command.finger_a_command.position = 0
-        self.right_gripper_command.finger_b_command.position = 0
-        self.right_gripper_command.finger_c_command.position = 0
-        self.right_gripper_command_publisher.publish(self.right_gripper_command)
-
-        if blocking:
-            self.wait_gripper()
-
-    def close_left_gripper(self, blocking=True):
-        self.left_gripper_command.finger_a_command.position = 1
-        self.left_gripper_command.finger_b_command.position = 1
-        self.left_gripper_command.finger_c_command.position = 1
+    def open_left_gripper(self, **kwargs):
+        self.set_left_gripper(0, 0, 0, **kwargs)
+        
+    def close_left_gripper(self, **kwargs):
+        self.set_left_gripper(1, 1, 1, **kwargs)
+        
+    def set_left_gripper(self, a, b, c, blocking=True):
+        self.left_gripper_command.finger_a_command.position = a
+        self.left_gripper_command.finger_b_command.position = b
+        self.left_gripper_command.finger_c_command.position = c
         self.left_gripper_command_publisher.publish(self.left_gripper_command)
 
         if blocking:
             self.wait_gripper()
 
-    def open_left_gripper(self, blocking=True):
-        self.left_gripper_command.finger_a_command.position = 0
-        self.left_gripper_command.finger_b_command.position = 0
-        self.left_gripper_command.finger_c_command.position = 0
-        self.left_gripper_command_publisher.publish(self.left_gripper_command)
 
-        if blocking:
-            self.wait_gripper()
 
 
     def move_object_callback(self, move_object_goal):
@@ -526,6 +558,52 @@ class Planner:
         self.marker_pub.publish(marker_fingers)
 
         # IPython.embed()
+
+    def change_control_mode(self, control_mode):
+
+        self.robot.GetController().Reset()
+        send_new_control_mode = rospy.ServiceProxy('/' + self.manipulator_name + '/set_control_mode_service', SetControlMode)
+        new_control_mode = ControlModeParameters()
+        new_control_mode.control_mode.mode = control_mode
+
+        if control_mode == ControlMode.JOINT_POSITION:
+            new_control_mode.joint_path_execution_params.joint_relative_velocity = 0.1
+            new_control_mode.joint_path_execution_params.joint_relative_acceleration = 0.1
+            print 'Switching to JOINT_POSITION mode.'
+        elif control_mode == ControlMode.CARTESIAN_POSE:
+            print 'CARTESIAN_POSE mode not supported'
+            return
+        elif control_mode == ControlMode.JOINT_IMPEDANCE:
+            new_control_mode.joint_path_execution_params.joint_relative_velocity = 0.5
+            new_control_mode.joint_path_execution_params.joint_relative_acceleration = 1.0
+
+            new_control_mode.joint_impedance_params.joint_damping.joint_1 = 0.7
+            new_control_mode.joint_impedance_params.joint_damping.joint_2 = 0.7
+            new_control_mode.joint_impedance_params.joint_damping.joint_3 = 0.7
+            new_control_mode.joint_impedance_params.joint_damping.joint_4 = 0.7
+            new_control_mode.joint_impedance_params.joint_damping.joint_5 = 0.7
+            new_control_mode.joint_impedance_params.joint_damping.joint_6 = 0.7
+            new_control_mode.joint_impedance_params.joint_damping.joint_7 = 0.7
+            new_control_mode.joint_impedance_params.joint_stiffness.joint_1 = 100.0
+            new_control_mode.joint_impedance_params.joint_stiffness.joint_2 = 100.0
+            new_control_mode.joint_impedance_params.joint_stiffness.joint_3 = 100.0
+            new_control_mode.joint_impedance_params.joint_stiffness.joint_4 = 100.0
+            new_control_mode.joint_impedance_params.joint_stiffness.joint_5 = 100.0
+            new_control_mode.joint_impedance_params.joint_stiffness.joint_6 = 100.0
+            new_control_mode.joint_impedance_params.joint_stiffness.joint_7 = 100.0
+            print 'Switching to JOINT_IMPEDANCE mode'
+
+        elif control_mode == ControlMode.CARTESIAN_IMPEDANCE:
+            print 'CARTESIAN_IMPEDANCE mode not supported'
+            return
+
+        result = send_new_control_mode(new_control_mode)
+        if result.success:
+            print 'Control mode switch success.'
+        else:
+            print 'Control mode switch failure.'
+            print result.message
+
 
 
 if __name__ == "__main__":
