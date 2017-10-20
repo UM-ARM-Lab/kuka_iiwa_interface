@@ -390,8 +390,26 @@ class Arm:
             self.disable_arm_sliders()
             print 'Switching to CARTESIAN_POSE mode.'
         elif control_mode == ControlMode.JOINT_IMPEDANCE:
-            print 'JOINT_IMPEDANCE mode switch is not implemented yet.'
-            return
+            new_control_mode.joint_path_execution_params.joint_relative_velocity = 0.5
+            new_control_mode.joint_path_execution_params.joint_relative_acceleration = 1.0
+
+            new_control_mode.joint_impedance_params.joint_damping.joint_1 = 0.7
+            new_control_mode.joint_impedance_params.joint_damping.joint_2 = 0.7
+            new_control_mode.joint_impedance_params.joint_damping.joint_3 = 0.7
+            new_control_mode.joint_impedance_params.joint_damping.joint_4 = 0.7
+            new_control_mode.joint_impedance_params.joint_damping.joint_5 = 0.7
+            new_control_mode.joint_impedance_params.joint_damping.joint_6 = 0.7
+            new_control_mode.joint_impedance_params.joint_damping.joint_7 = 0.7
+            new_control_mode.joint_impedance_params.joint_stiffness.joint_1 = 10.0
+            new_control_mode.joint_impedance_params.joint_stiffness.joint_2 = 10.0
+            new_control_mode.joint_impedance_params.joint_stiffness.joint_3 = 10.0
+            new_control_mode.joint_impedance_params.joint_stiffness.joint_4 = 10.0
+            new_control_mode.joint_impedance_params.joint_stiffness.joint_5 = 10.0
+            new_control_mode.joint_impedance_params.joint_stiffness.joint_6 = 10.0
+            new_control_mode.joint_impedance_params.joint_stiffness.joint_7 = 10.0
+            self.enable_arm_sliders()
+            print 'Switching to JOINT_IMPEDANCE mode'
+
         elif control_mode == ControlMode.CARTESIAN_IMPEDANCE:
             print 'CARTESIAN_IMPEDANCE mode switch is not implemented yet.'
             return
