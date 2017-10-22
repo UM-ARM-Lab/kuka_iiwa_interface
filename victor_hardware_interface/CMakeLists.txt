@@ -68,7 +68,8 @@ add_message_files(DIRECTORY msg FILES
     Robotiq3FingerActuatorStatus.msg
     Robotiq3FingerCommand.msg
     Robotiq3FingerObjectStatus.msg
-    Robotiq3FingerStatus.msg)
+    Robotiq3FingerStatus.msg
+    GraspStatus.msg)
 
 ## Generate services in the 'srv' folder
 add_service_files(DIRECTORY srv FILES
