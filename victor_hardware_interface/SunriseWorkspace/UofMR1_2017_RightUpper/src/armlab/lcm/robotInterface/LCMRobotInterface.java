@@ -271,7 +271,8 @@ public class LCMRobotInterface extends RoboticsAPIApplication implements LCMSubs
         motion.setMaxNullSpaceVelocity(params.max_nullspace_velocity);
         motion.setMaxOrientationAcceleration(new double[]{params.max_acceleration.a, params.max_acceleration.b, params.max_acceleration.c});
         motion.setMaxOrientationVelocity(new double[]{params.max_velocity.a, params.max_velocity.b, params.max_velocity.c});
-        motion.setMaxTranslationAcceleration(new double[]{params.max_acceleration.x, params.max_acceleration.y, params.max_acceleration.z});
+        motion.setMaxTranslationAcceleration(new double[]
+        		{params.max_acceleration.x * 1000, params.max_acceleration.y * 1000, params.max_acceleration.z * 1000});
         motion.setMaxTranslationVelocity(new double[]{params.max_velocity.x, params.max_velocity.y, params.max_velocity.z});
         motion.setTimeoutAfterGoalReach(TIMEOUT_AFTER_GOAL_REACH);
         return motion;
@@ -350,8 +351,7 @@ public class LCMRobotInterface extends RoboticsAPIApplication implements LCMSubs
             	{
             		getLogger().error("Unknown control mode from LCM: " + cmd.control_mode);
             	}
-            	arm_controller_.active_control_mode_ = cmd.control_mode;
-            
+           
             }
             end_effector_frame_.moveAsync(arm_controller_.getIMotion());
 
@@ -397,12 +397,13 @@ public class LCMRobotInterface extends RoboticsAPIApplication implements LCMSubs
     
     private class JointPositionController extends JointController
     {
-    	
-
-    	public JointPositionController(control_mode_parameters cmd) {
+    	   	public JointPositionController(control_mode_parameters cmd) {
+    		
             getLogger().info("Building new Joint Position control mode");
             joint_smartservo_motion_ = createSmartServoMotion(cmd.joint_path_execution_params);
             joint_smartservo_motion_.setMode(new PositionControlMode(true));
+            active_control_mode_ = new control_mode();
+            active_control_mode_.mode = control_mode.JOINT_POSITION;
             getLogger().info("Finished building new Joint control mode");
 		}
 
@@ -433,6 +434,9 @@ public class LCMRobotInterface extends RoboticsAPIApplication implements LCMSubs
     {
     	
     	public JointImpedenceController(control_mode_parameters cmd) {
+    		getLogger().info("Building new Joint control mode");
+            active_control_mode_ = new control_mode();
+            active_control_mode_.mode = control_mode.JOINT_IMPEDANCE;
             if (tool_ != null)
             {
                 getLogger().info("Attempting to validate for impedance mode (arm + tool)");
@@ -445,7 +449,7 @@ public class LCMRobotInterface extends RoboticsAPIApplication implements LCMSubs
                 boolean validated = SmartServo.validateForImpedanceMode(iiwa7_arm_);
                 assert(validated);
             }
-            getLogger().info("Building new Joint control mode");
+            
             joint_smartservo_motion_ = createSmartServoMotion(cmd.joint_path_execution_params);
             
             JointImpedanceControlMode jcm = new JointImpedanceControlMode(iiwa7_arm_.getJointCount());
@@ -503,6 +507,8 @@ public class LCMRobotInterface extends RoboticsAPIApplication implements LCMSubs
     {
     	public CartesianPoseController(control_mode_parameters cmd) {
             getLogger().info("Building new Cartesian control mode");
+            active_control_mode_ = new control_mode();
+            active_control_mode_.mode = control_mode.CARTESIAN_POSE;
             cartesian_smartservo_motion_ = createSmartServoLINMotion(cmd.cartesian_path_execution_params);
             cartesian_smartservo_motion_.setMode(new PositionControlMode(true));
             getLogger().info("Finished building new Cartesian control mode");
@@ -539,6 +545,10 @@ public class LCMRobotInterface extends RoboticsAPIApplication implements LCMSubs
     {
 
     	public CartesianImpedenceController(control_mode_parameters cmd) {
+            getLogger().info("Building new Cartesian control mode");
+            active_control_mode_ = new control_mode();
+            active_control_mode_.mode = control_mode.CARTESIAN_IMPEDANCE;
+            
             if (tool_ != null)
             {
                 getLogger().info("Attempting to validate for impedance mode (arm + tool)");
@@ -551,7 +561,7 @@ public class LCMRobotInterface extends RoboticsAPIApplication implements LCMSubs
                 boolean validated = SmartServoLIN.validateForImpedanceMode(iiwa7_arm_);
                 assert(validated);
             }
-            getLogger().info("Building new Cartesian control mode");
+
             cartesian_smartservo_motion_ = createSmartServoLINMotion(cmd.cartesian_path_execution_params);
             
             CartesianImpedanceControlMode ccm = new CartesianImpedanceControlMode();
@@ -569,15 +579,15 @@ public class LCMRobotInterface extends RoboticsAPIApplication implements LCMSubs
             ccm.parametrize(CartDOF.C).setStiffness(cmd.cartesian_impedance_params.cartesian_stiffness.c);
             ccm.setNullSpaceDamping(cmd.cartesian_impedance_params.nullspace_damping);
             ccm.setNullSpaceStiffness(cmd.cartesian_impedance_params.nullspace_stiffness);
-            ccm.setMaxPathDeviation(cmd.cartesian_control_mode_limits.max_path_deviation.x,
-                                    cmd.cartesian_control_mode_limits.max_path_deviation.y,
-                                    cmd.cartesian_control_mode_limits.max_path_deviation.z,
+            ccm.setMaxPathDeviation(cmd.cartesian_control_mode_limits.max_path_deviation.x * 1000,
+                                    cmd.cartesian_control_mode_limits.max_path_deviation.y * 1000,
+                                    cmd.cartesian_control_mode_limits.max_path_deviation.z * 1000,
                                     cmd.cartesian_control_mode_limits.max_path_deviation.a,
                                     cmd.cartesian_control_mode_limits.max_path_deviation.b,
                                     cmd.cartesian_control_mode_limits.max_path_deviation.c);
-            ccm.setMaxCartesianVelocity(cmd.cartesian_control_mode_limits.max_cartesian_velocity.x,
-                                        cmd.cartesian_control_mode_limits.max_cartesian_velocity.y,
-                                        cmd.cartesian_control_mode_limits.max_cartesian_velocity.z,
+            ccm.setMaxCartesianVelocity(cmd.cartesian_control_mode_limits.max_cartesian_velocity.x*1000,
+                                        cmd.cartesian_control_mode_limits.max_cartesian_velocity.y*1000,
+                                        cmd.cartesian_control_mode_limits.max_cartesian_velocity.z*1000,
                                         cmd.cartesian_control_mode_limits.max_cartesian_velocity.a,
                                         cmd.cartesian_control_mode_limits.max_cartesian_velocity.b,
                                         cmd.cartesian_control_mode_limits.max_cartesian_velocity.c);
@@ -619,14 +629,14 @@ public class LCMRobotInterface extends RoboticsAPIApplication implements LCMSubs
     	{
             CartesianImpedanceControlMode ccm = (CartesianImpedanceControlMode)cartesian_smartservo_motion_.getMode();
             // Impedance params
-            Conversions.vectorToCvq(ccm.getDamping(), control_mode_status_msg.cartesian_impedance_params.cartesian_damping);
-            Conversions.vectorToCvq(ccm.getStiffness(), control_mode_status_msg.cartesian_impedance_params.cartesian_stiffness);
+            Conversions.vectorToCvq(ccm.getDamping(), control_mode_status_msg.cartesian_impedance_params.cartesian_damping, false);
+            Conversions.vectorToCvq(ccm.getStiffness(), control_mode_status_msg.cartesian_impedance_params.cartesian_stiffness, false);
             control_mode_status_msg.cartesian_impedance_params.nullspace_damping = ccm.getNullSpaceDamping();
             control_mode_status_msg.cartesian_impedance_params.nullspace_stiffness = ccm.getNullSpaceStiffness();
             // Cartesian control mode limits
-            Conversions.vectorToCvq(ccm.getMaxCartesianVelocity(), control_mode_status_msg.cartesian_control_mode_limits.max_cartesian_velocity);
-            Conversions.vectorToCvq(ccm.getMaxPathDeviation(), control_mode_status_msg.cartesian_control_mode_limits.max_path_deviation);
-            Conversions.vectorToCvq(ccm.getMaxControlForce(), control_mode_status_msg.cartesian_control_mode_limits.max_control_force);
+            Conversions.vectorToCvq(ccm.getMaxCartesianVelocity(), control_mode_status_msg.cartesian_control_mode_limits.max_cartesian_velocity, true);
+            Conversions.vectorToCvq(ccm.getMaxPathDeviation(), control_mode_status_msg.cartesian_control_mode_limits.max_path_deviation, true);
+            Conversions.vectorToCvq(ccm.getMaxControlForce(), control_mode_status_msg.cartesian_control_mode_limits.max_control_force, false);
             control_mode_status_msg.cartesian_control_mode_limits.stop_on_max_control_force = ccm.hasMaxControlForceStopCondition();
     	}
     }
@@ -936,9 +946,11 @@ public class LCMRobotInterface extends RoboticsAPIApplication implements LCMSubs
         {
             synchronized (new_motion_command_ready_)
             {    
+            	// The output of this function is inherently in WorldFrame,
+            	// so we don't need to convert it to a different parent frame
+            	// as this is the same frame used by cartesian_smartservo_motion_
+            	// in the encapsulating class
                 cartesian_pose_target_ = Conversions.poseToFrame(cmd.cartesian_pose);
-                ObjectFrame cartesian_command_frame = iiwa7_arm_.getRootFrame();
-                cartesian_pose_target_.setParent(cartesian_command_frame, true);
                 new_motion_command_ready_ = true;
             }
         }
