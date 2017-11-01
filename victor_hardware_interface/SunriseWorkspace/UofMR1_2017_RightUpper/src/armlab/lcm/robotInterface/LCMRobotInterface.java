@@ -334,7 +334,7 @@ public class LCMRobotInterface extends RoboticsAPIApplication implements LCMSubs
             	}
             	case(control_mode.JOINT_IMPEDANCE):
             	{
-            		arm_controller_ = new JointImpedenceController(cmd);
+            		arm_controller_ = new JointImpedanceController(cmd);
             		break;
             	}
             	case(control_mode.CARTESIAN_POSE):
@@ -344,7 +344,7 @@ public class LCMRobotInterface extends RoboticsAPIApplication implements LCMSubs
             	}
             	case(control_mode.CARTESIAN_IMPEDANCE):
             	{
-            		arm_controller_ = new CartesianImpedenceController(cmd);
+            		arm_controller_ = new CartesianImpedanceController(cmd);
             		break;
             	}
             	default:
@@ -430,11 +430,11 @@ public class LCMRobotInterface extends RoboticsAPIApplication implements LCMSubs
     	}
     }
     
-    private class JointImpedenceController extends JointController
+    private class JointImpedanceController extends JointController
     {
     	
-    	public JointImpedenceController(control_mode_parameters cmd) {
-    		//getLogger().info("Building new Joint Impedence control mode");
+    	public JointImpedanceController(control_mode_parameters cmd) {
+    		//getLogger().info("Building new Joint Impedance control mode");
             active_control_mode_ = new control_mode();
             active_control_mode_.mode = control_mode.JOINT_IMPEDANCE;
             if (tool_ != null)
@@ -457,7 +457,7 @@ public class LCMRobotInterface extends RoboticsAPIApplication implements LCMSubs
             jcm.setStiffness(Conversions.jvqToVector(cmd.joint_impedance_params.joint_stiffness));
             
             joint_smartservo_motion_.setMode(jcm);
-            getLogger().info("Built new Joint Impedence control mode");
+            getLogger().info("Built new Joint Impedance control mode");
 		}
 
 		@Override
@@ -541,11 +541,11 @@ public class LCMRobotInterface extends RoboticsAPIApplication implements LCMSubs
     	}
     }
     
-    private class CartesianImpedenceController extends CartesianController
+    private class CartesianImpedanceController extends CartesianController
     {
 
-    	public CartesianImpedenceController(control_mode_parameters cmd) {
-            //getLogger().info("Building new Cartesian Impedence control mode");
+    	public CartesianImpedanceController(control_mode_parameters cmd) {
+            //getLogger().info("Building new Cartesian Impedance control mode");
             active_control_mode_ = new control_mode();
             active_control_mode_.mode = control_mode.CARTESIAN_IMPEDANCE;
             
@@ -600,7 +600,7 @@ public class LCMRobotInterface extends RoboticsAPIApplication implements LCMSubs
                                    cmd.cartesian_control_mode_limits.stop_on_max_control_force);
             
             cartesian_smartservo_motion_.setMode(ccm);
-            getLogger().info("Built new Cartesian Impedence control mode");
+            getLogger().info("Built new Cartesian Impedance control mode");
 		}
 
 		@Override
