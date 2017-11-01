@@ -317,10 +317,10 @@ public class LCMRobotInterface extends RoboticsAPIApplication implements LCMSubs
      */
     public void switchControlMode(control_mode_parameters cmd)
     {
-        getLogger().info("Changing control mode");
+        //getLogger().info("Changing control mode");
         synchronized (arm_io_lock_)
         {
-            getLogger().info("Switch to ControlMode:" + cmd.control_mode.mode);
+            getLogger().info("Switch to ControlMode: " + cmd.control_mode.mode);
             
             boolean stopped = arm_controller_.stop();
             assert(stopped);
@@ -399,12 +399,12 @@ public class LCMRobotInterface extends RoboticsAPIApplication implements LCMSubs
     {
     	   	public JointPositionController(control_mode_parameters cmd) {
     		
-            getLogger().info("Building new Joint Position control mode");
+            //getLogger().info("Building new Joint Position control mode");
             joint_smartservo_motion_ = createSmartServoMotion(cmd.joint_path_execution_params);
             joint_smartservo_motion_.setMode(new PositionControlMode(true));
             active_control_mode_ = new control_mode();
             active_control_mode_.mode = control_mode.JOINT_POSITION;
-            getLogger().info("Finished building new Joint control mode");
+            getLogger().info("Built new Joint Position control mode");
 		}
 
     	@Override
@@ -434,7 +434,7 @@ public class LCMRobotInterface extends RoboticsAPIApplication implements LCMSubs
     {
     	
     	public JointImpedenceController(control_mode_parameters cmd) {
-    		getLogger().info("Building new Joint control mode");
+    		//getLogger().info("Building new Joint Impedence control mode");
             active_control_mode_ = new control_mode();
             active_control_mode_.mode = control_mode.JOINT_IMPEDANCE;
             if (tool_ != null)
@@ -457,7 +457,7 @@ public class LCMRobotInterface extends RoboticsAPIApplication implements LCMSubs
             jcm.setStiffness(Conversions.jvqToVector(cmd.joint_impedance_params.joint_stiffness));
             
             joint_smartservo_motion_.setMode(jcm);
-            getLogger().info("Finished building new Joint control mode");
+            getLogger().info("Built new Joint Impedence control mode");
 		}
 
 		@Override
@@ -506,12 +506,12 @@ public class LCMRobotInterface extends RoboticsAPIApplication implements LCMSubs
     private class CartesianPoseController extends CartesianController
     {
     	public CartesianPoseController(control_mode_parameters cmd) {
-            getLogger().info("Building new Cartesian control mode");
+            //getLogger().info("Building new Cartesian Pose control mode");
             active_control_mode_ = new control_mode();
             active_control_mode_.mode = control_mode.CARTESIAN_POSE;
             cartesian_smartservo_motion_ = createSmartServoLINMotion(cmd.cartesian_path_execution_params);
             cartesian_smartservo_motion_.setMode(new PositionControlMode(true));
-            getLogger().info("Finished building new Cartesian control mode");
+            getLogger().info("Built new Cartesian Pose control mode");
 		}
 
 		@Override
@@ -545,7 +545,7 @@ public class LCMRobotInterface extends RoboticsAPIApplication implements LCMSubs
     {
 
     	public CartesianImpedenceController(control_mode_parameters cmd) {
-            getLogger().info("Building new Cartesian control mode");
+            //getLogger().info("Building new Cartesian Impedence control mode");
             active_control_mode_ = new control_mode();
             active_control_mode_.mode = control_mode.CARTESIAN_IMPEDANCE;
             
@@ -600,7 +600,7 @@ public class LCMRobotInterface extends RoboticsAPIApplication implements LCMSubs
                                    cmd.cartesian_control_mode_limits.stop_on_max_control_force);
             
             cartesian_smartservo_motion_.setMode(ccm);
-            getLogger().info("Finished building new Cartesian control mode");
+            getLogger().info("Built new Cartesian Impedence control mode");
 		}
 
 		@Override
