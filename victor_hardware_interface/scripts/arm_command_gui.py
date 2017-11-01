@@ -21,6 +21,7 @@ import rospy
 from victor_hardware_interface.msg import Robotiq3FingerCommand, MotionCommand, MotionStatus, Robotiq3FingerStatus, \
     ControlModeParameters, ControlMode
 from victor_hardware_interface.srv import SetControlMode, GetControlMode
+from victor_hardware_interface import victor_utils
 
 finger_range_discretization = 1000
 arm_joint_limit_margin = 1
@@ -148,7 +149,12 @@ class Arm:
 
         self.control_mode_label = self.init_label('Control Mode', 2, 1)
         control_mode_list = ['JOINT_POSITION', 'CARTESIAN_POSE', 'JOINT_IMPEDANCE', 'CARTESIAN_IMPEDANCE']
+        stiffness_list = ['STIFF', 'MEDIUM', 'SOFT']
+        s = victor_utils.Stiffness
+        self.stiffness_map = [s.STIFF, s.MEDIUM, s.SOFT]
+        self.stiffness = self.stiffness_map[0]
         self.control_mode_combobox = self.init_combobox(control_mode_list, 2, self.change_control_mode, 0)
+        self.stiffness_combobox = self.init_combobox(stiffness_list, 2, self.set_stiffness, 0)
 
         self.finger_command = Robotiq3FingerCommand()
         self.arm_command = MotionCommand()
@@ -192,7 +198,8 @@ class Arm:
         sys.stdout.flush()
         get_current_control_mode = rospy.ServiceProxy('/' + self.name + '/get_control_mode_service', GetControlMode)
         control_mode = get_current_control_mode()
-        self.control_mode_combobox.setCurrentIndex(control_mode.active_control_mode.control_mode.mode)
+        self.active_control_mode_int = control_mode.active_control_mode.control_mode.mode
+        self.control_mode_combobox.setCurrentIndex(self.active_control_mode_int)
         print 'Done'
 
     def arm_status_callback(self, data):
@@ -376,50 +383,33 @@ class Arm:
         if not self.block_command:
             self.arm_command_publisher.publish(self.arm_command)
 
-    def change_control_mode(self, control_mode):
-        send_new_control_mode = rospy.ServiceProxy('/' + self.name + '/set_control_mode_service', SetControlMode)
-        new_control_mode = ControlModeParameters()
-        new_control_mode.control_mode.mode = control_mode
+    def set_stiffness(self, stiffness):
+        self.stiffness = self.stiffness_map[stiffness]
+        print self.stiffness
+        self.change_control_mode(self.active_control_mode_int)
 
+    def change_control_mode(self, control_mode):
         if control_mode == ControlMode.JOINT_POSITION:
-            new_control_mode.joint_path_execution_params.joint_relative_velocity = 0.1
-            new_control_mode.joint_path_execution_params.joint_relative_acceleration = 0.1
             self.enable_arm_sliders()
             print 'Switching to JOINT_POSITION mode.'
         elif control_mode == ControlMode.CARTESIAN_POSE:
             self.disable_arm_sliders()
             print 'Switching to CARTESIAN_POSE mode.'
         elif control_mode == ControlMode.JOINT_IMPEDANCE:
-            new_control_mode.joint_path_execution_params.joint_relative_velocity = 0.5
-            new_control_mode.joint_path_execution_params.joint_relative_acceleration = 1.0
-
-            new_control_mode.joint_impedance_params.joint_damping.joint_1 = 0.7
-            new_control_mode.joint_impedance_params.joint_damping.joint_2 = 0.7
-            new_control_mode.joint_impedance_params.joint_damping.joint_3 = 0.7
-            new_control_mode.joint_impedance_params.joint_damping.joint_4 = 0.7
-            new_control_mode.joint_impedance_params.joint_damping.joint_5 = 0.7
-            new_control_mode.joint_impedance_params.joint_damping.joint_6 = 0.7
-            new_control_mode.joint_impedance_params.joint_damping.joint_7 = 0.7
-            new_control_mode.joint_impedance_params.joint_stiffness.joint_1 = 10.0
-            new_control_mode.joint_impedance_params.joint_stiffness.joint_2 = 10.0
-            new_control_mode.joint_impedance_params.joint_stiffness.joint_3 = 10.0
-            new_control_mode.joint_impedance_params.joint_stiffness.joint_4 = 10.0
-            new_control_mode.joint_impedance_params.joint_stiffness.joint_5 = 10.0
-            new_control_mode.joint_impedance_params.joint_stiffness.joint_6 = 10.0
-            new_control_mode.joint_impedance_params.joint_stiffness.joint_7 = 10.0
             self.enable_arm_sliders()
             print 'Switching to JOINT_IMPEDANCE mode'
-
         elif control_mode == ControlMode.CARTESIAN_IMPEDANCE:
             print 'CARTESIAN_IMPEDANCE mode switch is not implemented yet.'
             return
 
-        result = send_new_control_mode(new_control_mode)
+        result = victor_utils.set_control_mode(control_mode, self.name, self.stiffness)
+        
         if result.success:
             print 'Control mode switch success.'
         else:
             print 'Control mode switch failure.'
             print result.message
+        self.active_control_mode_int = control_mode
 
 
 def main():
