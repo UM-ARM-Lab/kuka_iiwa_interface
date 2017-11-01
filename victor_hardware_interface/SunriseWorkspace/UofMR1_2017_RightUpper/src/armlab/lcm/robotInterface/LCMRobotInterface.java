@@ -320,45 +320,56 @@ public class LCMRobotInterface extends RoboticsAPIApplication implements LCMSubs
         //getLogger().info("Changing control mode");
         synchronized (arm_io_lock_)
         {
-            getLogger().info("Switch to ControlMode: " + cmd.control_mode.mode);
-            
-            boolean stopped = arm_controller_.stop();
-            assert(stopped);
-            
-            switch (cmd.control_mode.mode)
+            if(cmd.control_mode.mode == arm_controller_.active_control_mode_.mode)
             {
-            	case(control_mode.JOINT_POSITION):
-            	{
-            		arm_controller_ = new JointPositionController(cmd);
-            		break;
-            	}
-            	case(control_mode.JOINT_IMPEDANCE):
-            	{
-            		arm_controller_ = new JointImpedanceController(cmd);
-            		break;
-            	}
-            	case(control_mode.CARTESIAN_POSE):
-            	{
-            		arm_controller_ = new CartesianPoseController(cmd);
-            		break;
-            	}
-            	case(control_mode.CARTESIAN_IMPEDANCE):
-            	{
-            		arm_controller_ = new CartesianImpedanceController(cmd);
-            		break;
-            	}
-            	default:
-            	{
-            		getLogger().error("Unknown control mode from LCM: " + cmd.control_mode);
-            	}
-           
+            	getLogger().info("Updating Control Mode: " + cmd.control_mode.mode);
+            	arm_controller_.update(cmd);
             }
-            end_effector_frame_.moveAsync(arm_controller_.getIMotion());
-
-            // Update params
-            joint_path_execution_params_ = cmd.joint_path_execution_params;
-            cartesian_path_execution_params_ = cmd.cartesian_path_execution_params;
+            else 
+            {
+            	buildControlMode(cmd);
+            }
         }
+    }
+    
+    public void buildControlMode(control_mode_parameters cmd)
+    {
+    	getLogger().info("Switch to ControlMode: " + cmd.control_mode.mode);
+        boolean stopped = arm_controller_.stop();
+        assert(stopped);
+        
+        switch (cmd.control_mode.mode)
+        {
+        	case(control_mode.JOINT_POSITION):
+        	{
+        		arm_controller_ = new JointPositionController(cmd);
+        		break;
+        	}
+        	case(control_mode.JOINT_IMPEDANCE):
+        	{
+        		arm_controller_ = new JointImpedanceController(cmd);
+        		break;
+        	}
+        	case(control_mode.CARTESIAN_POSE):
+        	{
+        		arm_controller_ = new CartesianPoseController(cmd);
+        		break;
+        	}
+        	case(control_mode.CARTESIAN_IMPEDANCE):
+        	{
+        		arm_controller_ = new CartesianImpedanceController(cmd);
+        		break;
+        	}
+        	default:
+        	{
+        		getLogger().error("Unknown control mode from LCM: " + cmd.control_mode);
+        	}
+       
+        }
+        // Update params
+        joint_path_execution_params_ = cmd.joint_path_execution_params;
+        cartesian_path_execution_params_ = cmd.cartesian_path_execution_params;
+        end_effector_frame_.moveAsync(arm_controller_.getIMotion());
     }
     
     
@@ -374,6 +385,7 @@ public class LCMRobotInterface extends RoboticsAPIApplication implements LCMSubs
     {
     	control_mode active_control_mode_;
     	abstract void setDestination(Targets t);
+    	void update(control_mode_parameters cmd) {}
     	abstract boolean stop();
     	abstract IMotion getIMotion();
     	abstract void populateStatusMsg(control_mode_parameters control_mode_status_msg);
@@ -432,6 +444,7 @@ public class LCMRobotInterface extends RoboticsAPIApplication implements LCMSubs
     
     private class JointImpedanceController extends JointController
     {
+    	public JointImpedanceControlMode jcm_;
     	
     	public JointImpedanceController(control_mode_parameters cmd) {
     		//getLogger().info("Building new Joint Impedance control mode");
@@ -452,13 +465,24 @@ public class LCMRobotInterface extends RoboticsAPIApplication implements LCMSubs
             
             joint_smartservo_motion_ = createSmartServoMotion(cmd.joint_path_execution_params);
             
-            JointImpedanceControlMode jcm = new JointImpedanceControlMode(iiwa7_arm_.getJointCount());
-            jcm.setDamping(Conversions.jvqToVector(cmd.joint_impedance_params.joint_damping));
-            jcm.setStiffness(Conversions.jvqToVector(cmd.joint_impedance_params.joint_stiffness));
-            
-            joint_smartservo_motion_.setMode(jcm);
+            jcm_ = new JointImpedanceControlMode(iiwa7_arm_.getJointCount());
+            setStiffness(cmd);
+            joint_smartservo_motion_.setMode(jcm_);
             getLogger().info("Built new Joint Impedance control mode");
 		}
+    	
+    	@Override
+    	void update(control_mode_parameters cmd){
+    		setStiffness(cmd);
+    		joint_smartservo_motion_.getRuntime().changeControlModeSettings(jcm_);
+    	}
+    	
+    	void setStiffness(control_mode_parameters cmd) {
+    		getLogger().info("Updating Joint Impedance Stiffness");
+            jcm_.setDamping(Conversions.jvqToVector(cmd.joint_impedance_params.joint_damping));
+            jcm_.setStiffness(Conversions.jvqToVector(cmd.joint_impedance_params.joint_stiffness));    
+    	}
+    
 
 		@Override
     	void setDestination(Targets targets)
