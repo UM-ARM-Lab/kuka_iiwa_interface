@@ -41,7 +41,11 @@ class ManualMotion:
 
     def callback_update(self, msg):
         global joint_names, joint_lower, joint_upper
+        with self.lock:
+            self.run_lowpass(msg)
 
+    def run_lowpass(self, msg):
+        
         if self.prev_time is None:
             self.prev_time = time.time()
 
