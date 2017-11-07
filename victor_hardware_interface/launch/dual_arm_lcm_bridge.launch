@@ -35,6 +35,8 @@
     </group>
 
     <node pkg="victor_hardware_interface" type="arm_wrench_republisher.py" name="arm_wrench_republisher" output="screen"/>
+    <node pkg="victor_hardware_interface" type="grasp_status_node.py"
+          name="grasp_status"/>
 
 </launch>
 
