@@ -7,6 +7,7 @@ from arc_utilities import ros_helpers
 from victor_hardware_interface.msg import Robotiq3FingerStatus, Robotiq3FingerCommand
 from sensor_msgs.msg import Joy
 
+
 class VictorJoystick:
     def __init__(self):
         self.gripper_status = \
@@ -20,12 +21,8 @@ class VictorJoystick:
                                      queue_size = 1)}
 
         self.joy_sub = rospy.Subscriber("/joy", Joy, self.joy_callback)
-        
-        
-    
+
     def joy_callback(self, joy):
-        # print joy.buttons
-        # print joy.axes
         A, B, X, Y, LB, RB, back, start, power, stick_button_left, stick_button_right, \
             dleft, dright, dup, ddown = joy.buttons
         left_hor, left_vert, LT, right_hor, right_vert,  RT, d_hor, d_vert = joy.axes
@@ -42,10 +39,6 @@ class VictorJoystick:
         if RB:
             self.open_gripper("right")
 
-        
-        
-
-        
     def close_gripper(self, gripper_name, **kwargs):
         self.set_gripper(gripper_name, (1.0, 1.0, 1.0), **kwargs)
 
@@ -87,7 +80,6 @@ class VictorJoystick:
 
         cmd.scissor_command.position = 1.0
         return cmd
-
 
                  
 def main():
