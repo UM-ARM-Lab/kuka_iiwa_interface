@@ -102,8 +102,10 @@ def print_joints(left, right):
     """Print nicely to the terminal so joint values can be copied"""
     rospy.loginfo("Joint angles are: ")
     vec_to_rad_str = lambda vec: '[' + ', '.join([str(np.round(rad, 3)) for rad in vec]) + ']'
-    rospy.loginfo("Left: " + vec_to_rad_str(left.last_pos))
-    rospy.loginfo("Right: " + vec_to_rad_str(right.last_pos))
+    if left.last_pos is not None:
+        rospy.loginfo("Left: " + vec_to_rad_str(left.last_pos))
+    if right.last_pos is not None:
+        rospy.loginfo("Right: " + vec_to_rad_str(right.last_pos))
 
 
 if __name__ == "__main__":
