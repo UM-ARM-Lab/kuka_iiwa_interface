@@ -38,6 +38,7 @@ class ManualMotion:
         self.prev_time = None
         self.lock = Lock()
         self.follow = False
+        self.last_pos = None
 
     def callback_update(self, msg):
         global joint_names, joint_lower, joint_upper
@@ -62,6 +63,9 @@ class ManualMotion:
         meas = np.array([getattr(msg.measured_joint_position,  joint) for joint in joint_names])
         cmd =  np.array([getattr(msg.commanded_joint_position, joint) for joint in joint_names])
 
+        self.last_pos = meas
+
+        
         err = np.linalg.norm(meas - cmd)
 
 
@@ -94,7 +98,12 @@ class ManualMotion:
         self.pub.publish(cmd_msg)
         
         
-
+def print_joints(left, right):
+    """Print nicely to the terminal so joint values can be copied"""
+    rospy.loginfo("Joint angles are: ")
+    vec_to_rad_str = lambda vec: '[' + ', '.join([str(np.round(rad, 3)) for rad in vec]) + ']'
+    rospy.loginfo("Left: " + vec_to_rad_str(left.last_pos))
+    rospy.loginfo("Right: " + vec_to_rad_str(right.last_pos))
 
 
 if __name__ == "__main__":
@@ -103,5 +112,7 @@ if __name__ == "__main__":
     vu.set_control_mode(ControlMode.JOINT_IMPEDANCE, "left_arm", vu.Stiffness.MEDIUM)
     vu.set_control_mode(ControlMode.JOINT_IMPEDANCE, "right_arm", vu.Stiffness.MEDIUM)
     left = ManualMotion("left_arm")
-    left = ManualMotion("right_arm")    
+    right = ManualMotion("right_arm")
+
+    rospy.on_shutdown(lambda: print_joints(left, right))
     rospy.spin()
