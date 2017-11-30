@@ -272,7 +272,7 @@ public class LCMRobotInterface extends RoboticsAPIApplication implements LCMSubs
         motion.setMaxOrientationAcceleration(new double[]{params.max_acceleration.a, params.max_acceleration.b, params.max_acceleration.c});
         motion.setMaxOrientationVelocity(new double[]{params.max_velocity.a, params.max_velocity.b, params.max_velocity.c});
         motion.setMaxTranslationAcceleration(new double[]
-        		{params.max_acceleration.x * 1000, params.max_acceleration.y * 1000, params.max_acceleration.z * 1000});
+                {params.max_acceleration.x * 1000, params.max_acceleration.y * 1000, params.max_acceleration.z * 1000});
         motion.setMaxTranslationVelocity(new double[]{params.max_velocity.x, params.max_velocity.y, params.max_velocity.z});
         motion.setTimeoutAfterGoalReach(TIMEOUT_AFTER_GOAL_REACH);
         return motion;
@@ -322,48 +322,48 @@ public class LCMRobotInterface extends RoboticsAPIApplication implements LCMSubs
         {
             if(cmd.control_mode.mode == arm_controller_.active_control_mode_.mode)
             {
-            	getLogger().info("Updating Control Mode: " + cmd.control_mode.mode);
-            	arm_controller_.update(cmd);
+                getLogger().info("Updating Control Mode: " + cmd.control_mode.mode);
+                arm_controller_.update(cmd);
             }
             else 
             {
-            	buildControlMode(cmd);
+                buildControlMode(cmd);
             }
         }
     }
     
     public void buildControlMode(control_mode_parameters cmd)
     {
-    	getLogger().info("Switch to ControlMode: " + cmd.control_mode.mode);
+        getLogger().info("Switch to ControlMode: " + cmd.control_mode.mode);
         boolean stopped = arm_controller_.stop();
         assert(stopped);
         
         switch (cmd.control_mode.mode)
         {
-        	case(control_mode.JOINT_POSITION):
-        	{
-        		arm_controller_ = new JointPositionController(cmd);
-        		break;
-        	}
-        	case(control_mode.JOINT_IMPEDANCE):
-        	{
-        		arm_controller_ = new JointImpedanceController(cmd);
-        		break;
-        	}
-        	case(control_mode.CARTESIAN_POSE):
-        	{
-        		arm_controller_ = new CartesianPoseController(cmd);
-        		break;
-        	}
-        	case(control_mode.CARTESIAN_IMPEDANCE):
-        	{
-        		arm_controller_ = new CartesianImpedanceController(cmd);
-        		break;
-        	}
-        	default:
-        	{
-        		getLogger().error("Unknown control mode from LCM: " + cmd.control_mode);
-        	}
+            case(control_mode.JOINT_POSITION):
+            {
+                arm_controller_ = new JointPositionController(cmd);
+                break;
+            }
+            case(control_mode.JOINT_IMPEDANCE):
+            {
+                arm_controller_ = new JointImpedanceController(cmd);
+                break;
+            }
+            case(control_mode.CARTESIAN_POSE):
+            {
+                arm_controller_ = new CartesianPoseController(cmd);
+                break;
+            }
+            case(control_mode.CARTESIAN_IMPEDANCE):
+            {
+                arm_controller_ = new CartesianImpedanceController(cmd);
+                break;
+            }
+            default:
+            {
+                getLogger().error("Unknown control mode from LCM: " + cmd.control_mode);
+            }
        
         }
         // Update params
@@ -375,7 +375,7 @@ public class LCMRobotInterface extends RoboticsAPIApplication implements LCMSubs
     
     public class Targets
     {
-    	public JointPosition joint_position_target;
+        public JointPosition joint_position_target;
         public Frame cartesian_pose_target;
         public JointPosition joint_impedance_target;
         public Frame cartesian_impedance_target;
@@ -383,46 +383,46 @@ public class LCMRobotInterface extends RoboticsAPIApplication implements LCMSubs
     
     private abstract class ArmController
     {
-    	control_mode active_control_mode_;
-    	abstract void setDestination(Targets t);
-    	void update(control_mode_parameters cmd) {}
-    	abstract boolean stop();
-    	abstract IMotion getIMotion();
-    	abstract void populateStatusMsg(control_mode_parameters control_mode_status_msg);
+        control_mode active_control_mode_;
+        abstract void setDestination(Targets t);
+        void update(control_mode_parameters cmd) {}
+        abstract boolean stop();
+        abstract IMotion getIMotion();
+        abstract void populateStatusMsg(control_mode_parameters control_mode_status_msg);
     }
     
     private abstract class JointController extends ArmController
     {
-    	public SmartServo joint_smartservo_motion_;
-    	
-    	@Override 
-    	IMotion getIMotion(){
-    		return joint_smartservo_motion_;
-    	}
-    	
-    	@Override
-    	boolean stop()
-    	{
-    		return joint_smartservo_motion_.getRuntime().stopMotion();
-    	}
+        public SmartServo joint_smartservo_motion_;
+        
+        @Override 
+        IMotion getIMotion(){
+            return joint_smartservo_motion_;
+        }
+        
+        @Override
+        boolean stop()
+        {
+            return joint_smartservo_motion_.getRuntime().stopMotion();
+        }
     }
     
     private class JointPositionController extends JointController
     {
-    	   	public JointPositionController(control_mode_parameters cmd) {
-    		
+        public JointPositionController(control_mode_parameters cmd) {
+            
             //getLogger().info("Building new Joint Position control mode");
             joint_smartservo_motion_ = createSmartServoMotion(cmd.joint_path_execution_params);
             joint_smartservo_motion_.setMode(new PositionControlMode(true));
             active_control_mode_ = new control_mode();
             active_control_mode_.mode = control_mode.JOINT_POSITION;
             getLogger().info("Built new Joint Position control mode");
-		}
+        }
 
-    	@Override
-    	void setDestination(Targets targets)
-    	{
-    		if (targets.joint_position_target != null)
+        @Override
+        void setDestination(Targets targets)
+        {
+            if (targets.joint_position_target != null)
             {
                 // Without isReadyToMove() this code seems to block on setDestination
                 if (iiwa7_arm_.isReadyToMove())
@@ -430,24 +430,24 @@ public class LCMRobotInterface extends RoboticsAPIApplication implements LCMSubs
                     joint_smartservo_motion_.getRuntime().setDestination(targets.joint_position_target);
                 }
             }
-    	}
-    	
-    	@Override
-    	void populateStatusMsg(control_mode_parameters control_mode_status_msg)
-    	{
+        }
+        
+        @Override
+        void populateStatusMsg(control_mode_parameters control_mode_status_msg)
+        {
             // Path execution params
             control_mode_status_msg.joint_path_execution_params.joint_relative_acceleration = joint_smartservo_motion_.getJointAccelerationRel();
             control_mode_status_msg.joint_path_execution_params.joint_relative_velocity = joint_smartservo_motion_.getJointVelocityRel();
-            control_mode_status_msg.joint_path_execution_params.override_joint_acceleration = joint_path_execution_params_.override_joint_acceleration;	
-    	}
+            control_mode_status_msg.joint_path_execution_params.override_joint_acceleration = joint_path_execution_params_.override_joint_acceleration;    
+        }
     }
     
     private class JointImpedanceController extends JointController
     {
-    	public JointImpedanceControlMode jcm_;
-    	
-    	public JointImpedanceController(control_mode_parameters cmd) {
-    		//getLogger().info("Building new Joint Impedance control mode");
+        public JointImpedanceControlMode jcm_;
+        
+        public JointImpedanceController(control_mode_parameters cmd) {
+            //getLogger().info("Building new Joint Impedance control mode");
             active_control_mode_ = new control_mode();
             active_control_mode_.mode = control_mode.JOINT_IMPEDANCE;
             if (tool_ != null)
@@ -469,24 +469,24 @@ public class LCMRobotInterface extends RoboticsAPIApplication implements LCMSubs
             setStiffness(cmd);
             joint_smartservo_motion_.setMode(jcm_);
             getLogger().info("Built new Joint Impedance control mode");
-		}
-    	
-    	@Override
-    	void update(control_mode_parameters cmd){
-    		setStiffness(cmd);
-    		joint_smartservo_motion_.getRuntime().changeControlModeSettings(jcm_);
-    	}
-    	
-    	void setStiffness(control_mode_parameters cmd) {
-    		getLogger().info("Updating Joint Impedance Stiffness");
+        }
+        
+        @Override
+        void update(control_mode_parameters cmd){
+            setStiffness(cmd);
+            joint_smartservo_motion_.getRuntime().changeControlModeSettings(jcm_);
+        }
+        
+        void setStiffness(control_mode_parameters cmd) {
+            getLogger().info("Updating Joint Impedance Stiffness");
             jcm_.setDamping(Conversions.jvqToVector(cmd.joint_impedance_params.joint_damping));
             jcm_.setStiffness(Conversions.jvqToVector(cmd.joint_impedance_params.joint_stiffness));    
-    	}
+        }
     
 
-		@Override
-    	void setDestination(Targets targets)
-    	{
+        @Override
+        void setDestination(Targets targets)
+        {
             if (targets.joint_impedance_target != null)
             {
                 // Without isReadyToMove() this code seems to block on setDestination
@@ -495,11 +495,11 @@ public class LCMRobotInterface extends RoboticsAPIApplication implements LCMSubs
                     joint_smartservo_motion_.getRuntime().setDestination(targets.joint_impedance_target);
                 }
             }
-    	}
-		
-    	@Override
-    	void populateStatusMsg(control_mode_parameters control_mode_status_msg)
-    	{
+        }
+        
+        @Override
+        void populateStatusMsg(control_mode_parameters control_mode_status_msg)
+        {
             // Impedance params
             JointImpedanceControlMode jcm = (JointImpedanceControlMode)joint_smartservo_motion_.getMode();
             Conversions.vectorToJvq(jcm.getDamping(), control_mode_status_msg.joint_impedance_params.joint_damping);
@@ -508,39 +508,39 @@ public class LCMRobotInterface extends RoboticsAPIApplication implements LCMSubs
             control_mode_status_msg.joint_path_execution_params.joint_relative_acceleration = joint_smartservo_motion_.getJointAccelerationRel();
             control_mode_status_msg.joint_path_execution_params.joint_relative_velocity = joint_smartservo_motion_.getJointVelocityRel();
             control_mode_status_msg.joint_path_execution_params.override_joint_acceleration = joint_path_execution_params_.override_joint_acceleration;
-    	}
+        }
     }
     
     private abstract class CartesianController extends ArmController
     {
-    	public SmartServoLIN cartesian_smartservo_motion_;
-    	
-    	@Override 
-    	IMotion getIMotion(){
-    		return cartesian_smartservo_motion_;
-    	}
-    	
-    	@Override
-    	boolean stop()
-    	{
-    		return cartesian_smartservo_motion_.getRuntime().stopMotion();
-    	}
+        public SmartServoLIN cartesian_smartservo_motion_;
+        
+        @Override 
+        IMotion getIMotion(){
+            return cartesian_smartservo_motion_;
+        }
+        
+        @Override
+        boolean stop()
+        {
+            return cartesian_smartservo_motion_.getRuntime().stopMotion();
+        }
     }
     
     private class CartesianPoseController extends CartesianController
     {
-    	public CartesianPoseController(control_mode_parameters cmd) {
+        public CartesianPoseController(control_mode_parameters cmd) {
             //getLogger().info("Building new Cartesian Pose control mode");
             active_control_mode_ = new control_mode();
             active_control_mode_.mode = control_mode.CARTESIAN_POSE;
             cartesian_smartservo_motion_ = createSmartServoLINMotion(cmd.cartesian_path_execution_params);
             cartesian_smartservo_motion_.setMode(new PositionControlMode(true));
             getLogger().info("Built new Cartesian Pose control mode");
-		}
+        }
 
-		@Override
-    	void setDestination(Targets targets)
-    	{
+        @Override
+        void setDestination(Targets targets)
+        {
             if (targets.cartesian_pose_target != null)
             {
                 // Without isReadyToMove() this code seems to block on setDestination
@@ -556,19 +556,19 @@ public class LCMRobotInterface extends RoboticsAPIApplication implements LCMSubs
                     } 
                 }
             }
-    	}
-    	
-    	@Override
-    	void populateStatusMsg(control_mode_parameters control_mode_status_msg)
-    	{
-    		
-    	}
+        }
+        
+        @Override
+        void populateStatusMsg(control_mode_parameters control_mode_status_msg)
+        {
+            
+        }
     }
     
     private class CartesianImpedanceController extends CartesianController
     {
 
-    	public CartesianImpedanceController(control_mode_parameters cmd) {
+        public CartesianImpedanceController(control_mode_parameters cmd) {
             //getLogger().info("Building new Cartesian Impedance control mode");
             active_control_mode_ = new control_mode();
             active_control_mode_.mode = control_mode.CARTESIAN_IMPEDANCE;
@@ -625,11 +625,11 @@ public class LCMRobotInterface extends RoboticsAPIApplication implements LCMSubs
             
             cartesian_smartservo_motion_.setMode(ccm);
             getLogger().info("Built new Cartesian Impedance control mode");
-		}
+        }
 
-		@Override
-    	void setDestination(Targets targets)
-    	{
+        @Override
+        void setDestination(Targets targets)
+        {
             if (targets.cartesian_impedance_target != null)
             {
                 // Without isReadyToMove() this code seems to block on setDestination
@@ -646,11 +646,11 @@ public class LCMRobotInterface extends RoboticsAPIApplication implements LCMSubs
                     
                 }
             }
-    	}
-		
-    	@Override
-    	void populateStatusMsg(control_mode_parameters control_mode_status_msg)
-    	{
+        }
+        
+        @Override
+        void populateStatusMsg(control_mode_parameters control_mode_status_msg)
+        {
             CartesianImpedanceControlMode ccm = (CartesianImpedanceControlMode)cartesian_smartservo_motion_.getMode();
             // Impedance params
             Conversions.vectorToCvq(ccm.getDamping(), control_mode_status_msg.cartesian_impedance_params.cartesian_damping, false);
@@ -662,7 +662,7 @@ public class LCMRobotInterface extends RoboticsAPIApplication implements LCMSubs
             Conversions.vectorToCvq(ccm.getMaxPathDeviation(), control_mode_status_msg.cartesian_control_mode_limits.max_path_deviation, true);
             Conversions.vectorToCvq(ccm.getMaxControlForce(), control_mode_status_msg.cartesian_control_mode_limits.max_control_force, false);
             control_mode_status_msg.cartesian_control_mode_limits.stop_on_max_control_force = ccm.hasMaxControlForceStopCondition();
-    	}
+        }
     }
 
     
@@ -931,29 +931,29 @@ public class LCMRobotInterface extends RoboticsAPIApplication implements LCMSubs
         
         public void storeMotionCommand(motion_command cmd)
         {
-        	synchronized (new_motion_command_ready_)
-        	{
-        		control_mode_ = cmd.control_mode; 
-	            switch (cmd.control_mode.mode)
-	            {
-	                case control_mode.JOINT_POSITION:
-	                case control_mode.JOINT_IMPEDANCE:
-	                {
-	                    storeJointPositionCommand(cmd);
-	                    break;
-	                }
-	                case control_mode.CARTESIAN_POSE:
-	                case control_mode.CARTESIAN_IMPEDANCE:
-	                {
-	                    storeCartesianPoseCommand(cmd);
-	                    break;
-	                }
-	                default:
-	                {
-	                    getLogger().error("MotionMode: " + cmd.control_mode + " is invalid");
-	                    break;
-	                }
-	            }
+            synchronized (new_motion_command_ready_)
+            {
+                control_mode_ = cmd.control_mode; 
+                switch (cmd.control_mode.mode)
+                {
+                    case control_mode.JOINT_POSITION:
+                    case control_mode.JOINT_IMPEDANCE:
+                    {
+                        storeJointPositionCommand(cmd);
+                        break;
+                    }
+                    case control_mode.CARTESIAN_POSE:
+                    case control_mode.CARTESIAN_IMPEDANCE:
+                    {
+                        storeCartesianPoseCommand(cmd);
+                        break;
+                    }
+                    default:
+                    {
+                        getLogger().error("MotionMode: " + cmd.control_mode + " is invalid");
+                        break;
+                    }
+                }
             }
         }
     
@@ -970,10 +970,10 @@ public class LCMRobotInterface extends RoboticsAPIApplication implements LCMSubs
         {
             synchronized (new_motion_command_ready_)
             {    
-            	// The output of this function is inherently in WorldFrame,
-            	// so we don't need to convert it to a different parent frame
-            	// as this is the same frame used by cartesian_smartservo_motion_
-            	// in the encapsulating class
+                // The output of this function is inherently in WorldFrame,
+                // so we don't need to convert it to a different parent frame
+                // as this is the same frame used by cartesian_smartservo_motion_
+                // in the encapsulating class
                 cartesian_pose_target_ = Conversions.poseToFrame(cmd.cartesian_pose);
                 new_motion_command_ready_ = true;
             }
