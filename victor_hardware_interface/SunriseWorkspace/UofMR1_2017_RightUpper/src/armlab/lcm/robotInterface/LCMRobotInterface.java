@@ -129,6 +129,9 @@ public class LCMRobotInterface extends RoboticsAPIApplication implements LCMSubs
         control_mode_parameters cmd = new control_mode_parameters();
         cmd.joint_path_execution_params = joint_path_execution_params_;
         arm_controller_ = new JointPositionController(cmd);
+
+        //This is needed to activate the smartservo motion
+        //the Servo runtime object cannot be accessed before this
         end_effector_frame_.moveAsync(arm_controller_.getIMotion());
         
         
@@ -269,11 +272,16 @@ public class LCMRobotInterface extends RoboticsAPIApplication implements LCMSubs
         motion.setMinimumTrajectoryExecutionTime(MINIMUM_TRAJECTORY_EXECUTION_TIME);
         motion.setMaxNullSpaceAcceleration(params.max_nullspace_acceleration);
         motion.setMaxNullSpaceVelocity(params.max_nullspace_velocity);
-        motion.setMaxOrientationAcceleration(new double[]{params.max_acceleration.a, params.max_acceleration.b, params.max_acceleration.c});
-        motion.setMaxOrientationVelocity(new double[]{params.max_velocity.a, params.max_velocity.b, params.max_velocity.c});
+        motion.setMaxOrientationAcceleration(new double[]
+            {params.max_acceleration.a, params.max_acceleration.b, params.max_acceleration.c});
+        motion.setMaxOrientationVelocity(new double[]
+            {params.max_velocity.a, params.max_velocity.b, params.max_velocity.c});
+
+        //*1000 is conversion from m (LCM) to mm (Kuka)
         motion.setMaxTranslationAcceleration(new double[]
-                {params.max_acceleration.x * 1000, params.max_acceleration.y * 1000, params.max_acceleration.z * 1000});
-        motion.setMaxTranslationVelocity(new double[]{params.max_velocity.x, params.max_velocity.y, params.max_velocity.z});
+            {params.max_acceleration.x * 1000, params.max_acceleration.y * 1000, params.max_acceleration.z * 1000});
+        motion.setMaxTranslationVelocity(new double[]
+            {params.max_velocity.x, params.max_velocity.y, params.max_velocity.z});
         motion.setTimeoutAfterGoalReach(TIMEOUT_AFTER_GOAL_REACH);
         return motion;
     }
@@ -319,7 +327,8 @@ public class LCMRobotInterface extends RoboticsAPIApplication implements LCMSubs
     {
         //getLogger().info("Changing control mode");
         synchronized (arm_io_lock_)
-        {
+        { 
+           //Don't rebuild control mode if we don't have to
             if(cmd.control_mode.mode == arm_controller_.active_control_mode_.mode)
             {
                 getLogger().info("Updating Control Mode: " + cmd.control_mode.mode);
@@ -369,6 +378,9 @@ public class LCMRobotInterface extends RoboticsAPIApplication implements LCMSubs
         // Update params
         joint_path_execution_params_ = cmd.joint_path_execution_params;
         cartesian_path_execution_params_ = cmd.cartesian_path_execution_params;
+
+        //This is needed to activate the smartservo motion
+        //the Servo runtime object cannot be accessed before this
         end_effector_frame_.moveAsync(arm_controller_.getIMotion());
     }
     
@@ -490,7 +502,7 @@ public class LCMRobotInterface extends RoboticsAPIApplication implements LCMSubs
             if (targets.joint_impedance_target != null)
             {
                 // Without isReadyToMove() this code seems to block on setDestination
-                if (iiwa7_arm_.isReadyToMove())// && !old_target.equals(target))
+                if (iiwa7_arm_.isReadyToMove())
                 {
                     joint_smartservo_motion_.getRuntime().setDestination(targets.joint_impedance_target);
                 }
@@ -544,7 +556,7 @@ public class LCMRobotInterface extends RoboticsAPIApplication implements LCMSubs
             if (targets.cartesian_pose_target != null)
             {
                 // Without isReadyToMove() this code seems to block on setDestination
-                if (iiwa7_arm_.isReadyToMove())// && !old_target.equals(target))
+                if (iiwa7_arm_.isReadyToMove())
                 {
                     try
                     {
@@ -561,7 +573,12 @@ public class LCMRobotInterface extends RoboticsAPIApplication implements LCMSubs
         @Override
         void populateStatusMsg(control_mode_parameters control_mode_status_msg)
         {
-            
+            CartesianImpedanceControlMode ccm = (CartesianImpedanceControlMode)cartesian_smartservo_motion_.getMode();
+            // Cartesian control mode limits
+            Conversions.vectorToCvq(ccm.getMaxCartesianVelocity(), control_mode_status_msg.cartesian_control_mode_limits.max_cartesian_velocity, true);
+            Conversions.vectorToCvq(ccm.getMaxPathDeviation(), control_mode_status_msg.cartesian_control_mode_limits.max_path_deviation, true);
+            Conversions.vectorToCvq(ccm.getMaxControlForce(), control_mode_status_msg.cartesian_control_mode_limits.max_control_force, false);
+            control_mode_status_msg.cartesian_control_mode_limits.stop_on_max_control_force = ccm.hasMaxControlForceStopCondition();
         }
     }
     
@@ -603,15 +620,16 @@ public class LCMRobotInterface extends RoboticsAPIApplication implements LCMSubs
             ccm.parametrize(CartDOF.C).setStiffness(cmd.cartesian_impedance_params.cartesian_stiffness.c);
             ccm.setNullSpaceDamping(cmd.cartesian_impedance_params.nullspace_damping);
             ccm.setNullSpaceStiffness(cmd.cartesian_impedance_params.nullspace_stiffness);
+            //*1000 is conversion from m (LCM) to mm (Kuka)
             ccm.setMaxPathDeviation(cmd.cartesian_control_mode_limits.max_path_deviation.x * 1000,
                                     cmd.cartesian_control_mode_limits.max_path_deviation.y * 1000,
                                     cmd.cartesian_control_mode_limits.max_path_deviation.z * 1000,
                                     cmd.cartesian_control_mode_limits.max_path_deviation.a,
                                     cmd.cartesian_control_mode_limits.max_path_deviation.b,
                                     cmd.cartesian_control_mode_limits.max_path_deviation.c);
-            ccm.setMaxCartesianVelocity(cmd.cartesian_control_mode_limits.max_cartesian_velocity.x*1000,
-                                        cmd.cartesian_control_mode_limits.max_cartesian_velocity.y*1000,
-                                        cmd.cartesian_control_mode_limits.max_cartesian_velocity.z*1000,
+            ccm.setMaxCartesianVelocity(cmd.cartesian_control_mode_limits.max_cartesian_velocity.x * 1000,
+                                        cmd.cartesian_control_mode_limits.max_cartesian_velocity.y * 1000,
+                                        cmd.cartesian_control_mode_limits.max_cartesian_velocity.z * 1000,
                                         cmd.cartesian_control_mode_limits.max_cartesian_velocity.a,
                                         cmd.cartesian_control_mode_limits.max_cartesian_velocity.b,
                                         cmd.cartesian_control_mode_limits.max_cartesian_velocity.c);
@@ -633,7 +651,7 @@ public class LCMRobotInterface extends RoboticsAPIApplication implements LCMSubs
             if (targets.cartesian_impedance_target != null)
             {
                 // Without isReadyToMove() this code seems to block on setDestination
-                if (iiwa7_arm_.isReadyToMove())// && !old_target.equals(target))
+                if (iiwa7_arm_.isReadyToMove())
                 {
                     try
                     {
