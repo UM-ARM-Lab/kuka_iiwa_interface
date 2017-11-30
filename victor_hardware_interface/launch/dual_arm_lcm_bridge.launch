@@ -35,4 +35,17 @@
     <node pkg="victor_hardware_interface" type="arm_wrench_republisher.py" name="arm_wrench_republisher" output="screen"/>
     <node pkg="victor_hardware_interface" type="grasp_status_node.py"      name="grasp_status"/>
 
+    <group>
+      <machine name="victorbackpack"
+               address="victorbackpack.local"
+               user="armlab"
+               env-loader="~/ros_env.sh"
+               />
+      <node name="polly" pkg="amazon_ros_speech" type="polly.py"
+            args="'Maize leader, standing by'"
+            machine="victorbackpack"/>
+
+    </group>
+
+
 </launch>
