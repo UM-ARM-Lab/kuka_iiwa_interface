@@ -18,8 +18,8 @@ from threading import Lock
 
 joint_names = ['joint_' + str(i) for i in range(1, 8)]
 
-hard_limits_deg = np.array([ 170,  120,  170,  120,  170,  120,  175])
-safety_deg = 30  #Stay far away from joint hard limits
+hard_limits_deg = np.array([170.0,  120.0,  170.0,  120.0,  170.0,  120.0,  175.0])
+safety_deg = 30.0  #Stay far away from joint hard limits
 
 joint_lower = -(hard_limits_deg - safety_deg) * np.pi/180
 joint_upper =  (hard_limits_deg - safety_deg) * np.pi/180
