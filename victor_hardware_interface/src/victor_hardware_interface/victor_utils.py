@@ -20,14 +20,13 @@ def set_control_mode(control_mode, arm, stiffness=Stiffness.MEDIUM):
     arm (string):               The name of the arm: "right_arm" or "left_arm"
     stiffness (Stiffness):      For impedance modes, uses a set of stiffness values
     """
-    send_new_control_mode = rospy.ServiceProxy("/" + arm + "/set_control_mode_service",
-                                               SetControlMode)
+    
+
     new_control_mode = ControlModeParameters()
     new_control_mode.control_mode.mode = control_mode
 
     if control_mode == ControlMode.JOINT_POSITION:
-        new_control_mode.joint_path_execution_params.joint_relative_velocity = 0.1
-        new_control_mode.joint_path_execution_params.joint_relative_acceleration = 0.1
+        new_control_mode = get_joint_position_params(vel = 0.1, accel = 0.1)
         
     elif control_mode == ControlMode.JOINT_IMPEDANCE:
         new_control_mode = get_joint_impedance_params(stiffness)
@@ -42,11 +41,24 @@ def set_control_mode(control_mode, arm, stiffness=Stiffness.MEDIUM):
     
     else:
         rospy.logerr("Unknown control mode requested: " + str(control_mode))
+        assert(False)
 
-    result = send_new_control_mode(new_control_mode)
+    result = send_new_control_mode(arm, new_control_mode)
     if not result.success:
         rospy.logerr("Failed to switch to control mode: " + str(control_mode))
     return result
+
+def send_new_control_mode(arm, msg):
+    send_new_control_mode_srv = rospy.ServiceProxy("/" + arm + "/set_control_mode_service",
+                                                   SetControlMode)
+    return send_new_control_mode_srv(msg)
+
+def get_joint_position_params(vel, accel):
+    new_control_mode = ControlModeParameters()
+    new_control_mode.control_mode.mode = ControlMode.JOINT_POSITION
+    new_control_mode.joint_path_execution_params.joint_relative_velocity = vel
+    new_control_mode.joint_path_execution_params.joint_relative_acceleration = accel
+    return new_control_mode
 
 
 def get_joint_impedance_params(stiffness):
@@ -57,7 +69,7 @@ def get_joint_impedance_params(stiffness):
     new_control_mode.control_mode.mode = ControlMode.JOINT_IMPEDANCE
 
     if stiffness == Stiffness.STIFF:
-        new_control_mode.joint_path_execution_params.joint_relative_velocity = 0.5
+        new_control_mode.joint_path_execution_params.joint_relative_velocity = 0.1
         new_control_mode.joint_path_execution_params.joint_relative_acceleration = 1.0
 
         new_control_mode.joint_impedance_params.joint_damping.joint_1 = 0.7
@@ -76,7 +88,7 @@ def get_joint_impedance_params(stiffness):
         new_control_mode.joint_impedance_params.joint_stiffness.joint_7 = 50.0
 
     elif stiffness == Stiffness.MEDIUM:
-        new_control_mode.joint_path_execution_params.joint_relative_velocity = 0.5
+        new_control_mode.joint_path_execution_params.joint_relative_velocity = 0.1
         new_control_mode.joint_path_execution_params.joint_relative_acceleration = 1.0
 
         new_control_mode.joint_impedance_params.joint_damping.joint_1 = 0.7
@@ -95,7 +107,7 @@ def get_joint_impedance_params(stiffness):
         new_control_mode.joint_impedance_params.joint_stiffness.joint_7 = 20.0
 
     elif stiffness == Stiffness.SOFT:
-        new_control_mode.joint_path_execution_params.joint_relative_velocity = 0.5
+        new_control_mode.joint_path_execution_params.joint_relative_velocity = 0.1
         new_control_mode.joint_path_execution_params.joint_relative_acceleration = 1.0
 
         new_control_mode.joint_impedance_params.joint_damping.joint_1 = 0.7
