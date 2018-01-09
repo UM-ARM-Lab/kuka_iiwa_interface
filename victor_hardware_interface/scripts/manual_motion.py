@@ -125,4 +125,6 @@ if __name__ == "__main__":
     right = ManualMotion("right_arm")
 
     rospy.on_shutdown(lambda: print_joints(left, right))
+
+    print "Running"
     rospy.spin()
