@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+import IPython
 import math
 import rospy
 from threading import Thread
@@ -172,6 +173,7 @@ class MinimalFakeArmInterface:
         :type cmd: MotionCommand
         :return: None
         """
+
         with self.input_mtx:
             if cmd.control_mode == self.control_mode_parameters_status_msg.control_mode:
                 if cmd.control_mode.mode == ControlMode.JOINT_POSITION \
@@ -204,7 +206,7 @@ class MinimalFakeArmInterface:
         :return:
         """
         with self.input_mtx:
-            return GetControlModeResponse(self.control_mode_parameters_status_msg)
+            return GetControlModeResponse(active_control_mode=self.control_mode_parameters_status_msg, has_active_control_mode=True)
 
     def set_control_mode_service_callback(self, req):
         """

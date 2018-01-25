@@ -20,7 +20,7 @@ from threading import Lock
 joint_names = ['joint_' + str(i) for i in range(1, 8)]
 
 hard_limits_deg = np.array([170.0,  120.0,  170.0,  120.0,  170.0,  120.0,  175.0])
-safety_deg = 30.0  # Stay far away from joint hard limits
+safety_deg = 20.0  # Stay far away from joint hard limits
 
 joint_lower = -(hard_limits_deg - safety_deg) * np.pi/180
 joint_upper =  (hard_limits_deg - safety_deg) * np.pi/180
@@ -35,7 +35,7 @@ class ManualMotion:
         self.threshold = 0.05
         self.arrive_threshold = 0.02
         
-        self.low_pass_tau = 0.01  # seconds
+        self.low_pass_tau = 0.001  # seconds
         self.prev_time = None
         self.lock = Lock()
         self.follow = False
@@ -84,6 +84,7 @@ class ManualMotion:
 
         # Low pass filter to avoid jerky motions
         alpha = dt / (self.low_pass_tau + dt)
+        alpha = 1.0
         new_cmd = (1.0 - alpha) * cmd + alpha * meas
 
         # Send the actual command
@@ -109,16 +110,16 @@ if __name__ == "__main__":
 
     print "initializing left arm ...",
     sys.stdout.flush()
-    result = vu.set_control_mode(ControlMode.JOINT_IMPEDANCE, "left_arm", vu.Stiffness.MEDIUM)
+    result = vu.set_control_mode(ControlMode.JOINT_IMPEDANCE, "left_arm", vu.Stiffness.RESPONSIVE)
     while not result.success:
-        result = vu.set_control_mode(ControlMode.JOINT_IMPEDANCE, "left_arm", vu.Stiffness.MEDIUM)
+        result = vu.set_control_mode(ControlMode.JOINT_IMPEDANCE, "left_arm", vu.Stiffness.RESPONSIVE)
     print "done"
 
     print "initializing right arm ...",
     sys.stdout.flush()
-    result = vu.set_control_mode(ControlMode.JOINT_IMPEDANCE, "right_arm", vu.Stiffness.MEDIUM)
+    result = vu.set_control_mode(ControlMode.JOINT_IMPEDANCE, "right_arm", vu.Stiffness.RESPONSIVE)
     while not result.success:
-        result = vu.set_control_mode(ControlMode.JOINT_IMPEDANCE, "right_arm", vu.Stiffness.MEDIUM)
+        result = vu.set_control_mode(ControlMode.JOINT_IMPEDANCE, "right_arm", vu.Stiffness.RESPONSIVE)
     print "done"
 
     left = ManualMotion("left_arm")
