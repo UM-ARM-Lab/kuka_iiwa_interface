@@ -31,7 +31,10 @@
     </group>
 
     <node pkg="joy"                       type="joy_node"                  name="xbox_joystick"/>
-    <node pkg="victor_hardware_interface" type="xbox_control.py"           name="xbox_to_victor"/>
+    <node pkg="victor_hardware_interface" type="xbox_control.py"           name="xbox_to_victor">
+        <param name="enable_finger_open_close_control"     type="bool"     value="true"/>
+        <param name="enable_scissor_open_close_control"    type="bool"     value="true"/>
+    </node>
     <node pkg="victor_hardware_interface" type="arm_wrench_republisher.py" name="arm_wrench_republisher" output="screen"/>
     <node pkg="victor_hardware_interface" type="grasp_status_node.py"      name="grasp_status"/>
 
