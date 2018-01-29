@@ -10,7 +10,7 @@
 
 namespace victor_utils
 {
-    victor_hardware_interface::JointValueQuantity vectorToJvq(std::vector<float> v)
+    victor_hardware_interface::JointValueQuantity vectorToJvq(const std::vector<double> &v)
     {
         assert(v.size() == 7);
         
@@ -26,9 +26,9 @@ namespace victor_utils
         return jvq;
     };
 
-    std::vector<float> jvqToVector(victor_hardware_interface::JointValueQuantity jvq)
+    std::vector<double> jvqToVector(const victor_hardware_interface::JointValueQuantity &jvq)
     {
-        std::vector<float> v(7);
+        std::vector<double> v(7);
         v[0] = jvq.joint_1;
         v[1] = jvq.joint_2;
         v[2] = jvq.joint_3;
