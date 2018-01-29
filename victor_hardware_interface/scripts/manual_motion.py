@@ -16,25 +16,26 @@ from victor_hardware_interface import victor_utils as vu
 from victor_hardware_interface.msg import *
 from threading import Lock
 
+
 joint_names = ['joint_' + str(i) for i in range(1, 8)]
 
 hard_limits_deg = np.array([170.0,  120.0,  170.0,  120.0,  170.0,  120.0,  175.0])
-safety_deg = 30.0  #Stay far away from joint hard limits
+safety_deg = 30.0  # Stay far away from joint hard limits
 
 joint_lower = -(hard_limits_deg - safety_deg) * np.pi/180
 joint_upper =  (hard_limits_deg - safety_deg) * np.pi/180
 
+
 class ManualMotion:
 
     def __init__(self, arm_name):
-        self.sub = rospy.Subscriber(arm_name + "/motion_status", MotionStatus,
-                                    self.callback_update)
+        self.sub = rospy.Subscriber(arm_name + "/motion_status", MotionStatus, self.callback_update)
         self.pub = rospy.Publisher(arm_name + "/motion_command", MotionCommand, queue_size=10)
 
         self.threshold = 0.05
         self.arrive_threshold = 0.02
         
-        self.low_pass_tau = 0.01 #second
+        self.low_pass_tau = 0.01  # seconds
         self.prev_time = None
         self.lock = Lock()
         self.follow = False
@@ -59,15 +60,11 @@ class ManualMotion:
             print "dt: ", dt
             assert False
 
-        
+        # Update our internal copy and calculate error for later thresholding
         meas = np.array([getattr(msg.measured_joint_position,  joint) for joint in joint_names])
         cmd =  np.array([getattr(msg.commanded_joint_position, joint) for joint in joint_names])
-
-        self.last_pos = meas
-
-        
         err = np.linalg.norm(meas - cmd)
-
+        self.last_pos = meas
 
 
         if err > self.threshold:
@@ -87,14 +84,13 @@ class ManualMotion:
 
         # Low pass filter to avoid jerky motions
         alpha = dt / (self.low_pass_tau + dt)
-        new_cmd = (1-alpha) * cmd + alpha * (meas)
+        new_cmd = (1.0 - alpha) * cmd + alpha * meas
 
-
+        # Send the actual command
         cmd_msg = MotionCommand()
         cmd_msg.control_mode.mode = ControlMode.JOINT_IMPEDANCE
-        for i in range(len(joint_names)):
-            setattr(cmd_msg.joint_position, joint_names[i], new_cmd[i])
-
+        for idx in range(len(joint_names)):
+            setattr(cmd_msg.joint_position, joint_names[idx], new_cmd[idx])
         self.pub.publish(cmd_msg)
         
         
@@ -110,14 +106,28 @@ def print_joints(left, right):
 
 if __name__ == "__main__":
     rospy.init_node("manual_motion")
-    print "initializing"
+
     control_mode_params = vu.get_joint_impedance_params(vu.Stiffness.MEDIUM)
     control_mode_params.joint_path_execution_params.joint_relative_velocity = 1.0
-    vu.send_new_control_mode("left_arm", control_mode_params)
-    vu.send_new_control_mode("right_arm", control_mode_params)
+
+    print "initializing left arm ...",
+    sys.stdout.flush()
+    result = vu.send_new_control_mode("left_arm", control_mode_params)
+    while not result.success:
+        result = vu.send_new_control_mode("left_arm", control_mode_params)
+    print "done"
+
+    print "initializing right arm ...",
+    sys.stdout.flush()
+    result = vu.send_new_control_mode("right_arm", control_mode_params)
+    while not result.success:
+        result = vu.send_new_control_mode("right_arm", control_mode_params)
+    print "done"
 
     left = ManualMotion("left_arm")
     right = ManualMotion("right_arm")
 
     rospy.on_shutdown(lambda: print_joints(left, right))
+
+    print "Running"
     rospy.spin()

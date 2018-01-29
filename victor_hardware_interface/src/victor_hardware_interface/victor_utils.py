@@ -49,6 +49,7 @@ def set_control_mode(control_mode, arm, stiffness=Stiffness.MEDIUM):
     return result
 
 def send_new_control_mode(arm, msg):
+    # TODO: Consider removing the forced global namespace in the future
     send_new_control_mode_srv = rospy.ServiceProxy("/" + arm + "/set_control_mode_service",
                                                    SetControlMode)
     return send_new_control_mode_srv(msg)
@@ -59,7 +60,6 @@ def get_joint_position_params(vel, accel):
     new_control_mode.joint_path_execution_params.joint_relative_velocity = vel
     new_control_mode.joint_path_execution_params.joint_relative_acceleration = accel
     return new_control_mode
-
 
 def get_joint_impedance_params(stiffness):
     """
@@ -124,7 +124,6 @@ def get_joint_impedance_params(stiffness):
         new_control_mode.joint_impedance_params.joint_stiffness.joint_5 = 3.0
         new_control_mode.joint_impedance_params.joint_stiffness.joint_6 = 3.0
         new_control_mode.joint_impedance_params.joint_stiffness.joint_7 = 1.0
-
 
     else:
         rospy.logerr("Unknown stiffness for Joint Impedance")
