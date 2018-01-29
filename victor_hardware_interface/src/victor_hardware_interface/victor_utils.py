@@ -10,7 +10,6 @@ class Stiffness(Enum):
     STIFF = 1
     MEDIUM = 3
     SOFT  = 2
-    RESPONSIVE = 4
     
 def set_control_mode(control_mode, arm, stiffness=Stiffness.MEDIUM):
     """
@@ -50,6 +49,7 @@ def set_control_mode(control_mode, arm, stiffness=Stiffness.MEDIUM):
     return result
 
 def send_new_control_mode(arm, msg):
+    # TODO: Consider removing the forced global namespace in the future
     send_new_control_mode_srv = rospy.ServiceProxy("/" + arm + "/set_control_mode_service",
                                                    SetControlMode)
     return send_new_control_mode_srv(msg)
@@ -60,7 +60,6 @@ def get_joint_position_params(vel, accel):
     new_control_mode.joint_path_execution_params.joint_relative_velocity = vel
     new_control_mode.joint_path_execution_params.joint_relative_acceleration = accel
     return new_control_mode
-
 
 def get_joint_impedance_params(stiffness):
     """
@@ -107,25 +106,6 @@ def get_joint_impedance_params(stiffness):
         new_control_mode.joint_impedance_params.joint_stiffness.joint_6 = 50.0
         new_control_mode.joint_impedance_params.joint_stiffness.joint_7 = 20.0
 
-    elif stiffness == Stiffness.RESPONSIVE:
-        new_control_mode.joint_path_execution_params.joint_relative_velocity = 0.1
-        new_control_mode.joint_path_execution_params.joint_relative_acceleration = 1.0
-
-        new_control_mode.joint_impedance_params.joint_damping.joint_1 = 0.4
-        new_control_mode.joint_impedance_params.joint_damping.joint_2 = 0.4
-        new_control_mode.joint_impedance_params.joint_damping.joint_3 = 0.4
-        new_control_mode.joint_impedance_params.joint_damping.joint_4 = 0.4
-        new_control_mode.joint_impedance_params.joint_damping.joint_5 = 0.4
-        new_control_mode.joint_impedance_params.joint_damping.joint_6 = 0.4
-        new_control_mode.joint_impedance_params.joint_damping.joint_7 = 0.4
-        new_control_mode.joint_impedance_params.joint_stiffness.joint_1 = 100.0
-        new_control_mode.joint_impedance_params.joint_stiffness.joint_2 = 100.0
-        new_control_mode.joint_impedance_params.joint_stiffness.joint_3 = 50.0
-        new_control_mode.joint_impedance_params.joint_stiffness.joint_4 = 50.0
-        new_control_mode.joint_impedance_params.joint_stiffness.joint_5 = 25.0
-        new_control_mode.joint_impedance_params.joint_stiffness.joint_6 = 25.0
-        new_control_mode.joint_impedance_params.joint_stiffness.joint_7 = 10.0
-
     elif stiffness == Stiffness.SOFT:
         new_control_mode.joint_path_execution_params.joint_relative_velocity = 0.1
         new_control_mode.joint_path_execution_params.joint_relative_acceleration = 1.0
@@ -144,7 +124,6 @@ def get_joint_impedance_params(stiffness):
         new_control_mode.joint_impedance_params.joint_stiffness.joint_5 = 3.0
         new_control_mode.joint_impedance_params.joint_stiffness.joint_6 = 3.0
         new_control_mode.joint_impedance_params.joint_stiffness.joint_7 = 1.0
-
 
     else:
         rospy.logerr("Unknown stiffness for Joint Impedance")
