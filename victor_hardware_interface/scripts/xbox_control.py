@@ -29,8 +29,8 @@ class VictorJoystick:
             dleft, dright, dup, ddown = joy.buttons
         left_hor, left_vert, LT, right_hor, right_vert,  RT, d_hor, d_vert = joy.axes
 
-        enable_finger_open_close_control = rospy.get_param("~/enable_finger_open_close_control", True)
-        enable_scissor_open_close_control = rospy.get_param("~/enable_scissor_open_close_control", True)
+        enable_finger_open_close_control = rospy.get_param("~enable_finger_open_close_control", True)
+        enable_scissor_open_close_control = rospy.get_param("~enable_scissor_open_close_control", True)
 
         rospy.loginfo_throttle(self.output_throttle_period,
                                "Finger open close control enabled:  " + str(enable_finger_open_close_control))
