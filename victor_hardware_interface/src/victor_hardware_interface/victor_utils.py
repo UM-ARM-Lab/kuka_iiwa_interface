@@ -130,3 +130,29 @@ def get_joint_impedance_params(stiffness):
         assert(False)
 
     return new_control_mode
+
+
+
+def jvq_to_list(jvq):
+    """Turns a joint value quantity into a list
+    Parameters:
+    jvq JointValueQuantity
+
+    Return:
+    list with 7 elements
+    """
+    return [getattr(jvq, 'joint_' + str(num)) for num in range(1,8)]
+
+def list_to_jvq(quantity_list):
+    """Turns a list of 7 numbers into a joint value quantity
+    Parameters:
+    list with 7 elements
+
+    Return:
+    jvq JointValueQuantity
+    """
+    assert(len(quantity_list) == 7)
+    jvq = JointValueQuantity()
+    for i in range(7):
+        setattr(jvq, 'joint_' + str(i+1), quantity_list[i])
+    return jvq
