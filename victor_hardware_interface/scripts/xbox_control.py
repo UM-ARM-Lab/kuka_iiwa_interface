@@ -10,11 +10,11 @@ from sensor_msgs.msg import Joy
 
 class VictorJoystick:
     def __init__(self):
-        self.enable_finger_open_close_control = rospy.get_param("~/enable_finger_open_close_control", False)
-        self.enable_scissor_open_close_control = rospy.get_param("~/enable_scissor_open_close_control", False)
+        self.enable_finger_open_close_control = rospy.get_param("~enable_finger_open_close_control", False)
+        self.enable_scissor_open_close_control = rospy.get_param("~enable_scissor_open_close_control", False)
 
-        rospy.loginfo("Finger open close control enabled:  ", self.enable_finger_open_close_control)
-        rospy.loginfo("Scissor open close control enabled: ", self.enable_scissor_open_close_control)
+        rospy.loginfo("Finger open close control enabled:  %r", self.enable_finger_open_close_control)
+        rospy.loginfo("Scissor open close control enabled: %r", self.enable_scissor_open_close_control)
 
         self.gripper_status = \
             {"right": ros_helpers.Listener("right_arm/gripper_status", Robotiq3FingerStatus),
@@ -88,7 +88,7 @@ class VictorJoystick:
         finger_pos    float[] - position values for fingers a,b,c. [0 to 1]
         scissor_pos   float   - position values for scissor. [0 to 1]
         """
-        
+
         cur = self.gripper_status[gripper_name].get()
         cmd = self.default_gripper_command()
 
@@ -125,7 +125,7 @@ class VictorJoystick:
         cmd.scissor_command.position = 1.0
         return cmd
 
-                 
+
 def main():
     rospy.init_node('xbox_control')
     VJ = VictorJoystick()
