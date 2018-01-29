@@ -1,0 +1,30 @@
+<launch>
+    <arg name="model"                        default="$(find victor_description)/urdf/victor.urdf.xacro"/>
+    <arg name="arm_command_gui"              default="false"/>
+
+    <param name="robot_description" command="$(find xacro)/xacro --xacro-ns --inorder $(arg model)"/>
+    <node pkg="victor_hardware_interface" type="joint_state_publisher.py" name="joint_state_publisher"/>
+    <node pkg="robot_state_publisher"     type="robot_state_publisher"    name="robot_state_publisher"/>
+    <node pkg="victor_hardware_interface" type="arm_command_gui.py"       name="arm_command_gui"    if="$(arg arm_command_gui)"/>
+    
+    <include file="$(find victor_hardware_interface)/launch/mocap_to_victor_static_transforms.launch">
+        <arg name="use_sim_time" value="false"/>
+    </include>
+
+    <node pkg="victor_fake_hardware_interface" type="minimal_fake_arm_interface.py" name="fake_arm_interface"/>
+
+    <!--<node pkg="joy"                       type="joy_node"                  name="xbox_joystick"/>-->
+    <!--<node pkg="victor_hardware_interface" type="xbox_control.py"           name="xbox_to_victor"/>-->
+    <node pkg="victor_hardware_interface" type="arm_wrench_republisher.py" name="arm_wrench_republisher" output="screen"/>
+    <node pkg="victor_hardware_interface" type="grasp_status_node.py"      name="grasp_status"/>
+
+    <group>
+        <machine name="victorbackpack"
+                 address="victorbackpack.local"
+                 user="armlab"
+                 env-loader="~/ros_env.sh"/>
+        <node name="polly" pkg="amazon_ros_speech" type="polly.py"
+              args="'Yellow leader, standing by. This is a sub par version of Maize'"
+              machine="victorbackpack"/>
+    </group>
+</launch>
