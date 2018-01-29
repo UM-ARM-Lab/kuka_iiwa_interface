@@ -111,8 +111,11 @@ def print_joints(left, right):
 if __name__ == "__main__":
     rospy.init_node("manual_motion")
     print "initializing"
-    vu.set_control_mode(ControlMode.JOINT_IMPEDANCE, "left_arm", vu.Stiffness.MEDIUM)
-    vu.set_control_mode(ControlMode.JOINT_IMPEDANCE, "right_arm", vu.Stiffness.MEDIUM)
+    control_mode_params = vu.get_joint_impedance_params(vu.Stiffness.MEDIUM)
+    control_mode_params.joint_path_execution_params.joint_relative_velocity = 1.0
+    vu.send_new_control_mode("left_arm", control_mode_params)
+    vu.send_new_control_mode("right_arm", control_mode_params)
+
     left = ManualMotion("left_arm")
     right = ManualMotion("right_arm")
 
