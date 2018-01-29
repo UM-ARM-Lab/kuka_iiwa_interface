@@ -10,12 +10,6 @@ from sensor_msgs.msg import Joy
 
 class VictorJoystick:
     def __init__(self):
-        self.enable_finger_open_close_control = rospy.get_param("~enable_finger_open_close_control", False)
-        self.enable_scissor_open_close_control = rospy.get_param("~enable_scissor_open_close_control", False)
-
-        rospy.loginfo("Finger open close control enabled:  %r", self.enable_finger_open_close_control)
-        rospy.loginfo("Scissor open close control enabled: %r", self.enable_scissor_open_close_control)
-
         self.gripper_status = \
             {"right": ros_helpers.Listener("right_arm/gripper_status", Robotiq3FingerStatus),
              "left": ros_helpers.Listener("left_arm/gripper_status", Robotiq3FingerStatus)}
@@ -33,10 +27,16 @@ class VictorJoystick:
             dleft, dright, dup, ddown = joy.buttons
         left_hor, left_vert, LT, right_hor, right_vert,  RT, d_hor, d_vert = joy.axes
 
-        if self.enable_finger_open_close_control:
+        enable_finger_open_close_control = rospy.get_param("~/enable_finger_open_close_control", True)
+        enable_scissor_open_close_control = rospy.get_param("~/enable_scissor_open_close_control", True)
+
+        rospy.loginfo_throttle(1.0, "Finger open close control enabled:  " + str(enable_finger_open_close_control))
+        rospy.loginfo_throttle(1.0, "Scissor open close control enabled: " + str(enable_scissor_open_close_control))
+
+        if enable_finger_open_close_control:
             self.finger_open_close_callback(LT, LB, RT, RB)
 
-        if self.enable_scissor_open_close_control:
+        if enable_scissor_open_close_control:
             self.scissor_open_close_callback(X, Y, A, B)
 
     def finger_open_close_callback(self, LT, LB, RT, RB):
