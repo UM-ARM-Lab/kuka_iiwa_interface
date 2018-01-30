@@ -305,4 +305,14 @@ public class Conversions
         forceTorqueToCvq(force_torque, cvq);
         return cvq;
     }
+
+    public static cartesian_control_mode_limits ccmToControlModeLimits(final CartesianImpedanceControlMode ccm)
+    {
+        cartesian_control_mode_limits ccml_msg;
+        vectorToCvq(ccm.getMaxCartesianVelocity(), ccml_msg.max_cartesian_velocity, true);
+        vectorToCvq(ccm.getMaxPathDeviation(), ccml_msg.max_path_deviation, true);
+        vectorToCvq(ccm.getMaxControlForce(), ccml_msg.max_control_force, false);
+        ccml_msg.stop_on_max_control_force = ccm.hasMaxControlForceStopCondition();
+
+    }
 }

@@ -86,7 +86,8 @@ public class LCMRobotInterface extends RoboticsAPIApplication implements LCMSubs
     private ObjectFrame end_effector_frame_; 
     
     private boolean running_;
-    
+
+    // TODO remove these as member variables. These are properties of the ArmController
     private joint_path_execution_parameters joint_path_execution_params_;
     private cartesian_path_execution_parameters cartesian_path_execution_params_;
     private ArmController arm_controller_;
@@ -398,6 +399,11 @@ public class LCMRobotInterface extends RoboticsAPIApplication implements LCMSubs
         control_mode active_control_mode_;
         abstract void setDestination(Targets t);
         void update(control_mode_parameters cmd) {}
+        boolean canUpdate(control_mode_parameters cmd)
+        {
+            return cmd.control_mode.mode == this.active_control_mode_.mode;
+        }
+        
         abstract boolean stop();
         abstract IMotion getIMotion();
         abstract void populateStatusMsg(control_mode_parameters control_mode_status_msg);
@@ -416,6 +422,16 @@ public class LCMRobotInterface extends RoboticsAPIApplication implements LCMSubs
         boolean stop()
         {
             return joint_smartservo_motion_.getRuntime().stopMotion();
+        }
+
+        @Override
+        boolean canUpdate(control_mode_parameters cmd)
+        {
+            if (!super.canUpdate(cmd))
+            {
+                return false;
+            }
+            return cmd.joint_path_execution_params.equals(joint_path_execution_params_);
         }
     }
     
@@ -537,6 +553,28 @@ public class LCMRobotInterface extends RoboticsAPIApplication implements LCMSubs
         {
             return cartesian_smartservo_motion_.getRuntime().stopMotion();
         }
+
+        @Override
+        boolean canUpdate(control_mode_parameters cmd)
+        {
+            if (!super.canUpdate(cmd))
+            {
+                return false;
+            }
+            
+            if (!cmd.cartesian_path_execution_params.equals(cartesian_path_execution_params_))
+            {
+                return false;
+            }
+
+            CartesianImpedanceControlMode ccm = (CartesianImpedanceControlMode)cartesian_smartservo_motion_.getMode();
+            if (!cmd.cartesian_control_mode_limits.equals(ccmToControlModeLimits(ccm)))
+            {
+                return false;
+            }
+            return true;
+        }
+
     }
     
     private class CartesianPoseController extends CartesianController
@@ -575,10 +613,7 @@ public class LCMRobotInterface extends RoboticsAPIApplication implements LCMSubs
         {
             CartesianImpedanceControlMode ccm = (CartesianImpedanceControlMode)cartesian_smartservo_motion_.getMode();
             // Cartesian control mode limits
-            Conversions.vectorToCvq(ccm.getMaxCartesianVelocity(), control_mode_status_msg.cartesian_control_mode_limits.max_cartesian_velocity, true);
-            Conversions.vectorToCvq(ccm.getMaxPathDeviation(), control_mode_status_msg.cartesian_control_mode_limits.max_path_deviation, true);
-            Conversions.vectorToCvq(ccm.getMaxControlForce(), control_mode_status_msg.cartesian_control_mode_limits.max_control_force, false);
-            control_mode_status_msg.cartesian_control_mode_limits.stop_on_max_control_force = ccm.hasMaxControlForceStopCondition();
+            control_mode_status_msg.cartesian_control_mode_limits = Conversions.ccmToControlModeLimits(ccm);
         }
     }
     
