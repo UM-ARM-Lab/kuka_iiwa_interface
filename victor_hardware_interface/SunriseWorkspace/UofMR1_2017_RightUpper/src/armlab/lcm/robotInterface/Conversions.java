@@ -7,8 +7,8 @@ import armlab.lcm.msgs.joint_value_quantity;
 import com.kuka.roboticsAPI.deviceModel.JointPosition;
 import com.kuka.roboticsAPI.geometricModel.Frame;
 import com.kuka.roboticsAPI.geometricModel.math.Matrix;
-import com.kuka.roboticsAPI.geometricModel.math.MatrixRotation;
 import com.kuka.roboticsAPI.geometricModel.math.MatrixBuilder;
+import com.kuka.roboticsAPI.geometricModel.math.MatrixRotation;
 import com.kuka.roboticsAPI.geometricModel.math.Transformation;
 import com.kuka.roboticsAPI.geometricModel.math.Vector;
 import com.kuka.roboticsAPI.sensorModel.ForceSensorData;
@@ -98,20 +98,29 @@ public class Conversions
         return jvq;
     }
     
-    public static void vectorToCvq(final double[] vec, cartesian_value_quantity cvq)
+    public static void vectorToCvq(final double[] vec, cartesian_value_quantity cvq, final boolean millimeters_to_meters)
     {
-        cvq.x = vec[0];
-        cvq.y = vec[1];
-        cvq.z = vec[2];
+    	if (millimeters_to_meters)
+    	{
+	        cvq.x = vec[0] / 1000.0;
+	        cvq.y = vec[1] / 1000.0;
+	        cvq.z = vec[2] / 1000.0;
+    	}
+    	else
+    	{
+    		cvq.x = vec[0];
+	        cvq.y = vec[1];
+	        cvq.z = vec[2];
+    	}
         cvq.a = vec[3];
         cvq.b = vec[4];
         cvq.c = vec[5];
     }
     
-    public static cartesian_value_quantity vectorToCvq(final double[] vec)
+    public static cartesian_value_quantity vectorToCvq(final double[] vec, final boolean millimeters_to_meters)
     {
         cartesian_value_quantity cvq = new cartesian_value_quantity();
-        vectorToCvq(vec, cvq);
+        vectorToCvq(vec, cvq, millimeters_to_meters);
         return cvq;
     }
     

@@ -98,20 +98,29 @@ public class Conversions
         return jvq;
     }
     
-    public static void vectorToCvq(final double[] vec, cartesian_value_quantity cvq)
+    public static void vectorToCvq(final double[] vec, cartesian_value_quantity cvq, final boolean millimeters_to_meters)
     {
-        cvq.x = vec[0];
-        cvq.y = vec[1];
-        cvq.z = vec[2];
+    	if (millimeters_to_meters)
+    	{
+	        cvq.x = vec[0] / 1000.0;
+	        cvq.y = vec[1] / 1000.0;
+	        cvq.z = vec[2] / 1000.0;
+    	}
+    	else
+    	{
+    		cvq.x = vec[0];
+	        cvq.y = vec[1];
+	        cvq.z = vec[2];
+    	}
         cvq.a = vec[3];
         cvq.b = vec[4];
         cvq.c = vec[5];
     }
     
-    public static cartesian_value_quantity vectorToCvq(final double[] vec)
+    public static cartesian_value_quantity vectorToCvq(final double[] vec, final boolean millimeters_to_meters)
     {
         cartesian_value_quantity cvq = new cartesian_value_quantity();
-        vectorToCvq(vec, cvq);
+        vectorToCvq(vec, cvq, millimeters_to_meters);
         return cvq;
     }
     
@@ -161,7 +170,7 @@ public class Conversions
     
     public static Transformation cvqToTransformation(final cartesian_value_quantity cvq)
     {
-        return Transformation.ofRad(cvq.x*1000, cvq.y*1000, cvq.z*1000, cvq.a, cvq.b, cvq.c);
+        return Transformation.ofRad(cvq.x*1000,cvq.y*1000,cvq.z*1000,cvq.a,cvq.b,cvq.c);
     }
 
     public static Frame cvqToFrame(final cartesian_value_quantity cvq)
@@ -268,7 +277,6 @@ public class Conversions
     
     public static Frame poseToFrame(final cartesian_pose pose)
     {
-    	// The Kuka framework wants translations in mm, so we do the conversion here
         Vector translation = Vector.of(pose.xt * 1000.0, pose.yt * 1000.0, pose.zt * 1000.0);
         MatrixRotation rotMatrix = quatToMatrix(pose.wr, pose.xr, pose.yr, pose.zr);
         return new Frame(Transformation.of(translation, rotMatrix));    
