@@ -330,7 +330,7 @@ public class LCMRobotInterface extends RoboticsAPIApplication implements LCMSubs
         synchronized (arm_io_lock_)
         { 
            //Don't rebuild control mode if we don't have to
-            if(cmd.control_mode.mode == arm_controller_.active_control_mode_.mode)
+            if(arm_controller_.canUpdate(cmd))
             {
                 getLogger().info("Updating Control Mode: " + cmd.control_mode.mode);
                 arm_controller_.update(cmd);
@@ -431,7 +431,7 @@ public class LCMRobotInterface extends RoboticsAPIApplication implements LCMSubs
             {
                 return false;
             }
-            return cmd.joint_path_execution_params.equals(joint_path_execution_params_);
+            return Utils.areEqual(cmd.joint_path_execution_params, joint_path_execution_params_);
         }
     }
     
@@ -506,7 +506,6 @@ public class LCMRobotInterface extends RoboticsAPIApplication implements LCMSubs
         }
         
         void setStiffness(control_mode_parameters cmd) {
-            getLogger().info("Updating Joint Impedance Stiffness");
             jcm_.setDamping(Conversions.jvqToVector(cmd.joint_impedance_params.joint_damping));
             jcm_.setStiffness(Conversions.jvqToVector(cmd.joint_impedance_params.joint_stiffness));    
         }
@@ -561,18 +560,15 @@ public class LCMRobotInterface extends RoboticsAPIApplication implements LCMSubs
             {
                 return false;
             }
-            
-            if (!cmd.cartesian_path_execution_params.equals(cartesian_path_execution_params_))
+             
+            if (!Utils.areEqual(cmd.cartesian_path_execution_params, cartesian_path_execution_params_))
             {
                 return false;
             }
 
             CartesianImpedanceControlMode ccm = (CartesianImpedanceControlMode)cartesian_smartservo_motion_.getMode();
-            if (!cmd.cartesian_control_mode_limits.equals(ccmToControlModeLimits(ccm)))
-            {
-                return false;
-            }
-            return true;
+            return Utils.areEqual(cmd.cartesian_control_mode_limits, Conversions.ccmToControlModeLimits(ccm));
+
         }
 
     }
@@ -611,9 +607,7 @@ public class LCMRobotInterface extends RoboticsAPIApplication implements LCMSubs
         @Override
         void populateStatusMsg(control_mode_parameters control_mode_status_msg)
         {
-            CartesianImpedanceControlMode ccm = (CartesianImpedanceControlMode)cartesian_smartservo_motion_.getMode();
-            // Cartesian control mode limits
-            control_mode_status_msg.cartesian_control_mode_limits = Conversions.ccmToControlModeLimits(ccm);
+            control_mode_status_msg.cartesian_path_execution_params = cartesian_path_execution_params_;
         }
     }
     
