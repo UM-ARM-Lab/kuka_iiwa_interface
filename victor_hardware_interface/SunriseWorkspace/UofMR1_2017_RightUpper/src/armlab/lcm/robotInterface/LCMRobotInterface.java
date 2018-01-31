@@ -426,7 +426,8 @@ public class LCMRobotInterface extends RoboticsAPIApplication implements LCMSubs
 
         @Override
         boolean canUpdate(control_mode_parameters cmd)
-            return super.canUpdate(cmd)) &&
+        {
+            return super.canUpdate(cmd) &&
                 Utils.areEqual(cmd.joint_path_execution_params, joint_path_execution_params_);
         }
     }
