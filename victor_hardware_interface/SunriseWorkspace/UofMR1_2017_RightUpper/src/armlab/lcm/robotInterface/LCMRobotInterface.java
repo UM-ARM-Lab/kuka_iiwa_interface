@@ -426,12 +426,8 @@ public class LCMRobotInterface extends RoboticsAPIApplication implements LCMSubs
 
         @Override
         boolean canUpdate(control_mode_parameters cmd)
-        {
-            if (!super.canUpdate(cmd))
-            {
-                return false;
-            }
-            return Utils.areEqual(cmd.joint_path_execution_params, joint_path_execution_params_);
+            return super.canUpdate(cmd)) &&
+                Utils.areEqual(cmd.joint_path_execution_params, joint_path_execution_params_);
         }
     }
     
@@ -556,19 +552,9 @@ public class LCMRobotInterface extends RoboticsAPIApplication implements LCMSubs
         @Override
         boolean canUpdate(control_mode_parameters cmd)
         {
-            if (!super.canUpdate(cmd))
-            {
-                return false;
-            }
-             
-            if (!Utils.areEqual(cmd.cartesian_path_execution_params, cartesian_path_execution_params_))
-            {
-                return false;
-            }
-
-            CartesianImpedanceControlMode ccm = (CartesianImpedanceControlMode)cartesian_smartservo_motion_.getMode();
-            return Utils.areEqual(cmd.cartesian_control_mode_limits, Conversions.ccmToControlModeLimits(ccm));
-
+            return super.canUpdate(cmd) &&
+                Utils.areEqual(cmd.cartesian_path_execution_params, cartesian_path_execution_params_) &&
+                Utils.areEqual(cmd.cartesian_control_mode_limits, Conversions.ccmToControlModeLimits((CartesianImpedanceControlMode)cartesian_smartservo_motion_.getMode()));
         }
 
     }
