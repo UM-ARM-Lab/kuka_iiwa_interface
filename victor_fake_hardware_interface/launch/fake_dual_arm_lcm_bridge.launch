@@ -11,7 +11,7 @@
         <arg name="use_sim_time" value="false"/>
     </include>
 
-    <node pkg="victor_fake_hardware_interface" type="minimal_fake_arm_interface.py" name="fake_arm_interface"/>
+    <node pkg="victor_fake_hardware_interface" type="minimal_fake_arm_interface.py" name="fake_arm_interface" output="screen"/>
 
     <!--<node pkg="joy"                       type="joy_node"                  name="xbox_joystick"/>-->
     <!--<node pkg="victor_hardware_interface" type="xbox_control.py"           name="xbox_to_victor"/>-->

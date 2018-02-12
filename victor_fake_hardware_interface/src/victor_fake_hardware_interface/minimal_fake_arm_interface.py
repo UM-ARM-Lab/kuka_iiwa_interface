@@ -2,12 +2,14 @@
 
 import IPython
 import math
+import numpy as np
 import rospy
 from threading import Thread
 from threading import Lock
 
 from victor_hardware_interface.msg import *
 from victor_hardware_interface.srv import *
+from victor_hardware_interface import victor_utils as vu
 
 arm_names = ["left_arm", "right_arm"]
 cartesian_field_names = ["x", "y", "z", "a", "b", "c"]
@@ -16,6 +18,8 @@ joint_names = ['joint_' + str(i) for i in range(1, 8)]
 control_mode_feedback_rate = 1.0 # Hz
 arm_status_feedback_rate = 100.0 # Hz
 gripper_feedback_rate =     10.0 # Hz
+
+speed_parameter_name = "~fake_victor_joint_speed"
 
 
 def DefaultControlModeParametersStatus():
@@ -168,18 +172,17 @@ class MinimalFakeArmInterface:
         self.arm_status_thread =        Thread(target=self.arm_status_feedback_thread)
         self.gripper_status_thread =    Thread(target=self.gripper_status_feedback_thread)
 
+
     def arm_motion_command_callback(self, cmd):
         """
         :type cmd: MotionCommand
         :return: None
         """
-
         with self.input_mtx:
             if cmd.control_mode == self.control_mode_parameters_status_msg.control_mode:
                 if cmd.control_mode.mode == ControlMode.JOINT_POSITION \
                         or cmd.control_mode.mode == ControlMode.JOINT_IMPEDANCE:
                     self.motion_status_msg.commanded_joint_position = cmd.joint_position
-                    self.motion_status_msg.measured_joint_position = cmd.joint_position
                 else:
                     rospy.logerr("Cartesian control modes not implemented")
             else:
@@ -227,12 +230,35 @@ class MinimalFakeArmInterface:
                 self.control_status_pub.publish(self.control_mode_parameters_status_msg)
             r.sleep()
 
+    def update_motion(self):
+        """
+        Runs a simple controller to move the arm closer to the commanded position
+
+        :type joint_position: joint_value_quantity
+        :return: None
+        """
+        
+        speed = rospy.get_param(speed_parameter_name, False)
+        if speed is False:
+            self.motion_status_msg.measured_joint_position = self.motion_status_msg.commanded_joint_position
+            return
+
+        # Very simple controller
+        cur = np.array(vu.jvq_to_list(self.motion_status_msg.measured_joint_position))
+        target = np.array(vu.jvq_to_list(self.motion_status_msg.commanded_joint_position))
+        dx = speed / arm_status_feedback_rate
+        dx = min(dx, np.linalg.norm(cur-target))
+        cur += (target - cur) * dx
+        self.motion_status_msg.measured_joint_position = vu.list_to_jvq(cur)
+
+
     # TODO: populate seq
     # TODO: populate timestamp in submessages
     def arm_status_feedback_thread(self):
         r = rospy.Rate(arm_status_feedback_rate)
         while not rospy.is_shutdown():
             with self.input_mtx:
+                self.update_motion()
                 self.motion_status_msg.header.stamp = rospy.Time.now()
                 self.motion_status_pub.publish(self.motion_status_msg)
             r.sleep()
@@ -257,28 +283,49 @@ class MinimalFakeArmInterface:
         self.arm_status_thread.join()
         self.gripper_status_thread.join()
 
+class FakeVictor:
+    def __init__(self):
+
+        self.docstring = """
+        FAKE VICTOR
+        ==================================================
+        This immitates Victor's communication interface without passing commands along to Victor.
+        Fake data is generated for the outgoing messages.
+        
+        Implementation:
+        Motion Speed: (default) Instant. Can be set through a ros param
+        No external torque
+        No joint velocity
+        No FK: All cartesian values are 0
+        Will never crash into environment
+        No joint limits
+        """
+
+        
+        self.arm_interfaces = {}
+        for arm in arm_names:
+            self.arm_interfaces[arm] = MinimalFakeArmInterface(
+                arm_name=arm,
+                control_mode_status_topic=arm + "/control_mode_status",
+                get_control_mode_service_topic=arm + "/get_control_mode_service",
+                set_control_mode_service_topic=arm + "/set_control_mode_service",
+                motion_command_topic=arm + "/motion_command",
+                motion_status_topic=arm + "/motion_status",
+                gripper_command_topic=arm + "/gripper_command",
+                gripper_status_topic=arm + "/gripper_status")
+            
+        for arm in arm_names:
+            self.arm_interfaces[arm].start_feedback_threads()
+    
+
 
 if __name__ == "__main__":
     rospy.init_node("minimal_fake_arm_interface")
 
-    interfaces = {}
-
-    for arm in arm_names:
-        interfaces[arm] = MinimalFakeArmInterface(
-            arm_name=arm,
-            control_mode_status_topic=arm + "/control_mode_status",
-            get_control_mode_service_topic=arm + "/get_control_mode_service",
-            set_control_mode_service_topic=arm + "/set_control_mode_service",
-            motion_command_topic=arm + "/motion_command",
-            motion_status_topic=arm + "/motion_status",
-            gripper_command_topic=arm + "/gripper_command",
-            gripper_status_topic=arm + "/gripper_status")
-
-    for arm in arm_names:
-        interfaces[arm].start_feedback_threads()
+    fake_victor = FakeVictor()
+    rospy.loginfo(fake_victor.docstring)
+    
 
     rospy.loginfo("Publishing data...")
     rospy.spin()
 
-    for arm in arm_names:
-        interfaces[arm].join_feedback_threads()
