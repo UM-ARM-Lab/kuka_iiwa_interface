@@ -261,6 +261,23 @@ class MinimalFakeArmInterface:
 if __name__ == "__main__":
     rospy.init_node("minimal_fake_arm_interface")
 
+    docstring = """
+
+    FAKE VICTOR
+    ==================================================
+    This immitates Victor's communication interface without passing commands along to Victor.
+    Fake data is generated for the outgoing messages.
+
+    Implementation:
+    Instant motion: Fake Victor immediately goes to the motion_command joint positions
+    No external torque
+    No joint velocity
+    No FK: All cartesian values are 0
+    Will never crash into environment
+    No joint limits
+    """
+    rospy.loginfo(docstring)
+
     interfaces = {}
 
     for arm in arm_names:
