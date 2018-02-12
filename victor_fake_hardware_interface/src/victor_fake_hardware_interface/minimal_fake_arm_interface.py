@@ -283,45 +283,49 @@ class MinimalFakeArmInterface:
         self.arm_status_thread.join()
         self.gripper_status_thread.join()
 
+class FakeVictor:
+    def __init__(self):
+
+        self.docstring = """
+        FAKE VICTOR
+        ==================================================
+        This immitates Victor's communication interface without passing commands along to Victor.
+        Fake data is generated for the outgoing messages.
+        
+        Implementation:
+        Motion Speed: (default) Instant. Can be set through a ros param
+        No external torque
+        No joint velocity
+        No FK: All cartesian values are 0
+        Will never crash into environment
+        No joint limits
+        """
+
+        
+        self.arm_interfaces = {}
+        for arm in arm_names:
+            self.arm_interfaces[arm] = MinimalFakeArmInterface(
+                arm_name=arm,
+                control_mode_status_topic=arm + "/control_mode_status",
+                get_control_mode_service_topic=arm + "/get_control_mode_service",
+                set_control_mode_service_topic=arm + "/set_control_mode_service",
+                motion_command_topic=arm + "/motion_command",
+                motion_status_topic=arm + "/motion_status",
+                gripper_command_topic=arm + "/gripper_command",
+                gripper_status_topic=arm + "/gripper_status")
+            
+        for arm in arm_names:
+            self.arm_interfaces[arm].start_feedback_threads()
+    
+
 
 if __name__ == "__main__":
     rospy.init_node("minimal_fake_arm_interface")
 
-    docstring = """
-
-    FAKE VICTOR
-    ==================================================
-    This immitates Victor's communication interface without passing commands along to Victor.
-    Fake data is generated for the outgoing messages.
-
-    Implementation:
-    Instant motion: Fake Victor immediately goes to the motion_command joint positions
-    No external torque
-    No joint velocity
-    No FK: All cartesian values are 0
-    Will never crash into environment
-    No joint limits
-    """
-    rospy.loginfo(docstring)
-
-    interfaces = {}
-
-    for arm in arm_names:
-        interfaces[arm] = MinimalFakeArmInterface(
-            arm_name=arm,
-            control_mode_status_topic=arm + "/control_mode_status",
-            get_control_mode_service_topic=arm + "/get_control_mode_service",
-            set_control_mode_service_topic=arm + "/set_control_mode_service",
-            motion_command_topic=arm + "/motion_command",
-            motion_status_topic=arm + "/motion_status",
-            gripper_command_topic=arm + "/gripper_command",
-            gripper_status_topic=arm + "/gripper_status")
-
-    for arm in arm_names:
-        interfaces[arm].start_feedback_threads()
+    fake_victor = FakeVictor()
+    rospy.loginfo(fake_victor.docstring)
+    
 
     rospy.loginfo("Publishing data...")
     rospy.spin()
 
-    for arm in arm_names:
-        interfaces[arm].join_feedback_threads()
