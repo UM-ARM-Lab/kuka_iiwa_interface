@@ -156,3 +156,18 @@ def list_to_jvq(quantity_list):
     for i in range(7):
         setattr(jvq, 'joint_' + str(i+1), quantity_list[i])
     return jvq
+
+def default_gripper_command():
+    cmd = Robotiq3FingerCommand()
+    cmd.finger_a_command.speed = 0.5
+    cmd.finger_b_command.speed = 0.5
+    cmd.finger_c_command.speed = 0.5
+    cmd.scissor_command.speed = 1.0
+
+    cmd.finger_a_command.force = 1.0
+    cmd.finger_b_command.force = 1.0
+    cmd.finger_c_command.force = 1.0
+    cmd.scissor_command.force = 1.0
+
+    cmd.scissor_command.position = 1.0
+    return cmd
