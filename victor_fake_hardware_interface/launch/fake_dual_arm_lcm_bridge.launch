@@ -1,6 +1,7 @@
 <launch>
-    <arg name="model"                        default="$(find victor_description)/urdf/victor.urdf.xacro"/>
-    <arg name="arm_command_gui"              default="false"/>
+    <arg name="model"                       default="$(find victor_description)/urdf/victor.urdf.xacro"/>
+    <arg name="arm_command_gui"             default="false"/>
+    <arg name="talkative"                   default="true"/>
 
     <param name="robot_description" command="$(find xacro)/xacro --xacro-ns --inorder $(arg model)"/>
     <node pkg="victor_hardware_interface" type="joint_state_publisher.py" name="joint_state_publisher"/>
@@ -21,6 +22,7 @@
                  env-loader="~/ros_env.sh"/>
         <node name="polly" pkg="amazon_ros_speech" type="polly.py"
               args="'Yellow leader, standing by. This is a sub par version of Maize'"
-              machine="victorbackpack"/>
+              machine="victorbackpack"
+              if="$(arg talkative)"/>
     </group>
 </launch>
