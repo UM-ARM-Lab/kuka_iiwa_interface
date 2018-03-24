@@ -51,11 +51,17 @@ class VictorJoystick:
         if LB:
             self.open_gripper("left")
 
+        if not (LT == -1 or LB):
+            self.stop_gripper("left")
+
         if RT == -1:
             self.close_gripper("right")
 
         if RB:
             self.open_gripper("right")
+
+        if not (RT == -1 or RB):
+            self.stop_gripper("right")
 
     def scissor_open_close_callback(self, X, Y, A, B):
         # Open and close the scissors on the gripper
@@ -65,11 +71,17 @@ class VictorJoystick:
         if Y:
             self.open_scissor("left")
 
+        if not (X or Y):
+            self.stop_scissor("left")
+
         if A:
             self.close_scissor("right")
 
         if B:
             self.open_scissor("right")
+
+        if not (A or B):
+            self.stop_scissor("right")
 
     def close_gripper(self, gripper_name, **kwargs):
         self.set_gripper(gripper_name, finger_pos=(1.0, 1.0, 1.0), **kwargs)
@@ -77,11 +89,23 @@ class VictorJoystick:
     def open_gripper(self, gripper_name, **kwargs):
         self.set_gripper(gripper_name, finger_pos=(0.0, 0.0, 0.0), **kwargs)
 
+    def stop_gripper(self, gripper_name):
+        status_msg = self.gripper_status[gripper_name].get()
+        a = status_msg.finger_a_status.position
+        b = status_msg.finger_b_status.position
+        c = status_msg.finger_c_status.position
+        self.set_gripper(gripper_name, finger_pos=(a, b,c ))
+
     def close_scissor(self, gripper_name, **kwargs):
         self.set_gripper(gripper_name, scissor_pos=1.0, **kwargs)
 
     def open_scissor(self, gripper_name, **kwargs):
         self.set_gripper(gripper_name, scissor_pos=0.0, **kwargs)
+
+    def stop_scissor(self, gripper_name):
+        status_msg = self.gripper_status[gripper_name].get()
+        s = status_msg.scissor_status.position
+        self.set_gripper(gripper_name, scissor_pos=s)
 
     def set_gripper(self, gripper_name, finger_pos=None, scissor_pos=None, blocking=True, continuous=False):
         """
@@ -113,6 +137,9 @@ class VictorJoystick:
             cmd.scissor_command.position = cur.scissor_status.position_request
 
         self.gripper_command_publisher[gripper_name].publish(cmd)
+        self.gripper_status[gripper_name].get()
+        while not self.gripper_status[gripper_name].has_new_data():
+            rospy.sleep(0.01)
 
     def default_gripper_command(self):
         cmd = Robotiq3FingerCommand()
