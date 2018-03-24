@@ -63,7 +63,6 @@ class VictorJoystick:
         if not (RT == -1 or RB):
             self.stop_gripper("right")
 
-
     def scissor_open_close_callback(self, X, Y, A, B):
         # Open and close the scissors on the gripper
         if X:
@@ -72,11 +71,17 @@ class VictorJoystick:
         if Y:
             self.open_scissor("left")
 
+        if not (X or Y):
+            self.stop_scissor("left")
+
         if A:
             self.close_scissor("right")
 
         if B:
             self.open_scissor("right")
+
+        if not (A or B):
+            self.stop_scissor("right")
 
     def close_gripper(self, gripper_name, **kwargs):
         self.set_gripper(gripper_name, finger_pos=(1.0, 1.0, 1.0), **kwargs)
@@ -96,6 +101,11 @@ class VictorJoystick:
 
     def open_scissor(self, gripper_name, **kwargs):
         self.set_gripper(gripper_name, scissor_pos=0.0, **kwargs)
+
+    def stop_scissor(self, gripper_name):
+        status_msg = self.gripper_status[gripper_name].get()
+        s = status_msg.scissor_status.position
+        self.set_gripper(gripper_name, scissor_pos=s)
 
     def set_gripper(self, gripper_name, finger_pos=None, scissor_pos=None, blocking=True, continuous=False):
         """
