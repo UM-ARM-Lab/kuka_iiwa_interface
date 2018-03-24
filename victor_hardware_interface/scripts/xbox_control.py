@@ -137,6 +137,9 @@ class VictorJoystick:
             cmd.scissor_command.position = cur.scissor_status.position_request
 
         self.gripper_command_publisher[gripper_name].publish(cmd)
+        self.gripper_status[gripper_name].get()
+        while not self.gripper_status[gripper_name].has_new_data():
+            rospy.sleep(0.01)
 
     def default_gripper_command(self):
         cmd = Robotiq3FingerCommand()
