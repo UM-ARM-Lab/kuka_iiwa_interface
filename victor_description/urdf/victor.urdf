@@ -1040,7 +1040,7 @@
     <child link="victor_left_gripper_fingerA_prox"/>
     <origin rpy="0 0.610865238198 0" xyz="0.02225000 0 0.02151380"/>
     <axis xyz="0 -1 0"/>
-    <limit effort="300" lower="-1" upper="1" velocity="10"/>
+    <limit effort="300" lower="0" upper="1.2217304763960307" velocity="10"/>
     <safety_controller k_position="100" k_velocity="2" soft_lower_limit="-0.610865238198" soft_upper_limit="0.610865238198"/>
     <dynamics damping="0.5"/>
   </joint>
@@ -1164,7 +1164,7 @@
     <child link="victor_left_gripper_fingerB_prox"/>
     <origin rpy="0 0.610865238198 0" xyz="0.02225000 0 0.02151380"/>
     <axis xyz="0 -1 0"/>
-    <limit effort="300" lower="-1" upper="1" velocity="10"/>
+    <limit effort="300" lower="0" upper="1.2217304763960307" velocity="10"/>
     <safety_controller k_position="100" k_velocity="2" soft_lower_limit="-0.610865238198" soft_upper_limit="0.610865238198"/>
     <dynamics damping="0.5"/>
   </joint>
@@ -1288,7 +1288,7 @@
     <child link="victor_left_gripper_fingerC_prox"/>
     <origin rpy="0 0.610865238198 0" xyz="0.02225000 0 0.02151380"/>
     <axis xyz="0 -1 0"/>
-    <limit effort="300" lower="-1" upper="1" velocity="10"/>
+    <limit effort="300" lower="0" upper="1.2217304763960307" velocity="10"/>
     <safety_controller k_position="100" k_velocity="2" soft_lower_limit="-0.610865238198" soft_upper_limit="0.610865238198"/>
     <dynamics damping="0.5"/>
   </joint>
@@ -1450,7 +1450,7 @@
     <child link="victor_right_gripper_fingerA_prox"/>
     <origin rpy="0 0.610865238198 0" xyz="0.02225000 0 0.02151380"/>
     <axis xyz="0 -1 0"/>
-    <limit effort="300" lower="-1" upper="1" velocity="10"/>
+    <limit effort="300" lower="0" upper="1.2217304763960307" velocity="10"/>
     <safety_controller k_position="100" k_velocity="2" soft_lower_limit="-0.610865238198" soft_upper_limit="0.610865238198"/>
     <dynamics damping="0.5"/>
   </joint>
@@ -1574,7 +1574,7 @@
     <child link="victor_right_gripper_fingerB_prox"/>
     <origin rpy="0 0.610865238198 0" xyz="0.02225000 0 0.02151380"/>
     <axis xyz="0 -1 0"/>
-    <limit effort="300" lower="-1" upper="1" velocity="10"/>
+    <limit effort="300" lower="0" upper="1.2217304763960307" velocity="10"/>
     <safety_controller k_position="100" k_velocity="2" soft_lower_limit="-0.610865238198" soft_upper_limit="0.610865238198"/>
     <dynamics damping="0.5"/>
   </joint>
@@ -1698,7 +1698,7 @@
     <child link="victor_right_gripper_fingerC_prox"/>
     <origin rpy="0 0.610865238198 0" xyz="0.02225000 0 0.02151380"/>
     <axis xyz="0 -1 0"/>
-    <limit effort="300" lower="-1" upper="1" velocity="10"/>
+    <limit effort="300" lower="0" upper="1.2217304763960307" velocity="10"/>
     <safety_controller k_position="100" k_velocity="2" soft_lower_limit="-0.610865238198" soft_upper_limit="0.610865238198"/>
     <dynamics damping="0.5"/>
   </joint>
