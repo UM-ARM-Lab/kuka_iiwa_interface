@@ -38,6 +38,8 @@ class XboxJoy:
         self.d_vert = d_vert
 
     def minus(self, other_joy):
+        """Returns a new XboxJoy object with values self - other_joy """
+        
         new_joy = deepcopy(self)
         new_joy.A -= other_joy.A
         new_joy.B -= other_joy.B
@@ -111,7 +113,7 @@ class VictorJoystick:
         self.prev_joy = joy
 
     def finger_open_close_callback(self, joy):
-        # Open and close the gripper fingers
+        """Open and close the gripper fingers"""
         joydiff = joy.minus(self.prev_joy)
         gripper_stop_dist = 0.05
 
@@ -142,7 +144,7 @@ class VictorJoystick:
                 self.open_gripper("right")
 
     def scissor_open_close_callback(self, joy):
-        # Open and close the scissors on the gripper
+        """Open and close the scissors on the gripper"""
         joydiff = joy.minus(self.prev_joy)
         scissor_stop_dist = 0.05
 
@@ -170,6 +172,7 @@ class VictorJoystick:
 
             
     def stop_gripper(self, gripper_name, motion=0):
+        """stops gripper fingers in current position + motion to allow for delay""" 
         cur = self.gripper_status[gripper_name].get()
         finger_pos = [cur.finger_a_status.position + motion,
                       cur.finger_b_status.position + motion,
@@ -178,6 +181,7 @@ class VictorJoystick:
         self.set_gripper(gripper_name, finger_pos=finger_pos)
         
     def stop_scissor(self, gripper_name, motion=0):
+        """stops gripper scissor in current position + motion to allow for delay""" 
         cur = self.gripper_status[gripper_name].get()
         scissor_pos = cur.scissor_status.position + motion
                       
