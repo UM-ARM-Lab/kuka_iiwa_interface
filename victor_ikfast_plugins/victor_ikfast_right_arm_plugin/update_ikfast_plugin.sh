@@ -1,0 +1,1 @@
+rosrun moveit_kinematics create_ikfast_moveit_plugin.py victor right_arm victor_ikfast_right_arm_plugin /home/arprice/catkin_ws/src/victor_ikfast_plugins/victor_ikfast_right_arm_plugin/src/victor_right_arm_ikfast_solver.cpp
