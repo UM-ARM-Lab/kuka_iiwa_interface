@@ -98,34 +98,53 @@ def print_joints(left, right):
     """Print nicely to the terminal so joint values can be copied"""
     rospy.loginfo("Joint angles are: ")
     vec_to_rad_str = lambda vec: '[' + ', '.join([str(np.round(rad, 3)) for rad in vec]) + ']'
-    if left.last_pos is not None:
+    if (left is not None) and (left.last_pos is not None):
         rospy.loginfo("Left: " + vec_to_rad_str(left.last_pos))
-    if right.last_pos is not None:
+    if (right is not None) and (right.last_pos is not None):
         rospy.loginfo("Right: " + vec_to_rad_str(right.last_pos))
 
 
 if __name__ == "__main__":
     rospy.init_node("manual_motion")
+    
 
     control_mode_params = vu.get_joint_impedance_params(vu.Stiffness.MEDIUM)
     control_mode_params.joint_path_execution_params.joint_relative_velocity = 1.0
 
-    print "initializing left arm ...",
-    sys.stdout.flush()
-    result = vu.send_new_control_mode("left_arm", control_mode_params)
-    while not result.success:
+    use_left_arm = rospy.get_param("~use_left_arm", True)
+    use_right_arm = rospy.get_param("~use_right_arm", True)
+
+
+
+    if(use_left_arm):
+        print "initializing left arm ...",
+        sys.stdout.flush()
         result = vu.send_new_control_mode("left_arm", control_mode_params)
-    print "done"
+        while not result.success:
+            result = vu.send_new_control_mode("left_arm", control_mode_params)
+        print "done"
+    else:
+        print("not using left arm")    
 
-    print "initializing right arm ...",
-    sys.stdout.flush()
-    result = vu.send_new_control_mode("right_arm", control_mode_params)
-    while not result.success:
+    if(use_right_arm):
+        print "initializing right arm ...",
+        sys.stdout.flush()
         result = vu.send_new_control_mode("right_arm", control_mode_params)
-    print "done"
+        while not result.success:
+            result = vu.send_new_control_mode("right_arm", control_mode_params)
+        print "done"
+    else:
+        print("not using right arm")    
 
-    left = ManualMotion("left_arm")
-    right = ManualMotion("right_arm")
+
+    left = None
+    right = None
+    if(use_left_arm):
+        left = ManualMotion("left_arm")
+    if(use_right_arm):
+        right = ManualMotion("right_arm")
+
+    
 
     rospy.on_shutdown(lambda: print_joints(left, right))
 
