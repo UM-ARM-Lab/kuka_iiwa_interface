@@ -15,6 +15,7 @@ import rospy
 from victor_hardware_interface import victor_utils as vu
 from victor_hardware_interface.msg import *
 from threading import Lock
+from arc_utilities import ros_helpers as rh
 
 
 joint_names = ['joint_' + str(i) for i in range(1, 8)]
@@ -42,7 +43,6 @@ class ManualMotion:
         self.last_pos = None
 
     def callback_update(self, msg):
-        global joint_names, joint_lower, joint_upper
         with self.lock:
             self.run_lowpass(msg)
 
@@ -109,7 +109,6 @@ if __name__ == "__main__":
     
 
     control_mode_params = vu.get_joint_impedance_params(vu.Stiffness.MEDIUM)
-    control_mode_params.joint_path_execution_params.joint_relative_velocity = 1.0
 
     use_left_arm = rospy.get_param("~use_left_arm", True)
     use_right_arm = rospy.get_param("~use_right_arm", True)
@@ -119,6 +118,11 @@ if __name__ == "__main__":
     if(use_left_arm):
         print "initializing left arm ...",
         sys.stdout.flush()
+        l_cm = rh.Listener("left_arm/control_mode_status", ControlModeParameters)
+        cur_mode = l_cm.get(block_until_data=True)
+        control_mode_params.joint_path_execution_params.joint_relative_velocity = cur_mode.joint_path_execution_params.joint_relative_velocity
+        control_mode_params.joint_path_execution_params.joint_relative_acceleration = cur_mode.joint_path_execution_params.joint_relative_acceleration
+        
         result = vu.send_new_control_mode("left_arm", control_mode_params)
         while not result.success:
             result = vu.send_new_control_mode("left_arm", control_mode_params)
@@ -128,6 +132,11 @@ if __name__ == "__main__":
 
     if(use_right_arm):
         print "initializing right arm ...",
+        r_cm = rh.Listener("right_arm/control_mode_status", ControlModeParameters)
+        cur_mode = r_cm.get(block_until_data=True)
+        control_mode_params.joint_path_execution_params.joint_relative_velocity = cur_mode.joint_path_execution_params.joint_relative_velocity
+        control_mode_params.joint_path_execution_params.joint_relative_acceleration = cur_mode.joint_path_execution_params.joint_relative_acceleration
+
         sys.stdout.flush()
         result = vu.send_new_control_mode("right_arm", control_mode_params)
         while not result.success:
