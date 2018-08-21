@@ -410,6 +410,7 @@ class Arm:
             print 'Control mode switch failure.'
             print result.message
         self.active_control_mode_int = control_mode
+        self.arm_command.control_mode.mode = control_mode
 
 
 def main():
