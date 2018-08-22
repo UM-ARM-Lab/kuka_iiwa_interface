@@ -215,6 +215,7 @@ class MinimalFakeArmInterface:
         """
         with self.input_mtx:
             self.control_mode_parameters_status_msg = req.new_control_mode
+            self.motion_status_msg.active_control_mode = req.new_control_mode.control_mode
             return SetControlModeResponse(success=True, message="")
 
     # TODO: populate seq
