@@ -13,6 +13,7 @@
         <chain base_link="victor_right_arm_link_0" tip_link="victor_right_arm_flange" />
     </group>
     <group name="right_gripper">
+        <link name="victor_right_gripper_mounting_bracket" />
         <link name="victor_right_gripper_palm" />
         <link name="victor_right_gripper_fingerA_base" />
         <link name="victor_right_gripper_fingerA_prox" />
@@ -26,7 +27,8 @@
         <link name="victor_right_gripper_fingerC_prox" />
         <link name="victor_right_gripper_fingerC_med" />
         <link name="victor_right_gripper_fingerC_dist" />
-        <link name="victor_right_gripper_mounting_bracket" />
+        <link name="victor_right_gripper_palm_surface" />
+        <link name="victor_right_gripper_palm_surface_kuka" />
     </group>
     <group name="left_palm_surface_group">
         <link name="victor_left_gripper_palm_surface" />
