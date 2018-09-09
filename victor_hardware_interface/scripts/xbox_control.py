@@ -10,8 +10,8 @@ from copy import deepcopy
 
 class XboxJoy:
     def __init__(self, joy_msg):
-        A, B, X, Y, LB, RB, back, start, power, stick_button_left, stick_button_right, \
-            dleft, dright, dup, ddown = joy_msg.buttons
+        A, B, X, Y, LB, RB, back, start, power, stick_button_left, stick_button_right = joy_msg.buttons#, \
+            # dleft, dright, dup, ddown = joy_msg.buttons
         left_hor, left_vert, LT, right_hor, right_vert,  RT, d_hor, d_vert = joy_msg.axes
         self.A = A
         self.B = B
@@ -24,10 +24,10 @@ class XboxJoy:
         self.power = power
         self.stick_button_left = stick_button_left
         self.stick_button_right = stick_button_right
-        self.dleft = dleft
-        self.dright = dright
-        self.dup = dup
-        self.ddown = ddown
+        # self.dleft = dleft
+        # self.dright = dright
+        # self.dup = dup
+        # self.ddown = ddown
         self.left_hor = left_hor
         self.left_vert = left_vert
         self.LT = LT
@@ -52,10 +52,10 @@ class XboxJoy:
         new_joy.power -= other_joy.power
         new_joy.stick_button_left -= other_joy.stick_button_left
         new_joy.stick_button_right -= other_joy.stick_button_right
-        new_joy.dleft -= other_joy.dleft
-        new_joy.dright -= other_joy.dright
-        new_joy.dup -= other_joy.dup
-        new_joy.ddown -= other_joy.ddown
+        # new_joy.dleft -= other_joy.dleft
+        # new_joy.dright -= other_joy.dright
+        # new_joy.dup -= other_joy.dup
+        # new_joy.ddown -= other_joy.ddown
         new_joy.left_hor -= other_joy.left_hor
         new_joy.left_vert -= other_joy.left_vert
         new_joy.LT -= other_joy.LT
@@ -171,7 +171,7 @@ class VictorJoystick:
                 self.open_scissor("right")
 
             
-    def stop_gripper(self, gripper_name, motion=0):
+    def stop_gripper(self, gripper_name, motion=0.0):
         """stops gripper fingers in current position + motion to allow for delay""" 
         cur = self.gripper_status[gripper_name].get()
         finger_pos = [cur.finger_a_status.position + motion,
@@ -180,7 +180,7 @@ class VictorJoystick:
                       
         self.set_gripper(gripper_name, finger_pos=finger_pos)
         
-    def stop_scissor(self, gripper_name, motion=0):
+    def stop_scissor(self, gripper_name, motion=0.0):
         """stops gripper scissor in current position + motion to allow for delay""" 
         cur = self.gripper_status[gripper_name].get()
         scissor_pos = cur.scissor_status.position + motion
