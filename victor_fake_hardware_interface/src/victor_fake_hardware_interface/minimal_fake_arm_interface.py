@@ -183,7 +183,9 @@ class MinimalFakeArmInterface:
                 else:
                     rospy.logerr("Cartesian control modes not implemented")
             else:
-                rospy.logerr("Motion command control mode does not match active control mode")
+                rospy.logerr("Motion command control mode " + str(cmd.control_mode) + 
+                             " does not match active control mode" +
+                             str(self.control_mode_parameters_status_msg.control_mode))
 
     def gripper_command_callback(self, cmd):
         """
