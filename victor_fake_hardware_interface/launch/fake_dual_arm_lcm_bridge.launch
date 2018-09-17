@@ -1,7 +1,7 @@
 <launch>
     <arg name="model"                       default="$(find victor_description)/urdf/victor.urdf.xacro"/>
     <arg name="arm_command_gui"             default="false"/>
-    <arg name="talkative"                   default="true"/>
+    <arg name="talkative"                   default="false"/>
 
     <param name="robot_description" command="$(find xacro)/xacro --xacro-ns --inorder $(arg model)"/>
     <node pkg="victor_hardware_interface" type="joint_state_publisher.py" name="joint_state_publisher"/>
