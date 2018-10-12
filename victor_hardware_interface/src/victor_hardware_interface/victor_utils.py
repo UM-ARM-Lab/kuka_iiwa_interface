@@ -11,7 +11,7 @@ class Stiffness(Enum):
     MEDIUM = 3
     SOFT  = 2
     
-def set_control_mode(control_mode, arm, stiffness=Stiffness.MEDIUM):
+def set_control_mode(control_mode, arm, stiffness=Stiffness.MEDIUM, vel=0.1, accel=0.1):
     """
     Sets Victor's control mode.
 
@@ -26,10 +26,10 @@ def set_control_mode(control_mode, arm, stiffness=Stiffness.MEDIUM):
     new_control_mode.control_mode.mode = control_mode
 
     if control_mode == ControlMode.JOINT_POSITION:
-        new_control_mode = get_joint_position_params(vel = 0.1, accel = 0.1)
+        new_control_mode = get_joint_position_params(vel=vel, accel=accel)
         
     elif control_mode == ControlMode.JOINT_IMPEDANCE:
-        new_control_mode = get_joint_impedance_params(stiffness)
+        new_control_mode = get_joint_impedance_params(stiffness, vel=vel, accel=accel)
 
     elif control_mode == ControlMode.CARTESIAN_POSE:
         rospy.logerr("Cartesian Mode not yet implemented")
@@ -61,7 +61,7 @@ def get_joint_position_params(vel, accel):
     new_control_mode.joint_path_execution_params.joint_relative_acceleration = accel
     return new_control_mode
 
-def get_joint_impedance_params(stiffness):
+def get_joint_impedance_params(stiffness, vel=0.1, accel=0.1):
     """
     Returns predefined joint impedance stiffness parameters for a few different stiffnesses
     """
@@ -69,8 +69,8 @@ def get_joint_impedance_params(stiffness):
     new_control_mode.control_mode.mode = ControlMode.JOINT_IMPEDANCE
 
     if stiffness == Stiffness.STIFF:
-        new_control_mode.joint_path_execution_params.joint_relative_velocity = 0.1
-        new_control_mode.joint_path_execution_params.joint_relative_acceleration = 1.0
+        new_control_mode.joint_path_execution_params.joint_relative_velocity = vel
+        new_control_mode.joint_path_execution_params.joint_relative_acceleration = accel
 
         new_control_mode.joint_impedance_params.joint_damping.joint_1 = 0.7
         new_control_mode.joint_impedance_params.joint_damping.joint_2 = 0.7
@@ -88,8 +88,8 @@ def get_joint_impedance_params(stiffness):
         new_control_mode.joint_impedance_params.joint_stiffness.joint_7 = 50.0
 
     elif stiffness == Stiffness.MEDIUM:
-        new_control_mode.joint_path_execution_params.joint_relative_velocity = 0.1
-        new_control_mode.joint_path_execution_params.joint_relative_acceleration = 1.0
+        new_control_mode.joint_path_execution_params.joint_relative_velocity = vel
+        new_control_mode.joint_path_execution_params.joint_relative_acceleration = accel
 
         new_control_mode.joint_impedance_params.joint_damping.joint_1 = 0.7
         new_control_mode.joint_impedance_params.joint_damping.joint_2 = 0.7
@@ -107,8 +107,8 @@ def get_joint_impedance_params(stiffness):
         new_control_mode.joint_impedance_params.joint_stiffness.joint_7 = 20.0
 
     elif stiffness == Stiffness.SOFT:
-        new_control_mode.joint_path_execution_params.joint_relative_velocity = 0.1
-        new_control_mode.joint_path_execution_params.joint_relative_acceleration = 1.0
+        new_control_mode.joint_path_execution_params.joint_relative_velocity = vel
+        new_control_mode.joint_path_execution_params.joint_relative_acceleration = accel
 
         new_control_mode.joint_impedance_params.joint_damping.joint_1 = 0.7
         new_control_mode.joint_impedance_params.joint_damping.joint_2 = 0.7
