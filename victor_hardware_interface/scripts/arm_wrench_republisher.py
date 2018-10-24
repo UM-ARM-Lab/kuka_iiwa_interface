@@ -20,8 +20,11 @@ from geometry_msgs.msg import WrenchStamped, Wrench, Vector3
 hand_to_frame = {'left':  'victor_left_gripper_palm_surface',
                  'right': 'victor_right_gripper_palm_surface'}
 
-hand_wrench_pub = {'left':  rospy.Publisher('left_hand_wrench', WrenchStamped, queue_size=1),
-                   'right': rospy.Publisher('right_hand_wrench', WrenchStamped, queue_size=1)}
+wrench_stamped_pub = {'left':  rospy.Publisher('left_gripper/wrench_stamped', WrenchStamped, queue_size=1),
+                      'right': rospy.Publisher('right_gripper/wrench_stamped', WrenchStamped, queue_size=1)}
+
+wrench_pub = {'left':  rospy.Publisher('left_gripper/wrench', Wrench, queue_size=1),
+              'right': rospy.Publisher('right_gripper/wrench', Wrench, queue_size=1)}
 
 
 def publishWrench(data, hand):
@@ -35,7 +38,8 @@ def publishWrench(data, hand):
     wrench_stamped_msg.header.stamp = rospy.Time(0)
     wrench_stamped_msg.header.frame_id = hand_to_frame[hand]
 
-    hand_wrench_pub[hand].publish(wrench_stamped_msg)
+    wrench_pub_stamped[hand].publish(wrench_stamped_msg)
+    wrench_pub[hand].publish(wrench_stamped_msg.wrench)
 
 def listener():
     rospy.Subscriber('/left_arm/motion_status', MotionStatus, publishWrench, 'left')
