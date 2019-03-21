@@ -31,27 +31,27 @@ class VictorJoystick:
         """
         Returns a new Xbox_msg object with values lhs - rhs
         """
-        xbox_lhs = deepcopy(xbox_lhs)
-        xbox_lhs.A -= xbox_rhs.A
-        xbox_lhs.B -= xbox_rhs.B
-        xbox_lhs.X -= xbox_rhs.X
-        xbox_lhs.Y -= xbox_rhs.Y
-        xbox_lhs.LB -= xbox_rhs.LB
-        xbox_lhs.RB -= xbox_rhs.RB
-        xbox_lhs.back -= xbox_rhs.back
-        xbox_lhs.start -= xbox_rhs.start
-        xbox_lhs.power -= xbox_rhs.power
-        xbox_lhs.stick_button_left -= xbox_rhs.stick_button_left
-        xbox_lhs.stick_button_right -= xbox_rhs.stick_button_right
-        xbox_lhs.LH -= xbox_rhs.LH
-        xbox_lhs.LV -= xbox_rhs.LV
-        xbox_lhs.LT -= xbox_rhs.LT
-        xbox_lhs.RH -= xbox_rhs.RH
-        xbox_lhs.RV -= xbox_rhs.RV
-        xbox_lhs.RT -= xbox_rhs.RT
-        xbox_lhs.DH -= xbox_rhs.DH
-        xbox_lhs.DV -= xbox_rhs.DV
-        return xbox_lhs
+        xbox_diff = deepcopy(xbox_lhs)
+        xbox_diff.A -= xbox_rhs.A
+        xbox_diff.B -= xbox_rhs.B
+        xbox_diff.X -= xbox_rhs.X
+        xbox_diff.Y -= xbox_rhs.Y
+        xbox_diff.LB -= xbox_rhs.LB
+        xbox_diff.RB -= xbox_rhs.RB
+        xbox_diff.back -= xbox_rhs.back
+        xbox_diff.start -= xbox_rhs.start
+        xbox_diff.power -= xbox_rhs.power
+        xbox_diff.stick_button_left -= xbox_rhs.stick_button_left
+        xbox_diff.stick_button_right -= xbox_rhs.stick_button_right
+        xbox_diff.LH -= xbox_rhs.LH
+        xbox_diff.LV -= xbox_rhs.LV
+        xbox_diff.LT -= xbox_rhs.LT
+        xbox_diff.RH -= xbox_rhs.RH
+        xbox_diff.RV -= xbox_rhs.RV
+        xbox_diff.RT -= xbox_rhs.RT
+        xbox_diff.DH -= xbox_rhs.DH
+        xbox_diff.DV -= xbox_rhs.DV
+        return xbox_diff
 
     def joy_callback(self, joy_msg):
         """
