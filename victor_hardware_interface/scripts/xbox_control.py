@@ -7,68 +7,7 @@ from arc_utilities import ros_helpers
 from victor_hardware_interface.msg import Robotiq3FingerStatus, Robotiq3FingerCommand
 from sensor_msgs.msg import Joy
 from copy import deepcopy
-
-class XboxJoy:
-    def __init__(self, joy_msg):
-        A, B, X, Y, LB, RB, back, start, power, stick_button_left, stick_button_right = joy_msg.buttons#, \
-            # dleft, dright, dup, ddown = joy_msg.buttons
-        left_hor, left_vert, LT, right_hor, right_vert,  RT, d_hor, d_vert = joy_msg.axes
-        self.A = A
-        self.B = B
-        self.X = X
-        self.Y = Y
-        self.LB = LB
-        self.RB = RB
-        self.back = back
-        self.start = start
-        self.power = power
-        self.stick_button_left = stick_button_left
-        self.stick_button_right = stick_button_right
-        # self.dleft = dleft
-        # self.dright = dright
-        # self.dup = dup
-        # self.ddown = ddown
-        self.left_hor = left_hor
-        self.left_vert = left_vert
-        self.LT = LT
-        self.right_hor = right_hor
-        self.right_vert = right_vert
-        self.RT =  RT
-        self.d_hor = d_hor
-        self.d_vert = d_vert
-
-    def minus(self, other_joy):
-        """Returns a new XboxJoy object with values self - other_joy """
-        
-        new_joy = deepcopy(self)
-        new_joy.A -= other_joy.A
-        new_joy.B -= other_joy.B
-        new_joy.X -= other_joy.X
-        new_joy.Y -= other_joy.Y
-        new_joy.LB -= other_joy.LB
-        new_joy.RB -= other_joy.RB
-        new_joy.back -= other_joy.back
-        new_joy.start -= other_joy.start
-        new_joy.power -= other_joy.power
-        new_joy.stick_button_left -= other_joy.stick_button_left
-        new_joy.stick_button_right -= other_joy.stick_button_right
-        # new_joy.dleft -= other_joy.dleft
-        # new_joy.dright -= other_joy.dright
-        # new_joy.dup -= other_joy.dup
-        # new_joy.ddown -= other_joy.ddown
-        new_joy.left_hor -= other_joy.left_hor
-        new_joy.left_vert -= other_joy.left_vert
-        new_joy.LT -= other_joy.LT
-        new_joy.right_hor -= other_joy.right_hor
-        new_joy.right_vert -= other_joy.right_vert
-        new_joy.RT -= other_joy. RT
-        new_joy.d_hor -= other_joy.d_hor
-        new_joy.d_vert -= other_joy.d_vert
-        return new_joy
-        
-
-
-
+from numpy import clip
 
 
 class VictorJoystick:
@@ -80,21 +19,47 @@ class VictorJoystick:
              "left": ros_helpers.Listener("left_arm/gripper_status", Robotiq3FingerStatus)}
 
         self.gripper_command_publisher = \
-            {"right": rospy.Publisher("right_arm/gripper_command", Robotiq3FingerCommand,
-                                      queue_size = 1),
-             "left": rospy.Publisher("left_arm/gripper_command", Robotiq3FingerCommand,
-                                     queue_size = 1)}
+            {"right": rospy.Publisher("right_arm/gripper_command", Robotiq3FingerCommand, queue_size=1),
+             "left": rospy.Publisher("left_arm/gripper_command", Robotiq3FingerCommand, queue_size=1)}
 
         self.joy_sub = rospy.Subscriber("joy", Joy, self.joy_callback)
 
-        self.prev_joy = None
+        self.prev_xbox_msg = None
 
-        
+    @staticmethod
+    def minus(xbox_lhs, xbox_rhs):
+        """
+        Returns a new Xbox_msg object with values lhs - rhs
+        """
+        xbox_diff = deepcopy(xbox_lhs)
+        xbox_diff.A -= xbox_rhs.A
+        xbox_diff.B -= xbox_rhs.B
+        xbox_diff.X -= xbox_rhs.X
+        xbox_diff.Y -= xbox_rhs.Y
+        xbox_diff.LB -= xbox_rhs.LB
+        xbox_diff.RB -= xbox_rhs.RB
+        xbox_diff.back -= xbox_rhs.back
+        xbox_diff.start -= xbox_rhs.start
+        xbox_diff.power -= xbox_rhs.power
+        xbox_diff.stick_button_left -= xbox_rhs.stick_button_left
+        xbox_diff.stick_button_right -= xbox_rhs.stick_button_right
+        xbox_diff.LH -= xbox_rhs.LH
+        xbox_diff.LV -= xbox_rhs.LV
+        xbox_diff.LT -= xbox_rhs.LT
+        xbox_diff.RH -= xbox_rhs.RH
+        xbox_diff.RV -= xbox_rhs.RV
+        xbox_diff.RT -= xbox_rhs.RT
+        xbox_diff.DH -= xbox_rhs.DH
+        xbox_diff.DV -= xbox_rhs.DV
+        return xbox_diff
 
     def joy_callback(self, joy_msg):
-        joy = XboxJoy(joy_msg)
-        if(self.prev_joy is None):
-            self.prev_joy = joy
+        """
+        Assumes that we are using xboxdrv without mimic mode
+        """
+        xbox_msg = ros_helpers.joy_to_xbox(joy_msg, xpad=False)
+        if self.prev_xbox_msg is None:
+            self.prev_xbox_msg = xbox_msg
 
         enable_finger_open_close_control = rospy.get_param("~enable_finger_open_close_control", True)
         enable_scissor_open_close_control = rospy.get_param("~enable_scissor_open_close_control", True)
@@ -105,86 +70,85 @@ class VictorJoystick:
                                "Scissor open close control enabled: " + str(enable_scissor_open_close_control))
 
         if enable_finger_open_close_control:
-            self.finger_open_close_callback(joy)
+            self.finger_open_close_callback(xbox_msg)
 
         if enable_scissor_open_close_control:
-            self.scissor_open_close_callback(joy)
+            self.scissor_open_close_callback(xbox_msg)
 
-        self.prev_joy = joy
+        self.prev_xbox_msg = xbox_msg
 
-    def finger_open_close_callback(self, joy):
+    def finger_open_close_callback(self, xbox_msg):
         """Open and close the gripper fingers"""
-        joydiff = joy.minus(self.prev_joy)
+        xboxdiff = VictorJoystick.minus(xbox_msg, self.prev_xbox_msg)
         gripper_stop_dist = 0.05
 
-        if joydiff.LT > 0:
+        if xboxdiff.LT > 0:
             self.stop_gripper("left", gripper_stop_dist)
-            
-        elif joydiff.LB < 0:
+
+        elif xboxdiff.LB < 0:
             self.stop_gripper("left", -gripper_stop_dist)
-            
+
         else:
-            if joy.LT == -1:
+            if xbox_msg.LT == -1:
                 self.close_gripper("left")
 
-            if joy.LB:
+            if xbox_msg.LB:
                 self.open_gripper("left")
 
-        if joydiff.RT > 0:
+        if xboxdiff.RT > 0:
             self.stop_gripper("right", gripper_stop_dist)
 
-        elif joydiff.RB < 0:
+        elif xboxdiff.RB < 0:
             self.stop_gripper("right", -gripper_stop_dist)
 
         else:
-            if joy.RT == -1:
+            if xbox_msg.RT == -1:
                 self.close_gripper("right")
 
-            if joy.RB:
+            if xbox_msg.RB:
                 self.open_gripper("right")
 
-    def scissor_open_close_callback(self, joy):
+    def scissor_open_close_callback(self, xbox_msg):
         """Open and close the scissors on the gripper"""
-        joydiff = joy.minus(self.prev_joy)
+        xboxdiff = VictorJoystick.minus(xbox_msg, self.prev_xbox_msg)
         scissor_stop_dist = 0.05
 
-        if joydiff.X < 0:
+        if xboxdiff.X < 0:
             self.stop_scissor("left", scissor_stop_dist)
-        elif joydiff.Y < 0:
+        elif xboxdiff.Y < 0:
             self.stop_scissor("left", -scissor_stop_dist)
         else:
-            if joy.X:
+            if xbox_msg.X:
                 self.close_scissor("left")
 
-            if joy.Y:
+            if xbox_msg.Y:
                 self.open_scissor("left")
 
-        if joydiff.A < 0:
+        if xboxdiff.A < 0:
             self.stop_scissor("right", scissor_stop_dist)
-        elif joydiff.B < 0:
+        elif xboxdiff.B < 0:
             self.stop_scissor("right", -scissor_stop_dist)
         else:
-            if joy.A:
+            if xbox_msg.A:
                 self.close_scissor("right")
 
-            if joy.B:
+            if xbox_msg.B:
                 self.open_scissor("right")
 
-            
     def stop_gripper(self, gripper_name, motion=0.0):
-        """stops gripper fingers in current position + motion to allow for delay""" 
+        """stops gripper fingers in current position + motion to allow for delay"""
         cur = self.gripper_status[gripper_name].get()
-        finger_pos = [cur.finger_a_status.position + motion,
-                      cur.finger_b_status.position + motion,
-                      cur.finger_c_status.position + motion]
-                      
+        finger_pos = [clip(cur.finger_a_status.position + motion, 0.0, 1.0),
+                      clip(cur.finger_b_status.position + motion, 0.0, 1.0),
+                      clip(cur.finger_c_status.position + motion, 0.0, 1.0)]
+
         self.set_gripper(gripper_name, finger_pos=finger_pos)
-        
+
     def stop_scissor(self, gripper_name, motion=0.0):
-        """stops gripper scissor in current position + motion to allow for delay""" 
+        """stops gripper scissor in current position + motion to allow for delay"""
         cur = self.gripper_status[gripper_name].get()
         scissor_pos = cur.scissor_status.position + motion
-                      
+
         self.set_gripper(gripper_name, scissor_pos = scissor_pos)
 
     def close_gripper(self, gripper_name):
@@ -254,5 +218,4 @@ def main():
 
 if __name__ == "__main__":
     main()
-
 
