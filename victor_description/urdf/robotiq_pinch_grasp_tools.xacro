@@ -13,7 +13,7 @@
             <inertial>
                 <origin xyz="0 0 0" rpy="0 0 0"/>
                 <!-- It's important that these have non-zero mass, otherwise gazebos URDF to SDF conversion will ignore them -->
-                <mass value="0.00001"/>
+                <mass value="0.001"/>
                 <inertia ixx="0"
                          ixy="0"
                          ixz="0"
@@ -37,7 +37,7 @@
             </visual>
             <inertial>
                 <origin xyz="0 0 0" rpy="0 0 0"/>
-                <mass value="0.00001"/>
+                <mass value="0.001"/>
                 <inertia ixx="0"
                          ixy="0"
                          ixz="0"

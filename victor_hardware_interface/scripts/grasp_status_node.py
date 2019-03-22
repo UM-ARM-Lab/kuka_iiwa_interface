@@ -56,12 +56,12 @@ def left_gripper_status_callback(finger_status, pub):
 def main():
     rospy.init_node('gripper_status_node')
 
-    right_grasp_status_publisher = rospy.Publisher('/right_arm/grasp_status', GraspStatus, queue_size=1)
-    right_gripper_status_subscriber = rospy.Subscriber('/right_arm/gripper_status', Robotiq3FingerStatus, right_gripper_status_callback, right_grasp_status_publisher)
+    right_grasp_status_publisher = rospy.Publisher('right_arm/grasp_status', GraspStatus, queue_size=1)
+    right_gripper_status_subscriber = rospy.Subscriber('right_arm/gripper_status', Robotiq3FingerStatus, right_gripper_status_callback, right_grasp_status_publisher)
 
-    left_grasp_status_publisher = rospy.Publisher('/left_arm/grasp_status', GraspStatus, queue_size=1)
-    left_gripper_status_subscriber = rospy.Subscriber('/left_arm/gripper_status', Robotiq3FingerStatus, left_gripper_status_callback, left_grasp_status_publisher)
-    
+    left_grasp_status_publisher = rospy.Publisher('left_arm/grasp_status', GraspStatus, queue_size=1)
+    left_gripper_status_subscriber = rospy.Subscriber('left_arm/gripper_status', Robotiq3FingerStatus, left_gripper_status_callback, left_grasp_status_publisher)
+
 
     rospy.spin()
 

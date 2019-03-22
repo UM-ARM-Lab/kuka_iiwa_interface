@@ -38,8 +38,8 @@ def publishWrench(data, hand):
     hand_wrench_pub[hand].publish(wrench_stamped_msg)
 
 def listener():
-    rospy.Subscriber('/left_arm/motion_status', MotionStatus, publishWrench, 'left')
-    rospy.Subscriber('/right_arm/motion_status', MotionStatus, publishWrench, 'right')
+    rospy.Subscriber('left_arm/motion_status', MotionStatus, publishWrench, 'left')
+    rospy.Subscriber('right_arm/motion_status', MotionStatus, publishWrench, 'right')
     rospy.spin()
     
 if __name__ == '__main__':

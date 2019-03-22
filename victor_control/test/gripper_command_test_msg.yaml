@@ -1,0 +1,19 @@
+# Pub this with rostopic pub /victor/left_hand_controller/command std_msgs/Float64MultiArray -f test/gripper_command_test_msg.yaml -1
+layout:
+  dim:
+    - label: ""
+      size: 1
+      stride: 1
+  data_offset: 0
+data:
+  - 0.2
+  - 0
+  - 0
+  - 0
+  - 0
+  - 0
+  - 0
+  - 0
+  - 0
+  - 0
+  - 0

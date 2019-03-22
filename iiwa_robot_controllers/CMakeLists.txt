@@ -114,3 +114,8 @@ target_link_libraries(iiwa_joint_state_publisher ${catkin_LIBRARIES})
 add_executable(iiwa_velocity_torque_controller include/${PROJECT_NAME}/iiwa_robot_config.hpp include/${PROJECT_NAME}/iiwa_robot_velocity_torque_controller.hpp src/iiwa_velocity_torque_controller.cpp)
 add_dependencies(iiwa_velocity_torque_controller ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 target_link_libraries(iiwa_velocity_torque_controller ${catkin_LIBRARIES})
+
+find_package(roslaunch REQUIRED)
+if(CATKIN_ENABLE_TESTING)
+  roslaunch_add_file_check(launch)
+endif()

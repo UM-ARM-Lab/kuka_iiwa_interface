@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <robot name="victor" xmlns:xacro="http://www.ros.org/wiki/xacro">
     <xacro:arg name="robot_name" default="victor"/>
-    <xacro:arg name="hardware_interface" default="PositionJointInterface"/>
+    <xacro:arg name="hardware_interface" default="hardware_interface/EffortJointInterface"/>
 
     <!-- Import Rviz colors -->
     <xacro:include filename="$(find victor_description)/urdf/materials.xacro"/>
@@ -56,16 +56,29 @@
     <!-- Robotiq grippers -->
     <!--Import the Robotiq 3 finger macro -->
     <xacro:include filename="$(find victor_description)/urdf/robotiq_3finger_gripper.xacro"/>
-    <xacro:robotiq_3finger parent="$(arg robot_name)_left_gripper_mounting_bracket" prefix="$(arg robot_name)_left_gripper">
+    <xacro:robotiq_3finger parent="$(arg robot_name)_left_gripper_mounting_bracket" prefix="$(arg robot_name)_left_gripper"
+                           hardware_interface="$(arg hardware_interface)">
         <origin xyz="0 0 0.02705" rpy="0 0 ${PI/4}"/> <!-- Offset measured with a tape measure; please confirm/fix this value -->
     </xacro:robotiq_3finger>
 
-    <xacro:robotiq_3finger parent="$(arg robot_name)_right_gripper_mounting_bracket" prefix="$(arg robot_name)_right_gripper">
+    <xacro:robotiq_3finger parent="$(arg robot_name)_right_gripper_mounting_bracket" prefix="$(arg robot_name)_right_gripper"
+                           hardware_interface="$(arg hardware_interface)">
         <origin xyz="0 0 0.02705" rpy="0 0 ${PI/4}"/> <!-- Offset measured with a tape measure; please confirm/fix this value -->
     </xacro:robotiq_3finger>
 
     <!-- Define additional links as "tools", which are useful for planning and getting transforms -->
     <xacro:include filename="$(find victor_description)/urdf/robotiq_pinch_grasp_tools.xacro"/>
     <xacro:robotiq_pinch_grasp_tools robot_name="$(arg robot_name)"/>
+    <!-- Add Gazebo properties for whole robot -->
+    <xacro:include filename="$(find victor_description)/urdf/victor.gazebo.xacro"/>
+    <xacro:include filename="$(find victor_description)/urdf/gazebo_utilities.xacro"/>
+    <!-- Load Gazebo lib and set the robot namespace -->
+    <xacro:add_gazebo_control_plugin robot_namespace="$(arg robot_name)"/>
+    <xacro:add_moveit_planning_scene_plugin robot_namespace="$(arg robot_name)" root_frame_id="victor_root"/>
+    <xacro:add_simulation_compliance side="left"/>
+    <xacro:add_simulation_compliance side="right"/>
+
+    <!-- Rigidly attach Victor to the Gazebo world -->
+    <xacro:add_gazebo_fixed_link base_link="$(arg robot_name)_root"/>
 
 </robot>
