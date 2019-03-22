@@ -5,7 +5,7 @@
   <!--Import the lbr iiwa macro -->
   <xacro:include filename="$(find victor_description)/urdf/iiwa7.xacro"/>
 
-  <xacro:arg name="hardware_interface" default="PositionJointInterface"/>
+  <xacro:arg name="hardware_interface" default="hardware_interface/PositionJointInterface"/>
   <!--<xacro:arg name="robot_name" default="iiwa"/>-->
   
   <!-- Fix to world just for testing -->

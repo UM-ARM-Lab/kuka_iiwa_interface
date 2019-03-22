@@ -2,8 +2,9 @@
 <robot xmlns:xacro="http://www.ros.org/wiki/xacro">
 
     <xacro:include filename="$(find victor_description)/urdf/robotiq_finger.xacro"/>
+    <xacro:include filename="$(find victor_description)/urdf/robotiq_3finger_gripper.transmission.xacro"/>
 
-    <xacro:macro name="robotiq_3finger" params="parent prefix *origin">
+    <xacro:macro name="robotiq_3finger" params="parent prefix hardware_interface *origin">
 
         <joint name="${prefix}_palm_joint" type="fixed">
             <xacro:insert_block name="origin"/>
@@ -93,6 +94,9 @@
             <dynamics damping="${joint_damping}"/>
         </joint>
         <xacro:robotiq_finger prefix="${prefix}_fingerC"/>
+
+        <xacro:robotiq_3finger_gripper_transmission hardware_interface="${hardware_interface}"
+                                                    robot_name="${prefix}"/>
 
     </xacro:macro>
 
