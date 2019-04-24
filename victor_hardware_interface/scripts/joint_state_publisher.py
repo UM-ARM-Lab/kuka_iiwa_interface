@@ -16,7 +16,7 @@ def compute_finger_angles(control):
     m1 = max_angle[0] / 140.0
     m2 = max_angle[1] / 100.0
 
-    # TODO: Add a link to the documentation/paper we used for this math
+    # http://motion.pratt.duke.edu/papers/IUCS-TR711-Franchi-gripper.pdf
     # Based on the relationship from the documentation, set each joint angle based on the "phase" of the motion
     if g <= 110.0:
         theta1 = m1 * g
