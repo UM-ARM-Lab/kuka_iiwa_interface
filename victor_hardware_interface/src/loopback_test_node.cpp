@@ -7,6 +7,7 @@
 #include <iostream>
 #include <arc_utilities/arc_helpers.hpp>
 #include <arc_utilities/eigen_helpers_conversions.hpp>
+#include <arc_utilities/math_helpers.hpp>
 #include <victor_hardware_interface/iiwa_hardware_interface.hpp>
 #include <victor_hardware_interface/robotiq_3finger_hardware_interface.hpp>
 // ROS message headers

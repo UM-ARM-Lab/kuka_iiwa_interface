@@ -14,6 +14,7 @@
 #include <sensor_msgs/JointState.h>
 #include <iiwa_robot_controllers/FRIState.h>
 #include <iiwa_robot_controllers/iiwa_robot_config.hpp>
+#include <arc_utilities/vector_math.hpp>
 
 class IiwaJointStatePublisher
 {
