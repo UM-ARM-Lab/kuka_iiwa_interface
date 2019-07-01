@@ -7,6 +7,7 @@
 #include <iostream>
 #include <arc_utilities/arc_helpers.hpp>
 #include <arc_utilities/eigen_helpers_conversions.hpp>
+#include <arc_utilities/math_helpers.hpp>
 #include <victor_hardware_interface/iiwa_hardware_interface.hpp>
 #include <victor_hardware_interface/robotiq_3finger_hardware_interface.hpp>
 // ROS message headers
@@ -287,6 +288,7 @@ public:
         command.control_mode.mode = victor_hardware_interface::ControlMode::JOINT_POSITION;
         command.header.stamp = ros::Time::now();
         const bool sent = iiwa_ptr_->SendMotionCommandMessage(command);
+        UNUSED(sent);
         assert(sent);
         motion_command_queue_.push_back(command);
     }
@@ -324,6 +326,7 @@ public:
         command.control_mode.mode = victor_hardware_interface::ControlMode::JOINT_POSITION;
         command.header.stamp = ros::Time::now();
         const bool sent = iiwa_ptr_->SendControlModeCommandMessage(command);
+        UNUSED(sent);
         assert(sent);
         control_mode_command_queue_.push_back(command);
     }
@@ -362,6 +365,7 @@ public:
         command.finger_c_command.header.stamp = command.header.stamp;
         command.scissor_command.header.stamp = command.header.stamp;
         const bool sent = robotiq_ptr_->sendCommandMessage(command);
+        UNUSED(sent);
         assert(sent);
         gripper_command_queue_.push_back(command);
     }
@@ -405,6 +409,7 @@ public:
         assert(motion_command_queue_.size() == 1);
         assert(motion_status_queue_.size() == 1);
         const bool match = CheckMotionCommandAndStatusMatch(motion_command_queue_.front(), motion_status_queue_.front());
+        UNUSED(match);
         assert(match);
         motion_command_rtt_.push_back(GetRTT(motion_command_queue_.front().header.stamp, ros::Time::now()));
         motion_command_queue_.clear();
@@ -416,6 +421,7 @@ public:
         assert(control_mode_command_queue_.size() == 1);
         assert(control_mode_status_queue_.size() == 1);
         const bool match = CheckControlModeCommandAndStatusMatch(control_mode_command_queue_.front(), control_mode_status_queue_.front());
+        UNUSED(match);
         assert(match);
         control_mode_command_rtt_.push_back(GetRTT(control_mode_command_queue_.front().header.stamp, ros::Time::now()));
         control_mode_command_queue_.clear();
@@ -427,6 +433,7 @@ public:
         assert(gripper_command_queue_.size() == 1);
         assert(gripper_status_queue_.size() == 1);
         const bool match = CheckGripperCommandAndStatusMatch(gripper_command_queue_.front(), gripper_status_queue_.front());
+        UNUSED(match);
         assert(match);
         gripper_command_rtt_.push_back(GetRTT(gripper_command_queue_.front().header.stamp, ros::Time::now()));
         gripper_command_queue_.clear();
