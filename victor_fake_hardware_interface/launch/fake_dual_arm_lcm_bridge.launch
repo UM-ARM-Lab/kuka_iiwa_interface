@@ -22,7 +22,7 @@
                  user="armlab"
                  env-loader="~/ros_env.sh"/>
         <node name="polly" pkg="amazon_ros_speech" type="polly.py"
-              args="'Yellow leader, standing by. This is a sub-par version of Maize'"
+              args="'Yellow leader, standing by. This is a sub par version of Maize'"
               machine="victorbackpack"
               if="$(arg talkative)"/>
     </group>
