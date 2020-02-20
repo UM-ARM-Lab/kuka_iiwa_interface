@@ -13,10 +13,7 @@ find_package(catkin REQUIRED COMPONENTS
 include_directories(${catkin_INCLUDE_DIRS})
 
 catkin_package(
-  INCLUDE_DIRS
-    include
   LIBRARIES
-    ik_solver
   CATKIN_DEPENDS
     moveit_core
     pluginlib
@@ -32,9 +29,6 @@ find_package(LAPACK REQUIRED)
 
 add_library(${IKFAST_LIBRARY_NAME} src/victor_left_arm_ikfast_moveit_plugin.cpp)
 target_link_libraries(${IKFAST_LIBRARY_NAME} ${catkin_LIBRARIES} ${Boost_LIBRARIES} ${LAPACK_LIBRARIES})
-
-add_library(ik_solver src/victor_left_arm_ikfast_solver.cpp)
-target_link_libraries(ik_solver ${catkin_LIBRARIES})
 
 install(TARGETS ${IKFAST_LIBRARY_NAME} LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION})
 
