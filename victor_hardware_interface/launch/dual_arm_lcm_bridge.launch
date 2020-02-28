@@ -1,12 +1,17 @@
 <launch>
-    <arg name="model"                       default="$(find victor_description)/urdf/victor.urdf.xacro"/>
     <arg name="arm_command_gui"             default="false"/>
+    <arg name="talkative"                   default="true"/>
     <!-- Note that changing these from the default requires matching changes in the Java code -->
     <arg name="left_arm_recv_url"           default="udp://10.10.10.10:30002"/>
     <arg name="right_arm_recv_url"          default="udp://10.10.10.10:30001"/>
-    <arg name="talkative"                   default="true"/>
+    
+    <!-- Allows users to have slightly modified versions of Victor's URDF -->
+    <arg name="model"                       default="$(find victor_description)/urdf/victor.urdf.xacro"/>
+    <param name="robot_description"         command="$(find xacro)/xacro --xacro-ns --inorder $(arg model)"/>
 
-    <param name="robot_description" command="$(find xacro)/xacro --xacro-ns --inorder $(arg model)"/>
+    <include file="$(find victor_moveit_config)/launch/planning_context.launch">
+        <arg name="load_robot_description" value="false"/>
+    </include>
     <node pkg="victor_hardware_interface" type="joint_state_publisher.py" name="joint_state_publisher"/>
     <node pkg="robot_state_publisher"     type="robot_state_publisher"    name="robot_state_publisher"/>
     <node pkg="victor_hardware_interface" type="arm_command_gui.py"       name="arm_command_gui"    if="$(arg arm_command_gui)"/>

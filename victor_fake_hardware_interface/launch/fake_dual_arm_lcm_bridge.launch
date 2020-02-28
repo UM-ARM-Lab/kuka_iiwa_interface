@@ -1,9 +1,14 @@
 <launch>
-    <arg name="model"                       default="$(find victor_description)/urdf/victor.urdf.xacro"/>
     <arg name="arm_command_gui"             default="false"/>
     <arg name="talkative"                   default="false"/>
 
-    <param name="robot_description" command="$(find xacro)/xacro --xacro-ns --inorder $(arg model)"/>
+    <!-- Allows users to have slightly modified versions of Victor's URDF -->
+    <arg name="model"                       default="$(find victor_description)/urdf/victor.urdf.xacro"/>
+    <param name="robot_description"         command="$(find xacro)/xacro --xacro-ns --inorder $(arg model)"/>
+
+    <include file="$(find victor_moveit_config)/launch/planning_context.launch">
+        <arg name="load_robot_description" value="false"/>
+    </include>
     <node pkg="victor_hardware_interface" type="joint_state_publisher.py" name="joint_state_publisher"/>
     <node pkg="robot_state_publisher"     type="robot_state_publisher"    name="robot_state_publisher"/>
     <node pkg="victor_hardware_interface" type="arm_command_gui.py"       name="arm_command_gui"    if="$(arg arm_command_gui)"/>
@@ -26,3 +31,4 @@
               if="$(arg talkative)"/>
     </group>
 </launch>
+
