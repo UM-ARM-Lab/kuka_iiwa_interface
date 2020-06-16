@@ -71,7 +71,7 @@
             </plugin>
         </gazebo>
 
-        <gazebo> <!-- Unreferenced block is assumed to apply to the robot model -->
+        <gazebo> <!-- Unreferenced block is assumed to apply to the whole robot model -->
             <!-- Don't forget to update Gazebo path: `export GAZEBO_PLUGIN_PATH=${GAZEBO_PLUGIN_PATH}:~/catkin_ws/devel/lib` -->
             <plugin name="victor_left_hand_control_plugin" filename="libvictor_gazebo_plugins.so">
                 <side name="left"/>
