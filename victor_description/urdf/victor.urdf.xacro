@@ -70,6 +70,6 @@
     <!-- Load Gazebo lib and set the robot namespace -->
     <xacro:add_gazebo_control_plugin robot_namespace="$(arg robot_name)"/>
     <!-- Rigidly attach Victor to the Gazebo world -->
-    <xacro:add_gazebo_fixed_link base_link="$(arg robot_name)_root"/>
+    <!-- <xacro:add_gazebo_fixed_link base_link="$(arg robot_name)_root"/> -->
 
 </robot>
