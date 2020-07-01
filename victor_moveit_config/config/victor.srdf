@@ -377,7 +377,6 @@
     <disable_collisions link1="victor_left_gripper_fingerA_base" link2="victor_left_gripper_fingerC_prox" reason="Never" />
     <disable_collisions link1="victor_left_gripper_fingerA_base" link2="victor_left_gripper_mounting_bracket" reason="Never" />
     <disable_collisions link1="victor_left_gripper_fingerA_base" link2="victor_left_gripper_palm" reason="Adjacent" />
-    <disable_collisions link1="victor_left_gripper_fingerA_base" link2="victor_right_gripper_fingerA_dist" reason="Never" />
     <disable_collisions link1="victor_left_gripper_fingerA_dist" link2="victor_left_gripper_fingerA_med" reason="Adjacent" />
     <disable_collisions link1="victor_left_gripper_fingerA_dist" link2="victor_left_gripper_fingerA_prox" reason="Never" />
     <disable_collisions link1="victor_left_gripper_fingerA_dist" link2="victor_left_gripper_fingerB_base" reason="Never" />
@@ -386,8 +385,6 @@
     <disable_collisions link1="victor_left_gripper_fingerA_dist" link2="victor_left_gripper_fingerC_prox" reason="Never" />
     <disable_collisions link1="victor_left_gripper_fingerA_dist" link2="victor_left_gripper_mounting_bracket" reason="Never" />
     <disable_collisions link1="victor_left_gripper_fingerA_dist" link2="victor_left_gripper_palm" reason="Never" />
-    <disable_collisions link1="victor_left_gripper_fingerA_dist" link2="victor_right_gripper_fingerA_dist" reason="Never" />
-    <disable_collisions link1="victor_left_gripper_fingerA_dist" link2="victor_right_gripper_fingerB_dist" reason="Never" />
     <disable_collisions link1="victor_left_gripper_fingerA_med" link2="victor_left_gripper_fingerA_prox" reason="Adjacent" />
     <disable_collisions link1="victor_left_gripper_fingerA_med" link2="victor_left_gripper_fingerB_base" reason="Never" />
     <disable_collisions link1="victor_left_gripper_fingerA_med" link2="victor_left_gripper_fingerB_med" reason="Never" />
@@ -424,9 +421,6 @@
     <disable_collisions link1="victor_left_gripper_fingerB_dist" link2="victor_left_gripper_fingerC_prox" reason="Never" />
     <disable_collisions link1="victor_left_gripper_fingerB_dist" link2="victor_left_gripper_mounting_bracket" reason="Never" />
     <disable_collisions link1="victor_left_gripper_fingerB_dist" link2="victor_left_gripper_palm" reason="Never" />
-    <disable_collisions link1="victor_left_gripper_fingerB_dist" link2="victor_right_gripper_fingerA_med" reason="Never" />
-    <disable_collisions link1="victor_left_gripper_fingerB_dist" link2="victor_right_gripper_fingerB_base" reason="Never" />
-    <disable_collisions link1="victor_left_gripper_fingerB_dist" link2="victor_right_gripper_fingerC_dist" reason="Never" />
     <disable_collisions link1="victor_left_gripper_fingerB_med" link2="victor_left_gripper_fingerB_prox" reason="Adjacent" />
     <disable_collisions link1="victor_left_gripper_fingerB_med" link2="victor_left_gripper_fingerC_base" reason="Never" />
     <disable_collisions link1="victor_left_gripper_fingerB_med" link2="victor_left_gripper_fingerC_dist" reason="Never" />
@@ -434,9 +428,6 @@
     <disable_collisions link1="victor_left_gripper_fingerB_med" link2="victor_left_gripper_fingerC_prox" reason="Never" />
     <disable_collisions link1="victor_left_gripper_fingerB_med" link2="victor_left_gripper_mounting_bracket" reason="Never" />
     <disable_collisions link1="victor_left_gripper_fingerB_med" link2="victor_left_gripper_palm" reason="Never" />
-    <disable_collisions link1="victor_left_gripper_fingerB_med" link2="victor_right_gripper_fingerA_dist" reason="Never" />
-    <disable_collisions link1="victor_left_gripper_fingerB_med" link2="victor_right_gripper_fingerB_base" reason="Never" />
-    <disable_collisions link1="victor_left_gripper_fingerB_med" link2="victor_right_gripper_fingerC_dist" reason="Never" />
     <disable_collisions link1="victor_left_gripper_fingerB_prox" link2="victor_left_gripper_fingerC_base" reason="Never" />
     <disable_collisions link1="victor_left_gripper_fingerB_prox" link2="victor_left_gripper_fingerC_dist" reason="Never" />
     <disable_collisions link1="victor_left_gripper_fingerB_prox" link2="victor_left_gripper_fingerC_med" reason="Never" />
@@ -448,23 +439,16 @@
     <disable_collisions link1="victor_left_gripper_fingerC_base" link2="victor_left_gripper_fingerC_prox" reason="Adjacent" />
     <disable_collisions link1="victor_left_gripper_fingerC_base" link2="victor_left_gripper_mounting_bracket" reason="Never" />
     <disable_collisions link1="victor_left_gripper_fingerC_base" link2="victor_left_gripper_palm" reason="Adjacent" />
-    <disable_collisions link1="victor_left_gripper_fingerC_base" link2="victor_right_gripper_fingerA_dist" reason="Never" />
-    <disable_collisions link1="victor_left_gripper_fingerC_base" link2="victor_right_gripper_fingerB_dist" reason="Never" />
     <disable_collisions link1="victor_left_gripper_fingerC_dist" link2="victor_left_gripper_fingerC_med" reason="Adjacent" />
     <disable_collisions link1="victor_left_gripper_fingerC_dist" link2="victor_left_gripper_fingerC_prox" reason="Never" />
     <disable_collisions link1="victor_left_gripper_fingerC_dist" link2="victor_left_gripper_mounting_bracket" reason="Never" />
     <disable_collisions link1="victor_left_gripper_fingerC_dist" link2="victor_left_gripper_palm" reason="Never" />
-    <disable_collisions link1="victor_left_gripper_fingerC_dist" link2="victor_right_gripper_fingerA_dist" reason="Never" />
-    <disable_collisions link1="victor_left_gripper_fingerC_dist" link2="victor_right_gripper_fingerB_dist" reason="Never" />
-    <disable_collisions link1="victor_left_gripper_fingerC_dist" link2="victor_right_gripper_fingerB_med" reason="Never" />
     <disable_collisions link1="victor_left_gripper_fingerC_med" link2="victor_left_gripper_fingerC_prox" reason="Adjacent" />
     <disable_collisions link1="victor_left_gripper_fingerC_med" link2="victor_left_gripper_mounting_bracket" reason="Never" />
     <disable_collisions link1="victor_left_gripper_fingerC_med" link2="victor_left_gripper_palm" reason="Never" />
     <disable_collisions link1="victor_left_gripper_fingerC_prox" link2="victor_left_gripper_mounting_bracket" reason="Never" />
     <disable_collisions link1="victor_left_gripper_fingerC_prox" link2="victor_left_gripper_palm" reason="Default" />
-    <disable_collisions link1="victor_left_gripper_fingerC_prox" link2="victor_right_gripper_fingerB_med" reason="Never" />
     <disable_collisions link1="victor_left_gripper_mounting_bracket" link2="victor_left_gripper_palm" reason="Adjacent" />
-    <disable_collisions link1="victor_left_gripper_mounting_bracket" link2="victor_right_gripper_fingerB_dist" reason="Never" />
     <disable_collisions link1="victor_pedestal" link2="victor_right_arm_link_0" reason="Never" />
     <disable_collisions link1="victor_pedestal" link2="victor_right_arm_link_1" reason="Never" />
     <disable_collisions link1="victor_pedestal" link2="victor_right_arm_link_2" reason="Never" />
