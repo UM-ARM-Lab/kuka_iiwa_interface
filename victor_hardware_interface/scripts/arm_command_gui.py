@@ -121,7 +121,7 @@ class Arm:
                                         finger_command_name=finger_command_name)
 
                 label = finger_joint_labels[finger_joint_name] + ' Command ' + \
-                        finger_command_name[0].upper() + finger_command_name[1:]
+                    finger_command_name[0].upper() + finger_command_name[1:]
 
                 self.finger_labels[(finger_joint_name, finger_command_name)] = self.init_label(label, col)
 
