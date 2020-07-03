@@ -1,5 +1,5 @@
 <?xml version="1.0"?>
-<package>
+<package format="2">
   <name>victor_description</name>
   <version>0.0.0</version>
   <description>The victor_description package</description>
@@ -40,11 +40,12 @@
   <!-- Use test_depend for packages you need only for testing: -->
   <!--   <test_depend>gtest</test_depend> -->
   <buildtool_depend>catkin</buildtool_depend>
-
+  <exec_depend>gazebo_ros</exec_depend>
 
   <!-- The export tag contains other, unspecified, tags -->
+  <!-- https://answers.gazebosim.org//question/6568/uri-paths-to-packages-in-the-sdf-model-file/ 
+       This version allows the use of file://victor_description/... inside of Gazebo SDF files -->
   <export>
-    <!-- Other tools can request additional information be placed here -->
-
+    <gazebo_ros gazebo_media_path="${prefix}/.." />
   </export>
 </package>
