@@ -170,25 +170,19 @@
         <link name="victor_right_arm_flange_kuka" />
     </group>
     <group name="both_arms">
-        <link name="victor_left_arm_link_0" />
-        <link name="victor_left_arm_link_1" />
-        <link name="victor_left_arm_link_2" />
-        <link name="victor_left_arm_link_3" />
-        <link name="victor_left_arm_link_4" />
-        <link name="victor_left_arm_link_5" />
-        <link name="victor_left_arm_link_6" />
-        <link name="victor_left_arm_link_7" />
-        <link name="victor_right_arm_link_0" />
-        <link name="victor_right_arm_link_1" />
-        <link name="victor_right_arm_link_2" />
-        <link name="victor_right_arm_link_3" />
-        <link name="victor_right_arm_link_4" />
-        <link name="victor_right_arm_link_5" />
-        <link name="victor_right_arm_link_6" />
-        <link name="victor_right_arm_link_7" />
+        <chain base_link="victor_right_arm_link_0" tip_link="victor_right_arm_flange" />
+        <chain base_link="victor_left_arm_link_0" tip_link="victor_left_arm_flange" />
     </group>
     <!--GROUP STATES: Purpose: Define a named state for a particular group, in terms of joint values. This is useful to define states like 'folded arms'-->
-    <group_state name="right_arm_home" group="right_arm" />
+    <group_state name="right_arm_home" group="right_arm">
+        <joint name="victor_right_arm_joint_1" value="0" />
+        <joint name="victor_right_arm_joint_2" value="0" />
+        <joint name="victor_right_arm_joint_3" value="0" />
+        <joint name="victor_right_arm_joint_4" value="0" />
+        <joint name="victor_right_arm_joint_5" value="0" />
+        <joint name="victor_right_arm_joint_6" value="0" />
+        <joint name="victor_right_arm_joint_7" value="0" />
+    </group_state>
     <group_state name="left_arm_home" group="left_arm">
         <joint name="victor_left_arm_joint_1" value="0" />
         <joint name="victor_left_arm_joint_2" value="0" />
