@@ -116,4 +116,6 @@ add_dependencies(iiwa_velocity_torque_controller ${${PROJECT_NAME}_EXPORTED_TARG
 target_link_libraries(iiwa_velocity_torque_controller ${catkin_LIBRARIES})
 
 find_package(roslaunch REQUIRED)
-roslaunch_add_file_check(launch)
+if(CATKIN_ENABLE_TESTING)
+  roslaunch_add_file_check(launch)
+endif()
