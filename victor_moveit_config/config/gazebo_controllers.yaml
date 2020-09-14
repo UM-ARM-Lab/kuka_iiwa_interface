@@ -1,5 +1,5 @@
 controller_list:
-  - name: both_arms_controller
+  - name: victor/position_trajectory_controller
     action_ns: follow_joint_trajectory
     type: FollowJointTrajectory
     default: true
@@ -11,17 +11,6 @@ controller_list:
       - victor_left_arm_joint_5
       - victor_left_arm_joint_6
       - victor_left_arm_joint_7
-      - victor_left_gripper_fingerA_joint_2
-      - victor_left_gripper_fingerA_joint_3
-      - victor_left_gripper_fingerA_joint_4
-      - victor_left_gripper_fingerB_knuckle
-      - victor_left_gripper_fingerB_joint_2
-      - victor_left_gripper_fingerB_joint_3
-      - victor_left_gripper_fingerB_joint_4
-      - victor_left_gripper_fingerC_knuckle
-      - victor_left_gripper_fingerC_joint_2
-      - victor_left_gripper_fingerC_joint_3
-      - victor_left_gripper_fingerC_joint_4
       - victor_right_arm_joint_1
       - victor_right_arm_joint_2
       - victor_right_arm_joint_3
@@ -29,14 +18,3 @@ controller_list:
       - victor_right_arm_joint_5
       - victor_right_arm_joint_6
       - victor_right_arm_joint_7
-      - victor_right_gripper_fingerA_joint_2
-      - victor_right_gripper_fingerA_joint_3
-      - victor_right_gripper_fingerA_joint_4
-      - victor_right_gripper_fingerB_knuckle
-      - victor_right_gripper_fingerB_joint_2
-      - victor_right_gripper_fingerB_joint_3
-      - victor_right_gripper_fingerB_joint_4
-      - victor_right_gripper_fingerC_knuckle
-      - victor_right_gripper_fingerC_joint_2
-      - victor_right_gripper_fingerC_joint_3
-      - victor_right_gripper_fingerC_joint_4

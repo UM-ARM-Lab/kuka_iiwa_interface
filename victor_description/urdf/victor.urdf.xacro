@@ -65,51 +65,11 @@
         <origin xyz="0 0 0.02705" rpy="0 0 ${PI/4}"/> <!-- Offset measured with a tape measure; please confirm/fix this value -->
     </xacro:robotiq_3finger>
 
-    <link name="$(arg robot_name)_left_tool_placeholder">
-        <visual>
-            <origin xyz="0 0 0" rpy="0 0 0"/>
-            <geometry>
-                <cylinder length="${6 * 0.0254}" radius="0.03"/>
-            </geometry>
-        </visual>
-        <collision>
-            <origin xyz="0 0 0" rpy="0 0 0"/>
-            <geometry>
-                <cylinder length="${6 * 0.0254}" radius="0.03"/>
-            </geometry>
-        </collision>
-    </link>
-    <joint name="$(arg robot_name)_left_tool_joint" type="fixed">
-        <parent link="$(arg robot_name)_left_gripper_palm_surface"/>
-        <child link="$(arg robot_name)_left_tool_placeholder"/>
-        <origin xyz="0 0 ${3 * 0.0254}"/>
-    </joint>
-
-    <link name="$(arg robot_name)_right_tool_placeholder">
-        <visual>
-            <origin xyz="0 0 0" rpy="0 0 0"/>
-            <geometry>
-                <cylinder length="${6 * 0.0254}" radius="0.03"/>
-            </geometry>
-        </visual>
-        <collision>
-            <origin xyz="0 0 0" rpy="0 0 0"/>
-            <geometry>
-                <cylinder length="${6 * 0.0254}" radius="0.03"/>
-            </geometry>
-        </collision>
-    </link>
-    <joint name="$(arg robot_name)_right_tool_joint" type="fixed">
-        <parent link="$(arg robot_name)_right_gripper_palm_surface"/>
-        <child link="$(arg robot_name)_right_tool_placeholder"/>
-        <origin xyz="0 0 ${3 * 0.0254}"/>
-    </joint>
-
     <!-- Add Gazebo properties for whole robot -->
     <xacro:include filename="$(find victor_description)/urdf/gazebo_utilities.xacro"/>
     <!-- Load Gazebo lib and set the robot namespace -->
     <xacro:add_gazebo_control_plugin robot_namespace="$(arg robot_name)"/>
     <!-- Rigidly attach Victor to the Gazebo world -->
-    <!-- <xacro:add_gazebo_fixed_link base_link="$(arg robot_name)_root"/> -->
+    <xacro:add_gazebo_fixed_link base_link="$(arg robot_name)_root"/>
 
 </robot>
