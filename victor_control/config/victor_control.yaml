@@ -154,7 +154,7 @@ victor:
     pid: { p: 1.0, i: 0.01, d: 1.0 }
 
   # trajectory controllers
-  left_arm_position_trajectory_controller:
+  left_arm_trajectory_controller:
     type: "position_controllers/JointTrajectoryController"
     joints:
       - victor_left_arm_joint_1
@@ -165,7 +165,7 @@ victor:
       - victor_left_arm_joint_6
       - victor_left_arm_joint_7
 
-  right_arm_position_trajectory_controller:
+  right_arm_trajectory_controller:
     type: "position_controllers/JointTrajectoryController"
     joints:
       - victor_right_arm_joint_1
@@ -175,6 +175,22 @@ victor:
       - victor_right_arm_joint_5
       - victor_right_arm_joint_6
       - victor_right_arm_joint_7
+    constraints:
+      goal_time: 0.6
+      victor_right_arm_joint_1:
+        goal: 0.02
+      victor_right_arm_joint_2:
+        goal: 0.02
+      victor_right_arm_joint_3:
+        goal: 0.02
+      victor_right_arm_joint_4:
+        goal: 0.02
+      victor_right_arm_joint_5:
+        goal: 0.02
+      victor_right_arm_joint_6:
+        goal: 0.02
+      victor_right_arm_joint_7:
+        goal: 0.02
 
   both_arms_trajectory_controller:
     type: "position_controllers/JointTrajectoryController"
@@ -235,7 +251,7 @@ victor:
       - victor_right_gripper_fingerC_joint_4
 
   left_hand_controller:
-    type: "position_controllers/JointGroupPositionController"
+    type: "position_controllers/JointTrajectoryController"
     joints:
       - victor_left_gripper_fingerA_joint_2
       - victor_left_gripper_fingerA_joint_3
@@ -250,7 +266,7 @@ victor:
       - victor_left_gripper_fingerC_joint_4
 
   right_hand_controller:
-    type: "position_controllers/JointGroupPositionController"
+    type: "position_controllers/JointTrajectoryController"
     joints:
       - victor_right_gripper_fingerA_joint_2
       - victor_right_gripper_fingerA_joint_3
