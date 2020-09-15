@@ -70,10 +70,6 @@
 
             <limit lower="${-16 * PI / 180}" upper="${10 * PI / 180}"
                effort="${max_effort}" velocity="${max_velocity}"/>
-            <safety_controller soft_lower_limit="${-14 * PI / 180}"
-                               soft_upper_limit="${8 * PI / 180}"
-                               k_position="${safety_controller_k_pos}"
-                               k_velocity="${safety_controller_k_vel}"/>
             <dynamics damping="${joint_damping}"/>
         </joint>
         <xacro:robotiq_finger prefix="${prefix}_fingerB"/>
@@ -87,10 +83,6 @@
 
             <limit lower="${-16 * PI / 180}" upper="${10 * PI / 180}"
                effort="${max_effort}" velocity="${max_velocity}"/>
-            <safety_controller soft_lower_limit="${-14 * PI / 180}"
-                               soft_upper_limit="${8 * PI / 180}"
-                               k_position="${safety_controller_k_pos}"
-                               k_velocity="${safety_controller_k_vel}"/>
             <dynamics damping="${joint_damping}"/>
         </joint>
         <xacro:robotiq_finger prefix="${prefix}_fingerC"/>

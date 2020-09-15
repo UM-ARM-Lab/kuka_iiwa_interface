@@ -22,7 +22,7 @@
     args="-urdf -model victor -param robot_description"/>
 
   <!-- ros_control victor launch file -->
-  <include file="$(find victor_hardware_interface)/launch/victor_control.launch" />
+  <include file="$(find victor_control)/launch/victor_control.launch" />
 
   <!-- moveit -->
   <include file="$(find victor_moveit_config)/launch/planning_context.launch">

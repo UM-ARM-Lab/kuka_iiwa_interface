@@ -57,11 +57,11 @@
     <!-- Robotiq grippers -->
     <!--Import the Robotiq 3 finger macro -->
     <xacro:include filename="$(find victor_description)/urdf/robotiq_3finger_gripper.xacro"/>
-    <xacro:robotiq_3finger parent="$(arg robot_name)_left_gripper_mounting_bracket" prefix="$(arg robot_name)_left_gripper" hardware_interface="hardware_interface/EffortJointInterface">
+    <xacro:robotiq_3finger parent="$(arg robot_name)_left_gripper_mounting_bracket" prefix="$(arg robot_name)_left_gripper" hardware_interface="$(arg hardware_interface)">
         <origin xyz="0 0 0.02705" rpy="0 0 ${PI/4}"/> <!-- Offset measured with a tape measure; please confirm/fix this value -->
     </xacro:robotiq_3finger>
 
-    <xacro:robotiq_3finger parent="$(arg robot_name)_right_gripper_mounting_bracket" prefix="$(arg robot_name)_right_gripper" hardware_interface="hardware_interface/EffortJointInterface">
+    <xacro:robotiq_3finger parent="$(arg robot_name)_right_gripper_mounting_bracket" prefix="$(arg robot_name)_right_gripper" hardware_interface="$(arg hardware_interface)">
         <origin xyz="0 0 0.02705" rpy="0 0 ${PI/4}"/> <!-- Offset measured with a tape measure; please confirm/fix this value -->
     </xacro:robotiq_3finger>
 

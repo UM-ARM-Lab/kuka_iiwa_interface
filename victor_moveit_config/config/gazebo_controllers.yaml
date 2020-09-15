@@ -1,8 +1,7 @@
 controller_list:
-  - name: victor/position_trajectory_controller
+  - name: victor/both_arms_trajectory_controller
     action_ns: follow_joint_trajectory
     type: FollowJointTrajectory
-    default: true
     joints:
       - victor_left_arm_joint_1
       - victor_left_arm_joint_2

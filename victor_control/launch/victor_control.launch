@@ -1,15 +1,18 @@
 <launch>
 
     <!-- Load joint controller configurations from YAML file to parameter server -->
-    <rosparam file="$(find victor_hardware_interface)/config/victor_control.yaml" command="load"/>
+    <rosparam file="$(find victor_control)/config/victor_control.yaml" command="load"/>
 
-    <!-- load the controllers -->
+    <!-- load the controllers.
+    This is the lowest level at which one can choose whether to control left/right/both arms -->
     <node name="controller_spawner"
           pkg="controller_manager"
           type="spawner"
           ns="/victor"
           args="
-          position_trajectory_controller
+          both_arms_trajectory_controller
+          left_hand_controller
+          right_hand_controller
           joint_state_controller"/>
 
     <!-- convert joint states to TF transforms for rviz, etc -->
