@@ -6,10 +6,12 @@ import rospy
 from victor_hardware_interface_msgs.msg import *
 from victor_hardware_interface_msgs.srv import *
 
+
 class Stiffness(Enum):
     STIFF = 1
     MEDIUM = 3
-    SOFT  = 2
+    SOFT = 2
+
 
 def set_control_mode(control_mode, arm, stiffness=Stiffness.MEDIUM, vel=0.1, accel=0.1):
     """
@@ -20,7 +22,6 @@ def set_control_mode(control_mode, arm, stiffness=Stiffness.MEDIUM, vel=0.1, acc
     arm (string):               The name of the arm: "right_arm" or "left_arm"
     stiffness (Stiffness):      For impedance modes, uses a set of stiffness values
     """
-
 
     new_control_mode = ControlModeParameters()
     new_control_mode.control_mode.mode = control_mode
@@ -33,20 +34,21 @@ def set_control_mode(control_mode, arm, stiffness=Stiffness.MEDIUM, vel=0.1, acc
 
     elif control_mode == ControlMode.CARTESIAN_POSE:
         rospy.logerr("Cartesian Mode not yet implemented")
-        assert(False)
+        assert False
 
     elif control_mode == ControlMode.CARTESIAN_IMPEDANCE:
         rospy.logerr("Cartesian Mode not yet implemented")
-        assert(False)
+        assert False
 
     else:
         rospy.logerr("Unknown control mode requested: " + str(control_mode))
-        assert(False)
+        assert False
 
     result = send_new_control_mode(arm, new_control_mode)
     if not result.success:
         rospy.logerr("Failed to switch to control mode: " + str(control_mode))
     return result
+
 
 def send_new_control_mode(arm, msg):
     # TODO: Consider removing the forced global namespace in the future
@@ -54,12 +56,14 @@ def send_new_control_mode(arm, msg):
                                                    SetControlMode)
     return send_new_control_mode_srv(msg)
 
+
 def get_joint_position_params(vel, accel):
     new_control_mode = ControlModeParameters()
     new_control_mode.control_mode.mode = ControlMode.JOINT_POSITION
     new_control_mode.joint_path_execution_params.joint_relative_velocity = vel
     new_control_mode.joint_path_execution_params.joint_relative_acceleration = accel
     return new_control_mode
+
 
 def get_joint_impedance_params(stiffness, vel=0.1, accel=0.1):
     """
@@ -127,10 +131,9 @@ def get_joint_impedance_params(stiffness, vel=0.1, accel=0.1):
 
     else:
         rospy.logerr("Unknown stiffness for Joint Impedance")
-        assert(False)
+        assert False
 
     return new_control_mode
-
 
 
 def jvq_to_list(jvq):
@@ -141,7 +144,8 @@ def jvq_to_list(jvq):
     Return:
     list with 7 elements
     """
-    return [getattr(jvq, 'joint_' + str(num)) for num in range(1,8)]
+    return [getattr(jvq, 'joint_' + str(num)) for num in range(1, 8)]
+
 
 def list_to_jvq(quantity_list):
     """Turns a list of 7 numbers into a joint value quantity
@@ -151,11 +155,12 @@ def list_to_jvq(quantity_list):
     Return:
     jvq JointValueQuantity
     """
-    assert(len(quantity_list) == 7)
+    assert (len(quantity_list) == 7)
     jvq = JointValueQuantity()
     for i in range(7):
-        setattr(jvq, 'joint_' + str(i+1), quantity_list[i])
+        setattr(jvq, 'joint_' + str(i + 1), quantity_list[i])
     return jvq
+
 
 def default_gripper_command():
     cmd = Robotiq3FingerCommand()
