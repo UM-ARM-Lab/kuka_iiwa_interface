@@ -1,6 +1,50 @@
 <?xml version="1.0"?>
 <robot xmlns:xacro="http://www.ros.org/wiki/xacro">
 
+    <gazebo reference="victor_right_arm_link_1">
+        <self_collide>1</self_collide>
+    </gazebo>
+    <gazebo reference="victor_right_arm_link_2">
+        <self_collide>1</self_collide>
+    </gazebo>
+    <gazebo reference="victor_right_arm_link_3">
+        <self_collide>1</self_collide>
+    </gazebo>
+    <gazebo reference="victor_right_arm_link_4">
+        <self_collide>1</self_collide>
+    </gazebo>
+    <gazebo reference="victor_right_arm_link_5">
+        <self_collide>1</self_collide>
+    </gazebo>
+    <gazebo reference="victor_right_arm_link_6">
+        <self_collide>1</self_collide>
+    </gazebo>
+    <gazebo reference="victor_right_arm_link_7">
+        <self_collide>0</self_collide>
+    </gazebo>
+    <gazebo reference="victor_left_arm_link_1">
+        <self_collide>1</self_collide>
+    </gazebo>
+    <gazebo reference="victor_left_arm_link_2">
+        <self_collide>1</self_collide>
+    </gazebo>
+    <gazebo reference="victor_left_arm_link_3">
+        <self_collide>1</self_collide>
+    </gazebo>
+    <gazebo reference="victor_left_arm_link_4">
+        <self_collide>1</self_collide>
+    </gazebo>
+    <gazebo reference="victor_left_arm_link_5">
+        <self_collide>1</self_collide>
+    </gazebo>
+    <gazebo reference="victor_left_arm_link_6">
+        <self_collide>1</self_collide>
+    </gazebo>
+    <gazebo reference="victor_left_arm_link_7">
+        <self_collide>0</self_collide>
+    </gazebo>
+
+
     <xacro:macro name="squishify" params="link_name">
         <gazebo reference="${link_name}">
             <collision>
@@ -66,7 +110,7 @@
         <gazebo>
             <plugin name="gazebo_ros_control" filename="libgazebo_ros_control.so">
                 <robotNamespace>/${robot_namespace}</robotNamespace>
-<!--                <robotNamespace>/</robotNamespace>-->
+                <!--                <robotNamespace>/</robotNamespace>-->
                 <legacyModeNS>false</legacyModeNS>
             </plugin>
         </gazebo>
@@ -86,11 +130,11 @@
     </xacro:macro>
 
     <xacro:macro name="add_gazebo_fixed_link" params="base_link:=base_link">
-        <link name="world" />
+        <link name="world"/>
         <joint name="world_joint" type="fixed">
-            <parent link="world" />
-            <child link = "${base_link}" />
-            <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0" />
+            <parent link="world"/>
+            <child link="${base_link}"/>
+            <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
         </joint>
     </xacro:macro>
 </robot>

@@ -65,6 +65,25 @@
         <origin xyz="0 0 0.02705" rpy="0 0 ${PI/4}"/> <!-- Offset measured with a tape measure; please confirm/fix this value -->
     </xacro:robotiq_3finger>
 
+    <!-- NOTE: defining tools here allows moveit to plan with respect to these frames very easily.
+      I think it makes sense to leave this file un-modified on shared accounts, and overwrite the robot description
+      on the parameter server from your local modified copy on a personal account. -->
+    <link name="left_tool_placeholder">
+    </link>
+    <joint name="$(arg robot_name)_left_tool_joint" type="fixed">
+        <parent link="$(arg robot_name)_left_gripper_palm_surface"/>
+        <child link="left_tool_placeholder"/>
+        <origin xyz="0 0 ${4 * 0.0254}"/>
+    </joint>
+
+    <link name="right_tool_placeholder">
+    </link>
+    <joint name="$(arg robot_name)_right_tool_joint" type="fixed">
+        <parent link="$(arg robot_name)_right_gripper_palm_surface"/>
+        <child link="right_tool_placeholder"/>
+        <origin xyz="0 0 ${4 * 0.0254}"/>
+    </joint>
+
     <!-- Add Gazebo properties for whole robot -->
     <xacro:include filename="$(find victor_description)/urdf/gazebo_utilities.xacro"/>
     <!-- Load Gazebo lib and set the robot namespace -->
