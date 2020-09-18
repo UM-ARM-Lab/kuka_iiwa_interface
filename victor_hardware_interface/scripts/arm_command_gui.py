@@ -3,6 +3,7 @@
 # [Create a window]
 
 # Python imports
+from __future__ import print_function
 import sys
 import signal
 import time
@@ -398,8 +399,8 @@ class Arm:
             self.enable_arm_sliders()
             print('Switching to JOINT_IMPEDANCE mode')
         elif control_mode == ControlMode.CARTESIAN_IMPEDANCE:
-            print('CARTESIAN_IMPEDANCE mode switch is not implemented yet.')
-            return
+            self.disable_arm_sliders()
+            print('Switching to CARTESIAN_IMPEDANCE mode')
 
         result = victor_utils.set_control_mode(control_mode, self.name, self.stiffness)
 

@@ -20,10 +20,10 @@ def get_new_control_mode(control_mode: ControlMode, stiffness=Stiffness.MEDIUM, 
         return get_joint_position_params(vel, accel)
     elif control_mode == ControlMode.JOINT_IMPEDANCE:
         return get_joint_impedance_params(stiffness, vel, accel)
+    elif control_mode == ControlMode.CARTESIAN_IMPEDANCE:
+        return get_cartesian_impedance_params()
     elif control_mode == ControlMode.CARTESIAN_POSE:
         raise NotImplementedError("Cartesian Mode not yet implemented")
-    elif control_mode == ControlMode.CARTESIAN_IMPEDANCE:
-        raise NotImplementedError("Cartesian Impedance Mode not yet implemented")
     else:
         raise NotImplementedError(f"Unknown control mode requested: {control_mode}")
 
@@ -127,6 +127,64 @@ def get_joint_impedance_params(stiffness, vel=0.1, accel=0.1):
         rospy.logerr("Unknown stiffness for Joint Impedance")
         assert False
 
+    return new_control_mode
+
+
+def get_cartesian_impedance_params():
+    """
+    Returns predefined cartesian impedance parameters
+    """
+    # TODO allow sub-modes such as xy planar motion
+    new_control_mode = ControlModeParameters()
+    new_control_mode.control_mode.mode = ControlMode.CARTESIAN_IMPEDANCE
+    velocity = 2.5
+    new_control_mode.cartesian_path_execution_params.max_velocity.x = velocity
+    new_control_mode.cartesian_path_execution_params.max_velocity.y = velocity
+    new_control_mode.cartesian_path_execution_params.max_velocity.z = velocity
+    new_control_mode.cartesian_path_execution_params.max_velocity.a = velocity * 0.25
+    new_control_mode.cartesian_path_execution_params.max_velocity.b = velocity * 0.25
+    new_control_mode.cartesian_path_execution_params.max_velocity.c = velocity * 0.25
+    new_control_mode.cartesian_path_execution_params.max_nullspace_velocity = 750.0
+    new_control_mode.cartesian_path_execution_params.max_acceleration.x = 100.0
+    new_control_mode.cartesian_path_execution_params.max_acceleration.y = 100.0
+    new_control_mode.cartesian_path_execution_params.max_acceleration.z = 100.0
+    new_control_mode.cartesian_path_execution_params.max_acceleration.a = 100.0
+    new_control_mode.cartesian_path_execution_params.max_acceleration.b = 100.0
+    new_control_mode.cartesian_path_execution_params.max_acceleration.c = 100.0
+    new_control_mode.cartesian_path_execution_params.max_nullspace_acceleration = 100.0
+    new_control_mode.cartesian_impedance_params.cartesian_damping.x = 0.25
+    new_control_mode.cartesian_impedance_params.cartesian_damping.y = 0.25
+    new_control_mode.cartesian_impedance_params.cartesian_damping.z = 0.25
+    new_control_mode.cartesian_impedance_params.cartesian_damping.a = 0.25
+    new_control_mode.cartesian_impedance_params.cartesian_damping.b = 0.25
+    new_control_mode.cartesian_impedance_params.cartesian_damping.c = 0.25
+    new_control_mode.cartesian_impedance_params.nullspace_damping = 0.5
+    new_control_mode.cartesian_impedance_params.cartesian_stiffness.x = 5000.0
+    new_control_mode.cartesian_impedance_params.cartesian_stiffness.y = 5000.0
+    new_control_mode.cartesian_impedance_params.cartesian_stiffness.z = 5000.0
+    new_control_mode.cartesian_impedance_params.cartesian_stiffness.a = 300.0
+    new_control_mode.cartesian_impedance_params.cartesian_stiffness.b = 300.0
+    new_control_mode.cartesian_impedance_params.cartesian_stiffness.c = 300.0
+    new_control_mode.cartesian_impedance_params.nullspace_stiffness = 100.0
+    new_control_mode.cartesian_control_mode_limits.max_path_deviation.x = 10000000.0
+    new_control_mode.cartesian_control_mode_limits.max_path_deviation.y = 10000000.0
+    new_control_mode.cartesian_control_mode_limits.max_path_deviation.z = 10000000.0
+    new_control_mode.cartesian_control_mode_limits.max_path_deviation.a = 10000000.0
+    new_control_mode.cartesian_control_mode_limits.max_path_deviation.b = 10000000.0
+    new_control_mode.cartesian_control_mode_limits.max_path_deviation.c = 10000000.0
+    new_control_mode.cartesian_control_mode_limits.max_cartesian_velocity.x = velocity
+    new_control_mode.cartesian_control_mode_limits.max_cartesian_velocity.y = velocity
+    new_control_mode.cartesian_control_mode_limits.max_cartesian_velocity.z = velocity
+    new_control_mode.cartesian_control_mode_limits.max_cartesian_velocity.a = velocity * 2.0 * 0.25
+    new_control_mode.cartesian_control_mode_limits.max_cartesian_velocity.b = velocity * 2.0 * 0.25
+    new_control_mode.cartesian_control_mode_limits.max_cartesian_velocity.c = velocity * 2.0 * 0.25
+    new_control_mode.cartesian_control_mode_limits.max_control_force.x = 20.0
+    new_control_mode.cartesian_control_mode_limits.max_control_force.y = 20.0
+    new_control_mode.cartesian_control_mode_limits.max_control_force.z = 20.0
+    new_control_mode.cartesian_control_mode_limits.max_control_force.a = 20.0
+    new_control_mode.cartesian_control_mode_limits.max_control_force.b = 20.0
+    new_control_mode.cartesian_control_mode_limits.max_control_force.c = 20.0
+    new_control_mode.cartesian_control_mode_limits.stop_on_max_control_force = False
     return new_control_mode
 
 
