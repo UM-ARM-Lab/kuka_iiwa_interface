@@ -321,6 +321,11 @@ public class Conversions
     public static cartesian_control_mode_limits ccmToControlModeLimits(final CartesianImpedanceControlMode ccm)
     {
         cartesian_control_mode_limits ccml_msg = new cartesian_control_mode_limits();
+        // explicit initialization because otherwise these properties could be null
+        ccml_msg.max_cartesian_velocity = Conversions.cvqInitializer(0.1);
+        ccml_msg.max_control_force = Conversions.cvqInitializer(0.1);
+        ccml_msg.max_path_deviation = Conversions.cvqInitializer(0.1);
+
         vectorToCvq(ccm.getMaxCartesianVelocity(), ccml_msg.max_cartesian_velocity, true);
         vectorToCvq(ccm.getMaxPathDeviation(), ccml_msg.max_path_deviation, true);
         vectorToCvq(ccm.getMaxControlForce(), ccml_msg.max_control_force, false);
