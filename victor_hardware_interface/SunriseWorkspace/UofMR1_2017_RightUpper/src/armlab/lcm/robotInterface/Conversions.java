@@ -102,18 +102,18 @@ public class Conversions
     
     public static void vectorToCvq(final double[] vec, cartesian_value_quantity cvq, final boolean millimeters_to_meters)
     {
-        if (millimeters_to_meters)
-        {
-            cvq.x = vec[0] / 1000.0;
-            cvq.y = vec[1] / 1000.0;
-            cvq.z = vec[2] / 1000.0;
-        }
-        else
-        {
-            cvq.x = vec[0];
-            cvq.y = vec[1];
-            cvq.z = vec[2];
-        }
+    	if (millimeters_to_meters)
+    	{
+	        cvq.x = vec[0] / 1000.0;
+	        cvq.y = vec[1] / 1000.0;
+	        cvq.z = vec[2] / 1000.0;
+    	}
+    	else
+    	{
+    		cvq.x = vec[0];
+	        cvq.y = vec[1];
+	        cvq.z = vec[2];
+    	}
         cvq.a = vec[3];
         cvq.b = vec[4];
         cvq.c = vec[5];
@@ -321,6 +321,11 @@ public class Conversions
     public static cartesian_control_mode_limits ccmToControlModeLimits(final CartesianImpedanceControlMode ccm)
     {
         cartesian_control_mode_limits ccml_msg = new cartesian_control_mode_limits();
+        // explicit initialization because otherwise these properties could be null
+        ccml_msg.max_cartesian_velocity = Conversions.cvqInitializer(0.1);
+        ccml_msg.max_control_force = Conversions.cvqInitializer(0.1);
+        ccml_msg.max_path_deviation = Conversions.cvqInitializer(0.1);
+
         vectorToCvq(ccm.getMaxCartesianVelocity(), ccml_msg.max_cartesian_velocity, true);
         vectorToCvq(ccm.getMaxPathDeviation(), ccml_msg.max_path_deviation, true);
         vectorToCvq(ccm.getMaxControlForce(), ccml_msg.max_control_force, false);
