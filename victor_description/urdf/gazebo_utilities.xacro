@@ -22,6 +22,15 @@
     <gazebo reference="victor_right_arm_link_7">
         <self_collide>0</self_collide>
     </gazebo>
+    <gazebo reference="victor_right_gripper_fingerA_dist">
+        <self_collide>1</self_collide>
+    </gazebo>
+    <gazebo reference="victor_right_gripper_fingerB_dist">
+        <self_collide>1</self_collide>
+    </gazebo>
+    <gazebo reference="victor_right_gripper_fingerC_dist">
+        <self_collide>1</self_collide>
+    </gazebo>
     <gazebo reference="victor_left_arm_link_1">
         <self_collide>1</self_collide>
     </gazebo>
@@ -42,6 +51,15 @@
     </gazebo>
     <gazebo reference="victor_left_arm_link_7">
         <self_collide>0</self_collide>
+    </gazebo>
+    <gazebo reference="victor_left_gripper_fingerA_dist">
+        <self_collide>1</self_collide>
+    </gazebo>
+    <gazebo reference="victor_left_gripper_fingerB_dist">
+        <self_collide>1</self_collide>
+    </gazebo>
+    <gazebo reference="victor_left_gripper_fingerC_dist">
+        <self_collide>1</self_collide>
     </gazebo>
 
 
@@ -112,16 +130,6 @@
                 <robotNamespace>/${robot_namespace}</robotNamespace>
                 <!--                <robotNamespace>/</robotNamespace>-->
                 <legacyModeNS>false</legacyModeNS>
-            </plugin>
-        </gazebo>
-
-        <gazebo> <!-- Unreferenced block is assumed to apply to the whole robot model -->
-            <!-- Don't forget to update Gazebo path: `export GAZEBO_PLUGIN_PATH=${GAZEBO_PLUGIN_PATH}:~/catkin_ws/devel/lib` -->
-            <plugin name="victor_left_hand_control_plugin" filename="libvictor_gazebo_plugins.so">
-                <side name="left"/>
-            </plugin>
-            <plugin name="victor_right_hand_control_plugin" filename="libvictor_gazebo_plugins.so">
-                <side name="right"/>
             </plugin>
         </gazebo>
 
