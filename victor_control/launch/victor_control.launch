@@ -1,4 +1,6 @@
 <launch>
+    <arg name="controllers_to_start"
+         default="both_arms_trajectory_controller left_hand_controller right_hand_controller joint_state_controller"/>
 
     <!-- Load joint controller configurations from YAML file to parameter server -->
     <rosparam file="$(find victor_control)/config/victor_control.yaml" command="load"/>
@@ -9,16 +11,11 @@
           pkg="controller_manager"
           type="spawner"
           ns="/victor"
-          args="
-          right_arm_trajectory_controller
-          left_arm_trajectory_controller
-          left_hand_controller
-          right_hand_controller
-          joint_state_controller"/>
+          args="$(arg controllers_to_start)"/>
 
     <!-- convert joint states to TF transforms for rviz, etc -->
     <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher">
-        <remap from="/joint_states" to="/victor/joint_states" />
+        <remap from="/joint_states" to="/victor/joint_states"/>
     </node>
 
 </launch>

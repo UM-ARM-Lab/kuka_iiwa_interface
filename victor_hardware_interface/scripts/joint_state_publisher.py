@@ -28,7 +28,7 @@ def compute_finger_angles(control):
         theta3 = min_3
     elif 140.0 < g <= 240.0:
         theta1 = max_angle[0]
-        theta2 = m2 * (g-140)
+        theta2 = m2 * (g - 140)
         theta3 = min_3
     else:
         theta1 = max_angle[0]
@@ -49,14 +49,42 @@ class VictorJointStatePublisher:
         # for the joints. We could change the callback functions to remove this assumption, but that would increase the
         # complexity of the callback functions unnecessarily
         self.joint_names = [
-                'victor_left_arm_joint_1',  'victor_left_arm_joint_2',  'victor_left_arm_joint_3',  'victor_left_arm_joint_4',  'victor_left_arm_joint_5',  'victor_left_arm_joint_6',  'victor_left_arm_joint_7',
-                'victor_right_arm_joint_1', 'victor_right_arm_joint_2', 'victor_right_arm_joint_3', 'victor_right_arm_joint_4', 'victor_right_arm_joint_5', 'victor_right_arm_joint_6', 'victor_right_arm_joint_7',
-                                                        'victor_left_gripper_fingerA_joint_2',  'victor_left_gripper_fingerA_joint_3',  'victor_left_gripper_fingerA_joint_4',
-                'victor_left_gripper_fingerB_knuckle',  'victor_left_gripper_fingerB_joint_2',  'victor_left_gripper_fingerB_joint_3',  'victor_left_gripper_fingerB_joint_4',
-                'victor_left_gripper_fingerC_knuckle',  'victor_left_gripper_fingerC_joint_2',  'victor_left_gripper_fingerC_joint_3',  'victor_left_gripper_fingerC_joint_4',
-                                                        'victor_right_gripper_fingerA_joint_2', 'victor_right_gripper_fingerA_joint_3', 'victor_right_gripper_fingerA_joint_4',
-                'victor_right_gripper_fingerB_knuckle', 'victor_right_gripper_fingerB_joint_2', 'victor_right_gripper_fingerB_joint_3', 'victor_right_gripper_fingerB_joint_4',
-                'victor_right_gripper_fingerC_knuckle', 'victor_right_gripper_fingerC_joint_2', 'victor_right_gripper_fingerC_joint_3', 'victor_right_gripper_fingerC_joint_4']
+            'victor_left_arm_joint_1',
+            'victor_left_arm_joint_2',
+            'victor_left_arm_joint_3',
+            'victor_left_arm_joint_4',
+            'victor_left_arm_joint_5',
+            'victor_left_arm_joint_6',
+            'victor_left_arm_joint_7',
+            'victor_right_arm_joint_1',
+            'victor_right_arm_joint_2',
+            'victor_right_arm_joint_3',
+            'victor_right_arm_joint_4',
+            'victor_right_arm_joint_5',
+            'victor_right_arm_joint_6',
+            'victor_right_arm_joint_7',
+            'victor_left_gripper_fingerA_joint_2',
+            'victor_left_gripper_fingerA_joint_3',
+            'victor_left_gripper_fingerA_joint_4',
+            'victor_left_gripper_fingerB_knuckle',
+            'victor_left_gripper_fingerB_joint_2',
+            'victor_left_gripper_fingerB_joint_3',
+            'victor_left_gripper_fingerB_joint_4',
+            'victor_left_gripper_fingerC_knuckle',
+            'victor_left_gripper_fingerC_joint_2',
+            'victor_left_gripper_fingerC_joint_3',
+            'victor_left_gripper_fingerC_joint_4',
+            'victor_right_gripper_fingerA_joint_2',
+            'victor_right_gripper_fingerA_joint_3',
+            'victor_right_gripper_fingerA_joint_4',
+            'victor_right_gripper_fingerB_knuckle',
+            'victor_right_gripper_fingerB_joint_2',
+            'victor_right_gripper_fingerB_joint_3',
+            'victor_right_gripper_fingerB_joint_4',
+            'victor_right_gripper_fingerC_knuckle',
+            'victor_right_gripper_fingerC_joint_2',
+            'victor_right_gripper_fingerC_joint_3',
+            'victor_right_gripper_fingerC_joint_4']
 
         # Setup the output message with default values
         self.joint_state_lock = Lock()
@@ -67,11 +95,15 @@ class VictorJointStatePublisher:
         self.joint_state_msg.effort = [0] * len(self.joint_names)
 
         # Setup the publishers and subscribers that will be used
-        self.joint_state_pub = rospy.Publisher("joint_states", JointState, queue_size = 1)
-        self.left_arm_sub = rospy.Subscriber("left_arm/motion_status", MotionStatus, self.left_arm_motion_status_callback)
-        self.right_arm_sub = rospy.Subscriber("right_arm/motion_status", MotionStatus, self.right_arm_motion_status_callback)
-        self.left_gripper_sub = rospy.Subscriber("left_arm/gripper_status", Robotiq3FingerStatus, self.left_gripper_motion_status_callback)
-        self.right_gripper_sub = rospy.Subscriber("right_arm/gripper_status", Robotiq3FingerStatus, self.right_gripper_motion_status_callback)
+        self.joint_state_pub = rospy.Publisher("victor/joint_states", JointState, queue_size=1)
+        self.left_arm_sub = rospy.Subscriber("left_arm/motion_status", MotionStatus,
+                                             self.left_arm_motion_status_callback)
+        self.right_arm_sub = rospy.Subscriber("right_arm/motion_status", MotionStatus,
+                                              self.right_arm_motion_status_callback)
+        self.left_gripper_sub = rospy.Subscriber("left_arm/gripper_status", Robotiq3FingerStatus,
+                                                 self.left_gripper_motion_status_callback)
+        self.right_gripper_sub = rospy.Subscriber("right_arm/gripper_status", Robotiq3FingerStatus,
+                                                  self.right_gripper_motion_status_callback)
 
     def run(self, loop_rate):
         rate = rospy.Rate(loop_rate)
@@ -80,18 +112,18 @@ class VictorJointStatePublisher:
             rate.sleep()
 
     def left_arm_motion_status_callback(self, motion_status):
-        self.set_arm_position_values(motion_status, offset = 0)
-        self.set_arm_effort_values(motion_status, offset = 0)
+        self.set_arm_position_values(motion_status, offset=0)
+        self.set_arm_effort_values(motion_status, offset=0)
 
     def right_arm_motion_status_callback(self, motion_status):
-        self.set_arm_position_values(motion_status, offset = 7)
-        self.set_arm_effort_values(motion_status, offset = 7)
+        self.set_arm_position_values(motion_status, offset=7)
+        self.set_arm_effort_values(motion_status, offset=7)
 
     def left_gripper_motion_status_callback(self, gripper_status):
-        self.set_gripper_position_values(gripper_status, offset = 14)
+        self.set_gripper_position_values(gripper_status, offset=14)
 
     def right_gripper_motion_status_callback(self, gripper_status):
-        self.set_gripper_position_values(gripper_status, offset = 25)
+        self.set_gripper_position_values(gripper_status, offset=25)
 
     def set_arm_position_values(self, motion_status, offset):
         with self.joint_state_lock:
@@ -105,13 +137,16 @@ class VictorJointStatePublisher:
 
     def set_gripper_position_values(self, gripper_status, offset):
         with self.joint_state_lock:
-            self.joint_state_msg.position[offset + 0: offset + 3] = compute_finger_angles(gripper_status.finger_a_status.position)
+            self.joint_state_msg.position[offset + 0: offset + 3] = compute_finger_angles(
+                gripper_status.finger_a_status.position)
 
             self.joint_state_msg.position[offset + 3] = compute_scissor_angle(gripper_status.scissor_status.position)
-            self.joint_state_msg.position[offset + 4: offset + 7] = compute_finger_angles(gripper_status.finger_b_status.position)
+            self.joint_state_msg.position[offset + 4: offset + 7] = compute_finger_angles(
+                gripper_status.finger_b_status.position)
 
             self.joint_state_msg.position[offset + 7] = compute_scissor_angle(gripper_status.scissor_status.position)
-            self.joint_state_msg.position[offset + 8: offset + 11] = compute_finger_angles(gripper_status.finger_c_status.position)
+            self.joint_state_msg.position[offset + 8: offset + 11] = compute_finger_angles(
+                gripper_status.finger_c_status.position)
 
     def set_arm_effort_values(self, motion_status, offset):
         # We use measured joint torque for now. As Kuka mentioned, it is the currently measured "raw" torque sensor
