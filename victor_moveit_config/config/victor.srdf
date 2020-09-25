@@ -528,6 +528,14 @@
     <disable_collisions link1="victor_right_gripper_fingerC_prox" link2="victor_right_gripper_palm" reason="Default"/>
     <disable_collisions link1="victor_right_gripper_mounting_bracket" link2="victor_right_gripper_palm" reason="Adjacent"/>
 
+    <!-- To allow grasping/pinching we must ignore these collisions -->
+    <disable_collisions link1="victor_right_gripper_fingerA_dist" link2="victor_right_gripper_fingerB_dist" reason="Never"/>
+    <disable_collisions link1="victor_right_gripper_fingerA_dist" link2="victor_right_gripper_fingerC_dist" reason="Never"/>
+    <disable_collisions link1="victor_right_gripper_fingerB_dist" link2="victor_right_gripper_fingerC_dist" reason="Never"/>
+    <disable_collisions link1="victor_left_gripper_fingerA_dist" link2="victor_left_gripper_fingerB_dist" reason="Never"/>
+    <disable_collisions link1="victor_left_gripper_fingerA_dist" link2="victor_left_gripper_fingerC_dist" reason="Never"/>
+    <disable_collisions link1="victor_left_gripper_fingerB_dist" link2="victor_left_gripper_fingerC_dist" reason="Never"/>
+
     <disable_collisions link1="left_tool_placeholder" link2="victor_left_gripper_mounting_bracket" reason="Never"/>
     <disable_collisions link1="left_tool_placeholder" link2="victor_left_gripper_palm" reason="Adjacent"/>
     <disable_collisions link1="left_tool_placeholder" link2="victor_left_gripper_fingerA_base" reason="Adjacent"/>
