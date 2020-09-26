@@ -56,8 +56,8 @@ class ManualMotion:
         self.prev_time = now
 
         if dt > 1:
-            print "Incredibly long time between messages. Something is weird"
-            print "dt: ", dt
+            print("Incredibly long time between messages. Something is weird")
+            print("dt: {}".format(dt))
             assert False
 
         # Update our internal copy and calculate error for later thresholding
@@ -116,7 +116,7 @@ if __name__ == "__main__":
 
 
     if(use_left_arm):
-        print "initializing left arm ...",
+        print("initializing left arm ...")
         sys.stdout.flush()
         l_cm = rh.Listener("left_arm/control_mode_status", ControlModeParameters)
         cur_mode = l_cm.get(block_until_data=True)
@@ -126,12 +126,12 @@ if __name__ == "__main__":
         result = vu.send_new_control_mode("left_arm", control_mode_params)
         while not result.success:
             result = vu.send_new_control_mode("left_arm", control_mode_params)
-        print "done"
+        print("done")
     else:
         print("not using left arm")    
 
     if(use_right_arm):
-        print "initializing right arm ...",
+        print("initializing right arm ...")
         r_cm = rh.Listener("right_arm/control_mode_status", ControlModeParameters)
         cur_mode = r_cm.get(block_until_data=True)
         control_mode_params.joint_path_execution_params.joint_relative_velocity = cur_mode.joint_path_execution_params.joint_relative_velocity
@@ -141,7 +141,7 @@ if __name__ == "__main__":
         result = vu.send_new_control_mode("right_arm", control_mode_params)
         while not result.success:
             result = vu.send_new_control_mode("right_arm", control_mode_params)
-        print "done"
+        print("done")
     else:
         print("not using right arm")    
 
@@ -157,5 +157,5 @@ if __name__ == "__main__":
 
     rospy.on_shutdown(lambda: print_joints(left, right))
 
-    print "Running"
+    print("Running")
     rospy.spin()
