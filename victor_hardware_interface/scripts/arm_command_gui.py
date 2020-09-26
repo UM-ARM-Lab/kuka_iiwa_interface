@@ -16,11 +16,10 @@ from PyQt5.QtGui import *
 from PyQt5.QtWidgets import *
 
 # ROS imports
-import rospkg
 import rospy
-from victor_hardware_interface.msg import Robotiq3FingerCommand, MotionCommand, MotionStatus, Robotiq3FingerStatus, \
-    ControlModeParameters, ControlMode
-from victor_hardware_interface.srv import SetControlMode, GetControlMode
+from victor_hardware_interface_msgs.msg import Robotiq3FingerCommand, MotionCommand, MotionStatus, Robotiq3FingerStatus, \
+    ControlMode
+from victor_hardware_interface_msgs.srv import  GetControlMode
 from victor_hardware_interface import victor_utils
 
 finger_range_discretization = 1000

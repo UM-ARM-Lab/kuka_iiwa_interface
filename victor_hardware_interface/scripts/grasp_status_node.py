@@ -9,9 +9,7 @@
 # super hacky now. Only works in scissors mode
 
 import rospy
-import time
-from victor_hardware_interface.msg import Robotiq3FingerStatus, GraspStatus
-from std_msgs.msg import String
+from victor_hardware_interface_msgs.msg import Robotiq3FingerStatus, GraspStatus
 
 
 

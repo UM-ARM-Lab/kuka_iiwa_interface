@@ -1,13 +1,12 @@
 #!/usr/bin/env python
 
-import IPython
 import math
 import rospy
 from threading import Thread
 from threading import Lock
 
-from victor_hardware_interface.msg import *
-from victor_hardware_interface.srv import *
+from victor_hardware_interface_msgs.msg import *
+from victor_hardware_interface_msgs.srv import *
 
 arm_names = ["left_arm", "right_arm"]
 cartesian_field_names = ["x", "y", "z", "a", "b", "c"]

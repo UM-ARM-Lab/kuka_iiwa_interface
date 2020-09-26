@@ -14,7 +14,7 @@
 
 
 import rospy
-from victor_hardware_interface.msg import MotionStatus
+from victor_hardware_interface_msgs.msg import MotionStatus
 from geometry_msgs.msg import WrenchStamped, Wrench, Vector3
 
 hand_to_frame = {'left':  'victor_left_gripper_palm_surface',

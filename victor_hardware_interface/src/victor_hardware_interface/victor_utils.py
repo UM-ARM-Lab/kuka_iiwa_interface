@@ -3,14 +3,14 @@
 from enum import Enum
 import rospy
 
-from victor_hardware_interface.msg import *
-from victor_hardware_interface.srv import *
+from victor_hardware_interface_msgs.msg import *
+from victor_hardware_interface_msgs.srv import *
 
 class Stiffness(Enum):
     STIFF = 1
     MEDIUM = 3
     SOFT  = 2
-    
+
 def set_control_mode(control_mode, arm, stiffness=Stiffness.MEDIUM, vel=0.1, accel=0.1):
     """
     Sets Victor's control mode.
@@ -20,25 +20,25 @@ def set_control_mode(control_mode, arm, stiffness=Stiffness.MEDIUM, vel=0.1, acc
     arm (string):               The name of the arm: "right_arm" or "left_arm"
     stiffness (Stiffness):      For impedance modes, uses a set of stiffness values
     """
-    
+
 
     new_control_mode = ControlModeParameters()
     new_control_mode.control_mode.mode = control_mode
 
     if control_mode == ControlMode.JOINT_POSITION:
         new_control_mode = get_joint_position_params(vel=vel, accel=accel)
-        
+
     elif control_mode == ControlMode.JOINT_IMPEDANCE:
         new_control_mode = get_joint_impedance_params(stiffness, vel=vel, accel=accel)
 
     elif control_mode == ControlMode.CARTESIAN_POSE:
         rospy.logerr("Cartesian Mode not yet implemented")
         assert(False)
-    
+
     elif control_mode == ControlMode.CARTESIAN_IMPEDANCE:
         rospy.logerr("Cartesian Mode not yet implemented")
         assert(False)
-    
+
     else:
         rospy.logerr("Unknown control mode requested: " + str(control_mode))
         assert(False)
