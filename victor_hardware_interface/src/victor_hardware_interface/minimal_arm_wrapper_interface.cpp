@@ -4,13 +4,13 @@
 #include <ros/callback_queue.h>
 
 // ROS message headers
-#include "victor_hardware_interface/ControlModeParameters.h"
-#include "victor_hardware_interface/MotionCommand.h"
-#include "victor_hardware_interface/MotionStatus.h"
-#include "victor_hardware_interface/Robotiq3FingerCommand.h"
-#include "victor_hardware_interface/Robotiq3FingerStatus.h"
-#include "victor_hardware_interface/SetControlMode.h"
-#include "victor_hardware_interface/GetControlMode.h"
+#include "victor_hardware_interface_msgs/ControlModeParameters.h"
+#include "victor_hardware_interface_msgs/MotionCommand.h"
+#include "victor_hardware_interface_msgs/MotionStatus.h"
+#include "victor_hardware_interface_msgs/Robotiq3FingerCommand.h"
+#include "victor_hardware_interface_msgs/Robotiq3FingerStatus.h"
+#include "victor_hardware_interface_msgs/SetControlMode.h"
+#include "victor_hardware_interface_msgs/GetControlMode.h"
 
 // LCM
 #include "victor_hardware_interface/iiwa_hardware_interface.hpp"
@@ -18,15 +18,17 @@
 
 namespace victor_hardware_interface
 {
-    inline ControlModeParameters mergeControlModeParameters(
-            const ControlModeParameters& active_control_mode,
-            const ControlModeParameters& new_control_mode);
+    namespace msgs = victor_hardware_interface_msgs;
+
+    inline msgs::ControlModeParameters mergeControlModeParameters(
+            const msgs::ControlModeParameters& active_control_mode,
+            const msgs::ControlModeParameters& new_control_mode);
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Helpers to test if two messages are equivalent
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    bool jvqEqual(const JointValueQuantity& jvq1, const JointValueQuantity& jvq2)
+    bool jvqEqual(const msgs::JointValueQuantity& jvq1, const msgs::JointValueQuantity& jvq2)
     {
         if (jvq1.joint_1 != jvq2.joint_1)
         {
@@ -62,7 +64,7 @@ namespace victor_hardware_interface
         }
     }
 
-    bool cvqEqual(const CartesianValueQuantity& cvq1, const CartesianValueQuantity& cvq2)
+    bool cvqEqual(const msgs::CartesianValueQuantity& cvq1, const msgs::CartesianValueQuantity& cvq2)
     {
         if (cvq1.x != cvq2.x)
         {
@@ -94,7 +96,7 @@ namespace victor_hardware_interface
         }
     }
 
-    bool jointPexpEqual(const JointPathExecutionParameters& pexp1, const JointPathExecutionParameters& pexp2)
+    bool jointPexpEqual(const msgs::JointPathExecutionParameters& pexp1, const msgs::JointPathExecutionParameters& pexp2)
     {
         if (pexp1.joint_relative_acceleration != pexp2.joint_relative_acceleration)
         {
@@ -114,7 +116,7 @@ namespace victor_hardware_interface
         }
     }
 
-    bool cartesianPexpEqual(const CartesianPathExecutionParameters& pexp1, const CartesianPathExecutionParameters& pexp2)
+    bool cartesianPexpEqual(const msgs::CartesianPathExecutionParameters& pexp1, const msgs::CartesianPathExecutionParameters& pexp2)
     {
         if (cvqEqual(pexp1.max_velocity, pexp2.max_velocity) == false)
         {
@@ -138,7 +140,7 @@ namespace victor_hardware_interface
         }
     }
 
-    bool controlModeParamsEqual(const ControlModeParameters& params1, const ControlModeParameters& params2)
+    bool controlModeParamsEqual(const msgs::ControlModeParameters& params1, const msgs::ControlModeParameters& params2)
     {
         // Control mode parameter
         const bool cm_equal    = (params1.control_mode.mode == params2.control_mode.mode);
@@ -216,11 +218,11 @@ namespace victor_hardware_interface
         }
 
         // Set up IIWA LCM interface
-        const auto motion_status_callback_fn = [&] (const MotionStatus& motion_status)
+        const auto motion_status_callback_fn = [&] (const msgs::MotionStatus& motion_status)
         {
             return motionStatusLCMCallback(motion_status);
         };
-        const auto control_mode_status_callback_fn = [&] (const ControlModeParameters& control_mode_status)
+        const auto control_mode_status_callback_fn = [&] (const msgs::ControlModeParameters& control_mode_status)
         {
             return controlModeStatusLCMCallback(control_mode_status);
         };
@@ -230,7 +232,7 @@ namespace victor_hardware_interface
                         control_mode_command_channel, control_mode_status_channel, control_mode_status_callback_fn));
 
         // Set up Robotiq LCM interface
-        const auto gripper_status_callback_fn = [&] (const Robotiq3FingerStatus& gripper_status)
+        const auto gripper_status_callback_fn = [&] (const msgs::Robotiq3FingerStatus& gripper_status)
         {
             return gripperStatusLCMCallback(gripper_status);
         };
@@ -241,9 +243,9 @@ namespace victor_hardware_interface
 
         // Set up ROS interfaces
         nh_.setCallbackQueue(&ros_callback_queue_);
-        motion_status_pub_ = nh_.advertise<MotionStatus>(motion_status_topic, 1, false);
-        control_mode_status_pub_ = nh_.advertise<ControlModeParameters>(control_mode_status_topic, 1, false);
-        gripper_status_pub_ = nh_.advertise<Robotiq3FingerStatus>(gripper_status_topic, 1, false);
+        motion_status_pub_ = nh_.advertise<msgs::MotionStatus>(motion_status_topic, 1, false);
+        control_mode_status_pub_ = nh_.advertise<msgs::ControlModeParameters>(control_mode_status_topic, 1, false);
+        gripper_status_pub_ = nh_.advertise<msgs::Robotiq3FingerStatus>(gripper_status_topic, 1, false);
         motion_command_sub_ = nh_.subscribe(motion_command_topic, 1, &MinimalArmWrapperInterface::motionCommandROSCallback, this);
         gripper_command_sub_ = nh_.subscribe(gripper_command_topic, 1, &MinimalArmWrapperInterface::gripperCommandROSCallback, this);;
         set_control_mode_server_ = nh_.advertiseService(set_control_mode_service, &MinimalArmWrapperInterface::setControlModeCallback, this);
@@ -295,7 +297,7 @@ namespace victor_hardware_interface
     //// Static helpers to check parameters for being in valid ranges for the control mode /////////////////////////
 
     std::pair<bool, std::string> MinimalArmWrapperInterface::validateJointPathExecutionParams(
-            const JointPathExecutionParameters& params)
+            const msgs::JointPathExecutionParameters& params)
     {
         bool valid = true;
         std::string message;
@@ -318,7 +320,7 @@ namespace victor_hardware_interface
     }
 
     std::pair<bool, std::string> MinimalArmWrapperInterface::validateCartesianPathExecutionParams(
-            const CartesianPathExecutionParameters& params)
+            const msgs::CartesianPathExecutionParameters& params)
     {
         bool valid = true;
         std::string message;
@@ -401,7 +403,7 @@ namespace victor_hardware_interface
     }
 
     std::pair<bool, std::string> MinimalArmWrapperInterface::validateJointImpedanceParams(
-            const JointImpedanceParameters& params)
+            const msgs::JointImpedanceParameters& params)
     {
         bool valid = true;
         std::string message;
@@ -484,7 +486,7 @@ namespace victor_hardware_interface
     }
 
     std::pair<bool, std::string> MinimalArmWrapperInterface::validateCartesianImpedanceParams(
-            const CartesianImpedanceParameters& params)
+            const msgs::CartesianImpedanceParameters& params)
     {
         bool valid = true;
         std::string message;
@@ -568,7 +570,7 @@ namespace victor_hardware_interface
     }
 
     std::pair<bool, std::string> MinimalArmWrapperInterface::validateCartesianControlModeLimits(
-            const CartesianControlModeLimits& params)
+            const msgs::CartesianControlModeLimits& params)
     {
         bool valid = true;
         std::string message;
@@ -672,16 +674,16 @@ namespace victor_hardware_interface
         return std::make_pair(valid, message);
     }
 
-    std::pair<bool, std::string> MinimalArmWrapperInterface::validateControlMode(const ControlModeParameters& params)
+    std::pair<bool, std::string> MinimalArmWrapperInterface::validateControlMode(const msgs::ControlModeParameters& params)
     {
         bool valid = true;
         std::string message;
 
         // Check the control mode itself
-        if (params.control_mode.mode != ControlMode::JOINT_POSITION &&
-            params.control_mode.mode != ControlMode::JOINT_IMPEDANCE &&
-            params.control_mode.mode != ControlMode::CARTESIAN_POSE &&
-            params.control_mode.mode != ControlMode::CARTESIAN_IMPEDANCE)
+        if (params.control_mode.mode != msgs::ControlMode::JOINT_POSITION &&
+            params.control_mode.mode != msgs::ControlMode::JOINT_IMPEDANCE &&
+            params.control_mode.mode != msgs::ControlMode::CARTESIAN_POSE &&
+            params.control_mode.mode != msgs::ControlMode::CARTESIAN_IMPEDANCE)
         {
             valid = false;
             message += "+Invalid control mode";
@@ -713,10 +715,10 @@ namespace victor_hardware_interface
     //// ROS Callbacks to get and set the control mode as service calls ////////////////////////////////////////////
 
     bool MinimalArmWrapperInterface::setControlModeCallback(
-            SetControlMode::Request& req,
-            SetControlMode::Response& res)
+        msgs::SetControlMode::Request& req,
+            msgs::SetControlMode::Response& res)
     {
-        Maybe::Maybe<ControlModeParameters> local_active_control_mode_copy;
+        Maybe::Maybe<msgs::ControlModeParameters> local_active_control_mode_copy;
         {
             std::lock_guard<std::mutex> lock(control_mode_status_mutex_);
             local_active_control_mode_copy = active_control_mode_;
@@ -771,8 +773,8 @@ namespace victor_hardware_interface
     }
 
     bool MinimalArmWrapperInterface::getControlModeCallback(
-            GetControlMode::Request& req,
-            GetControlMode::Response& res)
+        msgs::GetControlMode::Request& req,
+            msgs::GetControlMode::Response& res)
     {
         UNUSED(req);
         std::lock_guard<std::mutex> lock(control_mode_status_mutex_);
@@ -790,7 +792,7 @@ namespace victor_hardware_interface
      * the message on the correct ROS topic
      */
     void MinimalArmWrapperInterface::controlModeStatusLCMCallback(
-            const ControlModeParameters& control_mode_status)
+            const msgs::ControlModeParameters& control_mode_status)
     {
         {
             std::lock_guard<std::mutex> lock(control_mode_status_mutex_);
@@ -810,7 +812,7 @@ namespace victor_hardware_interface
     //// Static helpers to check parameters for being in valid ranges for the motion command ///////////////////////
 
     std::pair<bool, std::string> MinimalArmWrapperInterface::validateJointPositions(
-            const JointValueQuantity& positions)
+            const msgs::JointValueQuantity& positions)
     {
         //TODO: The function is not implemented yet; it should check that the commanded joint positions are within the joint limits of the arm
         UNUSED(positions);
@@ -848,9 +850,9 @@ namespace victor_hardware_interface
     }
 
     std::pair<bool, std::string>MinimalArmWrapperInterface::validateMotionCommand(
-            const MotionCommand& command) const
+            const msgs::MotionCommand& command) const
     {
-        Maybe::Maybe<ControlModeParameters> active_control_mode_cached;
+        Maybe::Maybe<msgs::ControlModeParameters> active_control_mode_cached;
         {
             std::lock_guard<std::mutex> lock(control_mode_status_mutex_);
             active_control_mode_cached = active_control_mode_;
@@ -868,12 +870,12 @@ namespace victor_hardware_interface
 
             switch (command_motion_mode)
             {
-                case ControlMode::JOINT_POSITION:
-                case ControlMode::JOINT_IMPEDANCE:
+                case msgs::ControlMode::JOINT_POSITION:
+                case msgs::ControlMode::JOINT_IMPEDANCE:
                     return validateJointPositions(command.joint_position);
 
-                case ControlMode::CARTESIAN_POSE:
-                case ControlMode::CARTESIAN_IMPEDANCE:
+                case msgs::ControlMode::CARTESIAN_POSE:
+                case msgs::ControlMode::CARTESIAN_IMPEDANCE:
                     return validateCartesianPose(command.cartesian_pose, command.header.frame_id);
 
                 default:
@@ -889,7 +891,7 @@ namespace victor_hardware_interface
     /*
      * ROS callback to parse a arm motion command, and pass it along to the LCM subsystem
      */
-    void MinimalArmWrapperInterface::motionCommandROSCallback(const MotionCommand& command)
+    void MinimalArmWrapperInterface::motionCommandROSCallback(const msgs::MotionCommand& command)
     {
         const auto validity_check_results = validateMotionCommand(command);
         if (validity_check_results.first)
@@ -906,7 +908,7 @@ namespace victor_hardware_interface
      * LCM callback used by the LCM subsystem when a LCM status message is recieved. Republishes the motion status
      * on the correct ROS topic
      */
-    void MinimalArmWrapperInterface::motionStatusLCMCallback(const MotionStatus& motion_status)
+    void MinimalArmWrapperInterface::motionStatusLCMCallback(const msgs::MotionStatus& motion_status)
     {
         motion_status_pub_.publish(motion_status);
     }
@@ -918,7 +920,7 @@ namespace victor_hardware_interface
     //// Static helpers to check parameters for being in valid ranges for the gripper command //////////////////////
 
     std::pair<bool, std::string> MinimalArmWrapperInterface::validateFingerCommand(
-            const Robotiq3FingerActuatorCommand& command)
+            const msgs::Robotiq3FingerActuatorCommand& command)
     {
         bool valid = true;
         std::string message;
@@ -944,7 +946,7 @@ namespace victor_hardware_interface
     }
 
     std::pair<bool, std::string> MinimalArmWrapperInterface::validateGripperCommand(
-            const Robotiq3FingerCommand& command)
+            const msgs::Robotiq3FingerCommand& command)
     {
         const auto ac = validateFingerCommand(command.finger_a_command);
         const auto bc = validateFingerCommand(command.finger_b_command);
@@ -960,7 +962,7 @@ namespace victor_hardware_interface
      * ROS callback to parse a gripper motion command, and pass it along to the LCM subsystem
      */
     void MinimalArmWrapperInterface::gripperCommandROSCallback(
-            const Robotiq3FingerCommand& command)
+            const msgs::Robotiq3FingerCommand& command)
     {
         const auto validity_check_results = validateGripperCommand(command);
         if (validity_check_results.first)
@@ -978,7 +980,7 @@ namespace victor_hardware_interface
      * on the correct ROS topic
      */
     void MinimalArmWrapperInterface::gripperStatusLCMCallback(
-            const Robotiq3FingerStatus& gripper_status)
+            const msgs::Robotiq3FingerStatus& gripper_status)
     {
         gripper_status_pub_.publish(gripper_status);
     }
@@ -987,14 +989,14 @@ namespace victor_hardware_interface
     // Internal helpers
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    inline bool jointPathExecutionParamsIsDefault(const JointPathExecutionParameters& params)
+    inline bool jointPathExecutionParamsIsDefault(const msgs::JointPathExecutionParameters& params)
     {
         return (params.joint_relative_velocity == 0 && 
                 params.joint_relative_acceleration == 0 && 
                 params.override_joint_acceleration == 0);
     }
 
-    inline bool cartesianPathExecutionParamsIsDefault(const CartesianPathExecutionParameters& params)
+    inline bool cartesianPathExecutionParamsIsDefault(const msgs::CartesianPathExecutionParameters& params)
     {
         return (params.max_velocity.x == 0 && params.max_velocity.y == 0 && 
                 params.max_velocity.z == 0 && params.max_velocity.a == 0 && 
@@ -1005,7 +1007,7 @@ namespace victor_hardware_interface
                 params.max_nullspace_velocity == 0 && params.max_nullspace_acceleration == 0);
     }
 
-    inline bool jointImpedanceParamsIsDefault(const JointImpedanceParameters& params)
+    inline bool jointImpedanceParamsIsDefault(const msgs::JointImpedanceParameters& params)
     {
         return (params.joint_stiffness.joint_1 == 0 && params.joint_stiffness.joint_2 == 0 && 
                 params.joint_stiffness.joint_3 == 0 && params.joint_stiffness.joint_4 == 0 &&
@@ -1017,7 +1019,7 @@ namespace victor_hardware_interface
                 params.joint_damping.joint_7 == 0);
     }
 
-    inline bool cartesianImpedanceParamsIsDefault(const CartesianImpedanceParameters& params)
+    inline bool cartesianImpedanceParamsIsDefault(const msgs::CartesianImpedanceParameters& params)
     {
         return (params.cartesian_stiffness.x == 0 && params.cartesian_stiffness.y == 0 && 
                 params.cartesian_stiffness.z == 0 && params.cartesian_stiffness.a == 0 && 
@@ -1028,7 +1030,7 @@ namespace victor_hardware_interface
                 params.nullspace_stiffness == 0 && params.nullspace_damping == 0);
     }
 
-    inline bool cartesianControlModeLimitsIsDefault(const CartesianControlModeLimits& params)
+    inline bool cartesianControlModeLimitsIsDefault(const msgs::CartesianControlModeLimits& params)
     {
         return (params.max_path_deviation.x == 0 && params.max_path_deviation.y == 0 && 
                 params.max_path_deviation.z == 0 && params.max_path_deviation.a == 0 && 
@@ -1042,9 +1044,9 @@ namespace victor_hardware_interface
                 params.stop_on_max_control_force == false);
     }
 
-    inline ControlModeParameters mergeControlModeParameters(
-            const ControlModeParameters& active_control_mode,
-            const ControlModeParameters& new_control_mode)
+    inline msgs::ControlModeParameters mergeControlModeParameters(
+            const msgs::ControlModeParameters& active_control_mode,
+            const msgs::ControlModeParameters& new_control_mode)
     {
         /***************************************************************************************************************
         This function is a helper function for the callback function of setting a new control mode(setControlModeCallBack).
@@ -1058,7 +1060,7 @@ namespace victor_hardware_interface
         CARTESIAN_IMPEDANCE: cartesian_impedance_params, cartesian_control_mode_limits, cartesian_path_execution_params
         ***************************************************************************************************************/
 
-        ControlModeParameters merged_control_mode;
+      msgs::ControlModeParameters merged_control_mode;
         // Copy the old over
         merged_control_mode.joint_path_execution_params = active_control_mode.joint_path_execution_params;
         merged_control_mode.joint_impedance_params = active_control_mode.joint_impedance_params;
@@ -1070,7 +1072,7 @@ namespace victor_hardware_interface
         // Copy mode-dependant members
         switch (new_control_mode.control_mode.mode)
         {
-            case ControlMode::JOINT_IMPEDANCE:
+            case msgs::ControlMode::JOINT_IMPEDANCE:
                 merged_control_mode.joint_path_execution_params = new_control_mode.joint_path_execution_params;
                 merged_control_mode.joint_impedance_params = new_control_mode.joint_impedance_params;
 
@@ -1089,7 +1091,7 @@ namespace victor_hardware_interface
 
                 break;
 
-            case ControlMode::CARTESIAN_IMPEDANCE:
+            case msgs::ControlMode::CARTESIAN_IMPEDANCE:
                 merged_control_mode.cartesian_impedance_params = new_control_mode.cartesian_impedance_params;
                 merged_control_mode.cartesian_control_mode_limits = new_control_mode.cartesian_control_mode_limits;
                 merged_control_mode.cartesian_path_execution_params = new_control_mode.cartesian_path_execution_params;
@@ -1105,7 +1107,7 @@ namespace victor_hardware_interface
 
                 break;
 
-            case ControlMode::JOINT_POSITION:
+            case msgs::ControlMode::JOINT_POSITION:
                 // From the new
                 merged_control_mode.joint_path_execution_params = new_control_mode.joint_path_execution_params;
                 
@@ -1128,7 +1130,7 @@ namespace victor_hardware_interface
 
                 break;
 
-            case ControlMode::CARTESIAN_POSE:
+            case msgs::ControlMode::CARTESIAN_POSE:
                 // From the new
                 merged_control_mode.cartesian_path_execution_params = new_control_mode.cartesian_path_execution_params;
 

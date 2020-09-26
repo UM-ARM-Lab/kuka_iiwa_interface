@@ -1,8 +1,5 @@
-#include <stdlib.h>
 #include <stdio.h>
-#include <math.h>
 #include <vector>
-#include <map>
 #include <string>
 #include <iostream>
 #include <arc_utilities/arc_helpers.hpp>
@@ -11,17 +8,19 @@
 #include <victor_hardware_interface/iiwa_hardware_interface.hpp>
 #include <victor_hardware_interface/robotiq_3finger_hardware_interface.hpp>
 // ROS message headers
-#include <victor_hardware_interface/ControlModeParameters.h>
-#include <victor_hardware_interface/MotionCommand.h>
-#include <victor_hardware_interface/MotionStatus.h>
-#include <victor_hardware_interface/Robotiq3FingerCommand.h>
-#include <victor_hardware_interface/Robotiq3FingerStatus.h>
+#include <victor_hardware_interface_msgs/ControlModeParameters.h>
+#include <victor_hardware_interface_msgs/MotionCommand.h>
+#include <victor_hardware_interface_msgs/MotionStatus.h>
+#include <victor_hardware_interface_msgs/Robotiq3FingerCommand.h>
+#include <victor_hardware_interface_msgs/Robotiq3FingerStatus.h>
 // ROS
 #include <ros/ros.h>
 // LCM
 #include <lcm/lcm-cpp.hpp>
 
 #define RTT_CHECK_COUNT 10000
+
+namespace msgs = victor_hardware_interface_msgs;
 
 class LoopbackTester
 {
@@ -33,12 +32,12 @@ protected:
     std::unique_ptr<victor_hardware_interface::IIWAHardwareInterface> iiwa_ptr_;
     std::unique_ptr<victor_hardware_interface::Robotiq3FingerHardwareInterface> robotiq_ptr_;
 
-    std::vector<victor_hardware_interface::MotionCommand> motion_command_queue_;
-    std::vector<victor_hardware_interface::MotionStatus> motion_status_queue_;
-    std::vector<victor_hardware_interface::ControlModeParameters> control_mode_command_queue_;
-    std::vector<victor_hardware_interface::ControlModeParameters> control_mode_status_queue_;
-    std::vector<victor_hardware_interface::Robotiq3FingerCommand> gripper_command_queue_;
-    std::vector<victor_hardware_interface::Robotiq3FingerStatus> gripper_status_queue_;
+    std::vector<msgs::MotionCommand> motion_command_queue_;
+    std::vector<msgs::MotionStatus> motion_status_queue_;
+    std::vector<msgs::ControlModeParameters> control_mode_command_queue_;
+    std::vector<msgs::ControlModeParameters> control_mode_status_queue_;
+    std::vector<msgs::Robotiq3FingerCommand> gripper_command_queue_;
+    std::vector<msgs::Robotiq3FingerStatus> gripper_status_queue_;
 
     std::vector<double> motion_command_rtt_;
     std::vector<double> control_mode_command_rtt_;
@@ -63,32 +62,32 @@ public:
         control_mode_command_rtt_.reserve(RTT_CHECK_COUNT);
         gripper_command_rtt_.reserve(RTT_CHECK_COUNT);
         //
-        const auto motion_status_callback_fn = [&] (const victor_hardware_interface::MotionStatus& motion_status) { return MotionStatusCallback(motion_status); };
-        const auto control_mode_status_callback_fn = [&] (const victor_hardware_interface::ControlModeParameters& control_mode_status) { return ControlModeStatusCallback(control_mode_status); };
+        const auto motion_status_callback_fn = [&] (const msgs::MotionStatus& motion_status) { return MotionStatusCallback(motion_status); };
+        const auto control_mode_status_callback_fn = [&] (const msgs::ControlModeParameters& control_mode_status) { return ControlModeStatusCallback(control_mode_status); };
         iiwa_ptr_ = std::unique_ptr<victor_hardware_interface::IIWAHardwareInterface>(new victor_hardware_interface::IIWAHardwareInterface(send_lcm_ptr_, recv_lcm_ptr_, motion_command_channel, motion_status_channel, motion_status_callback_fn, control_mode_command_channel, control_mode_status_channel, control_mode_status_callback_fn));
-        const auto gripper_status_callback_fn = [&] (const victor_hardware_interface::Robotiq3FingerStatus& gripper_status) { return GripperStatusCallback(gripper_status); };
+        const auto gripper_status_callback_fn = [&] (const msgs::Robotiq3FingerStatus& gripper_status) { return GripperStatusCallback(gripper_status); };
         robotiq_ptr_ = std::unique_ptr<victor_hardware_interface::Robotiq3FingerHardwareInterface>(new victor_hardware_interface::Robotiq3FingerHardwareInterface(send_lcm_ptr_, recv_lcm_ptr_, gripper_command_channel, gripper_status_channel, gripper_status_callback_fn));
     }
 
-    void MotionStatusCallback(const victor_hardware_interface::MotionStatus& motion_status)
+    void MotionStatusCallback(const msgs::MotionStatus& motion_status)
     {
         ROS_DEBUG_STREAM_NAMED(ros::this_node::getName(), "Got motion status " << motion_status);
         motion_status_queue_.push_back(motion_status);
     }
 
-    void ControlModeStatusCallback(const victor_hardware_interface::ControlModeParameters& control_mode_status)
+    void ControlModeStatusCallback(const msgs::ControlModeParameters& control_mode_status)
     {
         ROS_DEBUG_STREAM_NAMED(ros::this_node::getName(), "Got control mode status " << control_mode_status);
         control_mode_status_queue_.push_back(control_mode_status);
     }
 
-    void GripperStatusCallback(const victor_hardware_interface::Robotiq3FingerStatus& gripper_status)
+    void GripperStatusCallback(const msgs::Robotiq3FingerStatus& gripper_status)
     {
         ROS_DEBUG_STREAM_NAMED(ros::this_node::getName(), "Got gripper status " << gripper_status);
         gripper_status_queue_.push_back(gripper_status);
     }
 
-    static inline bool JVQMatch(const victor_hardware_interface::JointValueQuantity& jvq1, const victor_hardware_interface::JointValueQuantity& jvq2)
+    static inline bool JVQMatch(const msgs::JointValueQuantity& jvq1, const msgs::JointValueQuantity& jvq2)
     {
         if (jvq1.joint_1 != jvq2.joint_1)
         {
@@ -124,7 +123,7 @@ public:
         }
     }
 
-    static inline bool CVQMatch(const victor_hardware_interface::CartesianValueQuantity& cvq1, const victor_hardware_interface::CartesianValueQuantity& cvq2)
+    static inline bool CVQMatch(const msgs::CartesianValueQuantity& cvq1, const msgs::CartesianValueQuantity& cvq2)
     {
         if (cvq1.x != cvq2.x)
         {
@@ -192,7 +191,7 @@ public:
         }
     }
 
-    static inline bool JointPExPMatch(const victor_hardware_interface::JointPathExecutionParameters& pexp1, const victor_hardware_interface::JointPathExecutionParameters& pexp2)
+    static inline bool JointPExPMatch(const msgs::JointPathExecutionParameters& pexp1, const msgs::JointPathExecutionParameters& pexp2)
     {
         if (pexp1.joint_relative_acceleration != pexp2.joint_relative_acceleration)
         {
@@ -212,7 +211,7 @@ public:
         }
     }
 
-    static inline bool CartesianPExPMatch(const victor_hardware_interface::CartesianPathExecutionParameters& pexp1, const victor_hardware_interface::CartesianPathExecutionParameters& pexp2)
+    static inline bool CartesianPExPMatch(const msgs::CartesianPathExecutionParameters& pexp1, const msgs::CartesianPathExecutionParameters& pexp2)
     {
         if (CVQMatch(pexp1.max_velocity, pexp2.max_velocity) == false)
         {
@@ -236,9 +235,9 @@ public:
         }
     }
 
-    static inline victor_hardware_interface::JointValueQuantity MakeJVQ(const double j1, const double j2, const double j3, const double j4, const double j5, const double j6, const double j7)
+    static inline msgs::JointValueQuantity MakeJVQ(const double j1, const double j2, const double j3, const double j4, const double j5, const double j6, const double j7)
     {
-        victor_hardware_interface::JointValueQuantity jvq;
+        msgs::JointValueQuantity jvq;
         jvq.joint_1 = j1;
         jvq.joint_2 = j2;
         jvq.joint_3 = j3;
@@ -249,9 +248,9 @@ public:
         return jvq;
     }
 
-    static inline victor_hardware_interface::CartesianValueQuantity MakeCVQ(const double x, const double y, const double z, const double a, const double b, const double c)
+    static inline msgs::CartesianValueQuantity MakeCVQ(const double x, const double y, const double z, const double a, const double b, const double c)
     {
-        victor_hardware_interface::CartesianValueQuantity cvq;
+        msgs::CartesianValueQuantity cvq;
         cvq.x = x;
         cvq.y = y;
         cvq.z = z;
@@ -261,18 +260,18 @@ public:
         return cvq;
     }
 
-    static inline victor_hardware_interface::JointPathExecutionParameters MakeJointPExP(const double jra, const double jrv, const double oja)
+    static inline msgs::JointPathExecutionParameters MakeJointPExP(const double jra, const double jrv, const double oja)
     {
-        victor_hardware_interface::JointPathExecutionParameters pexp;
+        msgs::JointPathExecutionParameters pexp;
         pexp.joint_relative_acceleration = jra;
         pexp.joint_relative_velocity = jrv;
         pexp.override_joint_acceleration = oja;
         return pexp;
     }
 
-    static inline victor_hardware_interface::Robotiq3FingerActuatorCommand MakeRobotiqActuatorCommand(const double p, const double s, const double f)
+    static inline msgs::Robotiq3FingerActuatorCommand MakeRobotiqActuatorCommand(const double p, const double s, const double f)
     {
-        victor_hardware_interface::Robotiq3FingerActuatorCommand command;
+        msgs::Robotiq3FingerActuatorCommand command;
         command.position = p;
         command.speed = s;
         command.force = f;
@@ -281,11 +280,11 @@ public:
 
     void SendMotionCommand()
     {
-        victor_hardware_interface::MotionCommand command;
+        msgs::MotionCommand command;
         command.joint_position = MakeJVQ(0.125, 0.25, 0.375, 0.5, 0.625, 0.75, 0.875);
         command.joint_velocity = MakeJVQ(0.875, 0.75, 0.625, 0.5, 0.375, 0.25, 0.125);
         command.cartesian_pose = EigenHelpersConversions::EigenIsometry3dToGeometryPose(Eigen::Isometry3d::Identity());
-        command.control_mode.mode = victor_hardware_interface::ControlMode::JOINT_POSITION;
+        command.control_mode.mode = msgs::ControlMode::JOINT_POSITION;
         command.header.stamp = ros::Time::now();
         const bool sent = iiwa_ptr_->SendMotionCommandMessage(command);
         UNUSED(sent);
@@ -293,7 +292,7 @@ public:
         motion_command_queue_.push_back(command);
     }
 
-    bool CheckMotionCommandAndStatusMatch(const victor_hardware_interface::MotionCommand& command, const victor_hardware_interface::MotionStatus& status) const
+    bool CheckMotionCommandAndStatusMatch(const msgs::MotionCommand& command, msgs::MotionStatus& status) const
     {
         const bool jpmatch = JVQMatch(command.joint_position, status.measured_joint_position);
         const bool jvmatch = JVQMatch(command.joint_velocity, status.measured_joint_velocity);
@@ -311,7 +310,7 @@ public:
 
     void SendControlModeCommand()
     {
-        victor_hardware_interface::ControlModeParameters command;
+        msgs::ControlModeParameters command;
         command.joint_impedance_params.joint_damping = MakeJVQ(0.125, 0.25, 0.375, 0.5, 0.625, 0.75, 0.875);
         command.joint_impedance_params.joint_stiffness = MakeJVQ(0.875, 0.75, 0.625, 0.5, 0.375, 0.25, 0.125);
         command.cartesian_impedance_params.cartesian_damping = MakeCVQ(1.0, 2.0, 3.0, 4.0, 5.0, 6.0);
@@ -323,7 +322,7 @@ public:
         command.cartesian_path_execution_params.max_acceleration = MakeCVQ(7.0, 6.0, 5.0, 4.0, 3.0, 2.0);
         command.cartesian_path_execution_params.max_nullspace_velocity = 7.0;
         command.cartesian_path_execution_params.max_nullspace_acceleration = 1.0;
-        command.control_mode.mode = victor_hardware_interface::ControlMode::JOINT_POSITION;
+        command.control_mode.mode = msgs::ControlMode::JOINT_POSITION;
         command.header.stamp = ros::Time::now();
         const bool sent = iiwa_ptr_->SendControlModeCommandMessage(command);
         UNUSED(sent);
@@ -331,7 +330,7 @@ public:
         control_mode_command_queue_.push_back(command);
     }
 
-    bool CheckControlModeCommandAndStatusMatch(const victor_hardware_interface::ControlModeParameters& command, const victor_hardware_interface::ControlModeParameters& status) const
+    bool CheckControlModeCommandAndStatusMatch(const msgs::ControlModeParameters& command, msgs::ControlModeParameters& status) const
     {
         const bool cdmatch = CVQMatch(command.cartesian_impedance_params.cartesian_damping, status.cartesian_impedance_params.cartesian_damping);
         const bool ndmatch = (command.cartesian_impedance_params.nullspace_damping == status.cartesian_impedance_params.nullspace_damping);
@@ -354,7 +353,7 @@ public:
 
     void SendGripperCommand()
     {
-        victor_hardware_interface::Robotiq3FingerCommand command;
+        msgs::Robotiq3FingerCommand command;
         command.finger_a_command = MakeRobotiqActuatorCommand(0.0, 0.125, 0.25);
         command.finger_b_command = MakeRobotiqActuatorCommand(0.125, 0.25, 0.375);
         command.finger_c_command = MakeRobotiqActuatorCommand(0.25, 0.375, 0.5);
@@ -370,7 +369,7 @@ public:
         gripper_command_queue_.push_back(command);
     }
 
-    static inline bool FingerActuatorCommandStatusTestMatch(const victor_hardware_interface::Robotiq3FingerActuatorCommand& command, const victor_hardware_interface::Robotiq3FingerActuatorStatus& status)
+    static inline bool FingerActuatorCommandStatusTestMatch(const msgs::Robotiq3FingerActuatorCommand& command, msgs::Robotiq3FingerActuatorStatus& status)
     {
         if (command.position != status.position_request)
         {
@@ -382,7 +381,7 @@ public:
         }
     }
 
-    bool CheckGripperCommandAndStatusMatch(const victor_hardware_interface::Robotiq3FingerCommand& command, const victor_hardware_interface::Robotiq3FingerStatus& status) const
+    bool CheckGripperCommandAndStatusMatch(const msgs::Robotiq3FingerCommand& command, msgs::Robotiq3FingerStatus& status) const
     {
         const bool famatch = FingerActuatorCommandStatusTestMatch(command.finger_a_command, status.finger_a_status);
         const bool fbmatch = FingerActuatorCommandStatusTestMatch(command.finger_b_command, status.finger_b_status);
