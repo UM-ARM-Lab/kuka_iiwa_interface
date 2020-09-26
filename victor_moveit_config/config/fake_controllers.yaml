@@ -1,33 +1,7 @@
 controller_list:
-  - name: fake_right_arm_controller
-    joints:
-      - victor_right_arm_joint_1
-      - victor_right_arm_joint_2
-      - victor_right_arm_joint_3
-      - victor_right_arm_joint_4
-      - victor_right_arm_joint_5
-      - victor_right_arm_joint_6
-      - victor_right_arm_joint_7
-  - name: fake_right_gripper_controller
-    joints:
-      - victor_right_gripper_fingerA_joint_2
-      - victor_right_gripper_fingerA_joint_3
-      - victor_right_gripper_fingerA_joint_4
-      - victor_right_gripper_fingerB_knuckle
-      - victor_right_gripper_fingerB_joint_2
-      - victor_right_gripper_fingerB_joint_3
-      - victor_right_gripper_fingerB_joint_4
-      - victor_right_gripper_fingerC_knuckle
-      - victor_right_gripper_fingerC_joint_2
-      - victor_right_gripper_fingerC_joint_3
-      - victor_right_gripper_fingerC_joint_4
-  - name: fake_left_palm_surface_group_controller
-    joints:
-      []
-  - name: fake_right_palm_surface_group_controller
-    joints:
-      []
-  - name: fake_left_arm_palm_surface_controller
+  - name: victor/both_arms_trajectory_controller
+    action_ns: follow_joint_trajectory
+    type: FollowJointTrajectory
     joints:
       - victor_left_arm_joint_1
       - victor_left_arm_joint_2
@@ -36,41 +10,6 @@ controller_list:
       - victor_left_arm_joint_5
       - victor_left_arm_joint_6
       - victor_left_arm_joint_7
-      - victor_left_gripper_fingerA_joint_2
-      - victor_left_gripper_fingerA_joint_3
-      - victor_left_gripper_fingerA_joint_4
-      - victor_left_gripper_fingerB_knuckle
-      - victor_left_gripper_fingerB_joint_2
-      - victor_left_gripper_fingerB_joint_3
-      - victor_left_gripper_fingerB_joint_4
-      - victor_left_gripper_fingerC_knuckle
-      - victor_left_gripper_fingerC_joint_2
-      - victor_left_gripper_fingerC_joint_3
-      - victor_left_gripper_fingerC_joint_4
-  - name: fake_left_arm_controller
-    joints:
-      - victor_left_arm_joint_1
-      - victor_left_arm_joint_2
-      - victor_left_arm_joint_3
-      - victor_left_arm_joint_4
-      - victor_left_arm_joint_5
-      - victor_left_arm_joint_6
-      - victor_left_arm_joint_7
-  - name: fake_left_gripper_controller
-    joints:
-      - victor_left_gripper_fingerA_joint_2
-      - victor_left_gripper_fingerA_joint_3
-      - victor_left_gripper_fingerA_joint_4
-      - victor_left_gripper_fingerB_knuckle
-      - victor_left_gripper_fingerB_joint_2
-      - victor_left_gripper_fingerB_joint_3
-      - victor_left_gripper_fingerB_joint_4
-      - victor_left_gripper_fingerC_knuckle
-      - victor_left_gripper_fingerC_joint_2
-      - victor_left_gripper_fingerC_joint_3
-      - victor_left_gripper_fingerC_joint_4
-  - name: fake_right_arm_palm_surface_controller
-    joints:
       - victor_right_arm_joint_1
       - victor_right_arm_joint_2
       - victor_right_arm_joint_3
@@ -78,54 +17,25 @@ controller_list:
       - victor_right_arm_joint_5
       - victor_right_arm_joint_6
       - victor_right_arm_joint_7
-      - victor_right_gripper_fingerA_joint_2
-      - victor_right_gripper_fingerA_joint_3
-      - victor_right_gripper_fingerA_joint_4
-      - victor_right_gripper_fingerB_knuckle
-      - victor_right_gripper_fingerB_joint_2
-      - victor_right_gripper_fingerB_joint_3
-      - victor_right_gripper_fingerB_joint_4
-      - victor_right_gripper_fingerC_knuckle
-      - victor_right_gripper_fingerC_joint_2
-      - victor_right_gripper_fingerC_joint_3
-      - victor_right_gripper_fingerC_joint_4
-  - name: fake_left_arm_palm_surface_kuka_controller
-    joints:
-      - victor_left_arm_joint_1
-      - victor_left_arm_joint_2
-      - victor_left_arm_joint_3
-      - victor_left_arm_joint_4
-      - victor_left_arm_joint_5
-      - victor_left_arm_joint_6
-      - victor_left_arm_joint_7
-      - victor_left_gripper_fingerA_joint_2
-      - victor_left_gripper_fingerA_joint_3
-      - victor_left_gripper_fingerA_joint_4
-      - victor_left_gripper_fingerB_knuckle
-      - victor_left_gripper_fingerB_joint_2
-      - victor_left_gripper_fingerB_joint_3
-      - victor_left_gripper_fingerB_joint_4
-      - victor_left_gripper_fingerC_knuckle
-      - victor_left_gripper_fingerC_joint_2
-      - victor_left_gripper_fingerC_joint_3
-      - victor_left_gripper_fingerC_joint_4
-  - name: fake_right_arm_palm_surface_kuka_controller
-    joints:
-      - victor_right_arm_joint_1
-      - victor_right_arm_joint_2
-      - victor_right_arm_joint_3
-      - victor_right_arm_joint_4
-      - victor_right_arm_joint_5
-      - victor_right_arm_joint_6
-      - victor_right_arm_joint_7
-      - victor_right_gripper_fingerA_joint_2
-      - victor_right_gripper_fingerA_joint_3
-      - victor_right_gripper_fingerA_joint_4
-      - victor_right_gripper_fingerB_knuckle
-      - victor_right_gripper_fingerB_joint_2
-      - victor_right_gripper_fingerB_joint_3
-      - victor_right_gripper_fingerB_joint_4
-      - victor_right_gripper_fingerC_knuckle
-      - victor_right_gripper_fingerC_joint_2
-      - victor_right_gripper_fingerC_joint_3
-      - victor_right_gripper_fingerC_joint_4
+#  - name: victor/right_arm_trajectory_controller
+#    action_ns: follow_joint_trajectory
+#    type: FollowJointTrajectory
+#    joints:
+#      - victor_right_arm_joint_1
+#      - victor_right_arm_joint_2
+#      - victor_right_arm_joint_3
+#      - victor_right_arm_joint_4
+#      - victor_right_arm_joint_5
+#      - victor_right_arm_joint_6
+#      - victor_right_arm_joint_7
+#  - name: victor/left_arm_trajectory_controller
+#    action_ns: follow_joint_trajectory
+#    type: FollowJointTrajectory
+#    joints:
+#      - victor_right_arm_joint_1
+#      - victor_right_arm_joint_2
+#      - victor_right_arm_joint_3
+#      - victor_right_arm_joint_4
+#      - victor_right_arm_joint_5
+#      - victor_right_arm_joint_6
+#      - victor_right_arm_joint_7
