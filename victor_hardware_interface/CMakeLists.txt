@@ -6,14 +6,10 @@ project(victor_hardware_interface)
 ## is used, also find other catkin packages
 set(CATKIN_PACKAGES
     arc_utilities
-    diagnostic_msgs
-    geometry_msgs
-    roscpp
-    sensor_msgs
-    std_msgs
+    victor_hardware_interface_msgs
     lcm)
 
-find_package(catkin REQUIRED COMPONENTS ${CATKIN_PACKAGES} message_generation)
+find_package(catkin REQUIRED COMPONENTS ${CATKIN_PACKAGES})
 find_package(cmake_modules REQUIRED)
 find_package(Eigen3 REQUIRED)
 set(Eigen3_INCLUDE_DIRS ${EIGEN3_INCLUDE_DIR})
@@ -52,29 +48,10 @@ catkin_python_setup()
 ##   * add every package in MSG_DEP_SET to generate_messages(DEPENDENCIES ...)
 
 ## Generate messages in the 'msg' folder
-add_message_files(DIRECTORY msg FILES
-    CartesianControlModeLimits.msg
-    CartesianImpedanceParameters.msg
-    CartesianPathExecutionParameters.msg
-    CartesianValueQuantity.msg
-    ControlMode.msg
-    ControlModeParameters.msg
-    JointImpedanceParameters.msg
-    JointPathExecutionParameters.msg
-    JointValueQuantity.msg
-    MotionCommand.msg
-    MotionStatus.msg
-    Robotiq3FingerActuatorCommand.msg
-    Robotiq3FingerActuatorStatus.msg
-    Robotiq3FingerCommand.msg
-    Robotiq3FingerObjectStatus.msg
-    Robotiq3FingerStatus.msg
-    GraspStatus.msg)
+# add_message_files()
 
 ## Generate services in the 'srv' folder
-add_service_files(DIRECTORY srv FILES
-    SetControlMode.srv
-    GetControlMode.srv)
+# add_service_files(
 
 ## Generate actions in the 'action' folder
 # add_action_files(
@@ -84,11 +61,7 @@ add_service_files(DIRECTORY srv FILES
 # )
 
 ## Generate added messages and services with any dependencies listed here
-generate_messages(DEPENDENCIES
-    diagnostic_msgs
-    geometry_msgs
-    sensor_msgs
-    std_msgs)
+# generate_messages(DEPENDENCIES )
 
 ################################################
 ## Declare ROS dynamic reconfigure parameters ##
@@ -122,8 +95,7 @@ generate_messages(DEPENDENCIES
 catkin_package(
     INCLUDE_DIRS    include 
     LIBRARIES       ${PROJECT_NAME} 
-    CATKIN_DEPENDS  ${CATKIN_PACKAGES}
-                    message_runtime)
+    CATKIN_DEPENDS  ${CATKIN_PACKAGES})
 
 ###########
 ## Build ##

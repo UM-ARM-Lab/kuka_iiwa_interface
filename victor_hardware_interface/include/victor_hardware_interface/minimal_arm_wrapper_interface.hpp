@@ -7,13 +7,13 @@
 #include <ros/ros.h>
 #include <ros/callback_queue.h>
 // ROS message headers
-#include <victor_hardware_interface/ControlModeParameters.h>
-#include <victor_hardware_interface/MotionCommand.h>
-#include <victor_hardware_interface/MotionStatus.h>
-#include <victor_hardware_interface/Robotiq3FingerCommand.h>
-#include <victor_hardware_interface/Robotiq3FingerStatus.h>
-#include <victor_hardware_interface/SetControlMode.h>
-#include <victor_hardware_interface/GetControlMode.h>
+#include <victor_hardware_interface_msgs/ControlModeParameters.h>
+#include <victor_hardware_interface_msgs/MotionCommand.h>
+#include <victor_hardware_interface_msgs/MotionStatus.h>
+#include <victor_hardware_interface_msgs/Robotiq3FingerCommand.h>
+#include <victor_hardware_interface_msgs/Robotiq3FingerStatus.h>
+#include <victor_hardware_interface_msgs/SetControlMode.h>
+#include <victor_hardware_interface_msgs/GetControlMode.h>
 
 // LCM
 #include <lcm/lcm-cpp.hpp>
@@ -27,19 +27,21 @@
 
 namespace victor_hardware_interface
 {
+    namespace msgs = victor_hardware_interface_msgs;
+
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Helpers to test if two messages are equivalent
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    bool jvqEqual(const JointValueQuantity& jvq1, const JointValueQuantity& jvq2);
+    bool jvqEqual(const msgs::JointValueQuantity& jvq1, const msgs::JointValueQuantity& jvq2);
 
-    bool cvqEqual(const CartesianValueQuantity& cvq1, const CartesianValueQuantity& cvq2);
+    bool cvqEqual(const msgs::CartesianValueQuantity& cvq1, const msgs::CartesianValueQuantity& cvq2);
 
-    bool jointPexpEqual(const JointPathExecutionParameters& pexp1, const JointPathExecutionParameters& pexp2);
+    bool jointPexpEqual(const msgs::JointPathExecutionParameters& pexp1, const msgs::JointPathExecutionParameters& pexp2);
 
-    bool cartesianPexpEqual(const CartesianPathExecutionParameters& pexp1, const CartesianPathExecutionParameters& pexp2);
+    bool cartesianPexpEqual(const msgs::CartesianPathExecutionParameters& pexp1, const msgs::CartesianPathExecutionParameters& pexp2);
 
-    bool controlModeParamsEqual(const ControlModeParameters& params1, const ControlModeParameters& params2);
+    bool controlModeParamsEqual(const msgs::ControlModeParameters& params1, const msgs::ControlModeParameters& params2);
 
 
     /**
@@ -91,7 +93,7 @@ namespace victor_hardware_interface
         ros::CallbackQueue ros_callback_queue_;
 
         mutable std::mutex control_mode_status_mutex_;
-        Maybe::Maybe<ControlModeParameters> active_control_mode_;
+        Maybe::Maybe<msgs::ControlModeParameters> active_control_mode_;
         const double set_control_mode_timeout_; // measured in seconds
 
         std::shared_ptr<lcm::LCM> send_lcm_ptr_;
@@ -109,29 +111,29 @@ namespace victor_hardware_interface
 
         //// Static helpers to check parameters for being in valid ranges for the control mode /////////////////////////
 
-        static std::pair<bool, std::string> validateJointPathExecutionParams(const JointPathExecutionParameters& params);
+        static std::pair<bool, std::string> validateJointPathExecutionParams(const msgs::JointPathExecutionParameters& params);
 
-        static std::pair<bool, std::string> validateCartesianPathExecutionParams(const CartesianPathExecutionParameters& params);
+        static std::pair<bool, std::string> validateCartesianPathExecutionParams(const msgs::CartesianPathExecutionParameters& params);
 
-        static std::pair<bool, std::string> validateJointImpedanceParams(const JointImpedanceParameters& params);
+        static std::pair<bool, std::string> validateJointImpedanceParams(const msgs::JointImpedanceParameters& params);
 
-        static std::pair<bool, std::string> validateCartesianImpedanceParams(const CartesianImpedanceParameters& params);
+        static std::pair<bool, std::string> validateCartesianImpedanceParams(const msgs::CartesianImpedanceParameters& params);
 
-        static std::pair<bool, std::string> validateCartesianControlModeLimits(const CartesianControlModeLimits& params);
+        static std::pair<bool, std::string> validateCartesianControlModeLimits(const msgs::CartesianControlModeLimits& params);
 
-        static std::pair<bool, std::string> validateControlMode(const ControlModeParameters& params);
+        static std::pair<bool, std::string> validateControlMode(const msgs::ControlModeParameters& params);
 
         //// ROS Callbacks to get and set the control mode as service calls ////////////////////////////////////////////
 
-        bool setControlModeCallback(SetControlMode::Request& req, SetControlMode::Response& res);
+        bool setControlModeCallback(msgs::SetControlMode::Request& req, msgs::SetControlMode::Response& res);
 
-        bool getControlModeCallback(GetControlMode::Request& req, GetControlMode::Response& res);
+        bool getControlModeCallback(msgs::GetControlMode::Request& req, msgs::GetControlMode::Response& res);
 
         /*
          * Callback function used by the LCM subsystem when a control_mode_status message is received. Caches the value
          * in active_control_mode_ for use by setControlModeCallback(...) and getControlModeCallback(...)
          */
-        void controlModeStatusLCMCallback(const ControlModeParameters& control_mode_status);
+        void controlModeStatusLCMCallback(const msgs::ControlModeParameters& control_mode_status);
 
         ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         // Arm movement/control and feedback functionality
@@ -139,22 +141,22 @@ namespace victor_hardware_interface
 
         //// Static helpers to check parameters for being in valid ranges for the motion command ///////////////////////
 
-        static std::pair<bool, std::string> validateJointPositions(const JointValueQuantity& positions);
+        static std::pair<bool, std::string> validateJointPositions(const msgs::JointValueQuantity& positions);
 
         std::pair<bool, std::string> validateCartesianPose(const geometry_msgs::Pose& pose, const std::string& frame) const;
 
-        std::pair<bool, std::string> validateMotionCommand(const MotionCommand& command) const;
+        std::pair<bool, std::string> validateMotionCommand(const msgs::MotionCommand& command) const;
 
         /*
          * ROS callback to parse a arm motion command, and pass it along to the LCM subsystem
          */
-        void motionCommandROSCallback(const MotionCommand& command);
+        void motionCommandROSCallback(const msgs::MotionCommand& command);
 
         /*
          * LCM callback used by the LCM subsystem when a LCM status message is recieved. Republishes the motion status
          * on the correct ROS topic
          */
-        void motionStatusLCMCallback(const MotionStatus& motion_status);
+        void motionStatusLCMCallback(const msgs::MotionStatus& motion_status);
 
         ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         // Gripper movement/control and feedback functionality
@@ -162,20 +164,20 @@ namespace victor_hardware_interface
 
         //// Static helpers to check parameters for being in valid ranges for the gripper command //////////////////////
 
-        static std::pair<bool, std::string> validateFingerCommand(const Robotiq3FingerActuatorCommand& command);
+        static std::pair<bool, std::string> validateFingerCommand(const msgs::Robotiq3FingerActuatorCommand& command);
 
-        static std::pair<bool, std::string> validateGripperCommand(const Robotiq3FingerCommand& command);
+        static std::pair<bool, std::string> validateGripperCommand(const msgs::Robotiq3FingerCommand& command);
 
         /*
          * ROS callback to parse a gripper motion command, and pass it along to the LCM subsystem
          */
-        void gripperCommandROSCallback(const Robotiq3FingerCommand& command);
+        void gripperCommandROSCallback(const msgs::Robotiq3FingerCommand& command);
 
         /*
          * LCM callback used by the LCM subsystem when a LCM status message is recieved. Republishes the motion status
          * on the correct ROS topic
          */
-        void gripperStatusLCMCallback(const Robotiq3FingerStatus& gripper_status);
+        void gripperStatusLCMCallback(const msgs::Robotiq3FingerStatus& gripper_status);
 
     };
 }

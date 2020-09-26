@@ -2,6 +2,8 @@
 
 namespace victor_hardware_interface
 {
+    namespace msgs = victor_hardware_interface_msgs;
+
     /////////////////////////////////////////////////////////////////////////////////
     // Robotiq3FingerHardwardInterface class implementation
     /////////////////////////////////////////////////////////////////////////////////
@@ -11,7 +13,7 @@ namespace victor_hardware_interface
             const std::shared_ptr<lcm::LCM>& recv_lcm_ptr,
             const std::string& command_channel_name,
             const std::string& status_channel_name,
-            const std::function<void(const Robotiq3FingerStatus&)>& status_callback_fn)
+            const std::function<void(const msgs::Robotiq3FingerStatus&)>& status_callback_fn)
         : send_lcm_ptr_(send_lcm_ptr), recv_lcm_ptr_(recv_lcm_ptr)
         , command_channel_name_(command_channel_name)
         , status_channel_name_(status_channel_name)
@@ -31,7 +33,7 @@ namespace victor_hardware_interface
                                  this);
     }
 
-    bool Robotiq3FingerHardwareInterface::sendCommandMessage(const Robotiq3FingerCommand& command)
+    bool Robotiq3FingerHardwareInterface::sendCommandMessage(const msgs::Robotiq3FingerCommand& command)
     {
         const robotiq_3finger_command lcm_command = commandRosToLcm(command);
         const int ret = send_lcm_ptr_->publish(command_channel_name_, &lcm_command);
@@ -51,7 +53,7 @@ namespace victor_hardware_interface
     {
         UNUSED(buffer);
         UNUSED(channel);
-        const Robotiq3FingerStatus ros_status = statusLcmToRos(*status_msg);
+        const msgs::Robotiq3FingerStatus ros_status = statusLcmToRos(*status_msg);
         status_callback_fn_(ros_status);
     }
 
@@ -59,7 +61,7 @@ namespace victor_hardware_interface
     // Ros and LCM convert helper functions
     /////////////////////////////////////////////////////////////////////////////////
 
-    robotiq_3finger_actuator_command fingerCommandRosToLcm(const Robotiq3FingerActuatorCommand& finger_command)
+    robotiq_3finger_actuator_command fingerCommandRosToLcm(const msgs::Robotiq3FingerActuatorCommand& finger_command)
     {
         robotiq_3finger_actuator_command lcm_command;
 
@@ -71,9 +73,9 @@ namespace victor_hardware_interface
         return lcm_command;
     }
 
-    Robotiq3FingerActuatorStatus fingerStatusLcmToRos(const robotiq_3finger_actuator_status& finger_status)
+    msgs::Robotiq3FingerActuatorStatus fingerStatusLcmToRos(const robotiq_3finger_actuator_status& finger_status)
     {
-        Robotiq3FingerActuatorStatus ros_status;
+        msgs::Robotiq3FingerActuatorStatus ros_status;
         ros_status.position = finger_status.position;
         ros_status.position_request = finger_status.position_request;
         ros_status.current = finger_status.current;
@@ -81,17 +83,17 @@ namespace victor_hardware_interface
         return ros_status;
     }
 
-    Robotiq3FingerObjectStatus objectStatusLcmToRos(const robotiq_3finger_object_status& object_status)
+    msgs::Robotiq3FingerObjectStatus objectStatusLcmToRos(const robotiq_3finger_object_status& object_status)
     {
-        Robotiq3FingerObjectStatus ros_status;
+        msgs::Robotiq3FingerObjectStatus ros_status;
         ros_status.status = (uint8_t)object_status.status;
         ros_status.header.stamp = ros::Time(object_status.timestamp);
         return ros_status;
     }
 
-    Robotiq3FingerStatus statusLcmToRos(const robotiq_3finger_status& status)
+    msgs::Robotiq3FingerStatus statusLcmToRos(const robotiq_3finger_status& status)
     {
-        Robotiq3FingerStatus ros_status;
+        msgs::Robotiq3FingerStatus ros_status;
         ros_status.finger_a_status = fingerStatusLcmToRos(status.finger_a_status);
         ros_status.finger_b_status = fingerStatusLcmToRos(status.finger_b_status);
         ros_status.finger_c_status = fingerStatusLcmToRos(status.finger_c_status);
@@ -109,7 +111,7 @@ namespace victor_hardware_interface
         return ros_status;
     }
 
-    robotiq_3finger_command commandRosToLcm(const Robotiq3FingerCommand& command)
+    robotiq_3finger_command commandRosToLcm(const msgs::Robotiq3FingerCommand& command)
     {
         robotiq_3finger_command lcm_command;
         lcm_command.finger_a_command = fingerCommandRosToLcm(command.finger_a_command);
