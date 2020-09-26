@@ -4,7 +4,7 @@
 
 import rospy
 from arc_utilities import ros_helpers
-from victor_hardware_interface.msg import Robotiq3FingerStatus, Robotiq3FingerCommand
+from victor_hardware_interface_msgs.msg import Robotiq3FingerStatus, Robotiq3FingerCommand
 from sensor_msgs.msg import Joy
 from copy import deepcopy
 from numpy import clip
@@ -149,7 +149,7 @@ class VictorJoystick:
         cur = self.gripper_status[gripper_name].get()
         scissor_pos = cur.scissor_status.position + motion
 
-        self.set_gripper(gripper_name, scissor_pos = scissor_pos)
+        self.set_gripper(gripper_name, scissor_pos=scissor_pos)
 
     def close_gripper(self, gripper_name):
         self.set_gripper(gripper_name, finger_pos=(1.0, 1.0, 1.0))
@@ -218,4 +218,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-

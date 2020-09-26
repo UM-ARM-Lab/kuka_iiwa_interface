@@ -5,15 +5,15 @@
 #
 # Puts the robot in impedance mode, but updates the setpoint position to be the measured position
 # Lowpass filter and thresholding prevent drift
-# 
-
+#
+import sys
 
 import numpy as np
 import time
 
 import rospy
 from victor_hardware_interface import victor_utils as vu
-from victor_hardware_interface.msg import *
+from victor_hardware_interface_msgs.msg import MotionCommand, MotionStatus, ControlModeParameters, ControlMode
 from threading import Lock
 from arc_utilities import ros_helpers as rh
 

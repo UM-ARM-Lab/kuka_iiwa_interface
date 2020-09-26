@@ -9,8 +9,8 @@
 #####################################################
 
 import rospy
-import victor_hardware_interface.msg
-import victor_hardware_interface.srv
+import victor_hardware_interface_msgs.msg
+import victor_hardware_interface_msgs.srv
 
 
 class ControlModeTester(object):

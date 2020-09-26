@@ -2,8 +2,8 @@
 
 import rospy
 from sensor_msgs.msg import JointState
-from victor_hardware_interface.msg import MotionStatus
-from victor_hardware_interface.msg import Robotiq3FingerStatus
+from victor_hardware_interface_msgs.msg import MotionStatus
+from victor_hardware_interface_msgs.msg import Robotiq3FingerStatus
 from threading import Lock
 from math import radians
 
