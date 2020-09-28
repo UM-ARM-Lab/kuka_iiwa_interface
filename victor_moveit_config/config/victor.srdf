@@ -56,8 +56,8 @@
         <link name="left_tool_placeholder"/>
     </group>
     <group name="both_arms">
-        <chain base_link="victor_right_arm_link_0" tip_link="right_tool_placeholder"/>
-        <chain base_link="victor_left_arm_link_0" tip_link="left_tool_placeholder"/>
+        <group name="left_arm"/>
+        <group name="right_arm"/>
     </group>
 
     <!--GROUP STATES: Purpose: Define a named state for a particular group, in terms of joint values. This is useful to define states like 'folded arms'-->
@@ -81,8 +81,8 @@
     </group_state>
 
     <!--END EFFECTOR: Purpose: Represent information about an end effector.-->
-    <end_effector name="right_ee" group="right_gripper" parent_link="victor_right_arm_flange" parent_group="right_arm"/>
-    <end_effector name="left_ee" group="left_gripper" parent_link="victor_left_arm_flange" parent_group="left_arm"/>
+    <end_effector name="right_ee" parent_link="victor_right_arm_flange" group="right_gripper"/>
+    <end_effector name="left_ee" parent_link="victor_left_arm_flange" group="left_gripper"/>
 
     <!--DISABLE COLLISIONS: By default it is assumed that any link of the robot could potentially come into collision with any other link in the robot. This tag disables collision checking between a specified pair of links. -->
     <disable_collisions link1="victor_base_plate" link2="victor_left_arm_link_0" reason="Default"/>
