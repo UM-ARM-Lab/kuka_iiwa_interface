@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <robot name="victor" xmlns:xacro="http://www.ros.org/wiki/xacro">
     <xacro:arg name="robot_name" default="victor"/>
-    <xacro:arg name="hardware_interface" default="hardware_interface/PositionJointInterface"/>
+    <xacro:arg name="hardware_interface" default="hardware_interface/EffortJointInterface"/>
 
         <!-- Import Rviz colors -->
     <xacro:include filename="$(find victor_description)/urdf/materials.xacro"/>

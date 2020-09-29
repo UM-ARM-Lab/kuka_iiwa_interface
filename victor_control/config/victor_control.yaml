@@ -4,196 +4,9 @@ victor:
     type: joint_state_controller/JointStateController
     publish_rate: 50
 
-  # Position Controllers ---------------------------------------
-  victor_left_arm_joint_1_position_controller:
-    type: position_controllers/JointPositionController
-    joint: victor_left_arm_joint_1
-    pid: { p: 100.0, i: 0.01, d: 10.0 }
-  victor_left_arm_joint_2_position_controller:
-    type: position_controllers/JointPositionController
-    joint: victor_left_arm_joint_2
-    pid: { p: 100.0, i: 0.01, d: 10.0 }
-  victor_left_arm_joint_3_position_controller:
-    type: position_controllers/JointPositionController
-    joint: victor_left_arm_joint_3
-    pid: { p: 100.0, i: 0.01, d: 10.0 }
-  victor_left_arm_joint_4_position_controller:
-    type: position_controllers/JointPositionController
-    joint: victor_left_arm_joint_4
-    pid: { p: 100.0, i: 0.01, d: 10.0 }
-  victor_left_arm_joint_5_position_controller:
-    type: position_controllers/JointPositionController
-    joint: victor_left_arm_joint_5
-    pid: { p: 100.0, i: 0.01, d: 10.0 }
-  victor_left_arm_joint_6_position_controller:
-    type: position_controllers/JointPositionController
-    joint: victor_left_arm_joint_6
-    pid: { p: 100.0, i: 0.01, d: 10.0 }
-  victor_left_arm_joint_7_position_controller:
-    type: position_controllers/JointPositionController
-    joint: victor_left_arm_joint_7
-    pid: { p: 100.0, i: 0.01, d: 10.0 }
-
-  victor_left_gripper_fingerA_joint_2_position_controller:
-    type: position_controllers/JointPositionController
-    joint: victor_left_gripper_fingerA_joint_2
-    pid: { p: 1.0, i: 0.01, d: 1.0 }
-  victor_left_gripper_fingerA_joint_3_position_controller:
-    type: position_controllers/JointPositionController
-    joint: victor_left_gripper_fingerA_joint_3
-    pid: { p: 1.0, i: 0.01, d: 1.0 }
-  victor_left_gripper_fingerA_joint_4_position_controller:
-    type: position_controllers/JointPositionController
-    joint: victor_left_gripper_fingerA_joint_4
-    pid: { p: 1.0, i: 0.01, d: 1.0 }
-  victor_left_gripper_fingerB_knuckle_position_controller:
-    type: position_controllers/JointPositionController
-    joint: victor_left_gripper_fingerB_knuckle
-    pid: { p: 1.0, i: 0.01, d: 1.0 }
-  victor_left_gripper_fingerB_joint_2_position_controller:
-    type: position_controllers/JointPositionController
-    joint: victor_left_gripper_fingerB_joint_2
-    pid: { p: 1.0, i: 0.01, d: 1.0 }
-  victor_left_gripper_fingerB_joint_3_position_controller:
-    type: position_controllers/JointPositionController
-    joint: victor_left_gripper_fingerB_joint_3
-    pid: { p: 1.0, i: 0.01, d: 1.0 }
-  victor_left_gripper_fingerB_joint_4_position_controller:
-    type: position_controllers/JointPositionController
-    joint: victor_left_gripper_fingerB_joint_4
-    pid: { p: 1.0, i: 0.01, d: 1.0 }
-  victor_left_gripper_fingerC_knuckle_position_controller:
-    type: position_controllers/JointPositionController
-    joint: victor_left_gripper_fingerC_knuckle
-    pid: { p: 1.0, i: 0.01, d: 1.0 }
-  victor_left_gripper_fingerC_joint_2_position_controller:
-    type: position_controllers/JointPositionController
-    joint: victor_left_gripper_fingerC_joint_2
-    pid: { p: 1.0, i: 0.01, d: 1.0 }
-  victor_left_gripper_fingerC_joint_3_position_controller:
-    type: position_controllers/JointPositionController
-    joint: victor_left_gripper_fingerC_joint_3
-    pid: { p: 1.0, i: 0.01, d: 1.0 }
-  victor_left_gripper_fingerC_joint_4_position_controller:
-    type: position_controllers/JointPositionController
-    joint: victor_left_gripper_fingerC_joint_4
-    pid: { p: 1.0, i: 0.01, d: 1.0 }
-
-  victor_right_arm_joint_1_position_controller:
-    type: position_controllers/JointPositionController
-    joint: victor_right_arm_joint_1
-    pid: { p: 100.0, i: 0.01, d: 10.0 }
-  victor_right_arm_joint_2_position_controller:
-    type: position_controllers/JointPositionController
-    joint: victor_right_arm_joint_2
-    pid: { p: 100.0, i: 0.01, d: 10.0 }
-  victor_right_arm_joint_3_position_controller:
-    type: position_controllers/JointPositionController
-    joint: victor_right_arm_joint_3
-    pid: { p: 100.0, i: 0.01, d: 10.0 }
-  victor_right_arm_joint_4_position_controller:
-    type: position_controllers/JointPositionController
-    joint: victor_right_arm_joint_4
-    pid: { p: 100.0, i: 0.01, d: 10.0 }
-  victor_right_arm_joint_5_position_controller:
-    type: position_controllers/JointPositionController
-    joint: victor_right_arm_joint_5
-    pid: { p: 100.0, i: 0.01, d: 10.0 }
-  victor_right_arm_joint_6_position_controller:
-    type: position_controllers/JointPositionController
-    joint: victor_right_arm_joint_6
-    pid: { p: 100.0, i: 0.01, d: 10.0 }
-  victor_right_arm_joint_7_position_controller:
-    type: position_controllers/JointPositionController
-    joint: victor_right_arm_joint_7
-    pid: { p: 100.0, i: 0.01, d: 10.0 }
-
-  victor_right_gripper_fingerA_joint_2_position_controller:
-    type: position_controllers/JointPositionController
-    joint: victor_right_gripper_fingerA_joint_2
-    pid: { p: 1.0, i: 0.01, d: 1.0 }
-  victor_right_gripper_fingerA_joint_3_position_controller:
-    type: position_controllers/JointPositionController
-    joint: victor_right_gripper_fingerA_joint_3
-    pid: { p: 1.0, i: 0.01, d: 1.0 }
-  victor_right_gripper_fingerA_joint_4_position_controller:
-    type: position_controllers/JointPositionController
-    joint: victor_right_gripper_fingerA_joint_4
-    pid: { p: 1.0, i: 0.01, d: 1.0 }
-  victor_right_gripper_fingerB_knuckle_position_controller:
-    type: position_controllers/JointPositionController
-    joint: victor_right_gripper_fingerB_knuckle
-    pid: { p: 1.0, i: 0.01, d: 1.0 }
-  victor_right_gripper_fingerB_joint_2_position_controller:
-    type: position_controllers/JointPositionController
-    joint: victor_right_gripper_fingerB_joint_2
-    pid: { p: 1.0, i: 0.01, d: 1.0 }
-  victor_right_gripper_fingerB_joint_3_position_controller:
-    type: position_controllers/JointPositionController
-    joint: victor_right_gripper_fingerB_joint_3
-    pid: { p: 1.0, i: 0.01, d: 1.0 }
-  victor_right_gripper_fingerB_joint_4_position_controller:
-    type: position_controllers/JointPositionController
-    joint: victor_right_gripper_fingerB_joint_4
-    pid: { p: 1.0, i: 0.01, d: 1.0 }
-  victor_right_gripper_fingerC_knuckle_position_controller:
-    type: position_controllers/JointPositionController
-    joint: victor_right_gripper_fingerC_knuckle
-    pid: { p: 1.0, i: 0.01, d: 1.0 }
-  victor_right_gripper_fingerC_joint_2_position_controller:
-    type: position_controllers/JointPositionController
-    joint: victor_right_gripper_fingerC_joint_2
-    pid: { p: 1.0, i: 0.01, d: 1.0 }
-  victor_right_gripper_fingerC_joint_3_position_controller:
-    type: position_controllers/JointPositionController
-    joint: victor_right_gripper_fingerC_joint_3
-    pid: { p: 1.0, i: 0.01, d: 1.0 }
-  victor_right_gripper_fingerC_joint_4_position_controller:
-    type: position_controllers/JointPositionController
-    joint: victor_right_gripper_fingerC_joint_4
-    pid: { p: 1.0, i: 0.01, d: 1.0 }
-
   # trajectory controllers
-  left_arm_trajectory_controller:
-    type: "position_controllers/JointTrajectoryController"
-    joints:
-      - victor_left_arm_joint_1
-      - victor_left_arm_joint_2
-      - victor_left_arm_joint_3
-      - victor_left_arm_joint_4
-      - victor_left_arm_joint_5
-      - victor_left_arm_joint_6
-      - victor_left_arm_joint_7
-
-  right_arm_trajectory_controller:
-    type: "position_controllers/JointTrajectoryController"
-    joints:
-      - victor_right_arm_joint_1
-      - victor_right_arm_joint_2
-      - victor_right_arm_joint_3
-      - victor_right_arm_joint_4
-      - victor_right_arm_joint_5
-      - victor_right_arm_joint_6
-      - victor_right_arm_joint_7
-    constraints:
-      goal_time: 0.6
-      victor_right_arm_joint_1:
-        goal: 0.02
-      victor_right_arm_joint_2:
-        goal: 0.02
-      victor_right_arm_joint_3:
-        goal: 0.02
-      victor_right_arm_joint_4:
-        goal: 0.02
-      victor_right_arm_joint_5:
-        goal: 0.02
-      victor_right_arm_joint_6:
-        goal: 0.02
-      victor_right_arm_joint_7:
-        goal: 0.02
-
   both_arms_trajectory_controller:
-    type: "position_controllers/JointTrajectoryController"
+    type: "effort_controllers/JointTrajectoryController"
     joints:
       - victor_left_arm_joint_1
       - victor_left_arm_joint_2
@@ -209,224 +22,154 @@ victor:
       - victor_right_arm_joint_5
       - victor_right_arm_joint_6
       - victor_right_arm_joint_7
-
-  full_trajectory_controller:
-    type: "position_controllers/JointTrajectoryController"
-    joints:
-      - victor_left_arm_joint_1
-      - victor_left_arm_joint_2
-      - victor_left_arm_joint_3
-      - victor_left_arm_joint_4
-      - victor_left_arm_joint_5
-      - victor_left_arm_joint_6
-      - victor_left_arm_joint_7
-      - victor_right_arm_joint_1
-      - victor_right_arm_joint_2
-      - victor_right_arm_joint_3
-      - victor_right_arm_joint_4
-      - victor_right_arm_joint_5
-      - victor_right_arm_joint_6
-      - victor_right_arm_joint_7
-      - victor_left_gripper_fingerA_joint_2
-      - victor_left_gripper_fingerA_joint_3
-      - victor_left_gripper_fingerA_joint_4
-      - victor_left_gripper_fingerB_knuckle
-      - victor_left_gripper_fingerB_joint_2
-      - victor_left_gripper_fingerB_joint_3
-      - victor_left_gripper_fingerB_joint_4
-      - victor_left_gripper_fingerC_knuckle
-      - victor_left_gripper_fingerC_joint_2
-      - victor_left_gripper_fingerC_joint_3
-      - victor_left_gripper_fingerC_joint_4
-      - victor_right_gripper_fingerA_joint_2
-      - victor_right_gripper_fingerA_joint_3
-      - victor_right_gripper_fingerA_joint_4
-      - victor_right_gripper_fingerB_knuckle
-      - victor_right_gripper_fingerB_joint_2
-      - victor_right_gripper_fingerB_joint_3
-      - victor_right_gripper_fingerB_joint_4
-      - victor_right_gripper_fingerC_knuckle
-      - victor_right_gripper_fingerC_joint_2
-      - victor_right_gripper_fingerC_joint_3
-      - victor_right_gripper_fingerC_joint_4
-
-  left_hand_controller:
-    type: "position_controllers/JointTrajectoryController"
-    joints:
-      - victor_left_gripper_fingerA_joint_2
-      - victor_left_gripper_fingerA_joint_3
-      - victor_left_gripper_fingerA_joint_4
-      - victor_left_gripper_fingerB_knuckle
-      - victor_left_gripper_fingerB_joint_2
-      - victor_left_gripper_fingerB_joint_3
-      - victor_left_gripper_fingerB_joint_4
-      - victor_left_gripper_fingerC_knuckle
-      - victor_left_gripper_fingerC_joint_2
-      - victor_left_gripper_fingerC_joint_3
-      - victor_left_gripper_fingerC_joint_4
-
-  right_hand_controller:
-    type: "position_controllers/JointTrajectoryController"
-    joints:
-      - victor_right_gripper_fingerA_joint_2
-      - victor_right_gripper_fingerA_joint_3
-      - victor_right_gripper_fingerA_joint_4
-      - victor_right_gripper_fingerB_knuckle
-      - victor_right_gripper_fingerB_joint_2
-      - victor_right_gripper_fingerB_joint_3
-      - victor_right_gripper_fingerB_joint_4
-      - victor_right_gripper_fingerC_knuckle
-      - victor_right_gripper_fingerC_joint_2
-      - victor_right_gripper_fingerC_joint_3
-      - victor_right_gripper_fingerC_joint_4
-
-  # gazebo
-  gazebo_ros_control:
-    pid_gains:
+    allow_partial_joints_goal: true
+    constraints:
+      goal_time: 0.5
       victor_left_arm_joint_1:
-        p: 10000.0
-        i: 0.01
-        d: 10.0
+        goal: 0.02
       victor_left_arm_joint_2:
-        p: 10000.0
-        i: 0.01
-        d: 10.0
+        goal: 0.02
       victor_left_arm_joint_3:
-        p: 10000.0
-        i: 0.01
-        d: 10.0
+        goal: 0.02
       victor_left_arm_joint_4:
-        p: 10000.0
-        i: 0.01
-        d: 10.0
+        goal: 0.02
       victor_left_arm_joint_5:
-        p: 1000.0
-        i: 0.01
-        d: 10.0
+        goal: 0.02
       victor_left_arm_joint_6:
-        p: 1000.0
-        i: 0.01
-        d: 10.0
+        goal: 0.02
       victor_left_arm_joint_7:
-        p: 1000.0
-        i: 0.01
-        d: 10.0
-
+        goal: 0.02
       victor_right_arm_joint_1:
-        p: 10000.0
-        i: 0.01
-        d: 10.0
+        goal: 0.02
       victor_right_arm_joint_2:
-        p: 10000.0
-        i: 0.01
-        d: 10.0
+        goal: 0.02
       victor_right_arm_joint_3:
-        p: 10000.0
-        i: 0.01
-        d: 10.0
+        goal: 0.02
       victor_right_arm_joint_4:
-        p: 10000.0
-        i: 0.01
-        d: 10.0
+        goal: 0.02
       victor_right_arm_joint_5:
-        p: 1000.0
-        i: 0.01
-        d: 10.0
+        goal: 0.02
       victor_right_arm_joint_6:
-        p: 1000.0
-        i: 0.01
-        d: 10.0
+        goal: 0.02
       victor_right_arm_joint_7:
-        p: 1000.0
-        i: 0.01
-        d: 10.0
+        goal: 0.02
+    gains:
+      victor_left_arm_joint_1: { p: 10000.0, i: 0.01, d: 10.0 }
+      victor_left_arm_joint_2: { p: 10000.0, i: 0.01, d: 10.0 }
+      victor_left_arm_joint_3: { p: 10000.0, i: 0.01, d: 10.0 }
+      victor_left_arm_joint_4: { p: 10000.0, i: 0.01, d: 10.0 }
+      victor_left_arm_joint_5: { p: 1000.0, i: 0.01, d: 10.0 }
+      victor_left_arm_joint_6: { p: 1000.0, i: 0.01, d: 10.0 }
+      victor_left_arm_joint_7: { p: 1000.0, i: 0.01, d: 10.0 }
+      victor_right_arm_joint_1: { p: 10000.0, i: 0.01, d: 10.0 }
+      victor_right_arm_joint_2: { p: 10000.0, i: 0.01, d: 10.0 }
+      victor_right_arm_joint_3: { p: 10000.0, i: 0.01, d: 10.0 }
+      victor_right_arm_joint_4: { p: 10000.0, i: 0.01, d: 10.0 }
+      victor_right_arm_joint_5: { p: 1000.0, i: 0.01, d: 10.0 }
+      victor_right_arm_joint_6: { p: 1000.0, i: 0.01, d: 10.0 }
+      victor_right_arm_joint_7: { p: 1000.0, i: 0.01, d: 10.0 }
 
+
+  left_hand_trajectory_controller:
+    type: "effort_controllers/JointTrajectoryController"
+    joints:
+      - victor_left_gripper_fingerA_joint_2
+      - victor_left_gripper_fingerA_joint_3
+      - victor_left_gripper_fingerA_joint_4
+      - victor_left_gripper_fingerB_knuckle
+      - victor_left_gripper_fingerB_joint_2
+      - victor_left_gripper_fingerB_joint_3
+      - victor_left_gripper_fingerB_joint_4
+      - victor_left_gripper_fingerC_knuckle
+      - victor_left_gripper_fingerC_joint_2
+      - victor_left_gripper_fingerC_joint_3
+      - victor_left_gripper_fingerC_joint_4
+    allow_partial_joints_goal: true
+    constraints:
+      goal_time: 0.5
       victor_left_gripper_fingerA_joint_2:
-        p: 50.0
-        i: 0.0
-        d: 0.05
+        goal: 0.02
       victor_left_gripper_fingerA_joint_3:
-        p: 50.0
-        i: 0.0
-        d: 0.05
+        goal: 0.02
       victor_left_gripper_fingerA_joint_4:
-        p: 50.0
-        i: 0.0
-        d: 0.05
+        goal: 0.02
       victor_left_gripper_fingerB_knuckle:
-        p: 50.0
-        i: 0.0
-        d: 0.05
+        goal: 0.02
       victor_left_gripper_fingerB_joint_2:
-        p: 50.0
-        i: 0.0
-        d: 0.05
+        goal: 0.02
       victor_left_gripper_fingerB_joint_3:
-        p: 50.0
-        i: 0.0
-        d: 0.05
+        goal: 0.02
       victor_left_gripper_fingerB_joint_4:
-        p: 50.0
-        i: 0.0
-        d: 0.05
+        goal: 0.02
       victor_left_gripper_fingerC_knuckle:
-        p: 50.0
-        i: 0.0
-        d: 0.05
+        goal: 0.02
       victor_left_gripper_fingerC_joint_2:
-        p: 50.0
-        i: 0.0
-        d: 0.05
+        goal: 0.02
       victor_left_gripper_fingerC_joint_3:
-        p: 50.0
-        i: 0.0
-        d: 0.05
+        goal: 0.02
       victor_left_gripper_fingerC_joint_4:
-        p: 50.0
-        i: 0.0
-        d: 0.05
+        goal: 0.02
+    gains:
+      victor_left_gripper_fingerA_joint_2: { p: 50.0, i: 0.0, d: 0.05 }
+      victor_left_gripper_fingerA_joint_3: { p: 50.0, i: 0.0, d: 0.05 }
+      victor_left_gripper_fingerA_joint_4: { p: 50.0, i: 0.0, d: 0.05 }
+      victor_left_gripper_fingerB_knuckle: { p: 50.0, i: 0.0, d: 0.05 }
+      victor_left_gripper_fingerB_joint_2: { p: 50.0, i: 0.0, d: 0.05 }
+      victor_left_gripper_fingerB_joint_3: { p: 50.0, i: 0.0, d: 0.05 }
+      victor_left_gripper_fingerB_joint_4: { p: 50.0, i: 0.0, d: 0.05 }
+      victor_left_gripper_fingerC_knuckle: { p: 50.0, i: 0.0, d: 0.05 }
+      victor_left_gripper_fingerC_joint_2: { p: 50.0, i: 0.0, d: 0.05 }
+      victor_left_gripper_fingerC_joint_3: { p: 50.0, i: 0.0, d: 0.05 }
+      victor_left_gripper_fingerC_joint_4: { p: 50.0, i: 0.0, d: 0.05 }
 
+  right_hand_trajectory_controller:
+    type: "effort_controllers/JointTrajectoryController"
+    joints:
+      - victor_right_gripper_fingerA_joint_2
+      - victor_right_gripper_fingerA_joint_3
+      - victor_right_gripper_fingerA_joint_4
+      - victor_right_gripper_fingerB_knuckle
+      - victor_right_gripper_fingerB_joint_2
+      - victor_right_gripper_fingerB_joint_3
+      - victor_right_gripper_fingerB_joint_4
+      - victor_right_gripper_fingerC_knuckle
+      - victor_right_gripper_fingerC_joint_2
+      - victor_right_gripper_fingerC_joint_3
+      - victor_right_gripper_fingerC_joint_4
+    allow_partial_joints_goal: true
+    constraints:
+      goal_time: 0.5
       victor_right_gripper_fingerA_joint_2:
-        p: 50.0
-        i: 0.0
-        d: 0.05
+        goal: 0.02
       victor_right_gripper_fingerA_joint_3:
-        p: 50.0
-        i: 0.0
-        d: 0.05
+        goal: 0.02
       victor_right_gripper_fingerA_joint_4:
-        p: 50.0
-        i: 0.0
-        d: 0.05
+        goal: 0.02
       victor_right_gripper_fingerB_knuckle:
-        p: 50.0
-        i: 0.0
-        d: 0.05
+        goal: 0.02
       victor_right_gripper_fingerB_joint_2:
-        p: 50.0
-        i: 0.0
-        d: 0.05
+        goal: 0.02
       victor_right_gripper_fingerB_joint_3:
-        p: 50.0
-        i: 0.0
-        d: 0.05
+        goal: 0.02
       victor_right_gripper_fingerB_joint_4:
-        p: 50.0
-        i: 0.0
-        d: 0.05
+        goal: 0.02
       victor_right_gripper_fingerC_knuckle:
-        p: 50.0
-        i: 0.0
-        d: 0.05
+        goal: 0.02
       victor_right_gripper_fingerC_joint_2:
-        p: 50.0
-        i: 0.0
-        d: 0.05
+        goal: 0.02
       victor_right_gripper_fingerC_joint_3:
-        p: 50.0
-        i: 0.0
-        d: 0.05
+        goal: 0.02
       victor_right_gripper_fingerC_joint_4:
-        p: 50.0
-        i: 0.0
-        d: 0.05
+        goal: 0.02
+    gains:
+      victor_right_gripper_fingerA_joint_2: { p: 50.0, i: 0.0, d: 0.05 }
+      victor_right_gripper_fingerA_joint_3: { p: 50.0, i: 0.0, d: 0.05 }
+      victor_right_gripper_fingerA_joint_4: { p: 50.0, i: 0.0, d: 0.05 }
+      victor_right_gripper_fingerB_knuckle: { p: 50.0, i: 0.0, d: 0.05 }
+      victor_right_gripper_fingerB_joint_2: { p: 50.0, i: 0.0, d: 0.05 }
+      victor_right_gripper_fingerB_joint_3: { p: 50.0, i: 0.0, d: 0.05 }
+      victor_right_gripper_fingerB_joint_4: { p: 50.0, i: 0.0, d: 0.05 }
+      victor_right_gripper_fingerC_knuckle: { p: 50.0, i: 0.0, d: 0.05 }
+      victor_right_gripper_fingerC_joint_2: { p: 50.0, i: 0.0, d: 0.05 }
+      victor_right_gripper_fingerC_joint_3: { p: 50.0, i: 0.0, d: 0.05 }
+      victor_right_gripper_fingerC_joint_4: { p: 50.0, i: 0.0, d: 0.05 }

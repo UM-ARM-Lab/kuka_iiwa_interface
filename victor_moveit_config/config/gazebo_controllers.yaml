@@ -1,26 +1,15 @@
 controller_list:
-#  - name: victor/both_arms_trajectory_controller
-#    action_ns: follow_joint_trajectory
-#    type: FollowJointTrajectory
-#    joints:
-#      - victor_left_arm_joint_1
-#      - victor_left_arm_joint_2
-#      - victor_left_arm_joint_3
-#      - victor_left_arm_joint_4
-#      - victor_left_arm_joint_5
-#      - victor_left_arm_joint_6
-#      - victor_left_arm_joint_7
-#      - victor_right_arm_joint_1
-#      - victor_right_arm_joint_2
-#      - victor_right_arm_joint_3
-#      - victor_right_arm_joint_4
-#      - victor_right_arm_joint_5
-#      - victor_right_arm_joint_6
-#      - victor_right_arm_joint_7
-  - name: victor/right_arm_trajectory_controller
+  - name: victor/both_arms_trajectory_controller
     action_ns: follow_joint_trajectory
     type: FollowJointTrajectory
     joints:
+      - victor_left_arm_joint_1
+      - victor_left_arm_joint_2
+      - victor_left_arm_joint_3
+      - victor_left_arm_joint_4
+      - victor_left_arm_joint_5
+      - victor_left_arm_joint_6
+      - victor_left_arm_joint_7
       - victor_right_arm_joint_1
       - victor_right_arm_joint_2
       - victor_right_arm_joint_3
@@ -28,14 +17,3 @@ controller_list:
       - victor_right_arm_joint_5
       - victor_right_arm_joint_6
       - victor_right_arm_joint_7
-#  - name: victor/left_arm_trajectory_controller
-#    action_ns: follow_joint_trajectory
-#    type: FollowJointTrajectory
-#    joints:
-#      - victor_right_arm_joint_1
-#      - victor_right_arm_joint_2
-#      - victor_right_arm_joint_3
-#      - victor_right_arm_joint_4
-#      - victor_right_arm_joint_5
-#      - victor_right_arm_joint_6
-#      - victor_right_arm_joint_7
