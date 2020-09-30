@@ -1,14 +1,13 @@
 #!/usr/bin/env python
 
-# [Create a window]
-
 # Python imports
 from __future__ import print_function
-import sys
-import signal
-import time
-import math
+
 import copy
+import math
+import signal
+import sys
+import time
 from functools import partial
 
 # Qt imports
@@ -18,10 +17,10 @@ from PyQt5.QtWidgets import *
 
 # ROS imports
 import rospy
+from victor_hardware_interface import victor_utils
 from victor_hardware_interface_msgs.msg import Robotiq3FingerCommand, MotionCommand, MotionStatus, Robotiq3FingerStatus, \
     ControlMode
-from victor_hardware_interface_msgs.srv import  GetControlMode
-from victor_hardware_interface import victor_utils
+from victor_hardware_interface_msgs.srv import GetControlMode
 
 finger_range_discretization = 1000
 arm_joint_limit_margin = 1
@@ -122,7 +121,7 @@ class Arm:
                                         finger_command_name=finger_command_name)
 
                 label = finger_joint_labels[finger_joint_name] + ' Command ' + \
-                    finger_command_name[0].upper() + finger_command_name[1:]
+                        finger_command_name[0].upper() + finger_command_name[1:]
 
                 self.finger_labels[(finger_joint_name, finger_command_name)] = self.init_label(label, col)
 
