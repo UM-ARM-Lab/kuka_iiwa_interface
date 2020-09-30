@@ -1,10 +1,11 @@
 #! /usr/bin/env python
 
 from enum import Enum
-import rospy
 
+import rospy
 from victor_hardware_interface_msgs.msg import *
 from victor_hardware_interface_msgs.srv import *
+
 
 # TODO: better integrate/de-duplicated between this and code in arm_robots
 
@@ -12,6 +13,19 @@ class Stiffness(Enum):
     STIFF = 1
     MEDIUM = 3
     SOFT = 2
+
+
+def get_new_control_mode(control_mode: ControlMode, stiffness=Stiffness.MEDIUM, vel=0.1, accel=0.1):
+    if control_mode == ControlMode.JOINT_POSITION:
+        return get_joint_position_params(vel, accel)
+    elif control_mode == ControlMode.JOINT_IMPEDANCE:
+        return get_joint_impedance_params(stiffness, vel, accel)
+    elif control_mode == ControlMode.CARTESIAN_POSE:
+        raise NotImplementedError("Cartesian Mode not yet implemented")
+    elif control_mode == ControlMode.CARTESIAN_IMPEDANCE:
+        raise NotImplementedError("Cartesian Impedance Mode not yet implemented")
+    else:
+        raise NotImplementedError(f"Unknown control mode requested: {control_mode}")
 
 
 def set_control_mode(control_mode, arm, stiffness=Stiffness.MEDIUM, vel=0.1, accel=0.1):
@@ -23,28 +37,7 @@ def set_control_mode(control_mode, arm, stiffness=Stiffness.MEDIUM, vel=0.1, acc
     arm (string):               The name of the arm: "right_arm" or "left_arm"
     stiffness (Stiffness):      For impedance modes, uses a set of stiffness values
     """
-
-    new_control_mode = ControlModeParameters()
-    new_control_mode.control_mode.mode = control_mode
-
-    if control_mode == ControlMode.JOINT_POSITION:
-        new_control_mode = get_joint_position_params(vel=vel, accel=accel)
-
-    elif control_mode == ControlMode.JOINT_IMPEDANCE:
-        new_control_mode = get_joint_impedance_params(stiffness, vel=vel, accel=accel)
-
-    elif control_mode == ControlMode.CARTESIAN_POSE:
-        rospy.logerr("Cartesian Mode not yet implemented")
-        assert False
-
-    elif control_mode == ControlMode.CARTESIAN_IMPEDANCE:
-        rospy.logerr("Cartesian Mode not yet implemented")
-        assert False
-
-    else:
-        rospy.logerr("Unknown control mode requested: " + str(control_mode))
-        assert False
-
+    new_control_mode = get_new_control_mode(control_mode, stiffness, vel, accel)
     result = send_new_control_mode(arm, new_control_mode)
     if not result.success:
         rospy.logerr("Failed to switch to control mode: " + str(control_mode))

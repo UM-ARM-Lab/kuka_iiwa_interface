@@ -1,44 +1,34 @@
 <launch>
 
-  <arg name="paused" default="false"/>
-  <arg name="use_sim_time" default="true"/>
-  <arg name="gui" default="true"/>
-  <arg name="headless" default="false"/>
-  <arg name="use_moveit" default="true"/>
-  <arg name="debug" default="false"/>
-  <!-- We resume the logic in empty_world.launch, changing only the name of the world to be launched -->
-  <include file="$(find gazebo_ros)/launch/empty_world.launch">
-    <arg name="debug" value="$(arg debug)"/>
-    <arg name="gui" value="$(arg gui)"/>
-    <arg name="paused" value="$(arg paused)"/>
-    <arg name="use_sim_time" value="$(arg use_sim_time)"/>
-    <arg name="headless" value="$(arg headless)"/>
-  </include>
+    <arg name="world_file" default="$(find victor_gazebo)/world/victor.world"/>
+    <arg name="paused" default="true"/>
+    <arg name="use_sim_time" default="true"/>
+    <arg name="gui" default="true"/>
+    <arg name="headless" default="false"/>
+    <arg name="debug" default="false"/>
 
-  <!-- Load the URDF into the ROS Parameter Server -->
-  <param name="robot_description"
-         command="$(find xacro)/xacro '$(find victor_description)/urdf/victor.urdf.xacro'"/>
-
-  <!-- Run a python script to the send a service call to gazebo_ros to spawn a URDF robot -->
-  <node name="urdf_spawner" pkg="gazebo_ros" type="spawn_model" respawn="false" output="screen"
-        args="-urdf -model victor -param robot_description"/>
-
-  <!-- ros_control victor launch file -->
-  <include file="$(find victor_control)/launch/victor_control.launch">
-    <!--  Using the default here is fine. -->
-    <!-- <arg name="controllers_to_start" value="" /> -->
-  </include>
-
-  <!-- moveit -->
-  <group if="$(arg use_moveit)">
-    <include file="$(find victor_moveit_config)/launch/planning_context.launch">
-      <arg name="load_robot_description" value="true"/>
+    <!-- We resume the logic in empty_world.launch, changing only the name of the world to be launched -->
+    <include file="$(find gazebo_ros)/launch/empty_world.launch">
+        <arg name="world_name" value="$(arg world_file)"/>
+        <arg name="debug" value="$(arg debug)"/>
+        <arg name="gui" value="$(arg gui)"/>
+        <arg name="paused" value="$(arg paused)"/>
+        <arg name="use_sim_time" value="$(arg use_sim_time)"/>
+        <arg name="headless" value="$(arg headless)"/>
     </include>
-    <include file="$(find victor_moveit_config)/launch/move_group.launch">
-      <arg name="allow_trajectory_execution" value="true"/>
-      <arg name="moveit_controller_manager" value="gazebo"/>
-      <arg name="info" value="true"/>
+
+    <!-- Load the URDF into the ROS Parameter Server -->
+    <param name="robot_description"
+           command="$(find xacro)/xacro '$(find victor_description)/urdf/victor.urdf.xacro'"/>
+
+    <!-- Run a python script to the send a service call to gazebo_ros to spawn a URDF robot -->
+    <node name="urdf_spawner" pkg="gazebo_ros" type="spawn_model" respawn="false" output="screen"
+          args="-urdf -model victor -param robot_description"/>
+
+    <!-- ros_control victor launch file -->
+    <include file="$(find victor_control)/launch/victor_control.launch">
+        <!--  Using the default here is fine. -->
+        <!-- <arg name="controllers_to_start" value="" /> -->
     </include>
-  </group>
 
 </launch>
