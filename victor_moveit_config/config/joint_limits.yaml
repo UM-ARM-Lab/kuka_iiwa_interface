@@ -4,37 +4,37 @@
 joint_limits:
   victor_left_arm_joint_1:
     has_velocity_limits: true
-    max_velocity: 3
+    max_velocity: 1
     has_acceleration_limits: true
     max_acceleration: 1
   victor_left_arm_joint_2:
     has_velocity_limits: true
-    max_velocity: 3
+    max_velocity: 1
     has_acceleration_limits: true
     max_acceleration: 1
   victor_left_arm_joint_3:
     has_velocity_limits: true
-    max_velocity: 3
+    max_velocity: 1
     has_acceleration_limits: true
     max_acceleration: 1
   victor_left_arm_joint_4:
     has_velocity_limits: true
-    max_velocity: 3
+    max_velocity: 1
     has_acceleration_limits: true
     max_acceleration: 1
   victor_left_arm_joint_5:
     has_velocity_limits: true
-    max_velocity: 3
+    max_velocity: 1
     has_acceleration_limits: true
     max_acceleration: 1
   victor_left_arm_joint_6:
     has_velocity_limits: true
-    max_velocity: 3
+    max_velocity: 1
     has_acceleration_limits: true
     max_acceleration: 1
   victor_left_arm_joint_7:
     has_velocity_limits: true
-    max_velocity: 3
+    max_velocity: 1
     has_acceleration_limits: true
     max_acceleration: 1
   victor_left_gripper_fingerA_joint_2:
@@ -94,37 +94,37 @@ joint_limits:
     max_acceleration: 1
   victor_right_arm_joint_1:
     has_velocity_limits: true
-    max_velocity: 3
+    max_velocity: 1
     has_acceleration_limits: true
     max_acceleration: 1
   victor_right_arm_joint_2:
     has_velocity_limits: true
-    max_velocity: 3
+    max_velocity: 1
     has_acceleration_limits: true
     max_acceleration: 1
   victor_right_arm_joint_3:
     has_velocity_limits: true
-    max_velocity: 3
+    max_velocity: 1
     has_acceleration_limits: true
     max_acceleration: 1
   victor_right_arm_joint_4:
     has_velocity_limits: true
-    max_velocity: 3
+    max_velocity: 1
     has_acceleration_limits: true
     max_acceleration: 1
   victor_right_arm_joint_5:
     has_velocity_limits: true
-    max_velocity: 3
+    max_velocity: 1
     has_acceleration_limits: true
     max_acceleration: 1
   victor_right_arm_joint_6:
     has_velocity_limits: true
-    max_velocity: 3
+    max_velocity: 1
     has_acceleration_limits: true
     max_acceleration: 1
   victor_right_arm_joint_7:
     has_velocity_limits: true
-    max_velocity: 3
+    max_velocity: 1
     has_acceleration_limits: true
     max_acceleration: 1
   victor_right_gripper_fingerA_joint_2:

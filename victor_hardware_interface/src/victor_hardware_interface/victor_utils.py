@@ -19,7 +19,7 @@ def get_new_control_mode(control_mode: ControlMode, stiffness=Stiffness.MEDIUM, 
     elif control_mode == ControlMode.JOINT_IMPEDANCE:
         return get_joint_impedance_params(stiffness, vel, accel)
     elif control_mode == ControlMode.CARTESIAN_IMPEDANCE:
-        return get_cartesian_impedance_params()
+        return get_cartesian_impedance_params(velocity=vel)
     elif control_mode == ControlMode.CARTESIAN_POSE:
         raise NotImplementedError("Cartesian Mode not yet implemented")
     else:
@@ -128,14 +128,13 @@ def get_joint_impedance_params(stiffness, vel=0.1, accel=0.1):
     return new_control_mode
 
 
-def get_cartesian_impedance_params():
+def get_cartesian_impedance_params(velocity=2.5):
     """
     Returns predefined cartesian impedance parameters
     """
     # TODO allow sub-modes such as xy planar motion
     new_control_mode = ControlModeParameters()
     new_control_mode.control_mode.mode = ControlMode.CARTESIAN_IMPEDANCE
-    velocity = 2.5
     new_control_mode.cartesian_path_execution_params.max_velocity.x = velocity
     new_control_mode.cartesian_path_execution_params.max_velocity.y = velocity
     new_control_mode.cartesian_path_execution_params.max_velocity.z = velocity
