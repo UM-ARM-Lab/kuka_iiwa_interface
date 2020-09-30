@@ -7,8 +7,6 @@ from victor_hardware_interface_msgs.msg import *
 from victor_hardware_interface_msgs.srv import *
 
 
-# TODO: better integrate/de-duplicated between this and code in arm_robots
-
 class Stiffness(Enum):
     STIFF = 1
     MEDIUM = 3
