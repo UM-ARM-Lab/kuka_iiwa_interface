@@ -10,8 +10,7 @@
     <!-- Load joint controller configurations from YAML file to parameter server -->
     <rosparam file="$(find victor_control)/config/victor_control.yaml" command="load"/>
 
-    <!-- load the controllers.
-    This is the lowest level at which one can choose whether to control left/right/both arms -->
+    <!-- load the controllers -->
     <node name="controller_spawner_start"
           pkg="controller_manager"
           type="spawner"

@@ -1,67 +1,6 @@
 <?xml version="1.0"?>
 <robot xmlns:xacro="http://www.ros.org/wiki/xacro">
 
-    <gazebo reference="victor_right_arm_link_1">
-        <self_collide>1</self_collide>
-    </gazebo>
-    <gazebo reference="victor_right_arm_link_2">
-        <self_collide>1</self_collide>
-    </gazebo>
-    <gazebo reference="victor_right_arm_link_3">
-        <self_collide>1</self_collide>
-    </gazebo>
-    <gazebo reference="victor_right_arm_link_4">
-        <self_collide>1</self_collide>
-    </gazebo>
-    <gazebo reference="victor_right_arm_link_5">
-        <self_collide>1</self_collide>
-    </gazebo>
-    <gazebo reference="victor_right_arm_link_6">
-        <self_collide>1</self_collide>
-    </gazebo>
-    <gazebo reference="victor_right_arm_link_7">
-        <self_collide>0</self_collide>
-    </gazebo>
-    <gazebo reference="victor_right_gripper_fingerA_dist">
-        <self_collide>1</self_collide>
-    </gazebo>
-    <gazebo reference="victor_right_gripper_fingerB_dist">
-        <self_collide>1</self_collide>
-    </gazebo>
-    <gazebo reference="victor_right_gripper_fingerC_dist">
-        <self_collide>1</self_collide>
-    </gazebo>
-    <gazebo reference="victor_left_arm_link_1">
-        <self_collide>1</self_collide>
-    </gazebo>
-    <gazebo reference="victor_left_arm_link_2">
-        <self_collide>1</self_collide>
-    </gazebo>
-    <gazebo reference="victor_left_arm_link_3">
-        <self_collide>1</self_collide>
-    </gazebo>
-    <gazebo reference="victor_left_arm_link_4">
-        <self_collide>1</self_collide>
-    </gazebo>
-    <gazebo reference="victor_left_arm_link_5">
-        <self_collide>1</self_collide>
-    </gazebo>
-    <gazebo reference="victor_left_arm_link_6">
-        <self_collide>1</self_collide>
-    </gazebo>
-    <gazebo reference="victor_left_arm_link_7">
-        <self_collide>0</self_collide>
-    </gazebo>
-    <gazebo reference="victor_left_gripper_fingerA_dist">
-        <self_collide>1</self_collide>
-    </gazebo>
-    <gazebo reference="victor_left_gripper_fingerB_dist">
-        <self_collide>1</self_collide>
-    </gazebo>
-    <gazebo reference="victor_left_gripper_fingerC_dist">
-        <self_collide>1</self_collide>
-    </gazebo>
-
 
     <xacro:macro name="squishify" params="link_name">
         <gazebo reference="${link_name}">
@@ -117,24 +56,23 @@
         <xacro:springify joint_name="${finger}_joint_4"/>
     </xacro:macro>
 
-    <xacro:macro name="add_simulation_compliance" params="side">
-        <xacro:add_simulation_compliance_finger_helper finger="victor_${side}_gripper_fingerA"/>
-        <xacro:add_simulation_compliance_finger_helper finger="victor_${side}_gripper_fingerB"/>
-        <xacro:add_simulation_compliance_finger_helper finger="victor_${side}_gripper_fingerB"/>
-        <xacro:add_simulation_compliance_arm_helper arm="victor_${side}_arm" index="7"/>
-    </xacro:macro>
-
     <xacro:macro name="add_gazebo_control_plugin" params="robot_namespace">
         <gazebo>
             <plugin name="gazebo_ros_control" filename="libgazebo_ros_control.so">
-                <robotNamespace>/${robot_namespace}</robotNamespace>
-                <!--                <robotNamespace>/</robotNamespace>-->
+                <robotNamespace>${robot_namespace}</robotNamespace>
                 <legacyModeNS>false</legacyModeNS>
             </plugin>
         </gazebo>
+    </xacro:macro>
 
-        <xacro:add_simulation_compliance side="left"/>
-        <xacro:add_simulation_compliance side="right"/>
+    <xacro:macro name="add_moveit_planning_scene_plugin" params="robot_namespace root_frame_id">
+        <gazebo>
+            <plugin name="gazebo_ros_moveit_planning_scene" filename="libgazebo_ros_moveit_planning_scene.so">
+                <robotName>${robot_namespace}</robotName>
+                <!--  This must be the same as the root frame of the robot you're using -->
+                <frameId>${root_frame_id}</frameId>
+            </plugin>
+        </gazebo>
     </xacro:macro>
 
     <xacro:macro name="add_gazebo_fixed_link" params="base_link:=base_link">

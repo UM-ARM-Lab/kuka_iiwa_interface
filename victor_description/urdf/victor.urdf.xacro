@@ -3,7 +3,7 @@
     <xacro:arg name="robot_name" default="victor"/>
     <xacro:arg name="hardware_interface" default="hardware_interface/EffortJointInterface"/>
 
-        <!-- Import Rviz colors -->
+    <!-- Import Rviz colors -->
     <xacro:include filename="$(find victor_description)/urdf/materials.xacro"/>
 
     <!-- pedestal -->
@@ -18,7 +18,8 @@
     <!--Import the lbr iiwa macro -->
     <xacro:include filename="$(find victor_description)/urdf/iiwa7.xacro"/>
 
-    <xacro:iiwa7 hardware_interface="$(arg hardware_interface)" robot_name="$(arg robot_name)_left_arm" parent="$(arg robot_name)_left_arm_mount">
+    <xacro:iiwa7 hardware_interface="$(arg hardware_interface)" robot_name="$(arg robot_name)_left_arm"
+                 parent="$(arg robot_name)_left_arm_mount">
         <origin xyz="0 0 0" rpy="0 0 0"/>
     </xacro:iiwa7>
     <joint name="$(arg robot_name)_joint_left_arm_world_frame_kuka" type="fixed">
@@ -29,7 +30,8 @@
     <link name="$(arg robot_name)_left_arm_world_frame_kuka">
     </link>
 
-    <xacro:iiwa7 hardware_interface="$(arg hardware_interface)" robot_name="$(arg robot_name)_right_arm" parent="$(arg robot_name)_right_arm_mount">
+    <xacro:iiwa7 hardware_interface="$(arg hardware_interface)" robot_name="$(arg robot_name)_right_arm"
+                 parent="$(arg robot_name)_right_arm_mount">
         <origin xyz="0 0 0" rpy="0 0 0"/>
     </xacro:iiwa7>
     <joint name="$(arg robot_name)_joint_right_arm_world_frame_kuka" type="fixed">
@@ -39,7 +41,6 @@
     </joint>
     <link name="$(arg robot_name)_right_arm_world_frame_kuka">
     </link>
-
 
 
     <!-- arm to gripper adapter -->
@@ -57,11 +58,13 @@
     <!-- Robotiq grippers -->
     <!--Import the Robotiq 3 finger macro -->
     <xacro:include filename="$(find victor_description)/urdf/robotiq_3finger_gripper.xacro"/>
-    <xacro:robotiq_3finger parent="$(arg robot_name)_left_gripper_mounting_bracket" prefix="$(arg robot_name)_left_gripper" hardware_interface="$(arg hardware_interface)">
+    <xacro:robotiq_3finger parent="$(arg robot_name)_left_gripper_mounting_bracket" prefix="$(arg robot_name)_left_gripper"
+                           hardware_interface="$(arg hardware_interface)">
         <origin xyz="0 0 0.02705" rpy="0 0 ${PI/4}"/> <!-- Offset measured with a tape measure; please confirm/fix this value -->
     </xacro:robotiq_3finger>
 
-    <xacro:robotiq_3finger parent="$(arg robot_name)_right_gripper_mounting_bracket" prefix="$(arg robot_name)_right_gripper" hardware_interface="$(arg hardware_interface)">
+    <xacro:robotiq_3finger parent="$(arg robot_name)_right_gripper_mounting_bracket" prefix="$(arg robot_name)_right_gripper"
+                           hardware_interface="$(arg hardware_interface)">
         <origin xyz="0 0 0.02705" rpy="0 0 ${PI/4}"/> <!-- Offset measured with a tape measure; please confirm/fix this value -->
     </xacro:robotiq_3finger>
 
@@ -85,9 +88,12 @@
     </joint>
 
     <!-- Add Gazebo properties for whole robot -->
+    <xacro:include filename="$(find victor_description)/urdf/victor.gazebo.xacro"/>
     <xacro:include filename="$(find victor_description)/urdf/gazebo_utilities.xacro"/>
     <!-- Load Gazebo lib and set the robot namespace -->
     <xacro:add_gazebo_control_plugin robot_namespace="$(arg robot_name)"/>
+    <xacro:add_simulation_compliance side="left"/>
+    <xacro:add_simulation_compliance side="right"/>
     <!-- Rigidly attach Victor to the Gazebo world -->
     <xacro:add_gazebo_fixed_link base_link="$(arg robot_name)_root"/>
 
