@@ -1,4 +1,6 @@
 <launch>
+    <arg name="robot_namespace" default="victor"/>
+
     <arg name="controllers_to_start"
          default="
          both_arms_trajectory_controller
@@ -18,8 +20,7 @@
           args="$(arg controllers_to_start)"/>
 
     <!-- convert joint states to TF transforms for rviz, etc -->
-    <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher">
-        <remap from="/joint_states" to="/victor/joint_states"/>
+    <node ns="$(arg robot_namespace)" name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher">
     </node>
 
 </launch>

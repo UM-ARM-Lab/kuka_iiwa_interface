@@ -69,9 +69,11 @@
         <gazebo>
             <plugin name="gazebo_ros_moveit_planning_scene" filename="libgazebo_ros_moveit_planning_scene.so">
                 <robotName>${robot_namespace}</robotName>
+                <robotNamespace>${robot_namespace}</robotNamespace>
                 <!--  This must be the same as the root frame of the robot you're using -->
                 <frameId>${root_frame_id}</frameId>
                 <excludedModels>collision_sphere</excludedModels>
+                <scalePrimitivesFactor>1.2</scalePrimitivesFactor>
             </plugin>
         </gazebo>
     </xacro:macro>

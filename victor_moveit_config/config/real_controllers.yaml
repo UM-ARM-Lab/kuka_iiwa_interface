@@ -1,5 +1,5 @@
 controller_list:
-  - name: victor/both_arms_trajectory_controller
+  - name: both_arms_trajectory_controller
     action_ns: follow_joint_trajectory
     type: FollowJointTrajectory
     joints:
@@ -17,7 +17,7 @@ controller_list:
       - victor_right_arm_joint_5
       - victor_right_arm_joint_6
       - victor_right_arm_joint_7
-#  - name: victor/right_arm_trajectory_controller
+#  - name: right_arm_trajectory_controller
 #    action_ns: follow_joint_trajectory
 #    type: FollowJointTrajectory
 #    joints:
@@ -28,7 +28,7 @@ controller_list:
 #      - victor_right_arm_joint_5
 #      - victor_right_arm_joint_6
 #      - victor_right_arm_joint_7
-#  - name: victor/left_arm_trajectory_controller
+#  - name: left_arm_trajectory_controller
 #    action_ns: follow_joint_trajectory
 #    type: FollowJointTrajectory
 #    joints:
