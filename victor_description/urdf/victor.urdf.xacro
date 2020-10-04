@@ -92,8 +92,10 @@
     <xacro:include filename="$(find victor_description)/urdf/gazebo_utilities.xacro"/>
     <!-- Load Gazebo lib and set the robot namespace -->
     <xacro:add_gazebo_control_plugin robot_namespace="$(arg robot_name)"/>
+    <xacro:add_moveit_planning_scene_plugin robot_namespace="$(arg robot_name)" root_frame_id="victor_root"/>
     <xacro:add_simulation_compliance side="left"/>
     <xacro:add_simulation_compliance side="right"/>
+
     <!-- Rigidly attach Victor to the Gazebo world -->
     <xacro:add_gazebo_fixed_link base_link="$(arg robot_name)_root"/>
 

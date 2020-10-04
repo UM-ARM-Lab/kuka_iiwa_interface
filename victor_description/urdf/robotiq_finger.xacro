@@ -1,11 +1,10 @@
 <?xml version="1.0"?>
 <robot xmlns:xacro="http://www.ros.org/wiki/xacro">
 
-    <xacro:property name="joint_damping" value="0.005"/>
     <xacro:property name="max_effort" value="300"/>
     <xacro:property name="max_velocity" value="10"/>
 
-    <xacro:macro name="robotiq_finger" params="prefix">
+    <xacro:macro name="robotiq_finger" params="prefix joint_damping">
         <link name="${prefix}_base">
             <inertial>
                 <origin xyz="0 0 0" rpy="0 0 0"/>

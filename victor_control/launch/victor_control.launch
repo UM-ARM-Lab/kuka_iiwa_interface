@@ -10,13 +10,13 @@
          "/>
 
     <!-- Load joint controller configurations from YAML file to parameter server -->
-    <rosparam file="$(find victor_control)/config/victor_control.yaml" command="load"/>
+    <rosparam ns="$(arg robot_namespace)" file="$(find victor_control)/config/victor_control.yaml" command="load"/>
 
     <!-- load the controllers -->
     <node name="controller_spawner_start"
           pkg="controller_manager"
           type="spawner"
-          ns="/victor"
+          ns="$(arg robot_namespace)"
           args="$(arg controllers_to_start)"/>
 
     <!-- convert joint states to TF transforms for rviz, etc -->

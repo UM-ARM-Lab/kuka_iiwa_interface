@@ -73,7 +73,7 @@
                 <!--  This must be the same as the root frame of the robot you're using -->
                 <frameId>${root_frame_id}</frameId>
                 <excludedModels>collision_sphere</excludedModels>
-                <scalePrimitivesFactor>1.2</scalePrimitivesFactor>
+                <scalePrimitivesFactor>1.0</scalePrimitivesFactor>
             </plugin>
         </gazebo>
     </xacro:macro>
@@ -85,5 +85,16 @@
             <child link="${base_link}"/>
             <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
         </joint>
+    </xacro:macro>
+
+    <xacro:macro name="add_joint_cfm_damping" params="joint_name cfm_damping">
+        <gazebo reference="${joint_name}">
+            <physics>
+                <ode>
+                    <cfm>0.01</cfm>
+                    <implicit_spring_damper>1</implicit_spring_damper>
+                </ode>
+            </physics>
+        </gazebo>
     </xacro:macro>
 </robot>
