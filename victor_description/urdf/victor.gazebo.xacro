@@ -67,4 +67,12 @@
         <xacro:add_simulation_compliance_finger_helper finger="victor_${side}_gripper_fingerB"/>
         <xacro:add_simulation_compliance_arm_helper arm="victor_${side}_arm" index="7"/>
     </xacro:macro>
+
+    <gazebo reference='right_tool_joint'>
+        <preserveFixedJoint>true</preserveFixedJoint>
+    </gazebo>
+    <gazebo reference='left_tool_joint'>
+        <preserveFixedJoint>true</preserveFixedJoint>
+    </gazebo>
+
 </robot>

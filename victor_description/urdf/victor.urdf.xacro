@@ -72,19 +72,51 @@
       I think it makes sense to leave this file un-modified on shared accounts, and overwrite the robot description
       on the parameter server from your local modified copy on a personal account. -->
     <link name="left_tool_placeholder">
+        <visual name="left_tool_visual">
+            <origin xyz="0 0 0" rpy="0 0 0"/>
+            <geometry>
+                <sphere radius="0.002"/>
+            </geometry>
+        </visual>
+        <inertial>
+            <origin xyz="0 0 0" rpy="0 0 0"/>
+            <mass value="0.00001"/>
+            <inertia ixx="0"
+                     ixy="0"
+                     ixz="0"
+                     iyy="0"
+                     iyz="0"
+                     izz="0"/>
+        </inertial>
     </link>
-    <joint name="$(arg robot_name)_left_tool_joint" type="fixed">
-        <parent link="$(arg robot_name)_left_gripper_palm_surface"/>
+    <joint name="left_tool_joint" type="fixed">
+        <parent link="$(arg robot_name)_left_arm_link_7"/>
         <child link="left_tool_placeholder"/>
-        <origin xyz="0 0 ${4 * 0.0254}"/>
+        <origin xyz="0 0 ${10 * 0.0254}"/>
     </joint>
 
     <link name="right_tool_placeholder">
+        <visual name="right_tool_visual">
+            <origin xyz="0 0 0" rpy="0 0 0"/>
+            <geometry>
+                <sphere radius="0.002"/>
+            </geometry>
+        </visual>
+        <inertial>
+            <origin xyz="0 0 0" rpy="0 0 0"/>
+            <mass value="0.00001"/>
+            <inertia ixx="0"
+                     ixy="0"
+                     ixz="0"
+                     iyy="0"
+                     iyz="0"
+                     izz="0"/>
+        </inertial>
     </link>
-    <joint name="$(arg robot_name)_right_tool_joint" type="fixed">
-        <parent link="$(arg robot_name)_right_gripper_palm_surface"/>
+    <joint name="right_tool_joint" type="fixed">
+        <parent link="$(arg robot_name)_right_arm_link_7"/>
         <child link="right_tool_placeholder"/>
-        <origin xyz="0 0 ${4 * 0.0254}"/>
+        <origin xyz="0 0 ${10 * 0.0254}"/>
     </joint>
 
     <!-- Add Gazebo properties for whole robot -->
