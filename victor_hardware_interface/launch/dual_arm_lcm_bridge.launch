@@ -13,9 +13,7 @@
         <arg name="load_robot_description" value="false"/>
     </include>
     <node pkg="victor_hardware_interface" type="joint_state_publisher.py" name="joint_state_publisher"/>
-    <node pkg="robot_state_publisher"     type="robot_state_publisher"    name="robot_state_publisher">
-        <remap from="joint_states" to="victor/joint_states"/>
-    </node>
+    <node pkg="robot_state_publisher"     type="robot_state_publisher"    name="robot_state_publisher"/>
     <node pkg="victor_hardware_interface" type="arm_command_gui.py"       name="arm_command_gui"    if="$(arg arm_command_gui)"/>
     
     <group ns="left_arm">
