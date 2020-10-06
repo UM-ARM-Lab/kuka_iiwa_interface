@@ -195,7 +195,7 @@ class Arm:
 
         print('Getting {} current control mode ...'.format(self.name))
         sys.stdout.flush()
-        get_current_control_mode = rospy.ServiceProxy('/' + self.name + '/get_control_mode_service', GetControlMode)
+        get_current_control_mode = rospy.ServiceProxy(self.name + '/get_control_mode_service', GetControlMode)
         control_mode = get_current_control_mode()
         self.active_control_mode_int = control_mode.active_control_mode.control_mode.mode
         self.control_mode_combobox.setCurrentIndex(self.active_control_mode_int)
