@@ -95,7 +95,7 @@ class VictorJointStatePublisher:
         self.joint_state_msg.effort = [0] * len(self.joint_names)
 
         # Setup the publishers and subscribers that will be used
-        self.joint_state_pub = rospy.Publisher("victor/joint_states", JointState, queue_size=1)
+        self.joint_state_pub = rospy.Publisher("joint_states", JointState, queue_size=1)
         self.left_arm_sub = rospy.Subscriber("left_arm/motion_status", MotionStatus,
                                              self.left_arm_motion_status_callback)
         self.right_arm_sub = rospy.Subscriber("right_arm/motion_status", MotionStatus,
