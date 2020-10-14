@@ -66,5 +66,6 @@
 
     <!-- Define additional links as "tools", which are useful for planning and getting transforms -->
     <xacro:include filename="$(find victor_description)/urdf/robotiq_pinch_grasp_tools.xacro"/>
+    <xacro:robotiq_pinch_grasp_tools robot_name="$(arg robot_name)"/>
 
 </robot>
