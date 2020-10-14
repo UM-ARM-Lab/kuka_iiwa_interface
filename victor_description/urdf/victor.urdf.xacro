@@ -1,9 +1,11 @@
 <?xml version="1.0"?>
 <robot name="victor" xmlns:xacro="http://www.ros.org/wiki/xacro">
+    <xacro:arg name="use_tools" default="true"/>
+    <xacro:arg name="tool_dist_to_link_7" default="0.254"/>
     <xacro:arg name="robot_name" default="victor"/>
     <xacro:arg name="hardware_interface" default="PositionJointInterface"/>
 
-        <!-- Import Rviz colors -->
+    <!-- Import Rviz colors -->
     <xacro:include filename="$(find victor_description)/urdf/materials.xacro"/>
 
     <!-- pedestal -->
@@ -18,7 +20,8 @@
     <!--Import the lbr iiwa macro -->
     <xacro:include filename="$(find victor_description)/urdf/iiwa7.xacro"/>
 
-    <xacro:iiwa7 hardware_interface="$(arg hardware_interface)" robot_name="$(arg robot_name)_left_arm" parent="$(arg robot_name)_left_arm_mount">
+    <xacro:iiwa7 hardware_interface="$(arg hardware_interface)" robot_name="$(arg robot_name)_left_arm"
+                 parent="$(arg robot_name)_left_arm_mount">
         <origin xyz="0 0 0" rpy="0 0 0"/>
     </xacro:iiwa7>
     <joint name="$(arg robot_name)_joint_left_arm_world_frame_kuka" type="fixed">
@@ -29,7 +32,8 @@
     <link name="$(arg robot_name)_left_arm_world_frame_kuka">
     </link>
 
-    <xacro:iiwa7 hardware_interface="$(arg hardware_interface)" robot_name="$(arg robot_name)_right_arm" parent="$(arg robot_name)_right_arm_mount">
+    <xacro:iiwa7 hardware_interface="$(arg hardware_interface)" robot_name="$(arg robot_name)_right_arm"
+                 parent="$(arg robot_name)_right_arm_mount">
         <origin xyz="0 0 0" rpy="0 0 0"/>
     </xacro:iiwa7>
     <joint name="$(arg robot_name)_joint_right_arm_world_frame_kuka" type="fixed">
@@ -41,17 +45,68 @@
     </link>
 
 
-
     <!-- arm to gripper adapter -->
     <xacro:include filename="$(find victor_description)/urdf/iiwa7_to_robotiq_adapter.xacro"/>
     <xacro:iia7_to_robotiq_adapter parent="$(arg robot_name)_left_arm_flange" prefix="$(arg robot_name)_left">
-        <!--<origin xyz="0 0 0" rpy="${PI/2} 0 ${PI/4}"/> &lt;!&ndash; Offset measured with a tape measure; please confirm/fix this value &ndash;&gt;-->
         <origin xyz="0 0 0" rpy="0 0 0"/>
     </xacro:iia7_to_robotiq_adapter>
     <xacro:iia7_to_robotiq_adapter parent="$(arg robot_name)_right_arm_flange" prefix="$(arg robot_name)_right">
-        <!--<origin xyz="0 0 0" rpy="${PI/2} 0 ${PI/4}"/> &lt;!&ndash; Offset measured with a tape measure; please confirm/fix this value &ndash;&gt;-->
         <origin xyz="0 0 0" rpy="0 0 0"/>
     </xacro:iia7_to_robotiq_adapter>
+
+    <xacro:if value="$(arg use_tools)">
+        <!-- NOTE: defining tools here allows moveit to plan with respect to these frames very easily.
+          I think it makes sense to leave this file un-modified on shared accounts, and overwrite the robot description
+          on the parameter server from your local modified copy on a personal account. -->
+        <link name="left_tool">
+            <visual name="left_tool_visual">
+                <origin xyz="0 0 0" rpy="0 0 0"/>
+                <geometry>
+                    <sphere radius="0.002"/>
+                </geometry>
+            </visual>
+            <inertial>
+                <origin xyz="0 0 0" rpy="0 0 0"/>
+                <!-- It's important that these have non-zero mass, otherwise gazebos URDF to SDF conversion will ignore them -->
+                <mass value="0.00001"/>
+                <inertia ixx="0"
+                         ixy="0"
+                         ixz="0"
+                         iyy="0"
+                         iyz="0"
+                         izz="0"/>
+            </inertial>
+        </link>
+        <joint name="left_tool_joint" type="fixed">
+            <parent link="$(arg robot_name)_left_arm_link_7"/>
+            <child link="left_tool"/>
+            <origin xyz="0 0 $(arg tool_dist_to_link_7)"/>
+        </joint>
+
+        <link name="right_tool">
+            <visual name="right_tool_visual">
+                <origin xyz="0 0 0" rpy="0 0 0"/>
+                <geometry>
+                    <sphere radius="0.002"/>
+                </geometry>
+            </visual>
+            <inertial>
+                <origin xyz="0 0 0" rpy="0 0 0"/>
+                <mass value="0.00001"/>
+                <inertia ixx="0"
+                         ixy="0"
+                         ixz="0"
+                         iyy="0"
+                         iyz="0"
+                         izz="0"/>
+            </inertial>
+        </link>
+        <joint name="right_tool_joint" type="fixed">
+            <parent link="$(arg robot_name)_right_arm_link_7"/>
+            <child link="right_tool"/>
+            <origin xyz="0 0 $(arg tool_dist_to_link_7)"/>
+        </joint>
+    </xacro:if>
 
 
     <!-- Robotiq grippers -->
