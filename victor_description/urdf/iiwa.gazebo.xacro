@@ -3,15 +3,6 @@
 <robot xmlns:xacro="http://www.ros.org/wiki/xacro">
 
   <xacro:macro name="iiwa_gazebo" params="robot_name">
-    
-    <!-- Load Gazebo lib and set the robot namespace -->
-    <!--<xacro:if value="${load_control_plugin}">-->
-      <!--<gazebo>-->
-        <!--<plugin name="gazebo_ros_control" filename="libgazebo_ros_control.so">-->
-          <!--<robotNamespace>/${robot_name}</robotNamespace>-->
-        <!--</plugin>-->
-      <!--</gazebo>-->
-    <!--</xacro:if>-->
 
     <!-- Link0 -->
     <gazebo reference="${robot_name}_link_0">
