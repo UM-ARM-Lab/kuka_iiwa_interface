@@ -80,7 +80,7 @@
         </visual>
         <inertial>
             <origin xyz="0 0 0" rpy="0 0 0"/>
-            <mass value="0.00001"/>
+            <mass value="0.01"/>
             <inertia ixx="0"
                      ixy="0"
                      ixz="0"
@@ -104,7 +104,7 @@
         </visual>
         <inertial>
             <origin xyz="0 0 0" rpy="0 0 0"/>
-            <mass value="0.00001"/>
+            <mass value="0.01"/>
             <inertia ixx="0"
                      ixy="0"
                      ixz="0"
