@@ -9,8 +9,8 @@
         <!-- Extensions -->
         <xacro:include filename="$(find victor_description)/urdf/robotiq_3finger_gripper.gazebo.xacro"/>
 
-        <xacro:include filename="robotiq_3finger_gripper.transmission.xacro"/>
-        <xacro:robotiq_transmissions hardware_interface="${hardware_interface}"/>
+        <xacro:include filename="$(find victor_description)/urdf/robotiq_3finger_gripper.transmission.xacro"/>
+        <xacro:robotiq_transmissions prefix="${prefix}" hardware_interface="${hardware_interface}"/>
 
     </xacro:macro>
 </robot>
