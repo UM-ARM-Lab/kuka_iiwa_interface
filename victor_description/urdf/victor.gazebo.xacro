@@ -1,5 +1,22 @@
 <?xml version="1.0"?>
 <robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+    <gazebo reference="victor_pedestal">
+        <visual>
+            <material>
+                <diffuse>0.2 0.2 0.2 1.0</diffuse>
+                <ambient>0.1 0.1 0.1 1.0</ambient>
+            </material>
+        </visual>
+    </gazebo>
+    <gazebo reference="victor_base_plate">
+        <visual>
+            <material>
+                <diffuse>0.7 0.7 0.7 1.0</diffuse>
+                <ambient>0.3 0.3 0.3 1.0</ambient>
+                <specular>0.9 0.9 0.9 1.0</specular>
+            </material>
+        </visual>
+    </gazebo>
     <gazebo reference="victor_right_arm_link_1">
         <self_collide>1</self_collide>
     </gazebo>

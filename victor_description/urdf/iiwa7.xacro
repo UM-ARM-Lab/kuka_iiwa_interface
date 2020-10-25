@@ -106,7 +106,7 @@
             <visual>
                 <origin xyz="0 0 0" rpy="0 0 0"/>
                 <geometry>
-                    <mesh filename="package://victor_description/meshes/iiwa7/visual/link_2.stl"/>
+                    <mesh filename="package://victor_description/meshes/iiwa7/visual/link_2.dae"/>
                 </geometry>
                 <material name="Orange"/>
             </visual>
