@@ -13,7 +13,7 @@ class Stiffness(Enum):
     SOFT = 2
 
 
-def get_new_control_mode(control_mode: ControlMode, stiffness=Stiffness.MEDIUM, vel=0.1, accel=0.1):
+def get_control_mode_params(control_mode: ControlMode, stiffness=Stiffness.MEDIUM, vel=0.1, accel=0.1):
     if control_mode == ControlMode.JOINT_POSITION:
         return get_joint_position_params(vel, accel)
     elif control_mode == ControlMode.JOINT_IMPEDANCE:
@@ -35,7 +35,7 @@ def set_control_mode(control_mode, arm, stiffness=Stiffness.MEDIUM, vel=0.1, acc
     arm (string):               The name of the arm: "right_arm" or "left_arm"
     stiffness (Stiffness):      For impedance modes, uses a set of stiffness values
     """
-    new_control_mode = get_new_control_mode(control_mode, stiffness, vel, accel)
+    new_control_mode = get_control_mode_params(control_mode, stiffness, vel, accel)
     result = send_new_control_mode(arm, new_control_mode)
     if not result.success:
         rospy.logerr("Failed to switch to control mode: " + str(control_mode))
