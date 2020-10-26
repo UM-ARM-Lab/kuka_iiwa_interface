@@ -4,8 +4,6 @@
     <arg name="controllers_to_start"
          default="
          both_arms_trajectory_controller
-         left_hand_trajectory_controller
-         right_hand_trajectory_controller
          joint_state_controller
          "/>
 
