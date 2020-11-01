@@ -24,12 +24,14 @@ def main():
 
     for arm in arm_names:
         interfaces[arm].start_feedback_threads()
+        interfaces[arm + "/gripper"].start_feedback_threads()
 
     rospy.loginfo("Publishing data...")
     rospy.spin()
 
     for arm in arm_names:
         interfaces[arm].join_feedback_threads()
+        interfaces[arm + "/gripper"].join_feedback_threads()
 
 
 if __name__ == "__main__":
