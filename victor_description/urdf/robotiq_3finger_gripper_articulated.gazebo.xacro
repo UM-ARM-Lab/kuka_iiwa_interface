@@ -1,0 +1,10 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+    <gazebo>
+        <plugin name="RobotiqHandPlugin" filename="libRobotiqHandPlugin.so">
+            <side>${side}</side>
+            <kp_position>0.1</kp_position>
+            <kd_position>0.05</kd_position>
+        </plugin>
+    </gazebo>
+</robot>

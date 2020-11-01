@@ -1,0 +1,16 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+    <xacro:macro name="robotiq_3finger" params="prefix side parent *origin hardware_interface">
+        <xacro:include filename="$(find robotiq_3f_gripper_visualization)/cfg/robotiq_hand_macro.urdf.xacro"/>
+        <xacro:robotiq_hand prefix="${prefix}" parent="${parent}">
+            <xacro:insert_block name="origin"/>
+        </xacro:robotiq_hand>
+
+        <!-- Extensions -->
+        <xacro:include filename="$(find victor_description)/urdf/robotiq_3finger_gripper_articulated.gazebo.xacro"/>
+
+        <xacro:include filename="$(find victor_description)/urdf/robotiq_3finger_gripper_articulated.transmission.xacro"/>
+        <xacro:robotiq_transmissions prefix="${prefix}" hardware_interface="${hardware_interface}"/>
+
+    </xacro:macro>
+</robot>
