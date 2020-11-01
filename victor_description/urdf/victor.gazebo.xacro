@@ -1,5 +1,7 @@
 <?xml version="1.0"?>
 <robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+    <xacro:include filename="$(find victor_description)/urdf/gazebo_utilities.xacro"/>
+
     <gazebo reference="victor_pedestal">
         <visual>
             <material>
@@ -85,11 +87,7 @@
         <xacro:add_simulation_compliance_arm_helper arm="victor_${side}_arm" index="7"/>
     </xacro:macro>
 
-    <gazebo reference='right_tool_joint'>
-        <preserveFixedJoint>true</preserveFixedJoint>
-    </gazebo>
-    <gazebo reference='left_tool_joint'>
-        <preserveFixedJoint>true</preserveFixedJoint>
-    </gazebo>
+    <xacro:preserve joint_name="right_tool_joint"/>
+    <xacro:preserve joint_name="left_tool_joint"/>
 
 </robot>

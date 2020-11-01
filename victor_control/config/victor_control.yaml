@@ -5,7 +5,7 @@ joint_state_controller:
 
 # trajectory controllers
 both_arms_trajectory_controller:
-  type: "effort_controllers/JointTrajectoryController"
+  type: "position_controllers/JointTrajectoryController"
   joints:
     - victor_left_arm_joint_1
     - victor_left_arm_joint_2
@@ -57,20 +57,5 @@ both_arms_trajectory_controller:
       goal: 0.02
     victor_right_arm_joint_7:
       goal: 0.02
-  gains:
-    victor_left_arm_joint_1: { p: 10000.0, i: 0.01, d: 10.0 }
-    victor_left_arm_joint_2: { p: 10000.0, i: 0.01, d: 10.0 }
-    victor_left_arm_joint_3: { p: 10000.0, i: 0.01, d: 10.0 }
-    victor_left_arm_joint_4: { p: 10000.0, i: 0.01, d: 10.0 }
-    victor_left_arm_joint_5: { p: 1000.0, i: 0.01, d: 10.0 }
-    victor_left_arm_joint_6: { p: 1000.0, i: 0.01, d: 10.0 }
-    victor_left_arm_joint_7: { p: 1000.0, i: 0.01, d: 10.0 }
-    victor_right_arm_joint_1: { p: 10000.0, i: 0.01, d: 10.0 }
-    victor_right_arm_joint_2: { p: 10000.0, i: 0.01, d: 10.0 }
-    victor_right_arm_joint_3: { p: 10000.0, i: 0.01, d: 10.0 }
-    victor_right_arm_joint_4: { p: 10000.0, i: 0.01, d: 10.0 }
-    victor_right_arm_joint_5: { p: 1000.0, i: 0.01, d: 10.0 }
-    victor_right_arm_joint_6: { p: 1000.0, i: 0.01, d: 10.0 }
-    victor_right_arm_joint_7: { p: 1000.0, i: 0.01, d: 10.0 }
-
-
+    # we could specify PID gains here but that actually seems to only make things worse.
+    # Somehow *not* specify them works best

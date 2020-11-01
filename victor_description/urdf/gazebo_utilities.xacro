@@ -109,4 +109,10 @@
             </actuator>
         </transmission>
     </xacro:macro>
+
+    <xacro:macro name="preserve" params="joint_name">
+        <gazebo reference='${joint_name}'>
+            <preserveFixedJoint>true</preserveFixedJoint>
+        </gazebo>
+    </xacro:macro>
 </robot>
