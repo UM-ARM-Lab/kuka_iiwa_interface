@@ -3,8 +3,8 @@
     <gazebo>
         <plugin name="RobotiqHandPlugin" filename="libRobotiqHandPlugin.so">
             <side>${side}</side>
-            <kp_position>0.1</kp_position>
-            <kd_position>0.05</kd_position>
+            <kp_position>1.0</kp_position>
+            <kd_position>0.1</kd_position>
         </plugin>
     </gazebo>
 </robot>

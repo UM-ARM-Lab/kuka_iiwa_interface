@@ -46,7 +46,7 @@
 
     <!-- Robotiq grippers -->
     <xacro:if value="${gripper == 'robotiq_articulated'}">
-        <xacro:include filename="robotiq_grippers_articulated.xacro"/>
+        <xacro:include filename="$(find victor_description)/urdf/robotiq_grippers_articulated.xacro"/>
     </xacro:if>
     <xacro:if value="${gripper == 'robotiq'}">
         <xacro:include filename="$(find victor_description)/urdf/robotiq_3finger_gripper.xacro"/>
