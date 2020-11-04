@@ -6,48 +6,56 @@
 
         <!-- Link0 -->
         <gazebo reference="${robot_name}_link_0">
+            <kinematic>1</kinematic>
             <mu1>0.2</mu1>
             <mu2>0.2</mu2>
         </gazebo>
 
         <!-- Link1 -->
         <gazebo reference="${robot_name}_link_1">
+            <kinematic>1</kinematic>
             <mu1>0.2</mu1>
             <mu2>0.2</mu2>
         </gazebo>
 
         <!-- Link2 -->
         <gazebo reference="${robot_name}_link_2">
+            <kinematic>1</kinematic>
             <mu1>0.2</mu1>
             <mu2>0.2</mu2>
         </gazebo>
 
         <!-- Link3 -->
         <gazebo reference="${robot_name}_link_3">
+            <kinematic>1</kinematic>
             <mu1>0.2</mu1>
             <mu2>0.2</mu2>
         </gazebo>
 
         <!-- Link4 -->
         <gazebo reference="${robot_name}_link_4">
+            <kinematic>1</kinematic>
             <mu1>0.2</mu1>
             <mu2>0.2</mu2>
         </gazebo>
 
         <!-- Link5 -->
         <gazebo reference="${robot_name}_link_5">
+            <kinematic>1</kinematic>
             <mu1>0.2</mu1>
             <mu2>0.2</mu2>
         </gazebo>
 
         <!-- Link6 -->
         <gazebo reference="${robot_name}_link_6">
+            <kinematic>1</kinematic>
             <mu1>0.2</mu1>
             <mu2>0.2</mu2>
         </gazebo>
 
         <!-- Link7 -->
         <gazebo reference="${robot_name}_link_7">
+            <kinematic>1</kinematic>
             <mu1>0.2</mu1>
             <mu2>0.2</mu2>
         </gazebo>

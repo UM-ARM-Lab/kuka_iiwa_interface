@@ -18,7 +18,8 @@
           args="$(arg controllers_to_start)"/>
 
     <!-- convert joint states to TF transforms for rviz, etc -->
-    <node ns="$(arg robot_namespace)" name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher">
+    <node ns="$(arg robot_namespace)" name="robot_state_publisher" pkg="robot_state_publisher"
+          type="robot_state_publisher">
     </node>
 
 </launch>
