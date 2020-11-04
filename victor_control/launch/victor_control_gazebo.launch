@@ -1,0 +1,35 @@
+<launch>
+    <arg name="robot_namespace" default="victor"/>
+
+    <arg name="controllers_to_start"
+         default="
+         both_arms_trajectory_controller
+         joint_state_controller
+         "/>
+
+    <!-- Load joint controller configurations from YAML file to parameter server -->
+    <rosparam ns="$(arg robot_namespace)" file="$(find victor_control)/config/victor_control.yaml" command="load"/>
+
+    <node pkg="joint_state_publisher"
+          type="joint_state_publisher"
+          name="merge_joint_states">
+        <rosparam param="source_list">
+            ['victor/arms_joint_states','victor/l_gripper_joint_states','victor/r_gripper_joint_states']
+        </rosparam>
+        <remap from="joint_states" to="$(arg robot_namespace)/joint_states"/>
+    </node>
+
+
+    <!-- load the controllers -->
+    <node name="controller_spawner_start"
+          pkg="controller_manager"
+          type="spawner"
+          ns="$(arg robot_namespace)"
+          args="$(arg controllers_to_start)"/>
+
+    <!-- convert joint states to TF transforms for rviz, etc -->
+    <node ns="$(arg robot_namespace)" name="robot_state_publisher" pkg="robot_state_publisher"
+          type="robot_state_publisher">
+    </node>
+
+</launch>
