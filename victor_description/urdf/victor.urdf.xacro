@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <robot name="victor" xmlns:xacro="http://www.ros.org/wiki/xacro">
-    <xacro:property name="gripper" value="robotiq" />
+    <xacro:property name="gripper" value="kinematic_robotiq" />
     <xacro:arg name="robot_name" default="victor"/>
     <xacro:arg name="hardware_interface" default="hardware_interface/PositionJointInterface"/>
 
