@@ -9,4 +9,5 @@
   <buildtool_depend>catkin</buildtool_depend>
   <exec_depend>controller_manager</exec_depend>
   <exec_depend>effort_controllers</exec_depend>
+  <exec_depend>position_controllers</exec_depend>
 </package>
