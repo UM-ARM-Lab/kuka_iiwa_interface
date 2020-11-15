@@ -9,19 +9,23 @@
     <include file="$(find victor_moveit_config)/launch/planning_context.launch">
         <arg name="load_robot_description" value="false"/>
     </include>
-    <node pkg="victor_hardware_interface" type="joint_state_publisher.py" name="joint_state_publisher"/>
+    <node pkg="victor_hardware_interface" type="joint_state_publisher.py" name="joint_state_publisher"
+          ns="victor"/>
+    
     <node pkg="robot_state_publisher" type="robot_state_publisher" name="robot_state_publisher">
         <remap from="/joint_states" to="/victor/joint_states"/>
     </node>
     <node pkg="victor_hardware_interface" type="arm_command_gui.py" name="arm_command_gui" if="$(arg arm_command_gui)"/>
 
-    <node pkg="victor_fake_hardware_interface" type="minimal_fake_arm_interface.py" name="fake_arm_interface"/>
+    <node pkg="victor_fake_hardware_interface" type="minimal_fake_arm_interface_node.py" name="fake_arm_interface"
+          output="screen"
+          ns="victor"/>
 
     <!--<node pkg="joy"                       type="joy_node"                  name="xbox_joystick"/>-->
     <!--<node pkg="victor_hardware_interface" type="xbox_control.py"           name="xbox_to_victor"/>-->
     <node pkg="victor_hardware_interface" type="arm_wrench_republisher.py" name="arm_wrench_republisher"
-          output="screen"/>
-    <node pkg="victor_hardware_interface" type="grasp_status_node.py" name="grasp_status"/>
+          ns="victor"/>
+    <!-- <node pkg="victor_hardware_interface" type="grasp_status_node.py" name="grasp_status"/> -->
 
     <group>
         <machine name="victorbackpack"
