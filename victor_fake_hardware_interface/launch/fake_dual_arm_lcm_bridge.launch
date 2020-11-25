@@ -1,6 +1,7 @@
 <launch>
     <arg name="arm_command_gui" default="false"/>
     <arg name="talkative" default="false"/>
+    <arg name="initial_control_mode" default="0"/>
 
     <!-- Allows users to have slightly modified versions of Victor's URDF -->
     <arg name="model" default="$(find victor_description)/urdf/victor.urdf.xacro"/>
@@ -19,7 +20,10 @@
 
     <node pkg="victor_fake_hardware_interface" type="minimal_fake_arm_interface_node.py" name="fake_arm_interface"
           output="screen"
-          ns="victor"/>
+          ns="victor"
+          args="--initial_control_mode $(arg initial_control_mode)"
+          />
+
 
     <!--<node pkg="joy"                       type="joy_node"                  name="xbox_joystick"/>-->
     <!--<node pkg="victor_hardware_interface" type="xbox_control.py"           name="xbox_to_victor"/>-->

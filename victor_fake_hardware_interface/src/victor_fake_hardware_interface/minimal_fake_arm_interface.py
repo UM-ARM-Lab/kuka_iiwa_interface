@@ -97,11 +97,12 @@ class MinimalFakeArmInterface:
                  set_control_mode_service_topic,
                  motion_command_topic,
                  motion_status_topic,
+                 initial_control_mode=ControlMode.JOINT_POSITION,
                  ):
 
         self.input_mtx = Lock()
 
-        self.control_mode_parameters_status_msg = self.default_control_mode_parameters_status()
+        self.control_mode_parameters_status_msg = self.default_control_mode_parameters_status(initial_control_mode)
         self.motion_status_msg = self.default_motion_status(arm_name)
 
         self.get_control_mode_server = rospy.Service(get_control_mode_service_topic, GetControlMode,
@@ -184,13 +185,13 @@ class MinimalFakeArmInterface:
         self.arm_status_thread.join()
 
     @staticmethod
-    def default_control_mode_parameters_status():
+    def default_control_mode_parameters_status(control_mode=ControlMode.JOINT_POSITION):
         """
         :return type: ControlModeParameters
         """
         msg = ControlModeParameters()
 
-        msg.control_mode.mode = ControlMode.JOINT_POSITION
+        msg.control_mode.mode = control_mode
 
         # Joint impedance parameters
         for joint in MinimalFakeArmInterface.joint_names:
@@ -275,5 +276,3 @@ class MinimalFakeArmInterface:
         msg.active_control_mode.mode = ControlMode.JOINT_POSITION
 
         return msg
-
-
