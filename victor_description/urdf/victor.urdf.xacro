@@ -1,7 +1,9 @@
 <?xml version="1.0"?>
 <robot name="victor" xmlns:xacro="http://www.ros.org/wiki/xacro">
+    <xacro:property name="gripper" value="kinematic_robotiq" />
     <xacro:arg name="robot_name" default="victor"/>
-    <xacro:arg name="hardware_interface" default="PositionJointInterface"/>
+    <xacro:arg name="kinematic_arms" default="0"/>
+    <xacro:arg name="hardware_interface" default="hardware_interface/PositionJointInterface"/>
 
     <!-- Import Rviz colors -->
     <xacro:include filename="$(find victor_description)/urdf/materials.xacro"/>
@@ -19,7 +21,7 @@
     <xacro:include filename="$(find victor_description)/urdf/iiwa7.xacro"/>
 
     <xacro:iiwa7 hardware_interface="$(arg hardware_interface)" robot_name="$(arg robot_name)_left_arm"
-                 parent="$(arg robot_name)_left_arm_mount">
+                 parent="$(arg robot_name)_left_arm_mount" kinematic="$(arg kinematic_arms)">
         <origin xyz="0 0 0" rpy="0 0 0"/>
     </xacro:iiwa7>
     <joint name="$(arg robot_name)_joint_left_arm_world_frame_kuka" type="fixed">
@@ -31,7 +33,7 @@
     </link>
 
     <xacro:iiwa7 hardware_interface="$(arg hardware_interface)" robot_name="$(arg robot_name)_right_arm"
-                 parent="$(arg robot_name)_right_arm_mount">
+                 parent="$(arg robot_name)_right_arm_mount" kinematic="$(arg kinematic_arms)">
         <origin xyz="0 0 0" rpy="0 0 0"/>
     </xacro:iiwa7>
     <joint name="$(arg robot_name)_joint_right_arm_world_frame_kuka" type="fixed">
@@ -42,30 +44,35 @@
     <link name="$(arg robot_name)_right_arm_world_frame_kuka">
     </link>
 
-
     <!-- arm to gripper adapter -->
     <xacro:include filename="$(find victor_description)/urdf/iiwa7_to_robotiq_adapter.xacro"/>
     <xacro:iia7_to_robotiq_adapter parent="$(arg robot_name)_left_arm_flange" prefix="$(arg robot_name)_left">
-        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <origin xyz="0 0 -0.01" rpy="0 0 0"/>
     </xacro:iia7_to_robotiq_adapter>
     <xacro:iia7_to_robotiq_adapter parent="$(arg robot_name)_right_arm_flange" prefix="$(arg robot_name)_right">
-        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <origin xyz="0 0 -0.01" rpy="0 0 0"/>
     </xacro:iia7_to_robotiq_adapter>
 
 
     <!-- Robotiq grippers -->
-    <!--Import the Robotiq 3 finger macro -->
-    <xacro:include filename="$(find victor_description)/urdf/robotiq_3finger_gripper.xacro"/>
-    <xacro:robotiq_3finger parent="$(arg robot_name)_left_gripper_mounting_bracket" prefix="$(arg robot_name)_left_gripper">
-        <origin xyz="0 0 0.02705" rpy="0 0 ${PI/4}"/> <!-- Offset measured with a tape measure; please confirm/fix this value -->
-    </xacro:robotiq_3finger>
-
-    <xacro:robotiq_3finger parent="$(arg robot_name)_right_gripper_mounting_bracket" prefix="$(arg robot_name)_right_gripper">
-        <origin xyz="0 0 0.02705" rpy="0 0 ${PI/4}"/> <!-- Offset measured with a tape measure; please confirm/fix this value -->
-    </xacro:robotiq_3finger>
+    <xacro:if value="${gripper == 'kinematic_robotiq'}">
+        <xacro:include filename="$(find victor_description)/urdf/kinematic_robotiq_grippers.xacro"/>
+    </xacro:if>
+    <xacro:if value="${gripper == 'robotiq'}">
+        <xacro:include filename="$(find victor_description)/urdf/robotiq_grippers.xacro"/>
+    </xacro:if>
 
     <!-- Define additional links as "tools", which are useful for planning and getting transforms -->
     <xacro:include filename="$(find victor_description)/urdf/robotiq_pinch_grasp_tools.xacro"/>
     <xacro:robotiq_pinch_grasp_tools robot_name="$(arg robot_name)"/>
+    <!-- Add Gazebo properties for whole robot -->
+    <xacro:include filename="$(find victor_description)/urdf/victor.gazebo.xacro"/>
+    <xacro:include filename="$(find victor_description)/urdf/gazebo_utilities.xacro"/>
+    <!-- Load Gazebo lib and set the robot namespace -->
+    <xacro:add_gazebo_control_plugin robot_namespace="$(arg robot_name)"/>
+    <xacro:add_moveit_planning_scene_plugin robot_namespace="$(arg robot_name)" root_frame_id="victor_root"/>
+
+    <!-- Rigidly attach Victor to the Gazebo world -->
+    <xacro:add_gazebo_fixed_link base_link="$(arg robot_name)_root"/>
 
 </robot>
