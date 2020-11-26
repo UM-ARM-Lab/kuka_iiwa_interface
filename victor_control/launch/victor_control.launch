@@ -1,0 +1,3 @@
+<launch>
+    <arg name="robot_namespace" default="victor"/>
+</launch>
