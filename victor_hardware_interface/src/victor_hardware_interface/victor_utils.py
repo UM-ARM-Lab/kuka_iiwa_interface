@@ -44,7 +44,7 @@ def set_control_mode(control_mode, arm, stiffness=Stiffness.MEDIUM, vel=0.1, acc
 
 def send_new_control_mode(arm, msg):
     # TODO: Consider removing the forced global namespace in the future
-    send_new_control_mode_srv = rospy.ServiceProxy(arm + "/set_control_mode_service",
+    send_new_control_mode_srv = rospy.ServiceProxy("victor/" + arm + "/set_control_mode_service",
                                                    SetControlMode)
     return send_new_control_mode_srv(msg)
 
