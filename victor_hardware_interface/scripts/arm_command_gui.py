@@ -1,13 +1,13 @@
 #!/usr/bin/env python
 
-# [Create a window]
-
 # Python imports
-import sys
-import signal
-import time
-import math
+from __future__ import print_function
+
 import copy
+import math
+import signal
+import sys
+import time
 from functools import partial
 
 # Qt imports
@@ -17,10 +17,10 @@ from PyQt5.QtWidgets import *
 
 # ROS imports
 import rospy
+from victor_hardware_interface import victor_utils
 from victor_hardware_interface_msgs.msg import Robotiq3FingerCommand, MotionCommand, MotionStatus, Robotiq3FingerStatus, \
     ControlMode
-from victor_hardware_interface_msgs.srv import  GetControlMode
-from victor_hardware_interface import victor_utils
+from victor_hardware_interface_msgs.srv import GetControlMode
 
 finger_range_discretization = 1000
 arm_joint_limit_margin = 1
@@ -169,13 +169,13 @@ class Arm:
         self.finger_command.scissor_command.speed = 1.0
 
         self.finger_command_publisher = \
-            rospy.Publisher(self.name + '/gripper_command', Robotiq3FingerCommand, queue_size=10)
-        self.arm_command_publisher = rospy.Publisher(self.name + '/motion_command', MotionCommand, queue_size=10)
+            rospy.Publisher('victor/' + self.name + '/gripper_command', Robotiq3FingerCommand, queue_size=10)
+        self.arm_command_publisher = rospy.Publisher('victor/' + self.name + '/motion_command', MotionCommand, queue_size=10)
 
         self.gripper_status_subscriber = \
-            rospy.Subscriber(self.name + '/gripper_status', Robotiq3FingerStatus, self.gripper_status_callback)
+            rospy.Subscriber('victor/' + self.name + '/gripper_status', Robotiq3FingerStatus, self.gripper_status_callback)
         self.arm_status_subscriber = \
-            rospy.Subscriber(self.name + '/motion_status', MotionStatus, self.arm_status_callback)
+            rospy.Subscriber('victor/' + self.name + '/motion_status', MotionStatus, self.arm_status_callback)
 
         self.fingers_same_command = {finger_command_name: False for finger_command_name in finger_command_names}
 
@@ -195,7 +195,7 @@ class Arm:
 
         print('Getting {} current control mode ...'.format(self.name))
         sys.stdout.flush()
-        get_current_control_mode = rospy.ServiceProxy('/' + self.name + '/get_control_mode_service', GetControlMode)
+        get_current_control_mode = rospy.ServiceProxy('victor/' + self.name + '/get_control_mode_service', GetControlMode)
         control_mode = get_current_control_mode()
         self.active_control_mode_int = control_mode.active_control_mode.control_mode.mode
         self.control_mode_combobox.setCurrentIndex(self.active_control_mode_int)
@@ -398,8 +398,8 @@ class Arm:
             self.enable_arm_sliders()
             print('Switching to JOINT_IMPEDANCE mode')
         elif control_mode == ControlMode.CARTESIAN_IMPEDANCE:
-            print('CARTESIAN_IMPEDANCE mode switch is not implemented yet.')
-            return
+            self.disable_arm_sliders()
+            print('Switching to CARTESIAN_IMPEDANCE mode')
 
         result = victor_utils.set_control_mode(control_mode, self.name, self.stiffness)
 
