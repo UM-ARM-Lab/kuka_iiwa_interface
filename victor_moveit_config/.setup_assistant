@@ -2,9 +2,10 @@ moveit_setup_assistant_config:
   URDF:
     package: victor_description
     relative_path: urdf/victor.urdf.xacro
+    xacro_args: ""
   SRDF:
     relative_path: config/victor.srdf
   CONFIG:
     author_name: Dale McConachie
     author_email: dmcconac@umich.edu
-    generated_timestamp: 1504729997
+    generated_timestamp: 1582231870
