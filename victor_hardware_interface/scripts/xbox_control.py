@@ -3,11 +3,13 @@
 # ROS node to turn joystick msgs into Messages for Victor
 
 import rospy
-from arc_utilities import ros_helpers
+from arc_utilities.listener import Listener
 from victor_hardware_interface_msgs.msg import Robotiq3FingerStatus, Robotiq3FingerCommand
 from sensor_msgs.msg import Joy
 from copy import deepcopy
 from numpy import clip
+
+from arc_utilities.ros_helpers import joy_to_xbox
 
 
 class VictorJoystick:
@@ -15,8 +17,8 @@ class VictorJoystick:
         self.output_throttle_period = 5.0
 
         self.gripper_status = \
-            {"right": ros_helpers.Listener("right_arm/gripper_status", Robotiq3FingerStatus),
-             "left": ros_helpers.Listener("left_arm/gripper_status", Robotiq3FingerStatus)}
+            {"right": Listener("right_arm/gripper_status", Robotiq3FingerStatus),
+             "left": Listener("left_arm/gripper_status", Robotiq3FingerStatus)}
 
         self.gripper_command_publisher = \
             {"right": rospy.Publisher("right_arm/gripper_command", Robotiq3FingerCommand, queue_size=1),
@@ -57,7 +59,7 @@ class VictorJoystick:
         """
         Assumes that we are using xboxdrv without mimic mode
         """
-        xbox_msg = ros_helpers.joy_to_xbox(joy_msg, xpad=False)
+        xbox_msg = joy_to_xbox(joy_msg, xpad=False)
         if self.prev_xbox_msg is None:
             self.prev_xbox_msg = xbox_msg
 
@@ -212,7 +214,7 @@ class VictorJoystick:
 
 def main():
     rospy.init_node('xbox_control')
-    VJ = VictorJoystick()
+    vj = VictorJoystick()
     rospy.spin()
 
 
