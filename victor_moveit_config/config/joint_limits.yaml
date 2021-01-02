@@ -1,73 +1,76 @@
 # joint_limits.yaml allows the dynamics properties specified in the URDF to be overwritten or augmented as needed
 # Specific joint properties can be changed with the keys [max_position, min_position, max_velocity, max_acceleration]
 # Joint limits can be turned off with [has_velocity_limits, has_acceleration_limits]
+
+# The max_velocity limits correspond to values in the Kuka controller
 joint_limits:
   victor_left_arm_joint_1:
     has_velocity_limits: true
-    max_velocity: 1
+    max_velocity: 1.7453292519943295
     has_acceleration_limits: true
-    max_acceleration: 1
+    max_acceleration: 1.1344640137963142
   victor_left_arm_joint_2:
     has_velocity_limits: true
-    max_velocity: 1
+    max_velocity: 11.7453292519943295
     has_acceleration_limits: true
-    max_acceleration: 1
+    max_acceleration: 1.2217304763960306
   victor_left_arm_joint_3:
     has_velocity_limits: true
-    max_velocity: 1
+    max_velocity: 1.7453292519943295
     has_acceleration_limits: true
-    max_acceleration: 1
+    max_acceleration: 8.726646259971647
   victor_left_arm_joint_4:
     has_velocity_limits: true
-    max_velocity: 1
+    max_velocity: 12.2689280275926285
     has_acceleration_limits: true
-    max_acceleration: 1
+    max_acceleration: 8.726646259971647
   victor_left_arm_joint_5:
     has_velocity_limits: true
-    max_velocity: 1
+    max_velocity: 2.443460952792061
     has_acceleration_limits: true
-    max_acceleration: 1
+    max_acceleration: 26.17993877991494
   victor_left_arm_joint_6:
     has_velocity_limits: true
-    max_velocity: 1
+    max_velocity: 3.141592653589793
     has_acceleration_limits: true
-    max_acceleration: 1
+    max_acceleration: 20.943951023931955
   victor_left_arm_joint_7:
     has_velocity_limits: true
-    max_velocity: 1
+    max_velocity: 3.141592653589793
     has_acceleration_limits: true
+    max_acceleration: 34.906585039886586
   victor_right_arm_joint_1:
     has_velocity_limits: true
-    max_velocity: 1
+    max_velocity: 1.7453292519943295
     has_acceleration_limits: true
-    max_acceleration: 1
+    max_acceleration: 1.1344640137963142
   victor_right_arm_joint_2:
     has_velocity_limits: true
-    max_velocity: 1
+    max_velocity: 1.7453292519943295
     has_acceleration_limits: true
-    max_acceleration: 1
+    max_acceleration: 1.2217304763960306
   victor_right_arm_joint_3:
     has_velocity_limits: true
-    max_velocity: 1
+    max_velocity: 8.726646259971647
     has_acceleration_limits: true
     max_acceleration: 1
   victor_right_arm_joint_4:
     has_velocity_limits: true
-    max_velocity: 1
+    max_velocity: 8.726646259971647
     has_acceleration_limits: true
     max_acceleration: 1
   victor_right_arm_joint_5:
     has_velocity_limits: true
-    max_velocity: 1
+    max_velocity: 26.17993877991494
     has_acceleration_limits: true
     max_acceleration: 1
   victor_right_arm_joint_6:
     has_velocity_limits: true
-    max_velocity: 1
+    max_velocity: 20.943951023931955
     has_acceleration_limits: true
     max_acceleration: 1
   victor_right_arm_joint_7:
     has_velocity_limits: true
-    max_velocity: 1
+    max_velocity: 3.141592653589793
     has_acceleration_limits: true
-    max_acceleration: 1
+    max_acceleration: 34.906585039886586
