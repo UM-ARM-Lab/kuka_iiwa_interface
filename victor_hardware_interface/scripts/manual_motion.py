@@ -16,15 +16,15 @@ from victor_hardware_interface import victor_utils as vu
 from victor_hardware_interface_msgs.msg import MotionCommand, MotionStatus, ControlModeParameters, ControlMode
 from threading import Lock
 from arc_utilities import ros_helpers as rh
-
+from arc_utilities.listener import Listener
 
 joint_names = ['joint_' + str(i) for i in range(1, 8)]
 
-hard_limits_deg = np.array([170.0,  120.0,  170.0,  120.0,  170.0,  120.0,  175.0])
+hard_limits_deg = np.array([170.0, 120.0, 170.0, 120.0, 170.0, 120.0, 175.0])
 safety_deg = 30.0  # Stay far away from joint hard limits
 
-joint_lower = -(hard_limits_deg - safety_deg) * np.pi/180
-joint_upper =  (hard_limits_deg - safety_deg) * np.pi/180
+joint_lower = -(hard_limits_deg - safety_deg) * np.pi / 180
+joint_upper = (hard_limits_deg - safety_deg) * np.pi / 180
 
 
 class ManualMotion:
@@ -35,7 +35,7 @@ class ManualMotion:
 
         self.threshold = 0.05
         self.arrive_threshold = 0.02
-        
+
         self.low_pass_tau = 0.01  # seconds
         self.prev_time = None
         self.lock = Lock()
@@ -47,7 +47,7 @@ class ManualMotion:
             self.run_lowpass(msg)
 
     def run_lowpass(self, msg):
-        
+
         if self.prev_time is None:
             self.prev_time = time.time()
 
@@ -61,11 +61,10 @@ class ManualMotion:
             assert False
 
         # Update our internal copy and calculate error for later thresholding
-        meas = np.array([getattr(msg.measured_joint_position,  joint) for joint in joint_names])
-        cmd =  np.array([getattr(msg.commanded_joint_position, joint) for joint in joint_names])
+        meas = np.array([getattr(msg.measured_joint_position, joint) for joint in joint_names])
+        cmd = np.array([getattr(msg.commanded_joint_position, joint) for joint in joint_names])
         err = np.linalg.norm(meas - cmd)
         self.last_pos = meas
-
 
         if err > self.threshold:
             # Robot is far enough away from setpoint that we assume someone is pushing it
@@ -92,8 +91,8 @@ class ManualMotion:
         for idx in range(len(joint_names)):
             setattr(cmd_msg.joint_position, joint_names[idx], new_cmd[idx])
         self.pub.publish(cmd_msg)
-        
-        
+
+
 def print_joints(left, right):
     """Print nicely to the terminal so joint values can be copied"""
     rospy.loginfo("Joint angles are: ")
@@ -106,33 +105,30 @@ def print_joints(left, right):
 
 if __name__ == "__main__":
     rospy.init_node("manual_motion")
-    
 
     control_mode_params = vu.get_joint_impedance_params(vu.Stiffness.MEDIUM)
 
     use_left_arm = rospy.get_param("~use_left_arm", True)
     use_right_arm = rospy.get_param("~use_right_arm", True)
 
-
-
-    if(use_left_arm):
+    if use_left_arm:
         print("initializing left arm ...")
         sys.stdout.flush()
-        l_cm = rh.Listener("left_arm/control_mode_status", ControlModeParameters)
+        l_cm = Listener("left_arm/control_mode_status", ControlModeParameters)
         cur_mode = l_cm.get(block_until_data=True)
         control_mode_params.joint_path_execution_params.joint_relative_velocity = cur_mode.joint_path_execution_params.joint_relative_velocity
         control_mode_params.joint_path_execution_params.joint_relative_acceleration = cur_mode.joint_path_execution_params.joint_relative_acceleration
-        
+
         result = vu.send_new_control_mode("left_arm", control_mode_params)
         while not result.success:
             result = vu.send_new_control_mode("left_arm", control_mode_params)
         print("done")
     else:
-        print("not using left arm")    
+        print("not using left arm")
 
-    if(use_right_arm):
+    if use_right_arm:
         print("initializing right arm ...")
-        r_cm = rh.Listener("right_arm/control_mode_status", ControlModeParameters)
+        r_cm = Listener("right_arm/control_mode_status", ControlModeParameters)
         cur_mode = r_cm.get(block_until_data=True)
         control_mode_params.joint_path_execution_params.joint_relative_velocity = cur_mode.joint_path_execution_params.joint_relative_velocity
         control_mode_params.joint_path_execution_params.joint_relative_acceleration = cur_mode.joint_path_execution_params.joint_relative_acceleration
@@ -143,17 +139,14 @@ if __name__ == "__main__":
             result = vu.send_new_control_mode("right_arm", control_mode_params)
         print("done")
     else:
-        print("not using right arm")    
-
+        print("not using right arm")
 
     left = None
     right = None
-    if(use_left_arm):
+    if use_left_arm:
         left = ManualMotion("left_arm")
-    if(use_right_arm):
+    if use_right_arm:
         right = ManualMotion("right_arm")
-
-    
 
     rospy.on_shutdown(lambda: print_joints(left, right))
 

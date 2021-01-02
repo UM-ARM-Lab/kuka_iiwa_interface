@@ -1,4 +1,5 @@
 #include <victor_hardware_interface/robotiq_3finger_hardware_interface.hpp>
+#include <utility>
 
 namespace victor_hardware_interface {
 namespace msgs = victor_hardware_interface_msgs;
@@ -8,19 +9,19 @@ namespace msgs = victor_hardware_interface_msgs;
 /////////////////////////////////////////////////////////////////////////////////
 
 Robotiq3FingerHardwareInterface::Robotiq3FingerHardwareInterface(
-    const std::shared_ptr<lcm::LCM>& send_lcm_ptr, const std::shared_ptr<lcm::LCM>& recv_lcm_ptr,
-    const std::string& command_channel_name, const std::string& status_channel_name,
-    const std::function<void(const msgs::Robotiq3FingerStatus&)>& status_callback_fn)
-    : send_lcm_ptr_(send_lcm_ptr),
-      recv_lcm_ptr_(recv_lcm_ptr),
-      command_channel_name_(command_channel_name),
-      status_channel_name_(status_channel_name),
-      status_callback_fn_(status_callback_fn) {
+    std::shared_ptr<lcm::LCM>  send_lcm_ptr, std::shared_ptr<lcm::LCM>  recv_lcm_ptr,
+    std::string  command_channel_name, std::string  status_channel_name,
+    std::function<void(const msgs::Robotiq3FingerStatus&)>  status_callback_fn)
+    : send_lcm_ptr_(std::move(send_lcm_ptr)),
+      recv_lcm_ptr_(std::move(recv_lcm_ptr)),
+      command_channel_name_(std::move(command_channel_name)),
+      status_channel_name_(std::move(status_channel_name)),
+      status_callback_fn_(std::move(status_callback_fn)) {
   // Check lcm is valid to communicating
-  if (send_lcm_ptr_->good() != true) {
+  if (!send_lcm_ptr_->good()) {
     throw std::invalid_argument("Send LCM interface is not good");
   }
-  if (recv_lcm_ptr_->good() != true) {
+  if (!recv_lcm_ptr_->good()) {
     throw std::invalid_argument("Receive LCM interface is not good");
   }
   recv_lcm_ptr_->subscribe(status_channel_name_, &Robotiq3FingerHardwareInterface::internalStatusLCMCallback, this);
@@ -50,7 +51,7 @@ void Robotiq3FingerHardwareInterface::internalStatusLCMCallback(const lcm::Recei
 /////////////////////////////////////////////////////////////////////////////////
 
 robotiq_3finger_actuator_command fingerCommandRosToLcm(const msgs::Robotiq3FingerActuatorCommand& finger_command) {
-  robotiq_3finger_actuator_command lcm_command;
+  robotiq_3finger_actuator_command lcm_command{};
 
   // "Magic" number 0.0 and 1 are the bounds representing percentage value
   lcm_command.position = arc_helpers::ClampValueAndWarn(finger_command.position, 0.0, 1.0);
@@ -96,7 +97,7 @@ msgs::Robotiq3FingerStatus statusLcmToRos(const robotiq_3finger_status& status) 
 }
 
 robotiq_3finger_command commandRosToLcm(const msgs::Robotiq3FingerCommand& command) {
-  robotiq_3finger_command lcm_command;
+  robotiq_3finger_command lcm_command{};
   lcm_command.finger_a_command = fingerCommandRosToLcm(command.finger_a_command);
   lcm_command.finger_b_command = fingerCommandRosToLcm(command.finger_b_command);
   lcm_command.finger_c_command = fingerCommandRosToLcm(command.finger_c_command);

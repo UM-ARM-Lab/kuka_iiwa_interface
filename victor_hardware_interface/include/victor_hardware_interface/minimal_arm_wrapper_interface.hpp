@@ -53,9 +53,9 @@ namespace victor_hardware_interface
 
         MinimalArmWrapperInterface(
                 ros::NodeHandle& nh,
-                const std::shared_ptr<lcm::LCM>& send_lcm_ptr,
-                const std::shared_ptr<lcm::LCM>& recv_lcm_ptr,
-                const std::string& cartesian_control_frame,
+                std::shared_ptr<lcm::LCM>  send_lcm_ptr,
+                std::shared_ptr<lcm::LCM>  recv_lcm_ptr,
+                std::string  cartesian_control_frame,
                 const double set_control_mode_timeout,
                 // ROS Topics
                 const std::string& motion_command_topic,

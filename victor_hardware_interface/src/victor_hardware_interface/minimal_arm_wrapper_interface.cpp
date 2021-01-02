@@ -3,6 +3,8 @@
 // ROS
 #include <ros/callback_queue.h>
 
+#include <utility>
+
 // ROS message headers
 #include "victor_hardware_interface_msgs/ControlModeParameters.h"
 #include "victor_hardware_interface_msgs/GetControlMode.h"
@@ -78,9 +80,9 @@ bool jointPexpEqual(const msgs::JointPathExecutionParameters& pexp1, const msgs:
 
 bool cartesianPexpEqual(const msgs::CartesianPathExecutionParameters& pexp1,
                         const msgs::CartesianPathExecutionParameters& pexp2) {
-  if (cvqEqual(pexp1.max_velocity, pexp2.max_velocity) == false) {
+  if (!cvqEqual(pexp1.max_velocity, pexp2.max_velocity)) {
     return false;
-  } else if (cvqEqual(pexp1.max_acceleration, pexp2.max_acceleration) == false) {
+  } else if (!cvqEqual(pexp1.max_acceleration, pexp2.max_acceleration)) {
     return false;
   } else if (pexp1.max_nullspace_velocity != pexp2.max_nullspace_velocity) {
     return false;
@@ -139,8 +141,8 @@ bool controlModeParamsEqual(const msgs::ControlModeParameters& params1, const ms
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 MinimalArmWrapperInterface::MinimalArmWrapperInterface(
-    ros::NodeHandle& nh, const std::shared_ptr<lcm::LCM>& send_lcm_ptr, const std::shared_ptr<lcm::LCM>& recv_lcm_ptr,
-    const std::string& cartesian_control_frame, const double set_control_mode_timeout,
+    ros::NodeHandle& nh, std::shared_ptr<lcm::LCM>  send_lcm_ptr, std::shared_ptr<lcm::LCM>  recv_lcm_ptr,
+    std::string  cartesian_control_frame, const double set_control_mode_timeout,
     // ROS Topics
     const std::string& motion_command_topic, const std::string& motion_status_topic,
     const std::string& control_mode_status_topic, const std::string& get_control_mode_service,
@@ -151,13 +153,13 @@ MinimalArmWrapperInterface::MinimalArmWrapperInterface(
     const std::string& control_mode_command_channel, const std::string& control_mode_status_channel,
     const std::string& gripper_command_channel, const std::string& gripper_status_channel)
     : nh_(nh),
-      cartesian_control_frame_(cartesian_control_frame),
+      cartesian_control_frame_(std::move(cartesian_control_frame)),
       set_control_mode_timeout_(set_control_mode_timeout),
-      send_lcm_ptr_(send_lcm_ptr),
-      recv_lcm_ptr_(recv_lcm_ptr) {
+      send_lcm_ptr_(std::move(send_lcm_ptr)),
+      recv_lcm_ptr_(std::move(recv_lcm_ptr)) {
   // Verify that the control frame is a valid ROS TF name (or at least not empty)
   // TODO: Are there any other limits on TF frame names other than "non-empty"? see Issue #28
-  if (cartesian_control_frame_ == "") {
+  if (cartesian_control_frame_.empty()) {
     throw std::invalid_argument(
         "Cartesian control frame ["
         "] is not valid");
@@ -190,7 +192,6 @@ MinimalArmWrapperInterface::MinimalArmWrapperInterface(
       nh_.subscribe(motion_command_topic, 1, &MinimalArmWrapperInterface::motionCommandROSCallback, this);
   gripper_command_sub_ =
       nh_.subscribe(gripper_command_topic, 1, &MinimalArmWrapperInterface::gripperCommandROSCallback, this);
-  ;
   set_control_mode_server_ =
       nh_.advertiseService(set_control_mode_service, &MinimalArmWrapperInterface::setControlModeCallback, this);
   get_control_mode_server_ =
@@ -651,7 +652,7 @@ bool MinimalArmWrapperInterface::getControlModeCallback(msgs::GetControlMode::Re
 void MinimalArmWrapperInterface::controlModeStatusLCMCallback(const msgs::ControlModeParameters& control_mode_status) {
   {
     std::lock_guard<std::mutex> lock(control_mode_status_mutex_);
-    if (active_control_mode_.Valid() == false) {
+    if (!active_control_mode_.Valid()) {
       ROS_INFO_NAMED(ros::this_node::getName(), "Initializing active_control_mode for the first time");
     }
     active_control_mode_ = control_mode_status;
@@ -727,7 +728,6 @@ std::pair<bool, std::string> MinimalArmWrapperInterface::validateMotionCommand(
 
       default:
         return std::make_pair(false, std::string("Invalid commanded control mode. This should not be possible"));
-        ;
     }
   } else {
     return std::make_pair(false, std::string("No active control mode, cannot command motion"));
@@ -971,8 +971,6 @@ inline msgs::ControlModeParameters mergeControlModeParameters(const msgs::Contro
       ROS_INFO_STREAM_NAMED(ros::this_node::getName(),
                             "Invalid control mode: " << new_control_mode.control_mode << ".");
       assert(false);
-
-      break;
   }
 
   return merged_control_mode;
