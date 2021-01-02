@@ -179,14 +179,11 @@ public class LCMRobotInterface extends RoboticsAPIApplication implements LCMSubs
             public void run ()
             {
                 control_mode_parameters control_mode_cmd;
-                Targets targets = new Targets();
+                Targets targets;
                 synchronized (arm_io_lock_)
                 {
                     control_mode_cmd = control_mode_command_handler_.getControlModeCommand();
-                    targets.joint_position_target = motion_command_handler_.getJointPositionTarget();
-                    targets.cartesian_pose_target = motion_command_handler_.getCartesianPoseTarget();
-                    targets.joint_impedance_target = motion_command_handler_.getJointImpedanceTarget();
-                    targets.cartesian_impedance_target = motion_command_handler_.getCartesianImpedanceTarget();
+                    targets = motion_command_handler_.getTargets();
                 }
                 
                 if (control_mode_cmd != null)
@@ -259,11 +256,11 @@ public class LCMRobotInterface extends RoboticsAPIApplication implements LCMSubs
     {
         SmartServo motion = new SmartServo(iiwa7_arm_.getCurrentJointPosition());
         motion.setMinimumTrajectoryExecutionTime(MINIMUM_TRAJECTORY_EXECUTION_TIME);
-        motion.setJointVelocityRel(params.joint_relative_velocity);                    
+        motion.setJointVelocityRel(params.joint_relative_velocity);
         motion.setJointAccelerationRel(params.joint_relative_acceleration);
         motion.overrideJointAcceleration(params.override_joint_acceleration);
         motion.setTimeoutAfterGoalReach(TIMEOUT_AFTER_GOAL_REACH);
-        
+        motion.setSpeedTimeoutAfterGoalReach(0.1);
         return motion;
     }
     
@@ -392,6 +389,7 @@ public class LCMRobotInterface extends RoboticsAPIApplication implements LCMSubs
         public Frame cartesian_pose_target;
         public JointPosition joint_impedance_target;
         public Frame cartesian_impedance_target;
+        public JointPosition joint_velocity_target;
     }
     
     private abstract class ArmController
@@ -436,7 +434,6 @@ public class LCMRobotInterface extends RoboticsAPIApplication implements LCMSubs
     {
         public JointPositionController(control_mode_parameters cmd) {
             
-            //getLogger().info("Building new Joint Position control mode");
             joint_smartservo_motion_ = createSmartServoMotion(cmd.joint_path_execution_params);
             joint_smartservo_motion_.setMode(new PositionControlMode(true));
             active_control_mode_ = new control_mode();
@@ -452,7 +449,8 @@ public class LCMRobotInterface extends RoboticsAPIApplication implements LCMSubs
                 // Without isReadyToMove() this code seems to block on setDestination
                 if (iiwa7_arm_.isReadyToMove())
                 {
-                    joint_smartservo_motion_.getRuntime().setDestination(targets.joint_position_target);
+                    joint_smartservo_motion_.getRuntime().activateVelocityPlanning(true);
+                    joint_smartservo_motion_.getRuntime().setDestination(targets.joint_position_target, targets.joint_velocity_target);
                 }
             }
         }
@@ -516,7 +514,8 @@ public class LCMRobotInterface extends RoboticsAPIApplication implements LCMSubs
                 // Without isReadyToMove() this code seems to block on setDestination
                 if (iiwa7_arm_.isReadyToMove())
                 {
-                    joint_smartservo_motion_.getRuntime().setDestination(targets.joint_impedance_target);
+                    joint_smartservo_motion_.getRuntime().activateVelocityPlanning(true);
+                    joint_smartservo_motion_.getRuntime().setDestination(targets.joint_impedance_target, targets.joint_velocity_target);
                 }
             }
         }
@@ -553,6 +552,13 @@ public class LCMRobotInterface extends RoboticsAPIApplication implements LCMSubs
         @Override
         boolean canUpdate(control_mode_parameters cmd)
         {
+            getLogger().info("Checking if cartesian mode can update");
+            getLogger().info(
+            Double.toString(((CartesianImpedanceControlMode)cartesian_smartservo_motion_.getMode()).getMaxCartesianVelocity()[0]));
+            
+            cartesian_control_mode_limits ccm = Conversions.ccmToControlModeLimits((CartesianImpedanceControlMode)cartesian_smartservo_motion_.getMode());
+            getLogger().info("Successfully got max cartesian velocity");
+            
             return super.canUpdate(cmd) &&
                 Utils.areEqual(cmd.cartesian_path_execution_params, cartesian_path_execution_params_) &&
                 Utils.areEqual(cmd.cartesian_control_mode_limits, Conversions.ccmToControlModeLimits((CartesianImpedanceControlMode)cartesian_smartservo_motion_.getMode()));
@@ -960,6 +966,7 @@ public class LCMRobotInterface extends RoboticsAPIApplication implements LCMSubs
  
         private control_mode control_mode_ = null;
         private final JointPosition joint_position_target_ = new JointPosition(iiwa7_arm_.getJointCount());
+        private final JointPosition joint_velocity_target_ = new JointPosition(iiwa7_arm_.getJointCount());
         private Frame cartesian_pose_target_ = new Frame();
         private Boolean new_motion_command_ready_ = new Boolean(false);
         
@@ -996,6 +1003,7 @@ public class LCMRobotInterface extends RoboticsAPIApplication implements LCMSubs
             synchronized (new_motion_command_ready_)
             {
                 Conversions.jvqToJointPosition(cmd.joint_position, joint_position_target_);
+                Conversions.jvqToJointPosition(cmd.joint_velocity, joint_velocity_target_);
                 new_motion_command_ready_ = true;
             }
         }
@@ -1010,6 +1018,38 @@ public class LCMRobotInterface extends RoboticsAPIApplication implements LCMSubs
                 // in the encapsulating class
                 cartesian_pose_target_ = Conversions.poseToFrame(cmd.cartesian_pose);
                 new_motion_command_ready_ = true;
+            }
+        }
+        
+        public Targets getTargets()
+        {
+            synchronized (new_motion_command_ready_)
+            {
+                Targets targets = new Targets();
+                if (!new_motion_command_ready_)
+                {
+                    return targets;
+                }
+                if(control_mode_.mode == control_mode.JOINT_POSITION)
+                {
+                    targets.joint_position_target = joint_position_target_;
+                    targets.joint_velocity_target = joint_velocity_target_;
+                }
+                else if (control_mode_.mode == control_mode.JOINT_IMPEDANCE)
+                {
+                    targets.joint_impedance_target = joint_position_target_;
+                    targets.joint_velocity_target = joint_velocity_target_;
+                }
+                else if(control_mode_.mode == control_mode.CARTESIAN_POSE)
+                {
+                    targets.cartesian_pose_target = cartesian_pose_target_;
+                }
+                else if(control_mode_.mode == control_mode.CARTESIAN_IMPEDANCE)
+                {
+                    targets.cartesian_impedance_target = cartesian_pose_target_;
+                }
+                new_motion_command_ready_ = false;
+                return targets;
             }
         }
         
