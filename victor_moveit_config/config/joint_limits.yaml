@@ -11,7 +11,7 @@ joint_limits:
     max_acceleration: 1.1344640137963142
   victor_left_arm_joint_2:
     has_velocity_limits: true
-    max_velocity: 11.7453292519943295
+    max_velocity: 1.7453292519943295
     has_acceleration_limits: true
     max_acceleration: 1.2217304763960306
   victor_left_arm_joint_3:
@@ -21,7 +21,7 @@ joint_limits:
     max_acceleration: 8.726646259971647
   victor_left_arm_joint_4:
     has_velocity_limits: true
-    max_velocity: 12.2689280275926285
+    max_velocity: 2.2689280275926285
     has_acceleration_limits: true
     max_acceleration: 8.726646259971647
   victor_left_arm_joint_5:
@@ -51,24 +51,24 @@ joint_limits:
     max_acceleration: 1.2217304763960306
   victor_right_arm_joint_3:
     has_velocity_limits: true
-    max_velocity: 8.726646259971647
+    max_velocity: 1.7453292519943295
     has_acceleration_limits: true
-    max_acceleration: 1
+    max_acceleration: 8.726646259971647
   victor_right_arm_joint_4:
     has_velocity_limits: true
-    max_velocity: 8.726646259971647
+    max_velocity: 2.2689280275926285
     has_acceleration_limits: true
-    max_acceleration: 1
+    max_acceleration: 8.726646259971647
   victor_right_arm_joint_5:
     has_velocity_limits: true
-    max_velocity: 26.17993877991494
+    max_velocity: 2.443460952792061
     has_acceleration_limits: true
-    max_acceleration: 1
+    max_acceleration: 26.17993877991494
   victor_right_arm_joint_6:
     has_velocity_limits: true
-    max_velocity: 20.943951023931955
+    max_velocity: 3.141592653589793
     has_acceleration_limits: true
-    max_acceleration: 1
+    max_acceleration:  20.943951023931955
   victor_right_arm_joint_7:
     has_velocity_limits: true
     max_velocity: 3.141592653589793
