@@ -555,10 +555,10 @@ public class LCMRobotInterface extends RoboticsAPIApplication implements LCMSubs
             getLogger().info("Checking if cartesian mode can update");
             getLogger().info(
             Double.toString(((CartesianImpedanceControlMode)cartesian_smartservo_motion_.getMode()).getMaxCartesianVelocity()[0]));
-            
+
             cartesian_control_mode_limits ccm = Conversions.ccmToControlModeLimits((CartesianImpedanceControlMode)cartesian_smartservo_motion_.getMode());
             getLogger().info("Successfully got max cartesian velocity");
-            
+
             return super.canUpdate(cmd) &&
                 Utils.areEqual(cmd.cartesian_path_execution_params, cartesian_path_execution_params_) &&
                 Utils.areEqual(cmd.cartesian_control_mode_limits, Conversions.ccmToControlModeLimits((CartesianImpedanceControlMode)cartesian_smartservo_motion_.getMode()));

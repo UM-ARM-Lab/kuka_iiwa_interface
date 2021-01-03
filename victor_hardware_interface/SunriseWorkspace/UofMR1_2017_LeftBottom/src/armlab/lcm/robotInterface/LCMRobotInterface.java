@@ -183,7 +183,7 @@ public class LCMRobotInterface extends RoboticsAPIApplication implements LCMSubs
                 synchronized (arm_io_lock_)
                 {
                     control_mode_cmd = control_mode_command_handler_.getControlModeCommand();
-                	targets = motion_command_handler_.getTargets();
+                    targets = motion_command_handler_.getTargets();
                 }
                 
                 if (control_mode_cmd != null)
@@ -552,13 +552,13 @@ public class LCMRobotInterface extends RoboticsAPIApplication implements LCMSubs
         @Override
         boolean canUpdate(control_mode_parameters cmd)
         {
-        	getLogger().info("Checking if cartesian mode can update");
-        	getLogger().info(
-        	Double.toString(((CartesianImpedanceControlMode)cartesian_smartservo_motion_.getMode()).getMaxCartesianVelocity()[0]));
-        	
-        	cartesian_control_mode_limits ccm = Conversions.ccmToControlModeLimits((CartesianImpedanceControlMode)cartesian_smartservo_motion_.getMode());
-        	getLogger().info("Successfully got max cartesian velocity");
-        	
+            getLogger().info("Checking if cartesian mode can update");
+            getLogger().info(
+            Double.toString(((CartesianImpedanceControlMode)cartesian_smartservo_motion_.getMode()).getMaxCartesianVelocity()[0]));
+
+            cartesian_control_mode_limits ccm = Conversions.ccmToControlModeLimits((CartesianImpedanceControlMode)cartesian_smartservo_motion_.getMode());
+            getLogger().info("Successfully got max cartesian velocity");
+
             return super.canUpdate(cmd) &&
                 Utils.areEqual(cmd.cartesian_path_execution_params, cartesian_path_execution_params_) &&
                 Utils.areEqual(cmd.cartesian_control_mode_limits, Conversions.ccmToControlModeLimits((CartesianImpedanceControlMode)cartesian_smartservo_motion_.getMode()));
@@ -1025,30 +1025,30 @@ public class LCMRobotInterface extends RoboticsAPIApplication implements LCMSubs
         {
             synchronized (new_motion_command_ready_)
             {
-            	Targets targets = new Targets();
-            	if (!new_motion_command_ready_)
-            	{
-            		return targets;
-            	}
-            	if(control_mode_.mode == control_mode.JOINT_POSITION)
-            	{
-            		targets.joint_position_target = joint_position_target_;
-            		targets.joint_velocity_target = joint_velocity_target_;
-            	}
-            	else if (control_mode_.mode == control_mode.JOINT_IMPEDANCE)
-            	{
-               		targets.joint_impedance_target = joint_position_target_;
-            		targets.joint_velocity_target = joint_velocity_target_;
-            	}
-            	else if(control_mode_.mode == control_mode.CARTESIAN_POSE)
-            	{
-            		targets.cartesian_pose_target = cartesian_pose_target_;
-            	}
-            	else if(control_mode_.mode == control_mode.CARTESIAN_IMPEDANCE)
-            	{
-            		targets.cartesian_impedance_target = cartesian_pose_target_;
-            	}
-            	new_motion_command_ready_ = false;
+                Targets targets = new Targets();
+                if (!new_motion_command_ready_)
+                {
+                    return targets;
+                }
+                if(control_mode_.mode == control_mode.JOINT_POSITION)
+                {
+                    targets.joint_position_target = joint_position_target_;
+                    targets.joint_velocity_target = joint_velocity_target_;
+                }
+                else if (control_mode_.mode == control_mode.JOINT_IMPEDANCE)
+                {
+                    targets.joint_impedance_target = joint_position_target_;
+                    targets.joint_velocity_target = joint_velocity_target_;
+                }
+                else if(control_mode_.mode == control_mode.CARTESIAN_POSE)
+                {
+                    targets.cartesian_pose_target = cartesian_pose_target_;
+                }
+                else if(control_mode_.mode == control_mode.CARTESIAN_IMPEDANCE)
+                {
+                    targets.cartesian_impedance_target = cartesian_pose_target_;
+                }
+                new_motion_command_ready_ = false;
                 return targets;
             }
         }
