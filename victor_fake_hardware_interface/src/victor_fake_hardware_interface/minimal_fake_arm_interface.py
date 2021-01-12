@@ -84,58 +84,43 @@ class MinimalFakeGripperInterface:
         self.gripper_status_thread.join()
 
 
-class MinimalFakeArmInterface:
-    cartesian_field_names = ["x", "y", "z", "a", "b", "c"]
-    joint_names = ['joint_' + str(i) for i in range(1, 8)]
+class MinimalFakeControlModeInterface:
     control_mode_feedback_rate = 1.0  # Hz
-    arm_status_feedback_rate = 100.0  # Hz
 
     def __init__(self,
                  arm_name,
                  control_mode_status_topic,
                  get_control_mode_service_topic,
                  set_control_mode_service_topic,
-                 motion_command_topic,
-                 motion_status_topic,
                  initial_control_mode=ControlMode.JOINT_POSITION,
                  ):
-
         self.input_mtx = Lock()
-
         self.control_mode_parameters_status_msg = self.default_control_mode_parameters_status(initial_control_mode)
-        self.motion_status_msg = self.default_motion_status(arm_name)
 
         self.get_control_mode_server = rospy.Service(get_control_mode_service_topic, GetControlMode,
                                                      self.get_control_mode_service_callback)
         self.set_control_mode_server = rospy.Service(set_control_mode_service_topic, SetControlMode,
                                                      self.set_control_mode_service_callback)
 
-        self.motion_command_sub = rospy.Subscriber(motion_command_topic, MotionCommand,
-                                                   self.arm_motion_command_callback)
-
         self.control_status_pub = rospy.Publisher(control_mode_status_topic, ControlModeParameters, queue_size=1)
-        self.motion_status_pub = rospy.Publisher(motion_status_topic, MotionStatus, queue_size=1)
 
         self.control_mode_thread = Thread(target=self.control_mode_feedback_thread)
-        self.arm_status_thread = Thread(target=self.arm_status_feedback_thread)
 
-    def arm_motion_command_callback(self, cmd):
-        """
-        :type cmd: MotionCommand
-        :return: None
-        """
+    def start_feedback_threads(self):
+        self.control_mode_thread.start()
 
-        with self.input_mtx:
-            if cmd.control_mode == self.control_mode_parameters_status_msg.control_mode:
-                if cmd.control_mode.mode == ControlMode.JOINT_POSITION or cmd.control_mode.mode == ControlMode.JOINT_IMPEDANCE:
-                    self.motion_status_msg.commanded_joint_position = cmd.joint_position
-                    self.motion_status_msg.measured_joint_position = cmd.joint_position
-                else:
-                    rospy.logerr("Cartesian control modes not implemented")
-            else:
-                rospy.logerr("Motion command control mode " + str(cmd.control_mode) +
-                             " does not match active control mode" +
-                             str(self.control_mode_parameters_status_msg.control_mode))
+    def join_feedback_threads(self):
+        self.control_mode_thread.join()
+
+    # TODO: populate seq
+    # TODO: populate timestamp in submessages
+    def control_mode_feedback_thread(self):
+        r = rospy.Rate(self.control_mode_feedback_rate)
+        while not rospy.is_shutdown():
+            with self.input_mtx:
+                self.control_mode_parameters_status_msg.header.stamp = rospy.Time.now()
+                self.control_status_pub.publish(self.control_mode_parameters_status_msg)
+            r.sleep()
 
     def get_control_mode_service_callback(self, req):
         """
@@ -153,36 +138,7 @@ class MinimalFakeArmInterface:
         """
         with self.input_mtx:
             self.control_mode_parameters_status_msg = req.new_control_mode
-            self.motion_status_msg.active_control_mode = req.new_control_mode.control_mode
             return SetControlModeResponse(success=True, message="")
-
-    # TODO: populate seq
-    # TODO: populate timestamp in submessages
-    def control_mode_feedback_thread(self):
-        r = rospy.Rate(self.control_mode_feedback_rate)
-        while not rospy.is_shutdown():
-            with self.input_mtx:
-                self.control_mode_parameters_status_msg.header.stamp = rospy.Time.now()
-                self.control_status_pub.publish(self.control_mode_parameters_status_msg)
-            r.sleep()
-
-    # TODO: populate seq
-    # TODO: populate timestamp in submessages
-    def arm_status_feedback_thread(self):
-        r = rospy.Rate(self.arm_status_feedback_rate)
-        while not rospy.is_shutdown():
-            with self.input_mtx:
-                self.motion_status_msg.header.stamp = rospy.Time.now()
-                self.motion_status_pub.publish(self.motion_status_msg)
-            r.sleep()
-
-    def start_feedback_threads(self):
-        self.control_mode_thread.start()
-        self.arm_status_thread.start()
-
-    def join_feedback_threads(self):
-        self.control_mode_thread.join()
-        self.arm_status_thread.join()
 
     @staticmethod
     def default_control_mode_parameters_status(control_mode=ControlMode.JOINT_POSITION):
@@ -225,6 +181,74 @@ class MinimalFakeArmInterface:
         msg.cartesian_path_execution_params.max_nullspace_acceleration = 0.1
 
         return msg
+
+
+class MinimalFakeArmInterface:
+    cartesian_field_names = ["x", "y", "z", "a", "b", "c"]
+    joint_names = ['joint_' + str(i) for i in range(1, 8)]
+    arm_status_feedback_rate = 100.0  # Hz
+
+    def __init__(self,
+                 arm_name,
+                 control_mode_status_topic,
+                 get_control_mode_service_topic,
+                 set_control_mode_service_topic,
+                 motion_command_topic,
+                 motion_status_topic,
+                 initial_control_mode=ControlMode.JOINT_POSITION,
+                 ):
+
+        self.input_mtx = Lock()
+
+        self.control_mode_interface = MinimalFakeControlModeInterface(control_mode_status_topic,
+                                                                      get_control_mode_service_topic,
+                                                                      set_control_mode_service_topic,
+                                                                      initial_control_mode)
+        self.motion_status_msg = self.default_motion_status(arm_name)
+
+        self.motion_command_sub = rospy.Subscriber(motion_command_topic, MotionCommand,
+                                                   self.arm_motion_command_callback)
+
+        self.motion_status_pub = rospy.Publisher(motion_status_topic, MotionStatus, queue_size=1)
+
+        self.arm_status_thread = Thread(target=self.arm_status_feedback_thread)
+
+    def arm_motion_command_callback(self, cmd):
+        """
+        :type cmd: MotionCommand
+        :return: None
+        """
+
+        with self.input_mtx:
+            self.motion_status_msg.active_control_mode = self.control_mode_interface.control_mode_parameters_status_msg
+            if cmd.control_mode == self.control_mode_interface.control_mode_parameters_status_msg.control_mode:
+                if cmd.control_mode.mode == ControlMode.JOINT_POSITION or cmd.control_mode.mode == ControlMode.JOINT_IMPEDANCE:
+                    self.motion_status_msg.commanded_joint_position = cmd.joint_position
+                    self.motion_status_msg.measured_joint_position = cmd.joint_position
+                else:
+                    rospy.logerr("Cartesian control modes not implemented")
+            else:
+                rospy.logerr("Motion command control mode " + str(cmd.control_mode) +
+                             " does not match active control mode" +
+                             str(self.control_mode_interface.control_mode_parameters_status_msg.control_mode))
+
+    # TODO: populate seq
+    # TODO: populate timestamp in submessages
+    def arm_status_feedback_thread(self):
+        r = rospy.Rate(self.arm_status_feedback_rate)
+        while not rospy.is_shutdown():
+            with self.input_mtx:
+                self.motion_status_msg.header.stamp = rospy.Time.now()
+                self.motion_status_pub.publish(self.motion_status_msg)
+            r.sleep()
+
+    def start_feedback_threads(self):
+        self.control_mode_interface.start_feedback_threads()
+        self.arm_status_thread.start()
+
+    def join_feedback_threads(self):
+        self.control_mode_interface.join_feedback_threads()
+        self.arm_status_thread.join()
 
     @staticmethod
     def default_motion_status(arm):
