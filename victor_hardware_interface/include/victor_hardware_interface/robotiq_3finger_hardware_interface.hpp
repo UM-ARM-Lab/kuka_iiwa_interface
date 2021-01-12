@@ -37,11 +37,11 @@ namespace victor_hardware_interface
     public:
 
         Robotiq3FingerHardwareInterface(
-                const std::shared_ptr<lcm::LCM>& send_lcm_ptr,
-                const std::shared_ptr<lcm::LCM>& recv_lcm_ptr,
-                const std::string& command_channel_name,
-                const std::string& status_channel_name,
-                const std::function<void(const msgs::Robotiq3FingerStatus&)>& status_callback_fn);
+                std::shared_ptr<lcm::LCM> send_lcm_ptr,
+                std::shared_ptr<lcm::LCM> recv_lcm_ptr,
+                std::string command_channel_name,
+                std::string status_channel_name,
+                std::function<void(const msgs::Robotiq3FingerStatus&)> status_callback_fn);
 
         bool sendCommandMessage(const msgs::Robotiq3FingerCommand& command);
     };
