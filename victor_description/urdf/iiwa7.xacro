@@ -11,7 +11,6 @@
     <!-- some constants -->
     <xacro:property name="joint_damping" value="0.5"/>
     <xacro:property name="max_effort" value="300"/>
-    <xacro:property name="max_velocity" value="10"/>
 
     <xacro:macro name="iiwa7" params="parent hardware_interface robot_name kinematic *origin">
 
@@ -61,7 +60,7 @@
             <origin xyz="0 0 0.15" rpy="0 0 0"/>
             <axis xyz="0 0 1"/>
             <limit lower="${-170 * PI / 180}" upper="${170 * PI / 180}"
-                   effort="${max_effort}" velocity="${max_velocity}"/>
+                   effort="${max_effort}" velocity="1.7453292519943295"/>
             <dynamics damping="${joint_damping}"/>
         </joint>
 
@@ -93,7 +92,7 @@
             <origin xyz="0 0 0.19" rpy="${PI / 2}   0 ${PI}"/>
             <axis xyz="0 0 1"/>
             <limit lower="${-120 * PI / 180}" upper="${120 * PI / 180}"
-                   effort="${max_effort}" velocity="${max_velocity}"/>
+                   effort="${max_effort}" velocity="1.7453292519943295"/>
             <dynamics damping="${joint_damping}"/>
         </joint>
 
@@ -126,7 +125,7 @@
             <origin xyz="0 0.21 0" rpy="${PI / 2} 0 ${PI}"/>
             <axis xyz="0 0 1"/>
             <limit lower="${-170 * PI / 180}" upper="${170 * PI / 180}"
-                   effort="${max_effort}" velocity="${max_velocity}"/>
+                   effort="${max_effort}" velocity="1.7453292519943295"/>
             <dynamics damping="${joint_damping}"/>
         </joint>
 
@@ -161,7 +160,7 @@
             <origin xyz="0 0 0.19" rpy="${PI / 2} 0 0"/>
             <axis xyz="0 0 1"/>
             <limit lower="${-120 * PI / 180}" upper="${120 * PI / 180}"
-                   effort="${max_effort}" velocity="${max_velocity}"/>
+                   effort="${max_effort}" velocity="2.2689280275926285"/>
             <dynamics damping="${joint_damping}"/>
         </joint>
 
@@ -195,7 +194,7 @@
             <origin xyz="0 0.21 0" rpy="${-PI / 2} ${PI} 0"/>
             <axis xyz="0 0 1"/>
             <limit lower="${-170 * PI / 180}" upper="${170 * PI / 180}"
-                   effort="${max_effort}" velocity="${max_velocity}"/>
+                   effort="${max_effort}" velocity="2.443460952792061"/>
             <dynamics damping="${joint_damping}"/>
         </joint>
 
@@ -229,7 +228,7 @@
             <origin xyz="0 0.06070 0.19" rpy="${PI / 2} 0 0"/>
             <axis xyz="0 0 1"/>
             <limit lower="${-120 * PI / 180}" upper="${120 * PI / 180}"
-                   effort="${max_effort}" velocity="${max_velocity}"/>
+                   effort="${max_effort}" velocity="3.141592653589793"/>
             <dynamics damping="${joint_damping}"/>
         </joint>
 
@@ -263,7 +262,7 @@
             <origin xyz="0 0.081 0.06070" rpy="${- PI / 2} ${PI} 0"/>
             <axis xyz="0 0 1"/>
             <limit lower="${-175 * PI / 180}" upper="${175 * PI / 180}"
-                   effort="${max_effort}" velocity="${max_velocity}"/>
+                   effort="${max_effort}" velocity="3.141592653589793"/>
             <dynamics damping="${joint_damping}"/>
         </joint>
 
