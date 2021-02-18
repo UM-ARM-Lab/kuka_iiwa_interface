@@ -200,7 +200,8 @@ class MinimalFakeArmInterface:
 
         self.input_mtx = Lock()
 
-        self.control_mode_interface = MinimalFakeControlModeInterface(control_mode_status_topic,
+        self.control_mode_interface = MinimalFakeControlModeInterface(arm_name,
+                                                                      control_mode_status_topic,
                                                                       get_control_mode_service_topic,
                                                                       set_control_mode_service_topic,
                                                                       initial_control_mode)
