@@ -222,8 +222,7 @@ class MinimalFakeArmInterface:
             self.motion_status_msg.active_control_mode = \
                 self.control_mode_interface.control_mode_parameters_status_msg.control_mode
             if cmd.control_mode == self.control_mode_interface.control_mode_parameters_status_msg.control_mode:
-                if cmd.control_mode.mode == ControlMode.JOINT_POSITION or \
-                        cmd.control_mode.mode == ControlMode.JOINT_IMPEDANCE:
+                if cmd.control_mode.mode in [ControlMode.JOINT_POSITION, ControlMode.JOINT_IMPEDANCE]:
                     self.motion_status_msg.commanded_joint_position = cmd.joint_position
                     self.motion_status_msg.measured_joint_position = cmd.joint_position
                 else:
