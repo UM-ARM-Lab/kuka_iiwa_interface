@@ -88,7 +88,6 @@ class MinimalFakeControlModeInterface:
     control_mode_feedback_rate = 1.0  # Hz
 
     def __init__(self,
-                 arm_name,
                  control_mode_status_topic,
                  get_control_mode_service_topic,
                  set_control_mode_service_topic,
@@ -200,8 +199,7 @@ class MinimalFakeArmInterface:
 
         self.input_mtx = Lock()
 
-        self.control_mode_interface = MinimalFakeControlModeInterface(arm_name,
-                                                                      control_mode_status_topic,
+        self.control_mode_interface = MinimalFakeControlModeInterface(control_mode_status_topic,
                                                                       get_control_mode_service_topic,
                                                                       set_control_mode_service_topic,
                                                                       initial_control_mode)
