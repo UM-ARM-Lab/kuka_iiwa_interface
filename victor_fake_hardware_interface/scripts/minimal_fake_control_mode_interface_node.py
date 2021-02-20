@@ -5,7 +5,7 @@ import sys
 
 import rospy
 from victor_fake_hardware_interface.commandline_args_utils import control_mode_arg, control_mode_strings
-from victor_fake_hardware_interface.minimal_fake_arm_interface import MinimalFakeControlModeInterface as FCMI
+from victor_fake_hardware_interface.minimal_fake_arm_interface import MinimalFakeControlModeInterface as Fcmi
 
 
 def main(args):
@@ -16,8 +16,7 @@ def main(args):
     arm_names = ["left_arm", "right_arm"]
 
     for arm in arm_names:
-        interfaces[arm] = FCMI(arm_name=arm,
-                               control_mode_status_topic=arm + "/control_mode_status",
+        interfaces[arm] = Fcmi(control_mode_status_topic=arm + "/control_mode_status",
                                get_control_mode_service_topic=arm + "/get_control_mode_service",
                                set_control_mode_service_topic=arm + "/set_control_mode_service",
                                initial_control_mode=control_mode_arg(args.initial_control_mode))

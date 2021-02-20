@@ -88,7 +88,6 @@ class MinimalFakeControlModeInterface:
     control_mode_feedback_rate = 1.0  # Hz
 
     def __init__(self,
-                 arm_name,
                  control_mode_status_topic,
                  get_control_mode_service_topic,
                  set_control_mode_service_topic,
@@ -220,9 +219,10 @@ class MinimalFakeArmInterface:
         """
 
         with self.input_mtx:
-            self.motion_status_msg.active_control_mode = self.control_mode_interface.control_mode_parameters_status_msg
+            self.motion_status_msg.active_control_mode = \
+                self.control_mode_interface.control_mode_parameters_status_msg.control_mode
             if cmd.control_mode == self.control_mode_interface.control_mode_parameters_status_msg.control_mode:
-                if cmd.control_mode.mode == ControlMode.JOINT_POSITION or cmd.control_mode.mode == ControlMode.JOINT_IMPEDANCE:
+                if cmd.control_mode.mode in [ControlMode.JOINT_POSITION, ControlMode.JOINT_IMPEDANCE]:
                     self.motion_status_msg.commanded_joint_position = cmd.joint_position
                     self.motion_status_msg.measured_joint_position = cmd.joint_position
                 else:
