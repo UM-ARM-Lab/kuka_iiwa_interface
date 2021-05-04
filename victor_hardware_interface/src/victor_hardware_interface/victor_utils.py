@@ -245,3 +245,10 @@ def default_gripper_command():
 
     cmd.scissor_command.position = 1.0
     return cmd
+
+
+def is_gripper_closed(status: Robotiq3FingerStatus):
+    finger_a_closed = status.finger_a_status.position > 0.5 - 1e-2
+    finger_b_closed = status.finger_b_status.position > 0.5 - 1e-2
+    finger_c_closed = status.finger_c_status.position > 0.5 - 1e-2
+    return finger_a_closed and finger_b_closed and finger_c_closed
