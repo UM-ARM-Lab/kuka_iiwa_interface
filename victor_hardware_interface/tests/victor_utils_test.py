@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 
 import unittest
-import IPython
 from victor_hardware_interface import victor_utils as vu
 
 

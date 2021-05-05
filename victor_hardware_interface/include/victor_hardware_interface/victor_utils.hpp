@@ -6,16 +6,16 @@
  */
 
 
-#include <victor_hardware_interface/JointValueQuantity.h>
+#include <victor_hardware_interface_msgs/JointValueQuantity.h>
 
 namespace victor_utils
 {
-    static victor_hardware_interface::JointValueQuantity vectorToJvq(const std::vector<double> &v)
+    static victor_hardware_interface_msgs::JointValueQuantity vectorToJvq(const std::vector<double> &v)
     {
         assert(v.size() == 7);
         
-        victor_hardware_interface::JointValueQuantity jvq;
-        jvq = victor_hardware_interface::JointValueQuantity();
+        victor_hardware_interface_msgs::JointValueQuantity jvq;
+        jvq = victor_hardware_interface_msgs::JointValueQuantity();
         jvq.joint_1 = v[0];
         jvq.joint_2 = v[1];
         jvq.joint_3 = v[2];
@@ -26,7 +26,7 @@ namespace victor_utils
         return jvq;
     };
 
-    static std::vector<double> jvqToVector(const victor_hardware_interface::JointValueQuantity &jvq)
+    static std::vector<double> jvqToVector(const victor_hardware_interface_msgs::JointValueQuantity &jvq)
     {
         std::vector<double> v(7);
         v[0] = jvq.joint_1;
