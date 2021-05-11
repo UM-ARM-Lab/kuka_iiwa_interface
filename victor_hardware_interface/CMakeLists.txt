@@ -133,4 +133,7 @@ add_dependencies(${PROJECT_NAME}_arm_wrapper_node ${${PROJECT_NAME}_EXPORTED_TAR
 target_link_libraries(${PROJECT_NAME}_arm_wrapper_node ${PROJECT_NAME} ${catkin_LIBRARIES})
 
 
-catkin_add_gtest(test_victor_utils tests/test_victor_utils.cpp)
+if (CATKIN_ENABLE_TESTING)
+    catkin_add_gtest(test_victor_utils tests/test_victor_utils.cpp)
+endif()
+
