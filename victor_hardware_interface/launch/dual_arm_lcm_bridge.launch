@@ -1,6 +1,6 @@
 <launch>
     <arg name="arm_command_gui"             default="false"/>
-    <arg name="talkative"                   default="true"/>
+    <arg name="talkative"                   default="false"/>
     <!-- Note that changing these from the default requires matching changes in the Java code -->
     <arg name="left_arm_recv_url"           default="udp://10.10.10.10:30002"/>
     <arg name="right_arm_recv_url"          default="udp://10.10.10.10:30001"/>
