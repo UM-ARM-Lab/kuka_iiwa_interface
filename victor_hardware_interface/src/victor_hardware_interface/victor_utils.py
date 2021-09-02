@@ -21,7 +21,8 @@ def get_control_mode_params(control_mode: ControlMode, stiffness=Stiffness.MEDIU
     elif control_mode == ControlMode.JOINT_IMPEDANCE:
         return get_joint_impedance_params(stiffness, vel, accel)
     elif control_mode == ControlMode.CARTESIAN_IMPEDANCE:
-        return get_cartesian_impedance_params(velocity=vel)
+        # the semantics of this vel (even a value of 2.0 is slow) and moveit (expects [0, 1]) is very different
+        return get_cartesian_impedance_params(velocity=vel * 40)
     elif control_mode == ControlMode.CARTESIAN_POSE:
         raise NotImplementedError("Cartesian Mode not yet implemented")
     else:
