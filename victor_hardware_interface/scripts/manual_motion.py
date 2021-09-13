@@ -104,6 +104,7 @@ def print_joints(left, right):
 
 
 if __name__ == "__main__":
+    print("run this with ROS_NAMESPACE=victor")
     rospy.init_node("manual_motion")
 
     control_mode_params = vu.get_joint_impedance_params(vu.Stiffness.MEDIUM)
