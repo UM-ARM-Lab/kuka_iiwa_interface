@@ -1,0 +1,7 @@
+geometry_msgs/TwistStamped command
+---
+# 0 means success
+# 1 means can't move with that commanded twist
+# 2 means ros TF lookup failed
+int32 error_code
+string error_message

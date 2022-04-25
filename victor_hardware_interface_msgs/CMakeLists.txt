@@ -36,6 +36,7 @@ add_message_files(DIRECTORY msg FILES
 add_service_files(DIRECTORY srv FILES
         GetControlMode.srv
         SetControlMode.srv
+        SetTwist.srv
         )
 
 generate_messages(DEPENDENCIES
