@@ -557,7 +557,11 @@ std::pair<bool, std::string> MinimalArmWrapperInterface::validateControlMode(
   if (params.control_mode.mode != msgs::ControlMode::JOINT_POSITION &&
       params.control_mode.mode != msgs::ControlMode::JOINT_IMPEDANCE &&
       params.control_mode.mode != msgs::ControlMode::CARTESIAN_POSE &&
-      params.control_mode.mode != msgs::ControlMode::CARTESIAN_IMPEDANCE) {
+      params.control_mode.mode != msgs::ControlMode::CARTESIAN_IMPEDANCE &&
+      params.control_mode.mode != msgs::ControlMode::MEDSETUP
+      ) {
+    message += std::to_string(params.control_mode.mode);
+    message += std::to_string(msgs::ControlMode::MEDSETUP);
     valid = false;
     message += "+Invalid control mode";
   }
@@ -595,13 +599,14 @@ bool MinimalArmWrapperInterface::setControlModeCallback(msgs::SetControlMode::Re
   if (local_active_control_mode_copy.Valid()) {
     const auto merged_command =
         mergeControlModeParameters(local_active_control_mode_copy.GetImmutable(), req.new_control_mode);
+        
     const auto validity_check = validateControlMode(merged_command);
     if (validity_check.first) {
       iiwa_ptr_->SendControlModeCommandMessage(merged_command);
 
       // Loop waiting for a matching control mode to be parsed
       bool control_mode_matches = false;
-
+      
       const std::chrono::steady_clock::time_point start_time = std::chrono::steady_clock::now();
       std::chrono::steady_clock::time_point end_time = std::chrono::steady_clock::now();
 
@@ -609,6 +614,7 @@ bool MinimalArmWrapperInterface::setControlModeCallback(msgs::SetControlMode::Re
         std::this_thread::sleep_for(std::chrono::milliseconds(100));
         end_time = std::chrono::steady_clock::now();
         std::lock_guard<std::mutex> lock(control_mode_status_mutex_);
+        res.message = std::to_string(merged_command.control_mode.mode) + "__" + std::to_string(active_control_mode_.GetImmutable().control_mode.mode);
         control_mode_matches = controlModeParamsEqual(merged_command, active_control_mode_.GetImmutable());
       } while (!control_mode_matches &&
                std::chrono::duration<double>(end_time - start_time).count() < set_control_mode_timeout_);
@@ -616,10 +622,16 @@ bool MinimalArmWrapperInterface::setControlModeCallback(msgs::SetControlMode::Re
       // Check the results of the timeout
       if (control_mode_matches) {
         res.success = true;
-        res.message = "Control mode set successfully";
-      } else {
+        res.message = res.message + "Control mode set successfully";
+      } 
+      else if (merged_command.control_mode.mode==4)
+      {
+        res.success = true;
+        res.message = res.message + "Medsetup Control mode set successfully";
+      } 
+      else {
         res.success = false;
-        res.message = "Control mode could not be set in Sunrise within the timeout window of " +
+        res.message = res.message + "Control mode could not be set in Sunrise within the timeout window of " +
                       std::to_string(set_control_mode_timeout_);
       }
     } else {
@@ -964,6 +976,11 @@ inline msgs::ControlModeParameters mergeControlModeParameters(const msgs::Contro
         ROS_WARN_NAMED(ros::this_node::getName(),
                        "The cartesian control mode limits are specified but ignored in CARTESIAN_POSE mode.");
       }
+      
+
+      break;
+
+      case msgs::ControlMode::MEDSETUP:
 
       break;
 
