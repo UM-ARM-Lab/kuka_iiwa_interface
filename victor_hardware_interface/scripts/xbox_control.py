@@ -116,25 +116,25 @@ class VictorJoystick:
         scissor_stop_dist = 0.05
 
         if xboxdiff.X < 0:
-            self.stop_scissor("left", scissor_stop_dist)
-        elif xboxdiff.Y < 0:
             self.stop_scissor("left", -scissor_stop_dist)
+        elif xboxdiff.Y < 0:
+            self.stop_scissor("left", scissor_stop_dist)
         else:
-            if xbox_msg.X:
+            if xbox_msg.Y:
                 self.close_scissor("left")
 
-            if xbox_msg.Y:
+            if xbox_msg.X:
                 self.open_scissor("left")
 
         if xboxdiff.A < 0:
-            self.stop_scissor("right", scissor_stop_dist)
-        elif xboxdiff.B < 0:
             self.stop_scissor("right", -scissor_stop_dist)
+        elif xboxdiff.B < 0:
+            self.stop_scissor("right", scissor_stop_dist)
         else:
-            if xbox_msg.A:
+            if xbox_msg.B:
                 self.close_scissor("right")
 
-            if xbox_msg.B:
+            if xbox_msg.A:
                 self.open_scissor("right")
 
     def stop_gripper(self, gripper_name, motion=0.0):
