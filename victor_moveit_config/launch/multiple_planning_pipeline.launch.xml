@@ -1,0 +1,7 @@
+<launch>
+
+  <include ns="planning_pipelines/ompl" file="$(find victor_moveit_config)/launch/ompl_planning_pipeline.launch.xml" />
+  <include ns="planning_pipelines/dirrt" file="$(find victor_moveit_config)/launch/dirrt_planning_pipeline.launch.xml" />
+
+
+</launch>

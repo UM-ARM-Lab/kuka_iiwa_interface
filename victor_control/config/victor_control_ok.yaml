@@ -1,0 +1,61 @@
+# Publish all joint states -----------------------------------
+joint_state_controller:
+  type: joint_state_controller/JointStateController
+  publish_rate: 50
+
+# trajectory controllers
+both_arms_trajectory_controller:
+  type: "position_controllers/JointTrajectoryController"
+  joints:
+    - victor_left_arm_joint_1
+    - victor_left_arm_joint_2
+    - victor_left_arm_joint_3
+    - victor_left_arm_joint_4
+    - victor_left_arm_joint_5
+    - victor_left_arm_joint_6
+    - victor_left_arm_joint_7
+    - victor_right_arm_joint_1
+    - victor_right_arm_joint_2
+    - victor_right_arm_joint_3
+    - victor_right_arm_joint_4
+    - victor_right_arm_joint_5
+    - victor_right_arm_joint_6
+    - victor_right_arm_joint_7
+  # This allows moveit to send goals for sub-groups of these joints, which is necessary
+  # for one-arm motions. Also, moveit execution manager just doesn't seem to be able to handle
+  # having multiple controllers.
+  allow_partial_joints_goal: true
+  # these are necessary in order for the RViz Motion Planning plugin to correctly display status and the move_group
+  # node not to complain about tolerances being violated
+  constraints:
+    goal_time: 0.5
+    victor_left_arm_joint_1:
+      goal: 0.02
+    victor_left_arm_joint_2:
+      goal: 0.02
+    victor_left_arm_joint_3:
+      goal: 0.02
+    victor_left_arm_joint_4:
+      goal: 0.02
+    victor_left_arm_joint_5:
+      goal: 0.02
+    victor_left_arm_joint_6:
+      goal: 0.02
+    victor_left_arm_joint_7:
+      goal: 0.02
+    victor_right_arm_joint_1:
+      goal: 0.02
+    victor_right_arm_joint_2:
+      goal: 0.02
+    victor_right_arm_joint_3:
+      goal: 0.02
+    victor_right_arm_joint_4:
+      goal: 0.02
+    victor_right_arm_joint_5:
+      goal: 0.02
+    victor_right_arm_joint_6:
+      goal: 0.02
+    victor_right_arm_joint_7:
+      goal: 0.02
+    # we could specify PID gains here but that actually seems to only make things worse.
+    # Somehow *not* specify them works best
