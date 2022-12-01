@@ -1,6 +1,10 @@
 group_names_map:
   mixed_strategy: both_arms
   informed_rrt: both_arms
+  mixed_strategy_r: right_arm
+  informed_rrt_r: right_arm
+  mixed_strategy_l: left_arm
+  informed_rrt_l: left_arm
 
 default_planner_config: mixed_strategy
 
@@ -17,6 +21,49 @@ mixed_strategy:
   utopia_tolerance: 0.01
 
 informed_rrt:
+  type: Multigoal
+  max_distance: 0.5
+  max_refine_time: 1500.0
+  extend: true
+  local_bias: 0.0
+  forgetting_factor: 0
+  tube_radius: 0.01
+  utopia_tolerance: 0.0000001
+
+mixed_strategy_r:
+  type: Multigoal
+  max_distance: 0.5
+  max_refine_time: 1500.0
+  rewire_radius: 2.0
+  extend: true
+  local_bias: 0.5 # initial probability of local sampling
+  forgetting_factor: 0.999
+  tube_radius: 0.02
+  utopia_tolerance: 0.01
+  check_start_state: false
+
+informed_rrt_r:
+  type: Multigoal
+  max_distance: 0.5
+  max_refine_time: 1500.0
+  extend: true
+  local_bias: 0.0
+  forgetting_factor: 0
+  tube_radius: 0.01
+  utopia_tolerance: 0.0000001
+
+mixed_strategy_l:
+  type: Multigoal
+  max_distance: 0.5
+  max_refine_time: 1500.0
+  rewire_radius: 2.0
+  extend: true
+  local_bias: 0.5 # initial probability of local sampling
+  forgetting_factor: 0.999
+  tube_radius: 0.02
+  utopia_tolerance: 0.01
+
+informed_rrt_l:
   type: Multigoal
   max_distance: 0.5
   max_refine_time: 1500.0

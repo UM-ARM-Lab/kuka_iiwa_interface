@@ -10,6 +10,9 @@
     <!-- Load joint controller configurations from YAML file to parameter server -->
     <rosparam ns="$(arg robot_namespace)" file="$(find victor_control)/config/victor_control.yaml" command="load"/>
 
+    <!-- <rosparam file="$(find victor_control)/config/victor_pid_gains.yaml" command="load"/> -->
+
+
     <node pkg="joint_state_publisher"
           type="joint_state_publisher"
           name="merge_joint_states">

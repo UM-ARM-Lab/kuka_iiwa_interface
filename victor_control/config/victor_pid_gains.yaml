@@ -1,0 +1,59 @@
+victor:
+  gazebo_ros_control:
+    pid_gains:
+      victor_left_arm_joint_1:
+        p: 500
+        i: 0.0
+        d: 0.0
+      victor_left_arm_joint_2:
+        p: 500
+        i: 0.0
+        d: 0.0
+      victor_left_arm_joint_3:
+        p: 500
+        i: 0.0
+        d: 0.0
+      victor_left_arm_joint_4:
+        p: 500
+        i: 0.0
+        d: 0.0
+      victor_left_arm_joint_5:
+        p: 500
+        i: 0.0
+        d: 0.0
+      victor_left_arm_joint_6:
+        p: 500
+        i: 0.0
+        d: 0.0
+      victor_left_arm_joint_7:
+        p: 500
+        i: 0.0
+        d: 0.0
+      victor_right_arm_joint_1:
+        p: 500
+        i: 0.0
+        d: 0.0
+      victor_right_arm_joint_2:
+        p: 500
+        i: 0.0
+        d: 0.0
+      victor_right_arm_joint_3:
+        p: 500
+        i: 0.0
+        d: 0.0
+      victor_right_arm_joint_4:
+        p: 500
+        i: 0.0
+        d: 0.0
+      victor_right_arm_joint_5:
+        p: 500
+        i: 0.0
+        d: 0.0
+      victor_right_arm_joint_6:
+        p: 500
+        i: 0.0
+        d: 0.0
+      victor_right_arm_joint_7:
+        p: 500
+        i: 0.0
+        d: 0.0

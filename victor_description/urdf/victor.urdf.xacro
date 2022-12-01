@@ -1,9 +1,10 @@
 <?xml version="1.0"?>
 <robot name="victor" xmlns:xacro="http://www.ros.org/wiki/xacro">
-    <xacro:property name="gripper" value="kinematic_robotiq" />
+    <xacro:property name="gripper" value="none" />
     <xacro:arg name="robot_name" default="victor"/>
     <xacro:arg name="kinematic_arms" default="0"/>
     <xacro:arg name="hardware_interface" default="hardware_interface/PositionJointInterface"/>
+    <!--<xacro:arg name="hardware_interface" default="hardware_interface/EffortJointInterface"/> -->
 
     <!-- Import Rviz colors -->
     <xacro:include filename="$(find victor_description)/urdf/materials.xacro"/>
@@ -52,7 +53,6 @@
     <xacro:iia7_to_robotiq_adapter parent="$(arg robot_name)_right_arm_flange" prefix="$(arg robot_name)_right">
         <origin xyz="0 0 -0.01" rpy="0 0 0"/>
     </xacro:iia7_to_robotiq_adapter>
-
 
     <!-- Robotiq grippers -->
     <xacro:if value="${gripper == 'kinematic_robotiq'}">
