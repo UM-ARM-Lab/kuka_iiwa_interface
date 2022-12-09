@@ -1,3 +1,7 @@
+# NOTE: these gains are used by gazebo when a position interface is used.
+# IF these gains are NOT loaded, gazebo uses a kinematic controllers
+# IF they are loaded, gazebo uses a PID from position to position to control the joints (equivalent to an effort interface, but inside gazebo)
+
 victor:
   gazebo_ros_control:
     pid_gains:
