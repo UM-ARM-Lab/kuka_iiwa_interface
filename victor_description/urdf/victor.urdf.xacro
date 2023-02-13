@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <robot name="victor" xmlns:xacro="http://www.ros.org/wiki/xacro">
-    <xacro:property name="gripper" value="none" />
+    <xacro:property name="gripper" value="visual_robotiq" />
     <xacro:arg name="robot_name" default="victor"/>
     <xacro:arg name="kinematic_arms" default="0"/>
     <!--<xacro:arg name="hardware_interface" default="hardware_interface/PositionJointInterface"/>-->
@@ -60,6 +60,9 @@
     </xacro:if>
     <xacro:if value="${gripper == 'robotiq'}">
         <xacro:include filename="$(find victor_description)/urdf/robotiq_grippers.xacro"/>
+    </xacro:if>
+    <xacro:if value="${gripper == 'visual_robotiq'}">
+        <xacro:include filename="$(find victor_description)/urdf/robotiq_grippers_visual.xacro"/>
     </xacro:if>
 
     <!-- Define additional links as "tools", which are useful for planning and getting transforms -->
