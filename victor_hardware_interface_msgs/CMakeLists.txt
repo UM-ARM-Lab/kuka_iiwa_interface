@@ -37,6 +37,7 @@ add_service_files(DIRECTORY srv FILES
         GetControlMode.srv
         SetControlMode.srv
         GripperPosition.srv
+        ImpedanceSwitch.srv
         )
 
 generate_messages(DEPENDENCIES

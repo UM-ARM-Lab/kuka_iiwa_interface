@@ -32,33 +32,47 @@ both_arms_trajectory_controller:
     goal_time: 10.0
     stopped_velocity_tolerance: 0
     victor_left_arm_joint_1:
-      goal: 0.05
+      goal: 0.1
+      trajectory: 0.1
     victor_left_arm_joint_2:
       goal: 0.1
+      trajectory: 0.1
     victor_left_arm_joint_3:
       goal: 0.1
+      trajectory: 0.1
     victor_left_arm_joint_4:
       goal: 0.1
+      trajectory: 0.1
     victor_left_arm_joint_5:
       goal: 0.1
+      trajectory: 0.1
     victor_left_arm_joint_6:
       goal: 0.1
+      trajectory: 0.1
     victor_left_arm_joint_7:
       goal: 0.1
+      trajectory: 0.1
     victor_right_arm_joint_1:
       goal: 0.1
+      trajectory: 0.1
     victor_right_arm_joint_2:
       goal: 0.1
+      trajectory: 0.1
     victor_right_arm_joint_3:
       goal: 0.1
+      trajectory: 0.1
     victor_right_arm_joint_4:
       goal: 0.1
+      trajectory: 0.1
     victor_right_arm_joint_5:
       goal: 0.1
+      trajectory: 0.1
     victor_right_arm_joint_6:
       goal: 0.1
+      trajectory: 0.1
     victor_right_arm_joint_7:
       goal: 0.1
+      trajectory: 0.1
 
   #  gains: [1, 1, 1, 1, 1, 1, 1,   100, 100, 100, 100, 100, 1, 1]
     # we could specify PID gains here but that actually seems to only make things worse.

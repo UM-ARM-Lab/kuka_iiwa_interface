@@ -3,8 +3,8 @@
     <xacro:property name="gripper" value="visual_robotiq" />
     <xacro:arg name="robot_name" default="victor"/>
     <xacro:arg name="kinematic_arms" default="0"/>
-    <!--<xacro:arg name="hardware_interface" default="hardware_interface/PositionJointInterface"/>-->
-    <xacro:arg name="hardware_interface" default="hardware_interface/EffortJointInterface"/>
+    <xacro:arg name="hardware_interface" default="hardware_interface/PositionJointInterface"/>
+    <!--<xacro:arg name="hardware_interface" default="hardware_interface/EffortJointInterface"/>-->
 
     <!-- Import Rviz colors -->
     <xacro:include filename="$(find victor_description)/urdf/materials.xacro"/>
