@@ -1,5 +1,5 @@
 <launch>
-    <arg name="model" default="$(find-pkg-share robotiq_3f_description)/urdf/victor.urdf.xacro"/>
+    <arg name="model" default="$(find-pkg-share victor_description)/urdf/victor.urdf.xacro"/>
 
     <arg name="joint_state_publisher" default="true"/>
 
