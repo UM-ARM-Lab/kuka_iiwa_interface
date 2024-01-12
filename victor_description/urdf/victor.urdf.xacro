@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <robot name="victor" xmlns:xacro="http://www.ros.org/wiki/xacro">
-    <xacro:property name="gripper" value="kinematic_robotiq" />
+    <xacro:property name="gripper" value="robotiq" />
     <xacro:arg name="robot_name" default="victor"/>
     <xacro:arg name="kinematic_arms" default="0"/>
     <xacro:arg name="hardware_interface" default="hardware_interface/PositionJointInterface"/>
@@ -55,9 +55,6 @@
 
 
     <!-- Robotiq grippers -->
-    <xacro:if value="${gripper == 'kinematic_robotiq'}">
-        <xacro:include filename="$(find victor_description)/urdf/kinematic_robotiq_grippers.xacro"/>
-    </xacro:if>
     <xacro:if value="${gripper == 'robotiq'}">
         <xacro:include filename="$(find victor_description)/urdf/robotiq_grippers.xacro"/>
     </xacro:if>
@@ -65,14 +62,5 @@
     <!-- Define additional links as "tools", which are useful for planning and getting transforms -->
     <xacro:include filename="$(find victor_description)/urdf/robotiq_pinch_grasp_tools.xacro"/>
     <xacro:robotiq_pinch_grasp_tools robot_name="$(arg robot_name)"/>
-    <!-- Add Gazebo properties for whole robot -->
-    <xacro:include filename="$(find victor_description)/urdf/victor.gazebo.xacro"/>
-    <xacro:include filename="$(find victor_description)/urdf/gazebo_utilities.xacro"/>
-    <!-- Load Gazebo lib and set the robot namespace -->
-    <xacro:add_gazebo_control_plugin robot_namespace="$(arg robot_name)"/>
-    <xacro:add_moveit_planning_scene_plugin robot_namespace="$(arg robot_name)" root_frame_id="victor_root"/>
-
-    <!-- Rigidly attach Victor to the Gazebo world -->
-    <xacro:add_gazebo_fixed_link base_link="$(arg robot_name)_root"/>
 
 </robot>

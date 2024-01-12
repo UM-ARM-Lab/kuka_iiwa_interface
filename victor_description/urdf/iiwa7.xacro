@@ -1,10 +1,6 @@
 <?xml version="1.0"?>
 <robot xmlns:xacro="http://www.ros.org/wiki/xacro">
 
-    <!-- Import all Gazebo-customization elements, including Gazebo colors -->
-    <xacro:include filename="$(find victor_description)/urdf/iiwa.gazebo.xacro"/>
-    <!-- Import Transmissions -->
-    <xacro:include filename="$(find victor_description)/urdf/iiwa.transmission.xacro"/>
     <!-- Include Utilities -->
     <xacro:include filename="$(find victor_description)/urdf/utilities.xacro"/>
 
@@ -306,11 +302,6 @@
         </joint>
         <link name="${robot_name}_flange_kuka">
         </link>
-
-        <!--Extensions -->
-        <xacro:iiwa_gazebo robot_name="${robot_name}" kinematic="${kinematic}"/>
-        <xacro:iiwa_transmission hardware_interface="${hardware_interface}"
-                                 robot_name="${robot_name}"/>
 
     </xacro:macro>
 
