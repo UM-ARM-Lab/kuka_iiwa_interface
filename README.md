@@ -1,5 +1,5 @@
 # kuka_iiwa_interface
-Developmental controllers for the IIWA 7 robot, including a Catkinized version of the Kuka FRI SDK
+Developmental controllers for the IIWA 7 robot
 
 # Dependencies
 - [arc_utilities](https://github.com/UM-ARM-Lab/arc_utilities)
