@@ -45,6 +45,8 @@ ament_add_gtest(test_victor_utils tests/test_victor_utils.cpp)
 ament_target_dependencies(test_victor_utils ${THIS_PACKAGE_INCLUDE_DEPENDS})
 
 # Install
+ament_python_install_package(${PROJECT_NAME})
+
 install(
         TARGETS victor_lcm_bridge_node
         EXPORT ${PROJECT_NAME}_targets
