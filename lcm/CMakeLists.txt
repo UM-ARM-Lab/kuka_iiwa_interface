@@ -6,6 +6,8 @@ set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/cmake/Mo
 find_package(GLib REQUIRED)
 set(GLib_LIBRARIES ${GLib_LIBRARY})
 
+include(GNUInstallDirs)
+
 
 ###########
 ## Build ##
@@ -13,8 +15,6 @@ set(GLib_LIBRARIES ${GLib_LIBRARY})
 message(AUTHOR_WARNING "------- Deprecated definitions disabled for LCM build")
 
 add_definitions(-Wno-deprecated-declarations)
-
-include_directories(include SYSTEM ${GLib_INCLUDE_DIRS})
 
 add_library(${PROJECT_NAME} include/${PROJECT_NAME}/dbg.h
                             include/${PROJECT_NAME}/lcm.h
@@ -40,8 +40,12 @@ add_library(${PROJECT_NAME} include/${PROJECT_NAME}/dbg.h
                             src/${PROJECT_NAME}/lcm_tcpq.c
                             src/${PROJECT_NAME}/lcmtypes/channel_port_map_update_t.c
                             src/${PROJECT_NAME}/lcmtypes/channel_to_port_t.c)
-# add_dependencies(${PROJECT_NAME} ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 target_link_libraries(${PROJECT_NAME} ${GLib_LIBRARIES})
+target_include_directories(${PROJECT_NAME}
+        PUBLIC
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+        $<INSTALL_INTERFACE:include>
+        ${GLib_INCLUDE_DIRS})
 
 install(
         TARGETS ${PROJECT_NAME}
@@ -49,9 +53,12 @@ install(
         LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}      # lib
         ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}      # lib
         RUNTIME DESTINATION ${CMAKE_INSTALL_LIBDIR}/${PROJECT_NAME}
-        INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR} # include
 )
+install(DIRECTORY include)
 
 ament_export_targets(${PROJECT_NAME}_targets)
+ament_export_include_directories(
+        include
+)
 
 ament_package()
