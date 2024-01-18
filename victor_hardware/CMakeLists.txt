@@ -25,20 +25,20 @@ include(GNUInstallDirs)
 
 include_directories(include lcm_types SYSTEM)
 
-add_executable(victor_lcm_bridge_node
-        src/victor_lcm_bridge_node.cpp
-        src/victor_lcm_bridge_utils.cpp
+add_executable(iiwa_lcm_bridge_node
+        src/iiwa_lcm_bridge_node.cpp
+        src/iiwa_lcm_bridge_utils.cpp
         src/iiwa_lcm_bridge.cpp
         src/robotiq_3f_lcm_bridge.cpp
         include/victor_hardware/victor_utils.hpp
 )
 target_include_directories(
-        victor_lcm_bridge_node
+        iiwa_lcm_bridge_node
         PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:include>
 )
-ament_target_dependencies(victor_lcm_bridge_node ${THIS_PACKAGE_INCLUDE_DEPENDS})
+ament_target_dependencies(iiwa_lcm_bridge_node ${THIS_PACKAGE_INCLUDE_DEPENDS})
 
 # Testing
 ament_add_gtest(test_victor_utils tests/test_victor_utils.cpp)
@@ -48,7 +48,7 @@ ament_target_dependencies(test_victor_utils ${THIS_PACKAGE_INCLUDE_DEPENDS})
 ament_python_install_package(${PROJECT_NAME})
 
 install(
-        TARGETS victor_lcm_bridge_node
+        TARGETS iiwa_lcm_bridge_node
         EXPORT ${PROJECT_NAME}_targets
         LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}      # lib
         ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}      # lib
@@ -64,6 +64,13 @@ install(
   DESTINATION
     share/${PROJECT_NAME}
 )
+# Install Python nodes
+install(DIRECTORY
+  scripts/
+  DESTINATION lib/${PROJECT_NAME}
+  PATTERN "*.py"
+)
+
 
 # Export
 ament_export_dependencies(${THIS_PACKAGE_INCLUDE_DEPENDS})

@@ -13,14 +13,12 @@
     <node pkg="victor_hardware" exec="joint_state_publisher.py" name="joint_state_publisher" namespace="victor"/>
     <node pkg="robot_state_publisher" exec="robot_state_publisher" name="robot_state_publisher" namespace="victor"/>
     <node pkg="victor_hardware" exec="arm_command_gui.py" name="arm_command_gui" if="$(var arm_command_gui)" namespace="victor"/>
-    <node pkg="victor_hardware" exec="victor_hardware_arm_wrapper_node"
-            name="left_arm_lcm_bridge_node" output="screen" namespace="victor/left_arm">
+    <node pkg="victor_hardware" exec="iiwa_lcm_bridge_node" name="left_arm_lcm_bridge_node" output="screen" namespace="victor/left_arm">
         <param name="cartesian_pose_frame" value="victor_left_arm_world_frame_kuka"/>
         <param name="send_lcm_url" value="udp://10.10.10.12:30000"/>
         <param name="recv_lcm_url" value="$(var left_arm_recv_url)"/>
     </node>
-    <node pkg="victor_hardware" exec="victor_hardware_arm_wrapper_node"
-            name="right_arm_lcm_bridge_node" output="screen" namespace="victor/right_arm">
+    <node pkg="victor_hardware" exec="iiwa_lcm_bridge_node" name="right_arm_lcm_bridge_node" output="screen" namespace="victor/right_arm">
         <param name="cartesian_pose_frame" value="victor_right_arm_world_frame_kuka"/>
         <param name="send_lcm_url" value="udp://10.10.10.11:30000"/>
         <param name="recv_lcm_url" value="$(var right_arm_recv_url)"/>
