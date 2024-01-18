@@ -58,6 +58,12 @@ install(
         DIRECTORY include/
         DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}          # include
 )
+install(
+  DIRECTORY
+    launch
+  DESTINATION
+    share/${PROJECT_NAME}
+)
 
 # Export
 ament_export_dependencies(${THIS_PACKAGE_INCLUDE_DEPENDS})
