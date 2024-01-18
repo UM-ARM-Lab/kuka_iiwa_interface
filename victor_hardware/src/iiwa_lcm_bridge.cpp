@@ -2,7 +2,10 @@
 
 #include <arm_utilities/ros_helpers.hpp>
 #include <rclcpp/time.hpp>
+#include <rclcpp/logging.hpp>
 #include <utility>
+
+auto const logger = rclcpp::get_logger("iiwa_lcm_bridge");
 
 namespace msg = victor_hardware_interfaces::msg;
 

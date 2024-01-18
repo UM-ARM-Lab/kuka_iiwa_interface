@@ -23,7 +23,6 @@
 #include <victor_hardware/robotiq_3f_lcm_bridge.hpp>
 #include <victor_hardware/victor_lcm_bridge_utils.hpp>
 
-using namespace std::chrono_literals;
 using std::placeholders::_1;
 using std::placeholders::_2;
 using namespace victor_hardware;
@@ -73,9 +72,9 @@ const std::string GRIPPER_COMMAND_CHANNEL_PARAM("gripper_command_channel");
 const std::string GRIPPER_STATUS_CHANNEL_PARAM("gripper_status_channel");
 
 
-class VictorLcmBridgeNode : public rclcpp::Node {
+class IiwaLcmBridgeNode : public rclcpp::Node {
  public:
-  VictorLcmBridgeNode() : Node("victor_hardware_node") {
+  IiwaLcmBridgeNode() : Node("victor_hardware_node") {
     // Declare parameters
     // this->declare_parameter("cartesian_control_frame", DEFAULT_CARTESIAN_CONTROL_FRAME);
     this->declare_parameter(CARTESIAN_CONTROL_FRAME_PARAM, DEFAULT_CARTESIAN_CONTROL_FRAME);
@@ -143,17 +142,17 @@ class VictorLcmBridgeNode : public rclcpp::Node {
     control_mode_status_pub_ = create_publisher<msg::ControlModeParameters>(control_mode_status_topic, 1);
     gripper_status_pub_ = create_publisher<msg::Robotiq3FingerStatus>(gripper_status_topic, 1);
     motion_command_sub_ = create_subscription<msg::MotionCommand>(
-        motion_command_topic, 1, std::bind(&VictorLcmBridgeNode::motionCommandROSCallback, this, _1));
+        motion_command_topic, 1, std::bind(&IiwaLcmBridgeNode::motionCommandROSCallback, this, _1));
     gripper_command_sub_ = create_subscription<msg::Robotiq3FingerCommand>(
-        gripper_command_topic, 1, std::bind(&VictorLcmBridgeNode::gripperCommandROSCallback, this, _1));
+        gripper_command_topic, 1, std::bind(&IiwaLcmBridgeNode::gripperCommandROSCallback, this, _1));
     set_control_mode_server_ = create_service<srv::SetControlMode>(
-        set_control_mode_service, std::bind(&VictorLcmBridgeNode::setControlModeCallback, this, _1, _2));
+        set_control_mode_service, std::bind(&IiwaLcmBridgeNode::setControlModeCallback, this, _1, _2));
     get_control_mode_server_ = create_service<srv::GetControlMode>(
-        get_control_mode_service, std::bind(&VictorLcmBridgeNode::getControlModeCallback, this, _1, _2));
+        get_control_mode_service, std::bind(&IiwaLcmBridgeNode::getControlModeCallback, this, _1, _2));
 
     // Create a timer callback that runs every 1 millisecond
-    auto timer_callback = [&]() -> void { handle_lcm(); };
-    auto timer = this->create_wall_timer(1ms, timer_callback);
+    auto timer_callback = [&]() { handle_lcm(); };
+    timer_ = this->create_wall_timer(std::chrono::milliseconds(LCM_HANDLE_TIMEOUT), timer_callback);
   }
 
   void handle_lcm() {
@@ -897,13 +896,15 @@ class VictorLcmBridgeNode : public rclcpp::Node {
   std::shared_ptr<lcm::LCM> recv_lcm_ptr_;
   std::unique_ptr<IiwaLcmBridge> iiwa_ptr_;
   std::unique_ptr<Robotiq3fLcmBridge> robotiq_ptr_;
+
+  rclcpp::TimerBase::SharedPtr timer_;
 };
 
 int main(int argc, char** argv) {
   // Start ROS
   rclcpp::init(argc, argv);
 
-  auto const node = std::make_shared<VictorLcmBridgeNode>();
+  auto const node = std::make_shared<IiwaLcmBridgeNode>();
   rclcpp::spin(node);
 
   return 0;
