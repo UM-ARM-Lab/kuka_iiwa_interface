@@ -50,8 +50,8 @@ class RobotiqGrippersJoystickNode(Node):
         super().__init__("robotiq_grippers_joystick")
         self.output_throttle_period = 5.0
 
-        self.declare_parameter("~enable_finger_open_close_control", True)
-        self.declare_parameter("~enable_scissor_open_close_control", True)
+        self.declare_parameter("enable_finger_open_close_control", True)
+        self.declare_parameter("enable_scissor_open_close_control", True)
 
         self.gripper_status = {
             "right": Listener(self, "right_arm/gripper_status", Robotiq3FingerStatus),
