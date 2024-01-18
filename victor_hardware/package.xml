@@ -19,6 +19,8 @@
     <depend>victor_hardware_interfaces</depend>
     <depend>lcm</depend>
 
+    <exec_depend>victor_description</exec_depend>
+
     <export>
         <build_type>ament_cmake</build_type>
     </export>

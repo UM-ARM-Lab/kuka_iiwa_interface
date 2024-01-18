@@ -1,9 +1,9 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
-import rospy
+import rclpy
 from sensor_msgs.msg import JointState
-from victor_hardware_interface_msgs.msg import MotionStatus
-from victor_hardware_interface_msgs.msg import Robotiq3FingerStatus
+from victor_hardware_interfaces.msg import MotionStatus
+from victor_hardware_interfaces.msg import Robotiq3FingerStatus
 from threading import Lock
 from math import radians
 
