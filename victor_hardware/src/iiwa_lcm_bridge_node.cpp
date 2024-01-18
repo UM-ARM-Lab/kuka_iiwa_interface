@@ -54,46 +54,67 @@ const std::string DEFAULT_CONTROL_MODE_STATUS_CHANNEL("control_mode_status");
 const std::string DEFAULT_GRIPPER_COMMAND_CHANNEL("gripper_command");
 const std::string DEFAULT_GRIPPER_STATUS_CHANNEL("gripper_status");
 
+const std::string CARTESIAN_CONTROL_FRAME_PARAM("cartesian_control_frame");
+const std::string SET_CONTROL_MODE_TIMEOUT_PARAM("set_control_mode_timeout");
+const std::string MOTION_COMMAND_TOPIC_PARAM("motion_command_topic");
+const std::string MOTION_STATUS_TOPIC_PARAM("motion_status_topic");
+const std::string CONTROL_MODE_STATUS_TOPIC_PARAM("control_mode_status_topic");
+const std::string GET_CONTROL_MODE_SERVICE_PARAM("get_control_mode_service");
+const std::string SET_CONTROL_MODE_SERVICE_PARAM("set_control_mode_service");
+const std::string GRIPPER_COMMAND_TOPIC_PARAM("gripper_command_topic");
+const std::string GRIPPER_STATUS_TOPIC_PARAM("gripper_status_topic");
+const std::string SEND_LCM_URL_PARAM("send_lcm_url");
+const std::string RECV_LCM_URL_PARAM("recv_lcm_url");
+const std::string MOTION_COMMAND_CHANNEL_PARAM("motion_command_channel");
+const std::string MOTION_STATUS_CHANNEL_PARAM("motion_status_channel");
+const std::string CONTROL_MODE_COMMAND_CHANNEL_PARAM("control_mode_command_channel");
+const std::string CONTROL_MODE_STATUS_CHANNEL_PARAM("control_mode_status_channel");
+const std::string GRIPPER_COMMAND_CHANNEL_PARAM("gripper_command_channel");
+const std::string GRIPPER_STATUS_CHANNEL_PARAM("gripper_status_channel");
+
+
 class VictorLcmBridgeNode : public rclcpp::Node {
  public:
   VictorLcmBridgeNode() : Node("victor_hardware_node") {
     // Declare parameters
-    this->declare_parameter("cartesian_controler_frame", DEFAULT_CARTESIAN_CONTROL_FRAME);
-    this->declare_parameter("set_control_mode_timeout", DEFAULT_SET_CONTROL_MODE_TIMEOUT);
-    this->declare_parameter("motion_command_topic", DEFAULT_MOTION_COMMAND_TOPIC);
-    this->declare_parameter("motion_status_topic", DEFAULT_MOTION_STATUS_TOPIC);
-    this->declare_parameter("control_mode_status_topic", DEFAULT_CONTROL_MODE_STATUS_TOPIC);
-    this->declare_parameter("get_control_mode_service", DEFAULT_GET_CONTROL_MODE_SERVICE);
-    this->declare_parameter("set_control_mode_service", DEFAULT_SET_CONTROL_MODE_SERVICE);
-    this->declare_parameter("gripper_command_topic", DEFAULT_GRIPPER_COMMAND_TOPIC);
-    this->declare_parameter("gripper_status_topic", DEFAULT_GRIPPER_STATUS_TOPIC);
-    this->declare_parameter("send_lcm_url", DEFAULT_SEND_LCM_URL);
-    this->declare_parameter("recv_lcm_url", DEFAULT_RECV_LCM_URL);
-    this->declare_parameter("motion_command_channel", DEFAULT_MOTION_COMMAND_CHANNEL);
-    this->declare_parameter("motion_status_channel", DEFAULT_MOTION_STATUS_CHANNEL);
-    this->declare_parameter("control_mode_command_channel", DEFAULT_CONTROL_MODE_COMMAND_CHANNEL);
-    this->declare_parameter("control_mode_status_channel", DEFAULT_CONTROL_MODE_STATUS_CHANNEL);
-    this->declare_parameter("gripper_command_channel", DEFAULT_GRIPPER_COMMAND_CHANNEL);
-    this->declare_parameter("gripper_status_channel", DEFAULT_GRIPPER_STATUS_CHANNEL);
+    // this->declare_parameter("cartesian_control_frame", DEFAULT_CARTESIAN_CONTROL_FRAME);
+    this->declare_parameter(CARTESIAN_CONTROL_FRAME_PARAM, DEFAULT_CARTESIAN_CONTROL_FRAME);
+    this->declare_parameter(SET_CONTROL_MODE_TIMEOUT_PARAM, DEFAULT_SET_CONTROL_MODE_TIMEOUT);
+    this->declare_parameter(MOTION_COMMAND_TOPIC_PARAM, DEFAULT_MOTION_COMMAND_TOPIC);
+    this->declare_parameter(MOTION_STATUS_TOPIC_PARAM, DEFAULT_MOTION_STATUS_TOPIC);
+    this->declare_parameter(CONTROL_MODE_STATUS_TOPIC_PARAM, DEFAULT_CONTROL_MODE_STATUS_TOPIC);
+    this->declare_parameter(GET_CONTROL_MODE_SERVICE_PARAM, DEFAULT_GET_CONTROL_MODE_SERVICE);
+    this->declare_parameter(SET_CONTROL_MODE_SERVICE_PARAM, DEFAULT_SET_CONTROL_MODE_SERVICE);
+    this->declare_parameter(GRIPPER_COMMAND_TOPIC_PARAM, DEFAULT_GRIPPER_COMMAND_TOPIC);
+    this->declare_parameter(GRIPPER_STATUS_TOPIC_PARAM, DEFAULT_GRIPPER_STATUS_TOPIC);
+    this->declare_parameter(SEND_LCM_URL_PARAM, DEFAULT_SEND_LCM_URL);
+    this->declare_parameter(RECV_LCM_URL_PARAM, DEFAULT_RECV_LCM_URL);
+    this->declare_parameter(MOTION_COMMAND_CHANNEL_PARAM, DEFAULT_MOTION_COMMAND_CHANNEL);
+    this->declare_parameter(MOTION_STATUS_CHANNEL_PARAM, DEFAULT_MOTION_STATUS_CHANNEL);
+    this->declare_parameter(CONTROL_MODE_COMMAND_CHANNEL_PARAM, DEFAULT_CONTROL_MODE_COMMAND_CHANNEL);
+    this->declare_parameter(CONTROL_MODE_STATUS_CHANNEL_PARAM, DEFAULT_CONTROL_MODE_STATUS_CHANNEL);
+    this->declare_parameter(GRIPPER_COMMAND_CHANNEL_PARAM, DEFAULT_GRIPPER_COMMAND_CHANNEL);
+    this->declare_parameter(GRIPPER_STATUS_CHANNEL_PARAM, DEFAULT_GRIPPER_STATUS_CHANNEL);
 
     // Get paramter values
-    cartesian_control_frame_ = this->get_parameter("cartesian_control_frame").as_string();
-    set_control_mode_timeout_ = this->get_parameter("set_control_mode_timeout").as_double();
-    auto const motion_command_topic = this->get_parameter("motion_command_topic").as_string();
-    auto const motion_status_topic = this->get_parameter("motion_status_topic").as_string();
-    auto const control_mode_status_topic = this->get_parameter("control_mode_status_topic").as_string();
-    auto const get_control_mode_service = this->get_parameter("get_control_mode_service").as_string();
-    auto const set_control_mode_service = this->get_parameter("set_control_mode_service").as_string();
-    auto const gripper_command_topic = this->get_parameter("gripper_command_topic").as_string();
-    auto const gripper_status_topic = this->get_parameter("gripper_status_topic").as_string();
-    auto const send_lcm_url = this->get_parameter("send_lcm_url").as_string();
-    auto const recv_lcm_url = this->get_parameter("recv_lcm_url").as_string();
-    auto const motion_command_channel = this->get_parameter("motion_command_channel").as_string();
-    auto const motion_status_channel = this->get_parameter("motion_status_channel").as_string();
-    auto const control_mode_command_channel = this->get_parameter("control_mode_command_channel").as_string();
-    auto const control_mode_status_channel = this->get_parameter("control_mode_status_channel").as_string();
-    auto const gripper_command_channel = this->get_parameter("gripper_command_channel").as_string();
-    auto const gripper_status_channel = this->get_parameter("gripper_status_channel").as_string();
+    cartesian_control_frame_ = this->get_parameter(CARTESIAN_CONTROL_FRAME_PARAM).as_string();
+    set_control_mode_timeout_ = this->get_parameter(SET_CONTROL_MODE_TIMEOUT_PARAM).as_double();
+    auto const motion_command_topic = this->get_parameter(MOTION_COMMAND_TOPIC_PARAM).as_string();
+    auto const motion_status_topic = this->get_parameter(MOTION_STATUS_TOPIC_PARAM).as_string();
+    auto const control_mode_status_topic = this->get_parameter(CONTROL_MODE_STATUS_TOPIC_PARAM).as_string();
+    auto const get_control_mode_service = this->get_parameter(GET_CONTROL_MODE_SERVICE_PARAM).as_string();
+    auto const set_control_mode_service = this->get_parameter(SET_CONTROL_MODE_SERVICE_PARAM).as_string();
+    auto const gripper_command_topic = this->get_parameter(GRIPPER_COMMAND_TOPIC_PARAM).as_string();
+    auto const gripper_status_topic = this->get_parameter(GRIPPER_STATUS_TOPIC_PARAM).as_string();
+    auto const send_lcm_url = this->get_parameter(SEND_LCM_URL_PARAM).as_string();
+    auto const recv_lcm_url = this->get_parameter(RECV_LCM_URL_PARAM).as_string();
+    auto const motion_command_channel = this->get_parameter(MOTION_COMMAND_CHANNEL_PARAM).as_string();
+    auto const motion_status_channel = this->get_parameter(MOTION_STATUS_CHANNEL_PARAM).as_string();
+    auto const control_mode_command_channel = this->get_parameter(CONTROL_MODE_COMMAND_CHANNEL_PARAM).as_string();
+    auto const control_mode_status_channel = this->get_parameter(CONTROL_MODE_STATUS_CHANNEL_PARAM).as_string();
+    auto const gripper_command_channel = this->get_parameter(GRIPPER_COMMAND_CHANNEL_PARAM).as_string();
+    auto const gripper_status_channel = this->get_parameter(GRIPPER_STATUS_CHANNEL_PARAM).as_string();
+
 
     RCLCPP_INFO(logger, "Starting with send [%s] and receive [%s] LCM...", send_lcm_url.c_str(), recv_lcm_url.c_str());
     send_lcm_ptr_ = std::make_shared<lcm::LCM>(send_lcm_url);

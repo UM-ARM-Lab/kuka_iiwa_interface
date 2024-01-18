@@ -5,12 +5,17 @@
 from copy import deepcopy
 
 import rclpy
-from arm_utilities.listener import Listener
-from arm_utilities.ros_helpers import joy_to_xbox
+import rclpy.logging
 from numpy import clip
 from rclpy.node import Node
 from sensor_msgs.msg import Joy
+
+from arm_utilities.listener import Listener
+from arm_utilities.ros_helpers import joy_to_xbox
+from victor_hardware.victor_utils import default_gripper_command
 from victor_hardware_interfaces.msg import Robotiq3FingerStatus, Robotiq3FingerCommand
+
+logger = rclpy.logging.get_logger("robotiq_grippers_joystick_node")
 
 
 def minus(xbox_lhs, xbox_rhs):
@@ -45,9 +50,12 @@ class RobotiqGrippersJoystickNode(Node):
         super().__init__("robotiq_grippers_joystick")
         self.output_throttle_period = 5.0
 
+        self.declare_parameter("~enable_finger_open_close_control", True)
+        self.declare_parameter("~enable_scissor_open_close_control", True)
+
         self.gripper_status = {
-            "right": Listener("right_arm/gripper_status", Robotiq3FingerStatus),
-            "left": Listener("left_arm/gripper_status", Robotiq3FingerStatus)
+            "right": Listener(self, "right_arm/gripper_status", Robotiq3FingerStatus),
+            "left": Listener(self, "left_arm/gripper_status", Robotiq3FingerStatus)
         }
 
         self.gripper_command_publisher = {
@@ -67,13 +75,11 @@ class RobotiqGrippersJoystickNode(Node):
         if self.prev_xbox_msg is None:
             self.prev_xbox_msg = xbox_msg
 
-        enable_finger_open_close_control = rospy.get_param("~enable_finger_open_close_control", True)
-        enable_scissor_open_close_control = rospy.get_param("~enable_scissor_open_close_control", True)
+        enable_finger_open_close_control = self.get_parameter("~enable_finger_open_close_control")
+        enable_scissor_open_close_control = self.get_parameter("~enable_scissor_open_close_control")
 
-        rospy.loginfo_throttle(self.output_throttle_period,
-                               "Finger open close control enabled:  " + str(enable_finger_open_close_control))
-        rospy.loginfo_throttle(self.output_throttle_period,
-                               "Scissor open close control enabled: " + str(enable_scissor_open_close_control))
+        logger.info(f"{enable_finger_open_close_control=}", throttle_duration_sec=self.output_throttle_period)
+        logger.info(f"{enable_scissor_open_close_control=}", throttle_duration_sec=self.output_throttle_period)
 
         if enable_finger_open_close_control:
             self.finger_open_close_callback(xbox_msg)
@@ -180,7 +186,7 @@ class RobotiqGrippersJoystickNode(Node):
         """
 
         cur = self.gripper_status[gripper_name].get()
-        cmd = self.default_gripper_command()
+        cmd = default_gripper_command()
 
         # Set the finger position if commanded
         if finger_pos is not None:
@@ -199,21 +205,6 @@ class RobotiqGrippersJoystickNode(Node):
             cmd.scissor_command.position = cur.scissor_status.position_request
 
         self.gripper_command_publisher[gripper_name].publish(cmd)
-
-    def default_gripper_command(self):
-        cmd = Robotiq3FingerCommand()
-        cmd.finger_a_command.speed = 0.5
-        cmd.finger_b_command.speed = 0.5
-        cmd.finger_c_command.speed = 0.5
-        cmd.scissor_command.speed = 1.0
-
-        cmd.finger_a_command.force = 1.0
-        cmd.finger_b_command.force = 1.0
-        cmd.finger_c_command.force = 1.0
-        cmd.scissor_command.force = 1.0
-
-        cmd.scissor_command.position = 1.0
-        return cmd
 
 
 def main():
