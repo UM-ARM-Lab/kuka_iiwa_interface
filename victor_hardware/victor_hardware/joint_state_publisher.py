@@ -1,11 +1,13 @@
 #!/usr/bin/env python3
 
+from math import radians
+from threading import Lock
+
 import rclpy
+from rclpy.node import Node
 from sensor_msgs.msg import JointState
 from victor_hardware_interfaces.msg import MotionStatus
 from victor_hardware_interfaces.msg import Robotiq3FingerStatus
-from threading import Lock
-from math import radians
 
 
 def compute_finger_angles(control):
@@ -43,11 +45,12 @@ def compute_scissor_angle(control):
     return radians(26.0 * control - 16.0)
 
 
-class VictorJointStatePublisher:
+class VictorJointStatePublisher(Node):
     def __init__(self):
+        super().__init__("victor_joint_state_publisher")
         # We don't want to do this programatically, because the callback functions are using assuming a specific order
         # for the joints. We could change the callback functions to remove this assumption, but that would increase the
-        # complexity of the callback functions unnecessarily
+        # complexity of the callback functions
         self.joint_names = [
             'victor_left_arm_joint_1',
             'victor_left_arm_joint_2',
@@ -87,7 +90,7 @@ class VictorJointStatePublisher:
             'r_finger_2_joint_3',
         ]
 
-        # Setup the output message with default values
+        # Set up the output message with default values
         self.joint_state_lock = Lock()
         self.joint_state_msg = JointState()
         self.joint_state_msg.name = self.joint_names
@@ -95,22 +98,17 @@ class VictorJointStatePublisher:
         self.joint_state_msg.velocity = []
         self.joint_state_msg.effort = [0] * len(self.joint_names)
 
-        # Setup the publishers and subscribers that will be used
-        self.joint_state_pub = rospy.Publisher("joint_states", JointState, queue_size=1)
-        self.left_arm_sub = rospy.Subscriber("left_arm/motion_status", MotionStatus,
-                                             self.left_arm_motion_status_callback)
-        self.right_arm_sub = rospy.Subscriber("right_arm/motion_status", MotionStatus,
-                                              self.right_arm_motion_status_callback)
-        self.left_gripper_sub = rospy.Subscriber("left_arm/gripper_status", Robotiq3FingerStatus,
-                                                 self.left_gripper_motion_status_callback)
-        self.right_gripper_sub = rospy.Subscriber("right_arm/gripper_status", Robotiq3FingerStatus,
-                                                  self.right_gripper_motion_status_callback)
+        # Set up the publishers and subscribers that will be used
+        self.joint_state_pub = self.create_publisher(JointState, "joint_states", 10)
+        self.left_arm_sub = self.create_subscription(MotionStatus, "left_arm/motion_status", self.left_arm_motion_status_callback, 10)
+        self.right_arm_sub = self.create_subscription(MotionStatus, "right_arm/motion_status", self.right_arm_motion_status_callback, 10)
+        self.left_gripper_sub = self.create_subscription(Robotiq3FingerStatus, "left_arm/gripper_status", self.left_gripper_motion_status_callback,
+                                                         10)
+        self.right_gripper_sub = self.create_subscription(Robotiq3FingerStatus, "right_arm/gripper_status", self.right_gripper_motion_status_callback,
+                                                          10)
 
-    def run(self, loop_rate):
-        rate = rospy.Rate(loop_rate)
-        while not rospy.is_shutdown():
-            self.publish_joint_values()
-            rate.sleep()
+        # Create timer to publish joint states at 100Hz
+        self.create_timer(0.01, self.publish_joint_values)
 
     def left_arm_motion_status_callback(self, motion_status):
         self.set_arm_position_values(motion_status, offset=0)
@@ -164,14 +162,15 @@ class VictorJointStatePublisher:
 
     def publish_joint_values(self):
         with self.joint_state_lock:
-            self.joint_state_msg.header.stamp = rospy.Time.now()
+            self.joint_state_msg.header.stamp = self.get_clock().now()
             self.joint_state_pub.publish(self.joint_state_msg)
 
 
-if __name__ == '__main__':
-    rospy.init_node('victor_joint_state_publisher')
-    rospy.loginfo('Starting the victor joint state broadcaster...')
+def main():
+    rclpy.init()
+    node = VictorJointStatePublisher()
+    rclpy.spin(node)
 
-    rate = rospy.get_param("~rate", 10.0)
-    pub = VictorJointStatePublisher()
-    pub.run(rate)
+
+if __name__ == '__main__':
+    main()
