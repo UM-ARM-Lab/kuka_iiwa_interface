@@ -2,58 +2,62 @@
 
 # ROS node to turn joystick msgs into Messages for Victor
 
-import rospy
-from arc_utilities.listener import Listener
-from victor_hardware_interface_msgs.msg import Robotiq3FingerStatus, Robotiq3FingerCommand
-from sensor_msgs.msg import Joy
 from copy import deepcopy
+
+import rclpy
+from arm_utilities.listener import Listener
+from arm_utilities.ros_helpers import joy_to_xbox
 from numpy import clip
+from rclpy.node import Node
+from sensor_msgs.msg import Joy
+from victor_hardware_interfaces.msg import Robotiq3FingerStatus, Robotiq3FingerCommand
 
-from arc_utilities.ros_helpers import joy_to_xbox
+
+def minus(xbox_lhs, xbox_rhs):
+    """
+    Returns a new Xbox_msg object with values lhs - rhs
+    """
+    xbox_diff = deepcopy(xbox_lhs)
+    xbox_diff.A -= xbox_rhs.A
+    xbox_diff.B -= xbox_rhs.B
+    xbox_diff.X -= xbox_rhs.X
+    xbox_diff.Y -= xbox_rhs.Y
+    xbox_diff.LB -= xbox_rhs.LB
+    xbox_diff.RB -= xbox_rhs.RB
+    xbox_diff.back -= xbox_rhs.back
+    xbox_diff.start -= xbox_rhs.start
+    xbox_diff.power -= xbox_rhs.power
+    xbox_diff.stick_button_left -= xbox_rhs.stick_button_left
+    xbox_diff.stick_button_right -= xbox_rhs.stick_button_right
+    xbox_diff.LH -= xbox_rhs.LH
+    xbox_diff.LV -= xbox_rhs.LV
+    xbox_diff.LT -= xbox_rhs.LT
+    xbox_diff.RH -= xbox_rhs.RH
+    xbox_diff.RV -= xbox_rhs.RV
+    xbox_diff.RT -= xbox_rhs.RT
+    xbox_diff.DH -= xbox_rhs.DH
+    xbox_diff.DV -= xbox_rhs.DV
+    return xbox_diff
 
 
-class VictorJoystick:
+class RobotiqGrippersJoystickNode(Node):
     def __init__(self):
+        super().__init__("robotiq_grippers_joystick")
         self.output_throttle_period = 5.0
 
-        self.gripper_status = \
-            {"right": Listener("right_arm/gripper_status", Robotiq3FingerStatus),
-             "left": Listener("left_arm/gripper_status", Robotiq3FingerStatus)}
+        self.gripper_status = {
+            "right": Listener("right_arm/gripper_status", Robotiq3FingerStatus),
+            "left": Listener("left_arm/gripper_status", Robotiq3FingerStatus)
+        }
 
-        self.gripper_command_publisher = \
-            {"right": rospy.Publisher("right_arm/gripper_command", Robotiq3FingerCommand, queue_size=1),
-             "left": rospy.Publisher("left_arm/gripper_command", Robotiq3FingerCommand, queue_size=1)}
+        self.gripper_command_publisher = {
+            "right": self.create_publisher(Robotiq3FingerCommand, "right_arm/gripper_command", 10),
+            "left": self.create_publisher(Robotiq3FingerCommand, "left_arm/gripper_command", 10)
+        }
 
-        self.joy_sub = rospy.Subscriber("joy", Joy, self.joy_callback)
+        self.joy_sub = self.create_subscription(Joy, "joy", self.joy_callback, 10)
 
         self.prev_xbox_msg = None
-
-    @staticmethod
-    def minus(xbox_lhs, xbox_rhs):
-        """
-        Returns a new Xbox_msg object with values lhs - rhs
-        """
-        xbox_diff = deepcopy(xbox_lhs)
-        xbox_diff.A -= xbox_rhs.A
-        xbox_diff.B -= xbox_rhs.B
-        xbox_diff.X -= xbox_rhs.X
-        xbox_diff.Y -= xbox_rhs.Y
-        xbox_diff.LB -= xbox_rhs.LB
-        xbox_diff.RB -= xbox_rhs.RB
-        xbox_diff.back -= xbox_rhs.back
-        xbox_diff.start -= xbox_rhs.start
-        xbox_diff.power -= xbox_rhs.power
-        xbox_diff.stick_button_left -= xbox_rhs.stick_button_left
-        xbox_diff.stick_button_right -= xbox_rhs.stick_button_right
-        xbox_diff.LH -= xbox_rhs.LH
-        xbox_diff.LV -= xbox_rhs.LV
-        xbox_diff.LT -= xbox_rhs.LT
-        xbox_diff.RH -= xbox_rhs.RH
-        xbox_diff.RV -= xbox_rhs.RV
-        xbox_diff.RT -= xbox_rhs.RT
-        xbox_diff.DH -= xbox_rhs.DH
-        xbox_diff.DV -= xbox_rhs.DV
-        return xbox_diff
 
     def joy_callback(self, joy_msg):
         """
@@ -81,7 +85,7 @@ class VictorJoystick:
 
     def finger_open_close_callback(self, xbox_msg):
         """Open and close the gripper fingers"""
-        xboxdiff = VictorJoystick.minus(xbox_msg, self.prev_xbox_msg)
+        xboxdiff = minus(xbox_msg, self.prev_xbox_msg)
         gripper_stop_dist = 0.05
 
         if xboxdiff.LT > 0:
@@ -112,7 +116,7 @@ class VictorJoystick:
 
     def scissor_open_close_callback(self, xbox_msg):
         """Open and close the scissors on the gripper"""
-        xboxdiff = VictorJoystick.minus(xbox_msg, self.prev_xbox_msg)
+        xboxdiff = minus(xbox_msg, self.prev_xbox_msg)
         scissor_stop_dist = 0.05
 
         if xboxdiff.X < 0:
@@ -213,9 +217,9 @@ class VictorJoystick:
 
 
 def main():
-    rospy.init_node('xbox_control')
-    vj = VictorJoystick()
-    rospy.spin()
+    rclpy.init()
+    node = RobotiqGrippersJoystickNode()
+    rclpy.spin(node)
 
 
 if __name__ == "__main__":
