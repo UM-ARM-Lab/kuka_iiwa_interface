@@ -94,9 +94,9 @@ class VictorJointStatePublisher(Node):
         self.joint_state_lock = Lock()
         self.joint_state_msg = JointState()
         self.joint_state_msg.name = self.joint_names
-        self.joint_state_msg.position = [0] * len(self.joint_names)
+        self.joint_state_msg.position = [0.] * len(self.joint_names)
         self.joint_state_msg.velocity = []
-        self.joint_state_msg.effort = [0] * len(self.joint_names)
+        self.joint_state_msg.effort = [0.] * len(self.joint_names)
 
         # Set up the publishers and subscribers that will be used
         self.joint_state_pub = self.create_publisher(JointState, "joint_states", 10)
@@ -162,7 +162,7 @@ class VictorJointStatePublisher(Node):
 
     def publish_joint_values(self):
         with self.joint_state_lock:
-            self.joint_state_msg.header.stamp = self.get_clock().now()
+            self.joint_state_msg.header.stamp = self.get_clock().now().to_msg()
             self.joint_state_pub.publish(self.joint_state_msg)
 
 
