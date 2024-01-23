@@ -2,7 +2,7 @@
 
 from math import radians
 from threading import Lock
-
+from array import array
 import rclpy
 from rclpy.node import Node
 from sensor_msgs.msg import JointState
@@ -136,16 +136,16 @@ class VictorJointStatePublisher(Node):
 
     def set_gripper_position_values(self, gripper_status, offset):
         with self.joint_state_lock:
-            self.joint_state_msg.position[offset + 0: offset + 3] = compute_finger_angles(
-                gripper_status.finger_a_status.position)
+            self.joint_state_msg.position[offset + 0: offset + 3] = array("d", compute_finger_angles(
+                gripper_status.finger_a_status.position))
 
             self.joint_state_msg.position[offset + 3] = compute_scissor_angle(gripper_status.scissor_status.position)
-            self.joint_state_msg.position[offset + 4: offset + 7] = compute_finger_angles(
-                gripper_status.finger_b_status.position)
+            self.joint_state_msg.position[offset + 4: offset + 7] = array("d", compute_finger_angles(
+                gripper_status.finger_b_status.position))
 
             self.joint_state_msg.position[offset + 7] = compute_scissor_angle(gripper_status.scissor_status.position)
-            self.joint_state_msg.position[offset + 8: offset + 11] = compute_finger_angles(
-                gripper_status.finger_c_status.position)
+            self.joint_state_msg.position[offset + 8: offset + 11] = array("d", compute_finger_angles(
+                gripper_status.finger_c_status.position))
 
     def set_arm_effort_values(self, motion_status, offset):
         # We use measured joint torque for now. As Kuka mentioned, it is the currently measured "raw" torque sensor
