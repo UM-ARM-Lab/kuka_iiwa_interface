@@ -16,11 +16,12 @@ from PyQt5.QtGui import *
 from PyQt5.QtWidgets import *
 
 # ROS imports
-import rospy
-from victor_hardware_interface import victor_utils
-from victor_hardware_interface_msgs.msg import Robotiq3FingerCommand, MotionCommand, MotionStatus, Robotiq3FingerStatus, \
+import rclpy
+from rclpy.node import Node
+from victor_hardware import victor_utils
+from victor_hardware_interface.msg import Robotiq3FingerCommand, MotionCommand, MotionStatus, Robotiq3FingerStatus, \
     ControlMode
-from victor_hardware_interface_msgs.srv import GetControlMode
+from victor_hardware_interface.msgs.srv import GetControlMode
 
 finger_range_discretization = 1000
 arm_joint_limit_margin = 1
@@ -66,7 +67,7 @@ class Widget(QWidget):
         self.setLayout(self.v_layout)
 
 
-class Arm:
+class Arm(Node):
     def __init__(self, parent_layout, arm_name, box_row):
         self.name = arm_name
         self.block_command = False
@@ -168,16 +169,10 @@ class Arm:
         self.finger_command.finger_c_command.speed = 1.0
         self.finger_command.scissor_command.speed = 1.0
 
-        self.finger_command_publisher = \
-            rospy.Publisher('victor/' + self.name + '/gripper_command', Robotiq3FingerCommand, queue_size=10)
-        self.arm_command_publisher = rospy.Publisher('victor/' + self.name + '/motion_command', MotionCommand,
-                                                     queue_size=10)
-
-        self.gripper_status_subscriber = \
-            rospy.Subscriber('victor/' + self.name + '/gripper_status', Robotiq3FingerStatus,
-                             self.gripper_status_callback)
-        self.arm_status_subscriber = \
-            rospy.Subscriber('victor/' + self.name + '/motion_status', MotionStatus, self.arm_status_callback)
+        self.finger_command_publisher = self.create_publisher(Robotiq3FingerCommand, 'victor/' + self.name + '/gripper_command', 10)
+        self.arm_command_publisher = self.create_publisher(MotionCommand, 'victor/' + self.name + '/motion_command', 10)
+        self.gripper_status_subscriber = self.create_subscription(Robotiq3FingerStatus, 'victor/' + self.name + '/gripper_status',10)
+        self.arm_status_subscriber = self.create_subscription(MotionStatus, 'victor/' + self.name + '/motion_status', 10)
 
         self.fingers_same_command = {finger_command_name: False for finger_command_name in finger_command_names}
 
@@ -197,9 +192,11 @@ class Arm:
 
         print('Getting {} current control mode ...'.format(self.name))
         sys.stdout.flush()
-        get_current_control_mode = rospy.ServiceProxy('victor/' + self.name + '/get_control_mode_service',
-                                                      GetControlMode)
-        control_mode = get_current_control_mode()
+        get_current_control_mode = self.create_client(GetControlMode, 'victor/' + self.name + '/get_control_mode_service')
+        while not get_current_control_mode.wait_for_service(timeout_sec=1.0):
+            self.get_logger().info('Get control mode service not available, waiting again...')
+        control_mode = get_current_control_mode.call_async()
+        rclpy.spin_until_future_complete(self, control_mode)
         self.active_control_mode_int = control_mode.active_control_mode.control_mode.mode
         self.control_mode_combobox.setCurrentIndex(self.active_control_mode_int)
         print('Done')
