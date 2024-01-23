@@ -1,17 +1,18 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 # Python imports
 from __future__ import print_function
 
 import copy
 import math
+import pdb
 import signal
 import sys
 import time
 from functools import partial
 
 # Qt imports
-from PyQt5.QtCore import Qt
+from PyQt5.QtCore import Qt, QTimer
 from PyQt5.QtGui import *
 from PyQt5.QtWidgets import *
 
@@ -22,7 +23,7 @@ from victor_hardware import victor_utils
 from victor_hardware_interfaces.msg import Robotiq3FingerCommand, MotionCommand, MotionStatus, Robotiq3FingerStatus, \
     ControlMode
 from victor_hardware_interfaces.srv import GetControlMode
-
+from std_srvs.srv import Empty
 finger_range_discretization = 1000
 arm_joint_limit_margin = 1
 
@@ -65,6 +66,16 @@ class Widget(QWidget):
         self.right_arm = Arm(self.v_layout, 'right_arm', 1)
 
         self.setLayout(self.v_layout)
+        # create a timer callback with qt
+    #     self.timer = QTimer()
+    #     self.timer.timeout.connect(self.timer_callback)
+    #     self.timer.start(1)  # 1000 ms = 1 s
+    #
+    # def timer_callback(self):
+    #     print("timer callback")
+    #     rclpy.spin_once(self.left_arm)
+    #     rclpy.spin_once(self.right_arm)
+
 
 
 class Arm(Node):
@@ -169,13 +180,16 @@ class Arm(Node):
         self.finger_command.finger_b_command.speed = 1.0
         self.finger_command.finger_c_command.speed = 1.0
         self.finger_command.scissor_command.speed = 1.0
+        self.finger_command_publisher = self.create_publisher(Robotiq3FingerCommand,
+                                                              '/victor/' + self.name + '/gripper_command', 10)
+        self.arm_command_publisher = self.create_publisher(MotionCommand, '/victor/' + self.name + '/motion_command', 10)
 
-        self.finger_command_publisher = self.create_publisher(Robotiq3FingerCommand, 'victor/' + self.name + '/gripper_command', 10)
-        self.arm_command_publisher = self.create_publisher(MotionCommand, 'victor/' + self.name + '/motion_command', 10)
-        self.gripper_status_subscriber = self.create_subscription(Robotiq3FingerStatus, 'victor/' + self.name + '/gripper_status',
-                                                                  self.gripper_status_callback, 10)
-        self.arm_status_subscriber = self.create_subscription(MotionStatus, 'victor/' + self.name + '/motion_status',
-                                                              self.arm_status_callback, 10)
+        self.gripper_status_subscriber = self.create_subscription(
+            Robotiq3FingerStatus, '/victor/' + self.name + '/gripper_status',
+            self.gripper_status_callback, 10)
+        self.arm_status_subscriber = self.create_subscription(
+            MotionStatus, '/victor/' + self.name + '/motion_status',
+            self.arm_status_callback, 10)
 
         self.fingers_same_command = {finger_command_name: False for finger_command_name in finger_command_names}
 
@@ -185,26 +199,33 @@ class Arm(Node):
         parent_layout.addWidget(self.groupbox, box_row, 0)
 
         print('Getting', self.name, 'current joint values ...')
+        print('/victor/' + self.name + '/motion_status')
+        print( '/victor/' + self.name + '/gripper_status')
         sys.stdout.flush()
         while (not self.arm_status_updated) or (not self.gripper_status_updated):
+            rclpy.spin_once(self)
             time.sleep(0.01)
-        print('Done')
+        # print('Done')
 
         self.reset_arm_slider_to_current_value()
         self.reset_gripper_position_slider_to_current_value()
 
         print('Getting {} current control mode ...'.format(self.name))
         sys.stdout.flush()
-        get_current_control_mode = self.create_client(GetControlMode, 'victor/' + self.name + '/get_control_mode_service')
+        get_current_control_mode = self.create_client(GetControlMode,
+                                                      '/victor/' + self.name + '/get_control_mode_service')
         while not get_current_control_mode.wait_for_service(timeout_sec=1.0):
             self.get_logger().info('Get control mode service not available, waiting again...')
-        control_mode = get_current_control_mode.call_async()
+
+        control_mode = get_current_control_mode.call_async(GetControlMode.Request())
         rclpy.spin_until_future_complete(self, control_mode)
-        self.active_control_mode_int = control_mode.active_control_mode.control_mode.mode
+        self.active_control_mode_int = control_mode.result().active_control_mode.control_mode.mode
         self.control_mode_combobox.setCurrentIndex(self.active_control_mode_int)
-        print('Done')
+        print('Arm created')
+
 
     def arm_status_callback(self, data):
+        print( self.name, " arm status callback")
         self.arm_status = data
         self.arm_status_updated = True
 
@@ -424,6 +445,12 @@ def main():
     widget = Widget()
     widget.setWindowTitle("Arm Command Widget")
     widget.show()
+    # while 1:
+    #     print("spin once")
+    #     rclpy.spin_once(widget.left_arm)
+    #     rclpy.spin_once(widget.right_arm)
+    #     # time.sleep(0.01)
+
 
     sys.exit(app.exec_())
 

@@ -97,7 +97,7 @@ class VictorJointStatePublisher(Node):
         self.joint_state_msg.position = [0.] * len(self.joint_names)
         self.joint_state_msg.velocity = []
         self.joint_state_msg.effort = [0.] * len(self.joint_names)
-
+        print(self.joint_state_msg.position)
         # Set up the publishers and subscribers that will be used
         self.joint_state_pub = self.create_publisher(JointState, "joint_states", 10)
         self.left_arm_sub = self.create_subscription(MotionStatus, "left_arm/motion_status", self.left_arm_motion_status_callback, 10)
@@ -106,11 +106,11 @@ class VictorJointStatePublisher(Node):
                                                          10)
         self.right_gripper_sub = self.create_subscription(Robotiq3FingerStatus, "right_arm/gripper_status", self.right_gripper_motion_status_callback,
                                                           10)
-
         # Create timer to publish joint states at 100Hz
         self.create_timer(0.01, self.publish_joint_values)
 
     def left_arm_motion_status_callback(self, motion_status):
+        print("left arm motion status callback")
         self.set_arm_position_values(motion_status, offset=0)
         self.set_arm_effort_values(motion_status, offset=0)
 
@@ -169,6 +169,7 @@ class VictorJointStatePublisher(Node):
 def main():
     rclpy.init()
     node = VictorJointStatePublisher()
+    print(node.joint_state_msg.position)
     rclpy.spin(node)
 
 
