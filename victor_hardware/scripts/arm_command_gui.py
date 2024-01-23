@@ -19,9 +19,9 @@ from PyQt5.QtWidgets import *
 import rclpy
 from rclpy.node import Node
 from victor_hardware import victor_utils
-from victor_hardware_interface.msg import Robotiq3FingerCommand, MotionCommand, MotionStatus, Robotiq3FingerStatus, \
+from victor_hardware_interfaces.msg import Robotiq3FingerCommand, MotionCommand, MotionStatus, Robotiq3FingerStatus, \
     ControlMode
-from victor_hardware_interface.msgs.srv import GetControlMode
+from victor_hardware_interfaces.srv import GetControlMode
 
 finger_range_discretization = 1000
 arm_joint_limit_margin = 1
@@ -46,7 +46,7 @@ finger_column = {'finger_a': 2, 'finger_b': 4, 'finger_c': 6, 'scissor': 9}
 finger_joint_labels = {'finger_a': 'Finger A', 'finger_b': 'Finger B', 'finger_c': 'Finger C', 'scissor': 'Scissor'}
 
 finger_command_names = ['position', 'speed', 'force']
-finger_command_default = {'position': 0.0, 'speed': 1.0, 'force': 1.0}
+finger_command_default = {'position': 0, 'speed': 1, 'force': 1}
 
 
 def clip(value, joint_name):
@@ -69,6 +69,7 @@ class Widget(QWidget):
 
 class Arm(Node):
     def __init__(self, parent_layout, arm_name, box_row):
+        super().__init__(arm_name + '_arm_command_gui')
         self.name = arm_name
         self.block_command = False
 
@@ -171,8 +172,10 @@ class Arm(Node):
 
         self.finger_command_publisher = self.create_publisher(Robotiq3FingerCommand, 'victor/' + self.name + '/gripper_command', 10)
         self.arm_command_publisher = self.create_publisher(MotionCommand, 'victor/' + self.name + '/motion_command', 10)
-        self.gripper_status_subscriber = self.create_subscription(Robotiq3FingerStatus, 'victor/' + self.name + '/gripper_status',10)
-        self.arm_status_subscriber = self.create_subscription(MotionStatus, 'victor/' + self.name + '/motion_status', 10)
+        self.gripper_status_subscriber = self.create_subscription(Robotiq3FingerStatus, 'victor/' + self.name + '/gripper_status',
+                                                                  self.gripper_status_callback, 10)
+        self.arm_status_subscriber = self.create_subscription(MotionStatus, 'victor/' + self.name + '/motion_status',
+                                                              self.arm_status_callback, 10)
 
         self.fingers_same_command = {finger_command_name: False for finger_command_name in finger_command_names}
 
@@ -413,7 +416,7 @@ class Arm(Node):
 
 
 def main():
-    rospy.init_node('arm_command_widget')
+    rclpy.init()
     signal.signal(signal.SIGINT, signal.SIG_DFL)
 
     app = QApplication(sys.argv)
