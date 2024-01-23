@@ -54,8 +54,10 @@ install(
         ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}      # lib
         RUNTIME DESTINATION ${CMAKE_INSTALL_LIBDIR}/${PROJECT_NAME}
 )
-install(DIRECTORY include)
-
+install(
+        DIRECTORY include/
+        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}          # include
+)
 ament_export_targets(${PROJECT_NAME}_targets)
 ament_export_include_directories(
         include
