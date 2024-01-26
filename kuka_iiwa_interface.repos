@@ -2,8 +2,8 @@ repositories:
   ros2_robotiq_3f_gripper:
     type: git
     url: git@github.com:PeterMitrano/ros2_robotiq_3f_gripper.git
-    version: master
+    version: main
   arm_utilities:
     type: git
     url: git@github.com:UM-ARM-Lab/arm_utilities.git
-    version: humble
+    version: main
