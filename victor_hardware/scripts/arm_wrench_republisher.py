@@ -26,8 +26,8 @@ hand_wrench_pub = {'left': rospy.Publisher('left_gripper/wrench', WrenchStamped,
 def publishWrench(data, hand):
     wr = data.estimated_external_wrench
     wrench_msg = Wrench()
-    wrench_msg.force = Vector3(wr.x, wr.y, wr.z)
-    wrench_msg.torque = Vector3(wr.c, wr.b, wr.a)
+    wrench_msg.force = Vector3(x = wr.x, y = wr.y, z = wr.z)
+    wrench_msg.torque = Vector3(x = wr.c,y = wr.b, z =wr.a)
 
     wrench_stamped_msg = WrenchStamped()
     wrench_stamped_msg.wrench = wrench_msg
