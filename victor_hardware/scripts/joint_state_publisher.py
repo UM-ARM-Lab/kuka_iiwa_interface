@@ -106,7 +106,7 @@ class VictorJointStatePublisher(Node):
                                                          10)
         self.right_gripper_sub = self.create_subscription(Robotiq3FingerStatus, "right_arm/gripper_status", self.right_gripper_motion_status_callback,
                                                           10)
-
+        print("?s?S?S?")
         # Create timer to publish joint states at 100Hz
         self.create_timer(0.01, self.publish_joint_values)
 

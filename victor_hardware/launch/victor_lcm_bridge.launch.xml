@@ -31,8 +31,8 @@
         <param name="enable_finger_open_close_control" value="true"/>
         <param name="enable_scissor_open_close_control" value="true"/>
     </node>
-    <!-- <node pkg="victor_hardware" exec="arm_wrench_republisher.py" name="arm_wrench_republisher"
+    <node pkg="victor_hardware" exec="arm_wrench_republisher.py" name="arm_wrench_republisher"
           output="screen" namespace="victor"/>
-    <node pkg="victor_hardware" exec="grasp_status_node.py" name="grasp_status"/> -->
+    <!-- <node pkg="victor_hardware" exec="grasp_status_node.py" name="grasp_status"/> -->
 
 </launch>
