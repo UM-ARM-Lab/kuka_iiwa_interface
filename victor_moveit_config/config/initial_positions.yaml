@@ -1,0 +1,17 @@
+# Default initial positions for victor's ros2_control fake system
+
+initial_positions:
+  victor_left_arm_joint_1: 0
+  victor_left_arm_joint_2: 0
+  victor_left_arm_joint_3: 0
+  victor_left_arm_joint_4: 0
+  victor_left_arm_joint_5: 0
+  victor_left_arm_joint_6: 0
+  victor_left_arm_joint_7: 0
+  victor_right_arm_joint_1: 0
+  victor_right_arm_joint_2: 0
+  victor_right_arm_joint_3: 0
+  victor_right_arm_joint_4: 0
+  victor_right_arm_joint_5: 0
+  victor_right_arm_joint_6: 0
+  victor_right_arm_joint_7: 0

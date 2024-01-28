@@ -9,616 +9,20 @@
     <!--JOINTS: When a joint is specified, the child link of that joint (which will always exist) is automatically included-->
     <!--CHAINS: When a chain is specified, all the links along the chain (including endpoints) are included in the group. Additionally, all the joints that are parents to included links are also included. This means that joints along the chain and the parent joint of the base link are included in the group-->
     <!--SUBGROUPS: Groups can also be formed by referencing to already defined group names-->
-    <group name="right_arm">
-        <chain base_link="victor_right_arm_link_0" tip_link="victor_right_arm_flange"/>
-    </group>
-    <group name="right_gripper">
-        <link name="victor_right_gripper_mounting_bracket"/>
-        <link name="r_palm"/>
-        <link name="r_finger_1_link_0"/>
-        <link name="r_finger_1_link_1"/>
-        <link name="r_finger_1_link_2"/>
-        <link name="r_finger_1_link_3"/>
-        <link name="r_finger_2_link_0"/>
-        <link name="r_finger_2_link_1"/>
-        <link name="r_finger_2_link_2"/>
-        <link name="r_finger_2_link_3"/>
-        <link name="r_finger_middle_link_0"/>
-        <link name="r_finger_middle_link_1"/>
-        <link name="r_finger_middle_link_2"/>
-        <link name="r_finger_middle_link_3"/>
-    </group>
     <group name="left_arm">
-        <chain base_link="victor_left_arm_link_0" tip_link="victor_left_arm_flange"/>
+        <chain base_link="victor_left_arm_link_0" tip_link="left_tool"/>
     </group>
-    <group name="left_gripper">
-        <link name="victor_left_gripper_mounting_bracket"/>
-        <link name="l_palm"/>
-        <link name="l_finger_1_link_0"/>
-        <link name="l_finger_1_link_1"/>
-        <link name="l_finger_1_link_2"/>
-        <link name="l_finger_1_link_3"/>
-        <link name="l_finger_2_link_0"/>
-        <link name="l_finger_2_link_1"/>
-        <link name="l_finger_2_link_2"/>
-        <link name="l_finger_2_link_3"/>
-        <link name="l_finger_middle_link_0"/>
-        <link name="l_finger_middle_link_1"/>
-        <link name="l_finger_middle_link_2"/>
-        <link name="l_finger_middle_link_3"/>
+    <group name="right_arm">
+        <chain base_link="victor_right_arm_link_0" tip_link="right_tool"/>
     </group>
     <group name="both_arms">
         <group name="left_arm"/>
         <group name="right_arm"/>
     </group>
-
-
-    <!-- ---------------------------------------- -->
-    <!---           NAMED Positions           -->
-    <!-- ---------------------------------------- -->
-
-
-    <!-- GROUP STATES: Purpose: Define a named state for a -->
-    <!-- particular group, in terms of joint values. This -->
-    <!-- is useful to define states like 'folded arms'--> 
-
-    <group_state name="right_arm_zero" group="right_arm">
-        <joint name="victor_right_arm_joint_1" value="0"/>
-        <joint name="victor_right_arm_joint_2" value="0"/>
-        <joint name="victor_right_arm_joint_3" value="0"/>
-        <joint name="victor_right_arm_joint_4" value="0"/>
-        <joint name="victor_right_arm_joint_5" value="0"/>
-        <joint name="victor_right_arm_joint_6" value="0"/>
-        <joint name="victor_right_arm_joint_7" value="0"/>
-    </group_state>
-    <group_state name="left_arm_zero" group="left_arm">
-        <joint name="victor_left_arm_joint_1" value="0"/>
-        <joint name="victor_left_arm_joint_2" value="0"/>
-        <joint name="victor_left_arm_joint_3" value="0"/>
-        <joint name="victor_left_arm_joint_4" value="0"/>
-        <joint name="victor_left_arm_joint_5" value="0"/>
-        <joint name="victor_left_arm_joint_6" value="0"/>
-        <joint name="victor_left_arm_joint_7" value="0"/>
-    </group_state>
-    <group_state name="zero" group="both_arms">
-        <joint name="victor_right_arm_joint_1" value="0"/>
-        <joint name="victor_right_arm_joint_2" value="0"/>
-        <joint name="victor_right_arm_joint_3" value="0"/>
-        <joint name="victor_right_arm_joint_4" value="0"/>
-        <joint name="victor_right_arm_joint_5" value="0"/>
-        <joint name="victor_right_arm_joint_6" value="0"/>
-        <joint name="victor_right_arm_joint_7" value="0"/>
-        <joint name="victor_left_arm_joint_1" value="0"/>
-        <joint name="victor_left_arm_joint_2" value="0"/>
-        <joint name="victor_left_arm_joint_3" value="0"/>
-        <joint name="victor_left_arm_joint_4" value="0"/>
-        <joint name="victor_left_arm_joint_5" value="0"/>
-        <joint name="victor_left_arm_joint_6" value="0"/>
-        <joint name="victor_left_arm_joint_7" value="0"/>
-    </group_state>
-    <group_state name="up_and_back" group="both_arms">
-        <joint name="victor_left_arm_joint_1" value="-2.017"/>
-        <joint name="victor_left_arm_joint_2" value="1.141"/>
-        <joint name="victor_left_arm_joint_3" value="-0.737"/>
-        <joint name="victor_left_arm_joint_4" value="-1.319"/>
-        <joint name="victor_left_arm_joint_5" value="0.703"/>
-        <joint name="victor_left_arm_joint_6" value="1.534"/>
-        <joint name="victor_left_arm_joint_7" value="1.153"/>
-        <joint name="victor_right_arm_joint_1" value="-0.972"/>
-        <joint name="victor_right_arm_joint_2" value="-1.558"/>
-        <joint name="victor_right_arm_joint_3" value="0.505"/>
-        <joint name="victor_right_arm_joint_4" value="1.552"/>
-        <joint name="victor_right_arm_joint_5" value="-1.765"/>
-        <joint name="victor_right_arm_joint_6" value="-1.331"/>
-        <joint name="victor_right_arm_joint_7" value="-2.261"/>
-    </group_state>
-    <group_state name="impedance_switch" group="both_arms">
-        <joint name="victor_left_arm_joint_1" value="-0.694"/>
-        <joint name="victor_left_arm_joint_2" value="0.140"/>
-        <joint name="victor_left_arm_joint_3" value="-0.229"/>
-        <joint name="victor_left_arm_joint_4" value="-1.110"/>
-        <joint name="victor_left_arm_joint_5" value="-0.512"/>
-        <joint name="victor_left_arm_joint_6" value="1.272"/>
-        <joint name="victor_left_arm_joint_7" value="0.077"/>
-        <joint name="victor_right_arm_joint_1" value="0.724"/>
-        <joint name="victor_right_arm_joint_2" value="0.451"/>
-        <joint name="victor_right_arm_joint_3" value="0.940"/>
-        <joint name="victor_right_arm_joint_4" value="-1.425"/>
-        <joint name="victor_right_arm_joint_5" value="0.472"/>
-        <joint name="victor_right_arm_joint_6" value="0.777"/>
-        <joint name="victor_right_arm_joint_7" value="-0.809"/>
-    </group_state>
-    <group_state name="hug" group="both_arms">
-        <joint name="victor_left_arm_joint_1" value="0.604"/>
-        <joint name="victor_left_arm_joint_2" value="1.568"/>
-        <joint name="victor_left_arm_joint_3" value="-0.021"/>
-        <joint name="victor_left_arm_joint_4" value="-1.164"/>
-        <joint name="victor_left_arm_joint_5" value="0.355"/>
-        <joint name="victor_left_arm_joint_6" value="0.173"/>
-        <joint name="victor_left_arm_joint_7" value="0.297"/>
-        <joint name="victor_right_arm_joint_1" value="0.311"/>
-        <joint name="victor_right_arm_joint_2" value="1.561"/>
-        <joint name="victor_right_arm_joint_3" value="0.282"/>
-        <joint name="victor_right_arm_joint_4" value="-1.296"/>
-        <joint name="victor_right_arm_joint_5" value="0.137"/>
-        <joint name="victor_right_arm_joint_6" value="0.493"/>
-        <joint name="victor_right_arm_joint_7" value="0.112"/>
-    </group_state>
-    <group_state name="straight_up" group="both_arms">
-        <joint name="victor_left_arm_joint_1" value="-1.566"/>
-        <joint name="victor_left_arm_joint_2" value="1.570"/>
-        <joint name="victor_left_arm_joint_3" value="-0.002"/>
-        <joint name="victor_left_arm_joint_4" value="0.000"/>
-        <joint name="victor_left_arm_joint_5" value="0.002"/>
-        <joint name="victor_left_arm_joint_6" value="-0.001"/>
-        <joint name="victor_left_arm_joint_7" value="-0.000"/>
-        <joint name="victor_right_arm_joint_1" value="1.565"/>
-        <joint name="victor_right_arm_joint_2" value="1.568"/>
-        <joint name="victor_right_arm_joint_3" value="-0.002"/>
-        <joint name="victor_right_arm_joint_4" value="-0.001"/>
-        <joint name="victor_right_arm_joint_5" value="0.003"/>
-        <joint name="victor_right_arm_joint_6" value="-0.001"/>
-        <joint name="victor_right_arm_joint_7" value="0.001"/>
-    </group_state>
-    <group_state name="at_side" group="both_arms">
-        <joint name="victor_left_arm_joint_1" value="-1.270"/>
-        <joint name="victor_left_arm_joint_2" value="-1.227"/>
-        <joint name="victor_left_arm_joint_3" value="-0.309"/>
-        <joint name="victor_left_arm_joint_4" value="0.360"/>
-        <joint name="victor_left_arm_joint_5" value="-0.585"/>
-        <joint name="victor_left_arm_joint_6" value="0.496"/>
-        <joint name="victor_left_arm_joint_7" value="0.105"/>
-        <joint name="victor_right_arm_joint_1" value="1.144"/>
-        <joint name="victor_right_arm_joint_2" value="-1.189"/>
-        <joint name="victor_right_arm_joint_3" value="0.590"/>
-        <joint name="victor_right_arm_joint_4" value="0.292"/>
-        <joint name="victor_right_arm_joint_5" value="0.296"/>
-        <joint name="victor_right_arm_joint_6" value="0.265"/>
-        <joint name="victor_right_arm_joint_7" value="-0.809"/>
-    </group_state>
-    <group_state name="flex" group="both_arms">
-        <joint name="victor_left_arm_joint_1" value="-0.229"/>
-        <joint name="victor_left_arm_joint_2" value="-0.122"/>
-        <joint name="victor_left_arm_joint_3" value="-1.215"/>
-        <joint name="victor_left_arm_joint_4" value="-1.562"/>
-        <joint name="victor_left_arm_joint_5" value="-0.227"/>
-        <joint name="victor_left_arm_joint_6" value="1.572"/>
-        <joint name="victor_left_arm_joint_7" value="-0.119"/>
-        <joint name="victor_right_arm_joint_1" value="1.247"/>
-        <joint name="victor_right_arm_joint_2" value="-0.751"/>
-        <joint name="victor_right_arm_joint_3" value="1.119"/>
-        <joint name="victor_right_arm_joint_4" value="1.401"/>
-        <joint name="victor_right_arm_joint_5" value="0.281"/>
-        <joint name="victor_right_arm_joint_6" value="-1.382"/>
-        <joint name="victor_right_arm_joint_7" value="-1.069"/>
-    </group_state>
-    <group_state name="vr_teleop_start" group="both_arms">
-        <joint name="victor_left_arm_joint_1" value="-0.7911884615061292"/>
-        <joint name="victor_left_arm_joint_2" value="0.25679383673697187"/>
-        <joint name="victor_left_arm_joint_3" value="0.06381749569643466"/>
-        <joint name="victor_left_arm_joint_4" value="-1.0073001090215061"/>
-        <joint name="victor_left_arm_joint_5" value="-1.7949901117327038"/>
-        <joint name="victor_left_arm_joint_6" value="-0.6792001341453865"/>
-        <joint name="victor_left_arm_joint_7" value="-0.034203876649457815"/>
-        <joint name="victor_right_arm_joint_1" value="-0.011453503522893193"/>
-        <joint name="victor_right_arm_joint_2" value="0.2952485179756995"/>
-        <joint name="victor_right_arm_joint_3" value="-0.06431004724630154"/>
-        <joint name="victor_right_arm_joint_4" value="-1.0023593726155138"/>
-        <joint name="victor_right_arm_joint_5" value="-1.1340977864724464"/>
-        <joint name="victor_right_arm_joint_6" value="0.42173176539526386"/>
-        <joint name="victor_right_arm_joint_7" value="-0.02400146636779774"/>
-    </group_state>
-    <group_state name="handshake" group="right_arm">
-        <joint name="victor_right_arm_joint_1" value="-0.336"/>
-        <joint name="victor_right_arm_joint_2" value="0.105"/>
-        <joint name="victor_right_arm_joint_3" value="0.061"/>
-        <joint name="victor_right_arm_joint_4" value="-1.151"/>
-        <joint name="victor_right_arm_joint_5" value="-0.010"/>
-        <joint name="victor_right_arm_joint_6" value="0.577"/>
-        <joint name="victor_right_arm_joint_7" value="-0.675"/>
-    </group_state>
-
-
-    <!-- ---------------------------------------- -->
-    <!---           END Named Positions           -->
-    <!-- ---------------------------------------- -->
-
-
     <!--END EFFECTOR: Purpose: Represent information about an end effector.-->
-    <end_effector name="right_ee" parent_link="victor_right_arm_flange" group="right_gripper"/>
-    <end_effector name="left_ee" parent_link="victor_left_arm_flange" group="left_gripper"/>
+    <end_effector name="left_tool" parent_link="left_tool" group="left_arm"/>
+    <end_effector name="right_tool" parent_link="right_tool" group="right_arm"/>
     <!--DISABLE COLLISIONS: By default it is assumed that any link of the robot could potentially come into collision with any other link in the robot. This tag disables collision checking between a specified pair of links. -->
-    <disable_collisions link1="l_finger_1_link_0" link2="l_finger_1_link_1" reason="Adjacent"/>
-    <disable_collisions link1="l_finger_1_link_0" link2="l_finger_1_link_2" reason="Never"/>
-    <disable_collisions link1="l_finger_1_link_0" link2="l_finger_1_link_3" reason="Never"/>
-    <disable_collisions link1="l_finger_1_link_0" link2="l_finger_2_link_0" reason="Never"/>
-    <disable_collisions link1="l_finger_1_link_0" link2="l_finger_2_link_1" reason="Never"/>
-    <disable_collisions link1="l_finger_1_link_0" link2="l_finger_2_link_2" reason="Never"/>
-    <disable_collisions link1="l_finger_1_link_0" link2="l_finger_2_link_3" reason="Never"/>
-    <disable_collisions link1="l_finger_1_link_0" link2="l_finger_middle_link_0" reason="Never"/>
-    <disable_collisions link1="l_finger_1_link_0" link2="l_finger_middle_link_1" reason="Never"/>
-    <disable_collisions link1="l_finger_1_link_0" link2="l_finger_middle_link_2" reason="Never"/>
-    <disable_collisions link1="l_finger_1_link_0" link2="l_finger_middle_link_3" reason="Never"/>
-    <disable_collisions link1="l_finger_1_link_0" link2="l_palm" reason="Adjacent"/>
-    <disable_collisions link1="l_finger_1_link_0" link2="r_finger_2_link_2" reason="Never"/>
-    <disable_collisions link1="l_finger_1_link_0" link2="r_finger_2_link_3" reason="Never"/>
-    <disable_collisions link1="l_finger_1_link_0" link2="r_finger_middle_link_2" reason="Never"/>
-    <disable_collisions link1="l_finger_1_link_0" link2="r_finger_middle_link_3" reason="Never"/>
-    <disable_collisions link1="l_finger_1_link_0" link2="victor_left_arm_link_1" reason="Never"/>
-    <disable_collisions link1="l_finger_1_link_0" link2="victor_left_arm_link_2" reason="Never"/>
-    <disable_collisions link1="l_finger_1_link_0" link2="victor_left_arm_link_3" reason="Never"/>
-    <disable_collisions link1="l_finger_1_link_0" link2="victor_left_arm_link_4" reason="Never"/>
-    <disable_collisions link1="l_finger_1_link_0" link2="victor_left_arm_link_5" reason="Never"/>
-    <disable_collisions link1="l_finger_1_link_0" link2="victor_left_arm_link_6" reason="Never"/>
-    <disable_collisions link1="l_finger_1_link_0" link2="victor_left_arm_link_7" reason="Never"/>
-    <disable_collisions link1="l_finger_1_link_0" link2="victor_left_gripper_mounting_bracket" reason="Never"/>
-    <disable_collisions link1="l_finger_1_link_1" link2="l_finger_1_link_2" reason="Adjacent"/>
-    <disable_collisions link1="l_finger_1_link_1" link2="l_finger_1_link_3" reason="Never"/>
-    <disable_collisions link1="l_finger_1_link_1" link2="l_finger_2_link_0" reason="Never"/>
-    <disable_collisions link1="l_finger_1_link_1" link2="l_finger_2_link_1" reason="Never"/>
-    <disable_collisions link1="l_finger_1_link_1" link2="l_finger_2_link_2" reason="User"/>
-    <disable_collisions link1="l_finger_1_link_1" link2="l_finger_2_link_3" reason="Never"/>
-    <disable_collisions link1="l_finger_1_link_1" link2="l_finger_middle_link_0" reason="Never"/>
-    <disable_collisions link1="l_finger_1_link_1" link2="l_finger_middle_link_1" reason="Never"/>
-    <disable_collisions link1="l_finger_1_link_1" link2="l_finger_middle_link_2" reason="User"/>
-    <disable_collisions link1="l_finger_1_link_1" link2="l_finger_middle_link_3" reason="User"/>
-    <disable_collisions link1="l_finger_1_link_1" link2="l_palm" reason="Default"/>
-    <disable_collisions link1="l_finger_1_link_1" link2="r_finger_2_link_3" reason="Never"/>
-    <disable_collisions link1="l_finger_1_link_1" link2="r_finger_middle_link_0" reason="Never"/>
-    <disable_collisions link1="l_finger_1_link_1" link2="r_finger_middle_link_1" reason="Never"/>
-    <disable_collisions link1="l_finger_1_link_1" link2="victor_left_arm_link_3" reason="Never"/>
-    <disable_collisions link1="l_finger_1_link_1" link2="victor_left_arm_link_4" reason="Never"/>
-    <disable_collisions link1="l_finger_1_link_1" link2="victor_left_arm_link_5" reason="Never"/>
-    <disable_collisions link1="l_finger_1_link_1" link2="victor_left_arm_link_6" reason="Never"/>
-    <disable_collisions link1="l_finger_1_link_1" link2="victor_left_arm_link_7" reason="Never"/>
-    <disable_collisions link1="l_finger_1_link_1" link2="victor_left_gripper_mounting_bracket" reason="Never"/>
-    <disable_collisions link1="l_finger_1_link_2" link2="l_finger_1_link_3" reason="Adjacent"/>
-    <disable_collisions link1="l_finger_1_link_2" link2="l_finger_2_link_0" reason="Never"/>
-    <disable_collisions link1="l_finger_1_link_2" link2="l_finger_2_link_1" reason="Never"/>
-    <disable_collisions link1="l_finger_1_link_2" link2="l_finger_2_link_2" reason="User"/>
-    <disable_collisions link1="l_finger_1_link_2" link2="l_finger_2_link_3" reason="User"/>
-    <disable_collisions link1="l_finger_1_link_2" link2="l_finger_middle_link_0" reason="Never"/>
-    <disable_collisions link1="l_finger_1_link_2" link2="l_finger_middle_link_1" reason="User"/>
-    <disable_collisions link1="l_finger_1_link_2" link2="l_finger_middle_link_2" reason="User"/>
-    <disable_collisions link1="l_finger_1_link_2" link2="l_finger_middle_link_3" reason="User"/>
-    <disable_collisions link1="l_finger_1_link_2" link2="l_palm" reason="User"/>
-    <disable_collisions link1="l_finger_1_link_2" link2="r_finger_1_link_0" reason="Never"/>
-    <disable_collisions link1="l_finger_1_link_2" link2="r_finger_1_link_1" reason="Never"/>
-    <disable_collisions link1="l_finger_1_link_2" link2="r_finger_1_link_2" reason="Never"/>
-    <disable_collisions link1="l_finger_1_link_2" link2="r_finger_2_link_0" reason="Never"/>
-    <disable_collisions link1="l_finger_1_link_2" link2="r_finger_2_link_3" reason="Never"/>
-    <disable_collisions link1="l_finger_1_link_2" link2="r_finger_middle_link_0" reason="Never"/>
-    <disable_collisions link1="l_finger_1_link_2" link2="r_finger_middle_link_1" reason="Never"/>
-    <disable_collisions link1="l_finger_1_link_2" link2="victor_left_arm_link_3" reason="Never"/>
-    <disable_collisions link1="l_finger_1_link_2" link2="victor_left_arm_link_4" reason="Never"/>
-    <disable_collisions link1="l_finger_1_link_2" link2="victor_left_arm_link_5" reason="Never"/>
-    <disable_collisions link1="l_finger_1_link_2" link2="victor_left_arm_link_6" reason="Never"/>
-    <disable_collisions link1="l_finger_1_link_2" link2="victor_left_arm_link_7" reason="Never"/>
-    <disable_collisions link1="l_finger_1_link_2" link2="victor_left_gripper_mounting_bracket" reason="Never"/>
-    <disable_collisions link1="l_finger_1_link_2" link2="victor_right_gripper_mounting_bracket" reason="Never"/>
-    <disable_collisions link1="l_finger_1_link_3" link2="l_finger_2_link_0" reason="Never"/>
-    <disable_collisions link1="l_finger_1_link_3" link2="l_finger_2_link_1" reason="Never"/>
-    <disable_collisions link1="l_finger_1_link_3" link2="l_finger_2_link_2" reason="User"/>
-    <disable_collisions link1="l_finger_1_link_3" link2="l_finger_2_link_3" reason="User"/>
-    <disable_collisions link1="l_finger_1_link_3" link2="l_finger_middle_link_0" reason="Never"/>
-    <disable_collisions link1="l_finger_1_link_3" link2="l_finger_middle_link_1" reason="User"/>
-    <disable_collisions link1="l_finger_1_link_3" link2="l_finger_middle_link_2" reason="User"/>
-    <disable_collisions link1="l_finger_1_link_3" link2="l_finger_middle_link_3" reason="User"/>
-    <disable_collisions link1="l_finger_1_link_3" link2="l_palm" reason="User"/>
-    <disable_collisions link1="l_finger_1_link_3" link2="r_finger_1_link_0" reason="Never"/>
-    <disable_collisions link1="l_finger_1_link_3" link2="r_finger_2_link_0" reason="Never"/>
-    <disable_collisions link1="l_finger_1_link_3" link2="r_finger_middle_link_0" reason="Never"/>
-    <disable_collisions link1="l_finger_1_link_3" link2="r_finger_middle_link_1" reason="Never"/>
-    <disable_collisions link1="l_finger_1_link_3" link2="victor_left_arm_link_2" reason="Never"/>
-    <disable_collisions link1="l_finger_1_link_3" link2="victor_left_arm_link_3" reason="Never"/>
-    <disable_collisions link1="l_finger_1_link_3" link2="victor_left_arm_link_4" reason="Never"/>
-    <disable_collisions link1="l_finger_1_link_3" link2="victor_left_arm_link_5" reason="Never"/>
-    <disable_collisions link1="l_finger_1_link_3" link2="victor_left_arm_link_6" reason="Never"/>
-    <disable_collisions link1="l_finger_1_link_3" link2="victor_left_arm_link_7" reason="Never"/>
-    <disable_collisions link1="l_finger_1_link_3" link2="victor_left_gripper_mounting_bracket" reason="Never"/>
-    <disable_collisions link1="l_finger_1_link_3" link2="victor_right_gripper_mounting_bracket" reason="Never"/>
-    <disable_collisions link1="l_finger_2_link_0" link2="l_finger_2_link_1" reason="Adjacent"/>
-    <disable_collisions link1="l_finger_2_link_0" link2="l_finger_2_link_2" reason="Never"/>
-    <disable_collisions link1="l_finger_2_link_0" link2="l_finger_2_link_3" reason="Never"/>
-    <disable_collisions link1="l_finger_2_link_0" link2="l_finger_middle_link_0" reason="Never"/>
-    <disable_collisions link1="l_finger_2_link_0" link2="l_finger_middle_link_1" reason="Never"/>
-    <disable_collisions link1="l_finger_2_link_0" link2="l_finger_middle_link_2" reason="Never"/>
-    <disable_collisions link1="l_finger_2_link_0" link2="l_finger_middle_link_3" reason="Never"/>
-    <disable_collisions link1="l_finger_2_link_0" link2="l_palm" reason="Adjacent"/>
-    <disable_collisions link1="l_finger_2_link_0" link2="r_finger_1_link_0" reason="Never"/>
-    <disable_collisions link1="l_finger_2_link_0" link2="r_finger_1_link_3" reason="Never"/>
-    <disable_collisions link1="l_finger_2_link_0" link2="r_finger_middle_link_0" reason="Never"/>
-    <disable_collisions link1="l_finger_2_link_0" link2="r_finger_middle_link_1" reason="Never"/>
-    <disable_collisions link1="l_finger_2_link_0" link2="r_finger_middle_link_2" reason="Never"/>
-    <disable_collisions link1="l_finger_2_link_0" link2="victor_left_arm_link_1" reason="Never"/>
-    <disable_collisions link1="l_finger_2_link_0" link2="victor_left_arm_link_2" reason="Never"/>
-    <disable_collisions link1="l_finger_2_link_0" link2="victor_left_arm_link_3" reason="Never"/>
-    <disable_collisions link1="l_finger_2_link_0" link2="victor_left_arm_link_4" reason="Never"/>
-    <disable_collisions link1="l_finger_2_link_0" link2="victor_left_arm_link_5" reason="Never"/>
-    <disable_collisions link1="l_finger_2_link_0" link2="victor_left_arm_link_6" reason="Never"/>
-    <disable_collisions link1="l_finger_2_link_0" link2="victor_left_arm_link_7" reason="Never"/>
-    <disable_collisions link1="l_finger_2_link_0" link2="victor_left_gripper_mounting_bracket" reason="Never"/>
-    <disable_collisions link1="l_finger_2_link_1" link2="l_finger_2_link_2" reason="Adjacent"/>
-    <disable_collisions link1="l_finger_2_link_1" link2="l_finger_2_link_3" reason="Never"/>
-    <disable_collisions link1="l_finger_2_link_1" link2="l_finger_middle_link_0" reason="Never"/>
-    <disable_collisions link1="l_finger_2_link_1" link2="l_finger_middle_link_1" reason="Never"/>
-    <disable_collisions link1="l_finger_2_link_1" link2="l_finger_middle_link_2" reason="User"/>
-    <disable_collisions link1="l_finger_2_link_1" link2="l_finger_middle_link_3" reason="User"/>
-    <disable_collisions link1="l_finger_2_link_1" link2="l_palm" reason="Default"/>
-    <disable_collisions link1="l_finger_2_link_1" link2="r_finger_1_link_3" reason="Never"/>
-    <disable_collisions link1="l_finger_2_link_1" link2="r_finger_middle_link_0" reason="Never"/>
-    <disable_collisions link1="l_finger_2_link_1" link2="r_finger_middle_link_1" reason="Never"/>
-    <disable_collisions link1="l_finger_2_link_1" link2="victor_left_arm_link_3" reason="Never"/>
-    <disable_collisions link1="l_finger_2_link_1" link2="victor_left_arm_link_4" reason="Never"/>
-    <disable_collisions link1="l_finger_2_link_1" link2="victor_left_arm_link_5" reason="Never"/>
-    <disable_collisions link1="l_finger_2_link_1" link2="victor_left_arm_link_6" reason="Never"/>
-    <disable_collisions link1="l_finger_2_link_1" link2="victor_left_arm_link_7" reason="Never"/>
-    <disable_collisions link1="l_finger_2_link_1" link2="victor_left_gripper_mounting_bracket" reason="Never"/>
-    <disable_collisions link1="l_finger_2_link_2" link2="l_finger_2_link_3" reason="Adjacent"/>
-    <disable_collisions link1="l_finger_2_link_2" link2="l_finger_middle_link_0" reason="Never"/>
-    <disable_collisions link1="l_finger_2_link_2" link2="l_finger_middle_link_1" reason="User"/>
-    <disable_collisions link1="l_finger_2_link_2" link2="l_finger_middle_link_2" reason="User"/>
-    <disable_collisions link1="l_finger_2_link_2" link2="l_finger_middle_link_3" reason="User"/>
-    <disable_collisions link1="l_finger_2_link_2" link2="l_palm" reason="User"/>
-    <disable_collisions link1="l_finger_2_link_2" link2="r_finger_1_link_0" reason="Never"/>
-    <disable_collisions link1="l_finger_2_link_2" link2="r_finger_middle_link_0" reason="Never"/>
-    <disable_collisions link1="l_finger_2_link_2" link2="victor_left_arm_link_3" reason="Never"/>
-    <disable_collisions link1="l_finger_2_link_2" link2="victor_left_arm_link_4" reason="Never"/>
-    <disable_collisions link1="l_finger_2_link_2" link2="victor_left_arm_link_5" reason="Never"/>
-    <disable_collisions link1="l_finger_2_link_2" link2="victor_left_arm_link_6" reason="Never"/>
-    <disable_collisions link1="l_finger_2_link_2" link2="victor_left_arm_link_7" reason="Never"/>
-    <disable_collisions link1="l_finger_2_link_2" link2="victor_left_gripper_mounting_bracket" reason="Never"/>
-    <disable_collisions link1="l_finger_2_link_3" link2="l_finger_middle_link_0" reason="Never"/>
-    <disable_collisions link1="l_finger_2_link_3" link2="l_finger_middle_link_1" reason="User"/>
-    <disable_collisions link1="l_finger_2_link_3" link2="l_finger_middle_link_2" reason="User"/>
-    <disable_collisions link1="l_finger_2_link_3" link2="l_finger_middle_link_3" reason="User"/>
-    <disable_collisions link1="l_finger_2_link_3" link2="l_palm" reason="User"/>
-    <disable_collisions link1="l_finger_2_link_3" link2="r_finger_1_link_0" reason="Never"/>
-    <disable_collisions link1="l_finger_2_link_3" link2="r_finger_middle_link_0" reason="Never"/>
-    <disable_collisions link1="l_finger_2_link_3" link2="r_finger_middle_link_2" reason="Never"/>
-    <disable_collisions link1="l_finger_2_link_3" link2="r_finger_middle_link_3" reason="Never"/>
-    <disable_collisions link1="l_finger_2_link_3" link2="victor_left_arm_link_3" reason="Never"/>
-    <disable_collisions link1="l_finger_2_link_3" link2="victor_left_arm_link_4" reason="Never"/>
-    <disable_collisions link1="l_finger_2_link_3" link2="victor_left_arm_link_5" reason="Never"/>
-    <disable_collisions link1="l_finger_2_link_3" link2="victor_left_arm_link_6" reason="Never"/>
-    <disable_collisions link1="l_finger_2_link_3" link2="victor_left_arm_link_7" reason="Never"/>
-    <disable_collisions link1="l_finger_2_link_3" link2="victor_left_gripper_mounting_bracket" reason="Never"/>
-    <disable_collisions link1="l_finger_middle_link_0" link2="l_finger_middle_link_1" reason="Adjacent"/>
-    <disable_collisions link1="l_finger_middle_link_0" link2="l_finger_middle_link_2" reason="Never"/>
-    <disable_collisions link1="l_finger_middle_link_0" link2="l_finger_middle_link_3" reason="Never"/>
-    <disable_collisions link1="l_finger_middle_link_0" link2="l_palm" reason="Adjacent"/>
-    <disable_collisions link1="l_finger_middle_link_0" link2="r_finger_1_link_2" reason="Never"/>
-    <disable_collisions link1="l_finger_middle_link_0" link2="r_finger_1_link_3" reason="Never"/>
-    <disable_collisions link1="l_finger_middle_link_0" link2="r_finger_middle_link_2" reason="Never"/>
-    <disable_collisions link1="l_finger_middle_link_0" link2="r_finger_middle_link_3" reason="Never"/>
-    <disable_collisions link1="l_finger_middle_link_0" link2="victor_left_arm_link_1" reason="Never"/>
-    <disable_collisions link1="l_finger_middle_link_0" link2="victor_left_arm_link_2" reason="Never"/>
-    <disable_collisions link1="l_finger_middle_link_0" link2="victor_left_arm_link_3" reason="Never"/>
-    <disable_collisions link1="l_finger_middle_link_0" link2="victor_left_arm_link_4" reason="Never"/>
-    <disable_collisions link1="l_finger_middle_link_0" link2="victor_left_arm_link_5" reason="Never"/>
-    <disable_collisions link1="l_finger_middle_link_0" link2="victor_left_arm_link_6" reason="Never"/>
-    <disable_collisions link1="l_finger_middle_link_0" link2="victor_left_arm_link_7" reason="Never"/>
-    <disable_collisions link1="l_finger_middle_link_0" link2="victor_left_gripper_mounting_bracket" reason="Never"/>
-    <disable_collisions link1="l_finger_middle_link_1" link2="l_finger_middle_link_2" reason="Adjacent"/>
-    <disable_collisions link1="l_finger_middle_link_1" link2="l_finger_middle_link_3" reason="Never"/>
-    <disable_collisions link1="l_finger_middle_link_1" link2="l_palm" reason="Default"/>
-    <disable_collisions link1="l_finger_middle_link_1" link2="r_finger_1_link_2" reason="Never"/>
-    <disable_collisions link1="l_finger_middle_link_1" link2="r_finger_1_link_3" reason="Never"/>
-    <disable_collisions link1="l_finger_middle_link_1" link2="r_finger_middle_link_3" reason="Never"/>
-    <disable_collisions link1="l_finger_middle_link_1" link2="victor_left_arm_link_2" reason="Never"/>
-    <disable_collisions link1="l_finger_middle_link_1" link2="victor_left_arm_link_3" reason="Never"/>
-    <disable_collisions link1="l_finger_middle_link_1" link2="victor_left_arm_link_4" reason="Never"/>
-    <disable_collisions link1="l_finger_middle_link_1" link2="victor_left_arm_link_5" reason="Never"/>
-    <disable_collisions link1="l_finger_middle_link_1" link2="victor_left_arm_link_6" reason="Never"/>
-    <disable_collisions link1="l_finger_middle_link_1" link2="victor_left_arm_link_7" reason="Never"/>
-    <disable_collisions link1="l_finger_middle_link_1" link2="victor_left_gripper_mounting_bracket" reason="Never"/>
-    <disable_collisions link1="l_finger_middle_link_2" link2="l_finger_middle_link_3" reason="Adjacent"/>
-    <disable_collisions link1="l_finger_middle_link_2" link2="l_palm" reason="User"/>
-    <disable_collisions link1="l_finger_middle_link_2" link2="r_finger_1_link_2" reason="Never"/>
-    <disable_collisions link1="l_finger_middle_link_2" link2="r_finger_1_link_3" reason="Never"/>
-    <disable_collisions link1="l_finger_middle_link_2" link2="r_finger_middle_link_0" reason="Never"/>
-    <disable_collisions link1="l_finger_middle_link_2" link2="r_finger_middle_link_1" reason="Never"/>
-    <disable_collisions link1="l_finger_middle_link_2" link2="r_finger_middle_link_2" reason="Never"/>
-    <disable_collisions link1="l_finger_middle_link_2" link2="r_finger_middle_link_3" reason="Never"/>
-    <disable_collisions link1="l_finger_middle_link_2" link2="victor_left_arm_link_2" reason="Never"/>
-    <disable_collisions link1="l_finger_middle_link_2" link2="victor_left_arm_link_3" reason="Never"/>
-    <disable_collisions link1="l_finger_middle_link_2" link2="victor_left_arm_link_4" reason="Never"/>
-    <disable_collisions link1="l_finger_middle_link_2" link2="victor_left_arm_link_5" reason="Never"/>
-    <disable_collisions link1="l_finger_middle_link_2" link2="victor_left_arm_link_6" reason="Never"/>
-    <disable_collisions link1="l_finger_middle_link_2" link2="victor_left_arm_link_7" reason="Never"/>
-    <disable_collisions link1="l_finger_middle_link_2" link2="victor_left_gripper_mounting_bracket" reason="Never"/>
-    <disable_collisions link1="l_finger_middle_link_2" link2="victor_right_gripper_mounting_bracket" reason="Never"/>
-    <disable_collisions link1="l_finger_middle_link_3" link2="l_palm" reason="User"/>
-    <disable_collisions link1="l_finger_middle_link_3" link2="r_finger_1_link_2" reason="Never"/>
-    <disable_collisions link1="l_finger_middle_link_3" link2="r_finger_1_link_3" reason="Never"/>
-    <disable_collisions link1="l_finger_middle_link_3" link2="r_finger_middle_link_0" reason="Never"/>
-    <disable_collisions link1="l_finger_middle_link_3" link2="r_finger_middle_link_1" reason="Never"/>
-    <disable_collisions link1="l_finger_middle_link_3" link2="r_finger_middle_link_2" reason="Never"/>
-    <disable_collisions link1="l_finger_middle_link_3" link2="victor_left_arm_link_2" reason="Never"/>
-    <disable_collisions link1="l_finger_middle_link_3" link2="victor_left_arm_link_3" reason="Never"/>
-    <disable_collisions link1="l_finger_middle_link_3" link2="victor_left_arm_link_4" reason="Never"/>
-    <disable_collisions link1="l_finger_middle_link_3" link2="victor_left_arm_link_5" reason="Never"/>
-    <disable_collisions link1="l_finger_middle_link_3" link2="victor_left_arm_link_6" reason="Never"/>
-    <disable_collisions link1="l_finger_middle_link_3" link2="victor_left_arm_link_7" reason="Never"/>
-    <disable_collisions link1="l_finger_middle_link_3" link2="victor_left_gripper_mounting_bracket" reason="Never"/>
-    <disable_collisions link1="l_finger_middle_link_3" link2="victor_right_gripper_mounting_bracket" reason="Never"/>
-    <disable_collisions link1="l_palm" link2="victor_left_arm_link_2" reason="Never"/>
-    <disable_collisions link1="l_palm" link2="victor_left_arm_link_3" reason="Never"/>
-    <disable_collisions link1="l_palm" link2="victor_left_arm_link_4" reason="Never"/>
-    <disable_collisions link1="l_palm" link2="victor_left_arm_link_5" reason="Never"/>
-    <disable_collisions link1="l_palm" link2="victor_left_arm_link_6" reason="Never"/>
-    <disable_collisions link1="l_palm" link2="victor_left_arm_link_7" reason="Never"/>
-    <disable_collisions link1="l_palm" link2="victor_left_gripper_mounting_bracket" reason="Adjacent"/>
-    <disable_collisions link1="r_finger_1_link_0" link2="r_finger_1_link_1" reason="Adjacent"/>
-    <disable_collisions link1="r_finger_1_link_0" link2="r_finger_1_link_2" reason="Never"/>
-    <disable_collisions link1="r_finger_1_link_0" link2="r_finger_1_link_3" reason="Never"/>
-    <disable_collisions link1="r_finger_1_link_0" link2="r_finger_2_link_0" reason="Never"/>
-    <disable_collisions link1="r_finger_1_link_0" link2="r_finger_2_link_1" reason="Never"/>
-    <disable_collisions link1="r_finger_1_link_0" link2="r_finger_2_link_2" reason="Never"/>
-    <disable_collisions link1="r_finger_1_link_0" link2="r_finger_2_link_3" reason="Never"/>
-    <disable_collisions link1="r_finger_1_link_0" link2="r_finger_middle_link_0" reason="Never"/>
-    <disable_collisions link1="r_finger_1_link_0" link2="r_finger_middle_link_1" reason="Never"/>
-    <disable_collisions link1="r_finger_1_link_0" link2="r_finger_middle_link_2" reason="Never"/>
-    <disable_collisions link1="r_finger_1_link_0" link2="r_finger_middle_link_3" reason="Never"/>
-    <disable_collisions link1="r_finger_1_link_0" link2="r_palm" reason="Adjacent"/>
-    <disable_collisions link1="r_finger_1_link_0" link2="victor_right_arm_link_1" reason="Never"/>
-    <disable_collisions link1="r_finger_1_link_0" link2="victor_right_arm_link_2" reason="Never"/>
-    <disable_collisions link1="r_finger_1_link_0" link2="victor_right_arm_link_3" reason="Never"/>
-    <disable_collisions link1="r_finger_1_link_0" link2="victor_right_arm_link_4" reason="Never"/>
-    <disable_collisions link1="r_finger_1_link_0" link2="victor_right_arm_link_5" reason="Never"/>
-    <disable_collisions link1="r_finger_1_link_0" link2="victor_right_arm_link_6" reason="Never"/>
-    <disable_collisions link1="r_finger_1_link_0" link2="victor_right_arm_link_7" reason="Never"/>
-    <disable_collisions link1="r_finger_1_link_0" link2="victor_right_gripper_mounting_bracket" reason="Never"/>
-    <disable_collisions link1="r_finger_1_link_1" link2="r_finger_1_link_2" reason="Adjacent"/>
-    <disable_collisions link1="r_finger_1_link_1" link2="r_finger_1_link_3" reason="Never"/>
-    <disable_collisions link1="r_finger_1_link_1" link2="r_finger_2_link_0" reason="Never"/>
-    <disable_collisions link1="r_finger_1_link_1" link2="r_finger_2_link_1" reason="Never"/>
-    <disable_collisions link1="r_finger_1_link_1" link2="r_finger_2_link_2" reason="User"/>
-    <disable_collisions link1="r_finger_1_link_1" link2="r_finger_2_link_3" reason="Never"/>
-    <disable_collisions link1="r_finger_1_link_1" link2="r_finger_middle_link_0" reason="Never"/>
-    <disable_collisions link1="r_finger_1_link_1" link2="r_finger_middle_link_1" reason="Never"/>
-    <disable_collisions link1="r_finger_1_link_1" link2="r_finger_middle_link_2" reason="User"/>
-    <disable_collisions link1="r_finger_1_link_1" link2="r_finger_middle_link_3" reason="User"/>
-    <disable_collisions link1="r_finger_1_link_1" link2="r_palm" reason="Default"/>
-    <disable_collisions link1="r_finger_1_link_1" link2="victor_right_arm_link_1" reason="Never"/>
-    <disable_collisions link1="r_finger_1_link_1" link2="victor_right_arm_link_2" reason="Never"/>
-    <disable_collisions link1="r_finger_1_link_1" link2="victor_right_arm_link_3" reason="Never"/>
-    <disable_collisions link1="r_finger_1_link_1" link2="victor_right_arm_link_4" reason="Never"/>
-    <disable_collisions link1="r_finger_1_link_1" link2="victor_right_arm_link_5" reason="Never"/>
-    <disable_collisions link1="r_finger_1_link_1" link2="victor_right_arm_link_6" reason="Never"/>
-    <disable_collisions link1="r_finger_1_link_1" link2="victor_right_arm_link_7" reason="Never"/>
-    <disable_collisions link1="r_finger_1_link_1" link2="victor_right_gripper_mounting_bracket" reason="Never"/>
-    <disable_collisions link1="r_finger_1_link_2" link2="r_finger_1_link_3" reason="Adjacent"/>
-    <disable_collisions link1="r_finger_1_link_2" link2="r_finger_2_link_0" reason="Never"/>
-    <disable_collisions link1="r_finger_1_link_2" link2="r_finger_2_link_1" reason="Never"/>
-    <disable_collisions link1="r_finger_1_link_2" link2="r_finger_2_link_2" reason="User"/>
-    <disable_collisions link1="r_finger_1_link_2" link2="r_finger_2_link_3" reason="User"/>
-    <disable_collisions link1="r_finger_1_link_2" link2="r_finger_middle_link_0" reason="Never"/>
-    <disable_collisions link1="r_finger_1_link_2" link2="r_finger_middle_link_1" reason="User"/>
-    <disable_collisions link1="r_finger_1_link_2" link2="r_finger_middle_link_2" reason="User"/>
-    <disable_collisions link1="r_finger_1_link_2" link2="r_finger_middle_link_3" reason="User"/>
-    <disable_collisions link1="r_finger_1_link_2" link2="r_palm" reason="User"/>
-    <disable_collisions link1="r_finger_1_link_2" link2="victor_right_arm_link_2" reason="Never"/>
-    <disable_collisions link1="r_finger_1_link_2" link2="victor_right_arm_link_3" reason="Never"/>
-    <disable_collisions link1="r_finger_1_link_2" link2="victor_right_arm_link_4" reason="Never"/>
-    <disable_collisions link1="r_finger_1_link_2" link2="victor_right_arm_link_5" reason="Never"/>
-    <disable_collisions link1="r_finger_1_link_2" link2="victor_right_arm_link_6" reason="Never"/>
-    <disable_collisions link1="r_finger_1_link_2" link2="victor_right_arm_link_7" reason="Never"/>
-    <disable_collisions link1="r_finger_1_link_2" link2="victor_right_gripper_mounting_bracket" reason="Never"/>
-    <disable_collisions link1="r_finger_1_link_3" link2="r_finger_2_link_0" reason="Never"/>
-    <disable_collisions link1="r_finger_1_link_3" link2="r_finger_2_link_1" reason="Never"/>
-    <disable_collisions link1="r_finger_1_link_3" link2="r_finger_2_link_2" reason="User"/>
-    <disable_collisions link1="r_finger_1_link_3" link2="r_finger_2_link_3" reason="User"/>
-    <disable_collisions link1="r_finger_1_link_3" link2="r_finger_middle_link_0" reason="Never"/>
-    <disable_collisions link1="r_finger_1_link_3" link2="r_finger_middle_link_1" reason="User"/>
-    <disable_collisions link1="r_finger_1_link_3" link2="r_finger_middle_link_2" reason="User"/>
-    <disable_collisions link1="r_finger_1_link_3" link2="r_finger_middle_link_3" reason="User"/>
-    <disable_collisions link1="r_finger_1_link_3" link2="r_palm" reason="User"/>
-    <disable_collisions link1="r_finger_1_link_3" link2="victor_right_arm_link_3" reason="Never"/>
-    <disable_collisions link1="r_finger_1_link_3" link2="victor_right_arm_link_4" reason="Never"/>
-    <disable_collisions link1="r_finger_1_link_3" link2="victor_right_arm_link_5" reason="Never"/>
-    <disable_collisions link1="r_finger_1_link_3" link2="victor_right_arm_link_6" reason="Never"/>
-    <disable_collisions link1="r_finger_1_link_3" link2="victor_right_arm_link_7" reason="Never"/>
-    <disable_collisions link1="r_finger_1_link_3" link2="victor_right_gripper_mounting_bracket" reason="Never"/>
-    <disable_collisions link1="r_finger_2_link_0" link2="r_finger_2_link_1" reason="Adjacent"/>
-    <disable_collisions link1="r_finger_2_link_0" link2="r_finger_2_link_2" reason="Never"/>
-    <disable_collisions link1="r_finger_2_link_0" link2="r_finger_2_link_3" reason="Never"/>
-    <disable_collisions link1="r_finger_2_link_0" link2="r_finger_middle_link_0" reason="Never"/>
-    <disable_collisions link1="r_finger_2_link_0" link2="r_finger_middle_link_1" reason="Never"/>
-    <disable_collisions link1="r_finger_2_link_0" link2="r_finger_middle_link_2" reason="Never"/>
-    <disable_collisions link1="r_finger_2_link_0" link2="r_finger_middle_link_3" reason="Never"/>
-    <disable_collisions link1="r_finger_2_link_0" link2="r_palm" reason="Adjacent"/>
-    <disable_collisions link1="r_finger_2_link_0" link2="victor_right_arm_link_2" reason="Never"/>
-    <disable_collisions link1="r_finger_2_link_0" link2="victor_right_arm_link_3" reason="Never"/>
-    <disable_collisions link1="r_finger_2_link_0" link2="victor_right_arm_link_4" reason="Never"/>
-    <disable_collisions link1="r_finger_2_link_0" link2="victor_right_arm_link_5" reason="Never"/>
-    <disable_collisions link1="r_finger_2_link_0" link2="victor_right_arm_link_6" reason="Never"/>
-    <disable_collisions link1="r_finger_2_link_0" link2="victor_right_arm_link_7" reason="Never"/>
-    <disable_collisions link1="r_finger_2_link_0" link2="victor_right_gripper_mounting_bracket" reason="Never"/>
-    <disable_collisions link1="r_finger_2_link_1" link2="r_finger_2_link_2" reason="Adjacent"/>
-    <disable_collisions link1="r_finger_2_link_1" link2="r_finger_2_link_3" reason="Never"/>
-    <disable_collisions link1="r_finger_2_link_1" link2="r_finger_middle_link_0" reason="Never"/>
-    <disable_collisions link1="r_finger_2_link_1" link2="r_finger_middle_link_1" reason="Never"/>
-    <disable_collisions link1="r_finger_2_link_1" link2="r_finger_middle_link_2" reason="User"/>
-    <disable_collisions link1="r_finger_2_link_1" link2="r_finger_middle_link_3" reason="User"/>
-    <disable_collisions link1="r_finger_2_link_1" link2="r_palm" reason="Default"/>
-    <disable_collisions link1="r_finger_2_link_1" link2="victor_right_arm_link_2" reason="Never"/>
-    <disable_collisions link1="r_finger_2_link_1" link2="victor_right_arm_link_3" reason="Never"/>
-    <disable_collisions link1="r_finger_2_link_1" link2="victor_right_arm_link_4" reason="Never"/>
-    <disable_collisions link1="r_finger_2_link_1" link2="victor_right_arm_link_5" reason="Never"/>
-    <disable_collisions link1="r_finger_2_link_1" link2="victor_right_arm_link_6" reason="Never"/>
-    <disable_collisions link1="r_finger_2_link_1" link2="victor_right_arm_link_7" reason="Never"/>
-    <disable_collisions link1="r_finger_2_link_1" link2="victor_right_gripper_mounting_bracket" reason="Never"/>
-    <disable_collisions link1="r_finger_2_link_2" link2="r_finger_2_link_3" reason="Adjacent"/>
-    <disable_collisions link1="r_finger_2_link_2" link2="r_finger_middle_link_0" reason="Never"/>
-    <disable_collisions link1="r_finger_2_link_2" link2="r_finger_middle_link_1" reason="User"/>
-    <disable_collisions link1="r_finger_2_link_2" link2="r_finger_middle_link_2" reason="User"/>
-    <disable_collisions link1="r_finger_2_link_2" link2="r_finger_middle_link_3" reason="User"/>
-    <disable_collisions link1="r_finger_2_link_2" link2="r_palm" reason="User"/>
-    <disable_collisions link1="r_finger_2_link_2" link2="victor_right_arm_link_2" reason="Never"/>
-    <disable_collisions link1="r_finger_2_link_2" link2="victor_right_arm_link_3" reason="Never"/>
-    <disable_collisions link1="r_finger_2_link_2" link2="victor_right_arm_link_4" reason="Never"/>
-    <disable_collisions link1="r_finger_2_link_2" link2="victor_right_arm_link_5" reason="Never"/>
-    <disable_collisions link1="r_finger_2_link_2" link2="victor_right_arm_link_6" reason="Never"/>
-    <disable_collisions link1="r_finger_2_link_2" link2="victor_right_arm_link_7" reason="Never"/>
-    <disable_collisions link1="r_finger_2_link_2" link2="victor_right_gripper_mounting_bracket" reason="Never"/>
-    <disable_collisions link1="r_finger_2_link_3" link2="r_finger_middle_link_0" reason="Never"/>
-    <disable_collisions link1="r_finger_2_link_3" link2="r_finger_middle_link_1" reason="User"/>
-    <disable_collisions link1="r_finger_2_link_3" link2="r_finger_middle_link_2" reason="User"/>
-    <disable_collisions link1="r_finger_2_link_3" link2="r_finger_middle_link_3" reason="User"/>
-    <disable_collisions link1="r_finger_2_link_3" link2="r_palm" reason="User"/>
-    <disable_collisions link1="r_finger_2_link_3" link2="victor_right_arm_link_2" reason="Never"/>
-    <disable_collisions link1="r_finger_2_link_3" link2="victor_right_arm_link_3" reason="Never"/>
-    <disable_collisions link1="r_finger_2_link_3" link2="victor_right_arm_link_4" reason="Never"/>
-    <disable_collisions link1="r_finger_2_link_3" link2="victor_right_arm_link_5" reason="Never"/>
-    <disable_collisions link1="r_finger_2_link_3" link2="victor_right_arm_link_6" reason="Never"/>
-    <disable_collisions link1="r_finger_2_link_3" link2="victor_right_arm_link_7" reason="Never"/>
-    <disable_collisions link1="r_finger_2_link_3" link2="victor_right_gripper_mounting_bracket" reason="Never"/>
-    <disable_collisions link1="r_finger_middle_link_0" link2="r_finger_middle_link_1" reason="Adjacent"/>
-    <disable_collisions link1="r_finger_middle_link_0" link2="r_finger_middle_link_2" reason="Never"/>
-    <disable_collisions link1="r_finger_middle_link_0" link2="r_finger_middle_link_3" reason="Never"/>
-    <disable_collisions link1="r_finger_middle_link_0" link2="r_palm" reason="Adjacent"/>
-    <disable_collisions link1="r_finger_middle_link_0" link2="victor_right_arm_link_1" reason="Never"/>
-    <disable_collisions link1="r_finger_middle_link_0" link2="victor_right_arm_link_2" reason="Never"/>
-    <disable_collisions link1="r_finger_middle_link_0" link2="victor_right_arm_link_3" reason="Never"/>
-    <disable_collisions link1="r_finger_middle_link_0" link2="victor_right_arm_link_4" reason="Never"/>
-    <disable_collisions link1="r_finger_middle_link_0" link2="victor_right_arm_link_5" reason="Never"/>
-    <disable_collisions link1="r_finger_middle_link_0" link2="victor_right_arm_link_6" reason="Never"/>
-    <disable_collisions link1="r_finger_middle_link_0" link2="victor_right_arm_link_7" reason="Never"/>
-    <disable_collisions link1="r_finger_middle_link_0" link2="victor_right_gripper_mounting_bracket" reason="Never"/>
-    <disable_collisions link1="r_finger_middle_link_1" link2="r_finger_middle_link_2" reason="Adjacent"/>
-    <disable_collisions link1="r_finger_middle_link_1" link2="r_finger_middle_link_3" reason="Never"/>
-    <disable_collisions link1="r_finger_middle_link_1" link2="r_palm" reason="Default"/>
-    <disable_collisions link1="r_finger_middle_link_1" link2="victor_right_arm_link_2" reason="Never"/>
-    <disable_collisions link1="r_finger_middle_link_1" link2="victor_right_arm_link_3" reason="Never"/>
-    <disable_collisions link1="r_finger_middle_link_1" link2="victor_right_arm_link_4" reason="Never"/>
-    <disable_collisions link1="r_finger_middle_link_1" link2="victor_right_arm_link_5" reason="Never"/>
-    <disable_collisions link1="r_finger_middle_link_1" link2="victor_right_arm_link_6" reason="Never"/>
-    <disable_collisions link1="r_finger_middle_link_1" link2="victor_right_arm_link_7" reason="Never"/>
-    <disable_collisions link1="r_finger_middle_link_1" link2="victor_right_gripper_mounting_bracket" reason="Never"/>
-    <disable_collisions link1="r_finger_middle_link_2" link2="r_finger_middle_link_3" reason="Adjacent"/>
-    <disable_collisions link1="r_finger_middle_link_2" link2="r_palm" reason="User"/>
-    <disable_collisions link1="r_finger_middle_link_2" link2="victor_right_arm_link_2" reason="Never"/>
-    <disable_collisions link1="r_finger_middle_link_2" link2="victor_right_arm_link_3" reason="Never"/>
-    <disable_collisions link1="r_finger_middle_link_2" link2="victor_right_arm_link_4" reason="Never"/>
-    <disable_collisions link1="r_finger_middle_link_2" link2="victor_right_arm_link_5" reason="Never"/>
-    <disable_collisions link1="r_finger_middle_link_2" link2="victor_right_arm_link_6" reason="Never"/>
-    <disable_collisions link1="r_finger_middle_link_2" link2="victor_right_arm_link_7" reason="Never"/>
-    <disable_collisions link1="r_finger_middle_link_2" link2="victor_right_gripper_mounting_bracket" reason="Never"/>
-    <disable_collisions link1="r_finger_middle_link_3" link2="r_palm" reason="User"/>
-    <disable_collisions link1="r_finger_middle_link_3" link2="victor_right_arm_link_3" reason="Never"/>
-    <disable_collisions link1="r_finger_middle_link_3" link2="victor_right_arm_link_4" reason="Never"/>
-    <disable_collisions link1="r_finger_middle_link_3" link2="victor_right_arm_link_5" reason="Never"/>
-    <disable_collisions link1="r_finger_middle_link_3" link2="victor_right_arm_link_6" reason="Never"/>
-    <disable_collisions link1="r_finger_middle_link_3" link2="victor_right_arm_link_7" reason="Never"/>
-    <disable_collisions link1="r_finger_middle_link_3" link2="victor_right_gripper_mounting_bracket" reason="Never"/>
-    <disable_collisions link1="r_palm" link2="victor_right_arm_link_2" reason="Never"/>
-    <disable_collisions link1="r_palm" link2="victor_right_arm_link_3" reason="Never"/>
-    <disable_collisions link1="r_palm" link2="victor_right_arm_link_4" reason="Never"/>
-    <disable_collisions link1="r_palm" link2="victor_right_arm_link_5" reason="Never"/>
-    <disable_collisions link1="r_palm" link2="victor_right_arm_link_6" reason="Never"/>
-    <disable_collisions link1="r_palm" link2="victor_right_arm_link_7" reason="Never"/>
-    <disable_collisions link1="r_palm" link2="victor_right_gripper_mounting_bracket" reason="Adjacent"/>
     <disable_collisions link1="victor_base_plate" link2="victor_left_arm_link_0" reason="Default"/>
     <disable_collisions link1="victor_base_plate" link2="victor_left_arm_link_1" reason="Never"/>
     <disable_collisions link1="victor_base_plate" link2="victor_left_arm_link_2" reason="Never"/>
@@ -661,7 +65,11 @@
     <disable_collisions link1="victor_left_arm_link_2" link2="victor_left_arm_link_6" reason="Never"/>
     <disable_collisions link1="victor_left_arm_link_2" link2="victor_left_arm_link_7" reason="Never"/>
     <disable_collisions link1="victor_left_arm_link_2" link2="victor_left_arm_mount" reason="Never"/>
+    <disable_collisions link1="victor_left_arm_link_2" link2="victor_left_finger_a_link_0" reason="Never"/>
+    <disable_collisions link1="victor_left_arm_link_2" link2="victor_left_finger_b_link_0" reason="Never"/>
+    <disable_collisions link1="victor_left_arm_link_2" link2="victor_left_finger_c_link_0" reason="Never"/>
     <disable_collisions link1="victor_left_arm_link_2" link2="victor_left_gripper_mounting_bracket" reason="Never"/>
+    <disable_collisions link1="victor_left_arm_link_2" link2="victor_left_palm" reason="Never"/>
     <disable_collisions link1="victor_left_arm_link_2" link2="victor_pedestal" reason="Never"/>
     <disable_collisions link1="victor_left_arm_link_2" link2="victor_right_arm_link_0" reason="Never"/>
     <disable_collisions link1="victor_left_arm_link_2" link2="victor_right_arm_link_1" reason="Never"/>
@@ -674,7 +82,20 @@
     <disable_collisions link1="victor_left_arm_link_3" link2="victor_left_arm_link_6" reason="Never"/>
     <disable_collisions link1="victor_left_arm_link_3" link2="victor_left_arm_link_7" reason="Never"/>
     <disable_collisions link1="victor_left_arm_link_3" link2="victor_left_arm_mount" reason="Never"/>
+    <disable_collisions link1="victor_left_arm_link_3" link2="victor_left_finger_a_link_0" reason="Never"/>
+    <disable_collisions link1="victor_left_arm_link_3" link2="victor_left_finger_a_link_1" reason="Never"/>
+    <disable_collisions link1="victor_left_arm_link_3" link2="victor_left_finger_a_link_2" reason="Never"/>
+    <disable_collisions link1="victor_left_arm_link_3" link2="victor_left_finger_a_link_3" reason="Never"/>
+    <disable_collisions link1="victor_left_arm_link_3" link2="victor_left_finger_b_link_0" reason="Never"/>
+    <disable_collisions link1="victor_left_arm_link_3" link2="victor_left_finger_b_link_1" reason="Never"/>
+    <disable_collisions link1="victor_left_arm_link_3" link2="victor_left_finger_b_link_2" reason="Never"/>
+    <disable_collisions link1="victor_left_arm_link_3" link2="victor_left_finger_b_link_3" reason="Never"/>
+    <disable_collisions link1="victor_left_arm_link_3" link2="victor_left_finger_c_link_0" reason="Never"/>
+    <disable_collisions link1="victor_left_arm_link_3" link2="victor_left_finger_c_link_1" reason="Never"/>
+    <disable_collisions link1="victor_left_arm_link_3" link2="victor_left_finger_c_link_2" reason="Never"/>
+    <disable_collisions link1="victor_left_arm_link_3" link2="victor_left_finger_c_link_3" reason="Never"/>
     <disable_collisions link1="victor_left_arm_link_3" link2="victor_left_gripper_mounting_bracket" reason="Never"/>
+    <disable_collisions link1="victor_left_arm_link_3" link2="victor_left_palm" reason="Never"/>
     <disable_collisions link1="victor_left_arm_link_3" link2="victor_pedestal" reason="Never"/>
     <disable_collisions link1="victor_left_arm_link_3" link2="victor_right_arm_link_0" reason="Never"/>
     <disable_collisions link1="victor_left_arm_link_3" link2="victor_right_arm_link_1" reason="Never"/>
@@ -683,17 +104,69 @@
     <disable_collisions link1="victor_left_arm_link_4" link2="victor_left_arm_link_5" reason="Adjacent"/>
     <disable_collisions link1="victor_left_arm_link_4" link2="victor_left_arm_link_6" reason="Never"/>
     <disable_collisions link1="victor_left_arm_link_4" link2="victor_left_arm_link_7" reason="Never"/>
+    <disable_collisions link1="victor_left_arm_link_4" link2="victor_left_finger_a_link_0" reason="Never"/>
+    <disable_collisions link1="victor_left_arm_link_4" link2="victor_left_finger_a_link_1" reason="Never"/>
+    <disable_collisions link1="victor_left_arm_link_4" link2="victor_left_finger_a_link_2" reason="Never"/>
+    <disable_collisions link1="victor_left_arm_link_4" link2="victor_left_finger_a_link_3" reason="Never"/>
+    <disable_collisions link1="victor_left_arm_link_4" link2="victor_left_finger_b_link_0" reason="Never"/>
+    <disable_collisions link1="victor_left_arm_link_4" link2="victor_left_finger_b_link_1" reason="Never"/>
+    <disable_collisions link1="victor_left_arm_link_4" link2="victor_left_finger_b_link_2" reason="Never"/>
+    <disable_collisions link1="victor_left_arm_link_4" link2="victor_left_finger_b_link_3" reason="Never"/>
+    <disable_collisions link1="victor_left_arm_link_4" link2="victor_left_finger_c_link_0" reason="Never"/>
+    <disable_collisions link1="victor_left_arm_link_4" link2="victor_left_finger_c_link_1" reason="Never"/>
+    <disable_collisions link1="victor_left_arm_link_4" link2="victor_left_finger_c_link_2" reason="Never"/>
+    <disable_collisions link1="victor_left_arm_link_4" link2="victor_left_finger_c_link_3" reason="Never"/>
     <disable_collisions link1="victor_left_arm_link_4" link2="victor_left_gripper_mounting_bracket" reason="Never"/>
+    <disable_collisions link1="victor_left_arm_link_4" link2="victor_left_palm" reason="Never"/>
     <disable_collisions link1="victor_left_arm_link_4" link2="victor_right_arm_link_0" reason="Never"/>
     <disable_collisions link1="victor_left_arm_link_4" link2="victor_right_arm_link_1" reason="Never"/>
     <disable_collisions link1="victor_left_arm_link_4" link2="victor_right_arm_link_2" reason="Never"/>
     <disable_collisions link1="victor_left_arm_link_4" link2="victor_right_arm_mount" reason="Never"/>
     <disable_collisions link1="victor_left_arm_link_5" link2="victor_left_arm_link_6" reason="Adjacent"/>
     <disable_collisions link1="victor_left_arm_link_5" link2="victor_left_arm_link_7" reason="Never"/>
+    <disable_collisions link1="victor_left_arm_link_5" link2="victor_left_finger_a_link_0" reason="Never"/>
+    <disable_collisions link1="victor_left_arm_link_5" link2="victor_left_finger_a_link_1" reason="Never"/>
+    <disable_collisions link1="victor_left_arm_link_5" link2="victor_left_finger_a_link_2" reason="Never"/>
+    <disable_collisions link1="victor_left_arm_link_5" link2="victor_left_finger_a_link_3" reason="Never"/>
+    <disable_collisions link1="victor_left_arm_link_5" link2="victor_left_finger_b_link_0" reason="Never"/>
+    <disable_collisions link1="victor_left_arm_link_5" link2="victor_left_finger_b_link_1" reason="Never"/>
+    <disable_collisions link1="victor_left_arm_link_5" link2="victor_left_finger_b_link_2" reason="Never"/>
+    <disable_collisions link1="victor_left_arm_link_5" link2="victor_left_finger_b_link_3" reason="Never"/>
+    <disable_collisions link1="victor_left_arm_link_5" link2="victor_left_finger_c_link_0" reason="Never"/>
+    <disable_collisions link1="victor_left_arm_link_5" link2="victor_left_finger_c_link_1" reason="Never"/>
+    <disable_collisions link1="victor_left_arm_link_5" link2="victor_left_finger_c_link_2" reason="Never"/>
+    <disable_collisions link1="victor_left_arm_link_5" link2="victor_left_finger_c_link_3" reason="Never"/>
     <disable_collisions link1="victor_left_arm_link_5" link2="victor_left_gripper_mounting_bracket" reason="Never"/>
+    <disable_collisions link1="victor_left_arm_link_5" link2="victor_left_palm" reason="Never"/>
     <disable_collisions link1="victor_left_arm_link_6" link2="victor_left_arm_link_7" reason="Adjacent"/>
+    <disable_collisions link1="victor_left_arm_link_6" link2="victor_left_finger_a_link_0" reason="Never"/>
+    <disable_collisions link1="victor_left_arm_link_6" link2="victor_left_finger_a_link_1" reason="Never"/>
+    <disable_collisions link1="victor_left_arm_link_6" link2="victor_left_finger_a_link_2" reason="Never"/>
+    <disable_collisions link1="victor_left_arm_link_6" link2="victor_left_finger_a_link_3" reason="Never"/>
+    <disable_collisions link1="victor_left_arm_link_6" link2="victor_left_finger_b_link_0" reason="Never"/>
+    <disable_collisions link1="victor_left_arm_link_6" link2="victor_left_finger_b_link_1" reason="Never"/>
+    <disable_collisions link1="victor_left_arm_link_6" link2="victor_left_finger_b_link_2" reason="Never"/>
+    <disable_collisions link1="victor_left_arm_link_6" link2="victor_left_finger_b_link_3" reason="Never"/>
+    <disable_collisions link1="victor_left_arm_link_6" link2="victor_left_finger_c_link_0" reason="Never"/>
+    <disable_collisions link1="victor_left_arm_link_6" link2="victor_left_finger_c_link_1" reason="Never"/>
+    <disable_collisions link1="victor_left_arm_link_6" link2="victor_left_finger_c_link_2" reason="Never"/>
+    <disable_collisions link1="victor_left_arm_link_6" link2="victor_left_finger_c_link_3" reason="Never"/>
     <disable_collisions link1="victor_left_arm_link_6" link2="victor_left_gripper_mounting_bracket" reason="Never"/>
+    <disable_collisions link1="victor_left_arm_link_6" link2="victor_left_palm" reason="Never"/>
+    <disable_collisions link1="victor_left_arm_link_7" link2="victor_left_finger_a_link_0" reason="Never"/>
+    <disable_collisions link1="victor_left_arm_link_7" link2="victor_left_finger_a_link_1" reason="Never"/>
+    <disable_collisions link1="victor_left_arm_link_7" link2="victor_left_finger_a_link_2" reason="Never"/>
+    <disable_collisions link1="victor_left_arm_link_7" link2="victor_left_finger_a_link_3" reason="Never"/>
+    <disable_collisions link1="victor_left_arm_link_7" link2="victor_left_finger_b_link_0" reason="Never"/>
+    <disable_collisions link1="victor_left_arm_link_7" link2="victor_left_finger_b_link_1" reason="Never"/>
+    <disable_collisions link1="victor_left_arm_link_7" link2="victor_left_finger_b_link_2" reason="Never"/>
+    <disable_collisions link1="victor_left_arm_link_7" link2="victor_left_finger_b_link_3" reason="Never"/>
+    <disable_collisions link1="victor_left_arm_link_7" link2="victor_left_finger_c_link_0" reason="Never"/>
+    <disable_collisions link1="victor_left_arm_link_7" link2="victor_left_finger_c_link_1" reason="Never"/>
+    <disable_collisions link1="victor_left_arm_link_7" link2="victor_left_finger_c_link_2" reason="Never"/>
+    <disable_collisions link1="victor_left_arm_link_7" link2="victor_left_finger_c_link_3" reason="Never"/>
     <disable_collisions link1="victor_left_arm_link_7" link2="victor_left_gripper_mounting_bracket" reason="Adjacent"/>
+    <disable_collisions link1="victor_left_arm_link_7" link2="victor_left_palm" reason="Never"/>
     <disable_collisions link1="victor_left_arm_mount" link2="victor_pedestal" reason="Never"/>
     <disable_collisions link1="victor_left_arm_mount" link2="victor_right_arm_link_0" reason="Never"/>
     <disable_collisions link1="victor_left_arm_mount" link2="victor_right_arm_link_1" reason="Never"/>
@@ -701,6 +174,82 @@
     <disable_collisions link1="victor_left_arm_mount" link2="victor_right_arm_link_3" reason="Never"/>
     <disable_collisions link1="victor_left_arm_mount" link2="victor_right_arm_link_4" reason="Never"/>
     <disable_collisions link1="victor_left_arm_mount" link2="victor_right_arm_mount" reason="Never"/>
+    <disable_collisions link1="victor_left_finger_a_link_0" link2="victor_left_finger_a_link_1" reason="Adjacent"/>
+    <disable_collisions link1="victor_left_finger_a_link_0" link2="victor_left_finger_a_link_2" reason="Never"/>
+    <disable_collisions link1="victor_left_finger_a_link_0" link2="victor_left_finger_a_link_3" reason="Never"/>
+    <disable_collisions link1="victor_left_finger_a_link_0" link2="victor_left_finger_b_link_0" reason="Never"/>
+    <disable_collisions link1="victor_left_finger_a_link_0" link2="victor_left_finger_b_link_1" reason="Never"/>
+    <disable_collisions link1="victor_left_finger_a_link_0" link2="victor_left_finger_b_link_2" reason="Never"/>
+    <disable_collisions link1="victor_left_finger_a_link_0" link2="victor_left_finger_b_link_3" reason="Never"/>
+    <disable_collisions link1="victor_left_finger_a_link_0" link2="victor_left_finger_c_link_0" reason="Never"/>
+    <disable_collisions link1="victor_left_finger_a_link_0" link2="victor_left_finger_c_link_1" reason="Never"/>
+    <disable_collisions link1="victor_left_finger_a_link_0" link2="victor_left_finger_c_link_2" reason="Never"/>
+    <disable_collisions link1="victor_left_finger_a_link_0" link2="victor_left_finger_c_link_3" reason="Never"/>
+    <disable_collisions link1="victor_left_finger_a_link_0" link2="victor_left_gripper_mounting_bracket" reason="Never"/>
+    <disable_collisions link1="victor_left_finger_a_link_0" link2="victor_left_palm" reason="Adjacent"/>
+    <disable_collisions link1="victor_left_finger_a_link_0" link2="victor_right_finger_b_link_1" reason="Never"/>
+    <disable_collisions link1="victor_left_finger_a_link_0" link2="victor_right_finger_b_link_2" reason="Never"/>
+    <disable_collisions link1="victor_left_finger_a_link_1" link2="victor_left_finger_a_link_2" reason="Adjacent"/>
+    <disable_collisions link1="victor_left_finger_a_link_1" link2="victor_left_finger_a_link_3" reason="Never"/>
+    <disable_collisions link1="victor_left_finger_a_link_1" link2="victor_left_finger_b_link_0" reason="Never"/>
+    <disable_collisions link1="victor_left_finger_a_link_1" link2="victor_left_finger_b_link_1" reason="Never"/>
+    <disable_collisions link1="victor_left_finger_a_link_1" link2="victor_left_finger_c_link_0" reason="Never"/>
+    <disable_collisions link1="victor_left_finger_a_link_1" link2="victor_left_finger_c_link_1" reason="Never"/>
+    <disable_collisions link1="victor_left_finger_a_link_1" link2="victor_left_gripper_mounting_bracket" reason="Never"/>
+    <disable_collisions link1="victor_left_finger_a_link_1" link2="victor_left_palm" reason="Default"/>
+    <disable_collisions link1="victor_left_finger_a_link_2" link2="victor_left_finger_a_link_3" reason="Adjacent"/>
+    <disable_collisions link1="victor_left_finger_a_link_2" link2="victor_left_finger_b_link_0" reason="Never"/>
+    <disable_collisions link1="victor_left_finger_a_link_2" link2="victor_left_finger_c_link_0" reason="Never"/>
+    <disable_collisions link1="victor_left_finger_a_link_2" link2="victor_left_gripper_mounting_bracket" reason="Never"/>
+    <disable_collisions link1="victor_left_finger_a_link_2" link2="victor_left_palm" reason="Never"/>
+    <disable_collisions link1="victor_left_finger_a_link_3" link2="victor_left_finger_b_link_0" reason="Never"/>
+    <disable_collisions link1="victor_left_finger_a_link_3" link2="victor_left_finger_c_link_0" reason="Never"/>
+    <disable_collisions link1="victor_left_finger_a_link_3" link2="victor_left_gripper_mounting_bracket" reason="Never"/>
+    <disable_collisions link1="victor_left_finger_a_link_3" link2="victor_right_finger_a_link_0" reason="Never"/>
+    <disable_collisions link1="victor_left_finger_b_link_0" link2="victor_left_finger_b_link_1" reason="Adjacent"/>
+    <disable_collisions link1="victor_left_finger_b_link_0" link2="victor_left_finger_b_link_2" reason="Never"/>
+    <disable_collisions link1="victor_left_finger_b_link_0" link2="victor_left_finger_b_link_3" reason="Never"/>
+    <disable_collisions link1="victor_left_finger_b_link_0" link2="victor_left_finger_c_link_0" reason="Never"/>
+    <disable_collisions link1="victor_left_finger_b_link_0" link2="victor_left_finger_c_link_1" reason="Never"/>
+    <disable_collisions link1="victor_left_finger_b_link_0" link2="victor_left_finger_c_link_2" reason="Never"/>
+    <disable_collisions link1="victor_left_finger_b_link_0" link2="victor_left_finger_c_link_3" reason="Never"/>
+    <disable_collisions link1="victor_left_finger_b_link_0" link2="victor_left_gripper_mounting_bracket" reason="Never"/>
+    <disable_collisions link1="victor_left_finger_b_link_0" link2="victor_left_palm" reason="Adjacent"/>
+    <disable_collisions link1="victor_left_finger_b_link_1" link2="victor_left_finger_b_link_2" reason="Adjacent"/>
+    <disable_collisions link1="victor_left_finger_b_link_1" link2="victor_left_finger_b_link_3" reason="Never"/>
+    <disable_collisions link1="victor_left_finger_b_link_1" link2="victor_left_finger_c_link_0" reason="Never"/>
+    <disable_collisions link1="victor_left_finger_b_link_1" link2="victor_left_finger_c_link_1" reason="Never"/>
+    <disable_collisions link1="victor_left_finger_b_link_1" link2="victor_left_finger_c_link_2" reason="Never"/>
+    <disable_collisions link1="victor_left_finger_b_link_1" link2="victor_left_finger_c_link_3" reason="Never"/>
+    <disable_collisions link1="victor_left_finger_b_link_1" link2="victor_left_gripper_mounting_bracket" reason="Never"/>
+    <disable_collisions link1="victor_left_finger_b_link_1" link2="victor_left_palm" reason="Default"/>
+    <disable_collisions link1="victor_left_finger_b_link_2" link2="victor_left_finger_b_link_3" reason="Adjacent"/>
+    <disable_collisions link1="victor_left_finger_b_link_2" link2="victor_left_finger_c_link_0" reason="Never"/>
+    <disable_collisions link1="victor_left_finger_b_link_2" link2="victor_left_finger_c_link_1" reason="Never"/>
+    <disable_collisions link1="victor_left_finger_b_link_2" link2="victor_left_finger_c_link_2" reason="Never"/>
+    <disable_collisions link1="victor_left_finger_b_link_2" link2="victor_left_finger_c_link_3" reason="Never"/>
+    <disable_collisions link1="victor_left_finger_b_link_2" link2="victor_left_gripper_mounting_bracket" reason="Never"/>
+    <disable_collisions link1="victor_left_finger_b_link_2" link2="victor_left_palm" reason="Never"/>
+    <disable_collisions link1="victor_left_finger_b_link_3" link2="victor_left_finger_c_link_0" reason="Never"/>
+    <disable_collisions link1="victor_left_finger_b_link_3" link2="victor_left_finger_c_link_1" reason="Never"/>
+    <disable_collisions link1="victor_left_finger_b_link_3" link2="victor_left_finger_c_link_2" reason="Never"/>
+    <disable_collisions link1="victor_left_finger_b_link_3" link2="victor_left_gripper_mounting_bracket" reason="Never"/>
+    <disable_collisions link1="victor_left_finger_b_link_3" link2="victor_right_finger_c_link_3" reason="Never"/>
+    <disable_collisions link1="victor_left_finger_c_link_0" link2="victor_left_finger_c_link_1" reason="Adjacent"/>
+    <disable_collisions link1="victor_left_finger_c_link_0" link2="victor_left_finger_c_link_2" reason="Never"/>
+    <disable_collisions link1="victor_left_finger_c_link_0" link2="victor_left_finger_c_link_3" reason="Never"/>
+    <disable_collisions link1="victor_left_finger_c_link_0" link2="victor_left_gripper_mounting_bracket" reason="Never"/>
+    <disable_collisions link1="victor_left_finger_c_link_0" link2="victor_left_palm" reason="Adjacent"/>
+    <disable_collisions link1="victor_left_finger_c_link_0" link2="victor_right_finger_b_link_0" reason="Never"/>
+    <disable_collisions link1="victor_left_finger_c_link_1" link2="victor_left_finger_c_link_2" reason="Adjacent"/>
+    <disable_collisions link1="victor_left_finger_c_link_1" link2="victor_left_finger_c_link_3" reason="Never"/>
+    <disable_collisions link1="victor_left_finger_c_link_1" link2="victor_left_gripper_mounting_bracket" reason="Never"/>
+    <disable_collisions link1="victor_left_finger_c_link_1" link2="victor_left_palm" reason="Default"/>
+    <disable_collisions link1="victor_left_finger_c_link_2" link2="victor_left_finger_c_link_3" reason="Adjacent"/>
+    <disable_collisions link1="victor_left_finger_c_link_2" link2="victor_left_gripper_mounting_bracket" reason="Never"/>
+    <disable_collisions link1="victor_left_finger_c_link_3" link2="victor_left_gripper_mounting_bracket" reason="Never"/>
+    <disable_collisions link1="victor_left_finger_c_link_3" link2="victor_right_finger_b_link_2" reason="Never"/>
+    <disable_collisions link1="victor_left_gripper_mounting_bracket" link2="victor_left_palm" reason="Adjacent"/>
     <disable_collisions link1="victor_pedestal" link2="victor_right_arm_link_0" reason="Never"/>
     <disable_collisions link1="victor_pedestal" link2="victor_right_arm_link_1" reason="Never"/>
     <disable_collisions link1="victor_pedestal" link2="victor_right_arm_link_2" reason="Never"/>
@@ -718,6 +267,9 @@
     <disable_collisions link1="victor_right_arm_link_1" link2="victor_right_arm_link_6" reason="Never"/>
     <disable_collisions link1="victor_right_arm_link_1" link2="victor_right_arm_link_7" reason="Never"/>
     <disable_collisions link1="victor_right_arm_link_1" link2="victor_right_arm_mount" reason="Never"/>
+    <disable_collisions link1="victor_right_arm_link_1" link2="victor_right_finger_a_link_0" reason="Never"/>
+    <disable_collisions link1="victor_right_arm_link_1" link2="victor_right_finger_b_link_0" reason="Never"/>
+    <disable_collisions link1="victor_right_arm_link_1" link2="victor_right_finger_c_link_0" reason="Never"/>
     <disable_collisions link1="victor_right_arm_link_1" link2="victor_right_gripper_mounting_bracket" reason="Never"/>
     <disable_collisions link1="victor_right_arm_link_2" link2="victor_right_arm_link_3" reason="Adjacent"/>
     <disable_collisions link1="victor_right_arm_link_2" link2="victor_right_arm_link_4" reason="Never"/>
@@ -725,22 +277,158 @@
     <disable_collisions link1="victor_right_arm_link_2" link2="victor_right_arm_link_6" reason="Never"/>
     <disable_collisions link1="victor_right_arm_link_2" link2="victor_right_arm_link_7" reason="Never"/>
     <disable_collisions link1="victor_right_arm_link_2" link2="victor_right_arm_mount" reason="Never"/>
+    <disable_collisions link1="victor_right_arm_link_2" link2="victor_right_finger_a_link_0" reason="Never"/>
+    <disable_collisions link1="victor_right_arm_link_2" link2="victor_right_finger_b_link_0" reason="Never"/>
+    <disable_collisions link1="victor_right_arm_link_2" link2="victor_right_finger_c_link_0" reason="Never"/>
     <disable_collisions link1="victor_right_arm_link_2" link2="victor_right_gripper_mounting_bracket" reason="Never"/>
+    <disable_collisions link1="victor_right_arm_link_2" link2="victor_right_palm" reason="Never"/>
     <disable_collisions link1="victor_right_arm_link_3" link2="victor_right_arm_link_4" reason="Adjacent"/>
     <disable_collisions link1="victor_right_arm_link_3" link2="victor_right_arm_link_5" reason="Never"/>
     <disable_collisions link1="victor_right_arm_link_3" link2="victor_right_arm_link_6" reason="Never"/>
     <disable_collisions link1="victor_right_arm_link_3" link2="victor_right_arm_link_7" reason="Never"/>
     <disable_collisions link1="victor_right_arm_link_3" link2="victor_right_arm_mount" reason="Never"/>
+    <disable_collisions link1="victor_right_arm_link_3" link2="victor_right_finger_a_link_0" reason="Never"/>
+    <disable_collisions link1="victor_right_arm_link_3" link2="victor_right_finger_a_link_1" reason="Never"/>
+    <disable_collisions link1="victor_right_arm_link_3" link2="victor_right_finger_a_link_2" reason="Never"/>
+    <disable_collisions link1="victor_right_arm_link_3" link2="victor_right_finger_a_link_3" reason="Never"/>
+    <disable_collisions link1="victor_right_arm_link_3" link2="victor_right_finger_b_link_0" reason="Never"/>
+    <disable_collisions link1="victor_right_arm_link_3" link2="victor_right_finger_b_link_1" reason="Never"/>
+    <disable_collisions link1="victor_right_arm_link_3" link2="victor_right_finger_b_link_2" reason="Never"/>
+    <disable_collisions link1="victor_right_arm_link_3" link2="victor_right_finger_b_link_3" reason="Never"/>
+    <disable_collisions link1="victor_right_arm_link_3" link2="victor_right_finger_c_link_0" reason="Never"/>
+    <disable_collisions link1="victor_right_arm_link_3" link2="victor_right_finger_c_link_1" reason="Never"/>
+    <disable_collisions link1="victor_right_arm_link_3" link2="victor_right_finger_c_link_2" reason="Never"/>
+    <disable_collisions link1="victor_right_arm_link_3" link2="victor_right_finger_c_link_3" reason="Never"/>
     <disable_collisions link1="victor_right_arm_link_3" link2="victor_right_gripper_mounting_bracket" reason="Never"/>
+    <disable_collisions link1="victor_right_arm_link_3" link2="victor_right_palm" reason="Never"/>
     <disable_collisions link1="victor_right_arm_link_4" link2="victor_right_arm_link_5" reason="Adjacent"/>
     <disable_collisions link1="victor_right_arm_link_4" link2="victor_right_arm_link_6" reason="Never"/>
     <disable_collisions link1="victor_right_arm_link_4" link2="victor_right_arm_link_7" reason="Never"/>
-    <disable_collisions link1="victor_right_arm_link_4" link2="victor_right_arm_mount" reason="Never"/>
+    <disable_collisions link1="victor_right_arm_link_4" link2="victor_right_finger_a_link_0" reason="Never"/>
+    <disable_collisions link1="victor_right_arm_link_4" link2="victor_right_finger_a_link_1" reason="Never"/>
+    <disable_collisions link1="victor_right_arm_link_4" link2="victor_right_finger_a_link_2" reason="Never"/>
+    <disable_collisions link1="victor_right_arm_link_4" link2="victor_right_finger_a_link_3" reason="Never"/>
+    <disable_collisions link1="victor_right_arm_link_4" link2="victor_right_finger_b_link_0" reason="Never"/>
+    <disable_collisions link1="victor_right_arm_link_4" link2="victor_right_finger_b_link_1" reason="Never"/>
+    <disable_collisions link1="victor_right_arm_link_4" link2="victor_right_finger_b_link_2" reason="Never"/>
+    <disable_collisions link1="victor_right_arm_link_4" link2="victor_right_finger_b_link_3" reason="Never"/>
+    <disable_collisions link1="victor_right_arm_link_4" link2="victor_right_finger_c_link_0" reason="Never"/>
+    <disable_collisions link1="victor_right_arm_link_4" link2="victor_right_finger_c_link_1" reason="Never"/>
+    <disable_collisions link1="victor_right_arm_link_4" link2="victor_right_finger_c_link_2" reason="Never"/>
+    <disable_collisions link1="victor_right_arm_link_4" link2="victor_right_finger_c_link_3" reason="Never"/>
     <disable_collisions link1="victor_right_arm_link_4" link2="victor_right_gripper_mounting_bracket" reason="Never"/>
+    <disable_collisions link1="victor_right_arm_link_4" link2="victor_right_palm" reason="Never"/>
     <disable_collisions link1="victor_right_arm_link_5" link2="victor_right_arm_link_6" reason="Adjacent"/>
     <disable_collisions link1="victor_right_arm_link_5" link2="victor_right_arm_link_7" reason="Never"/>
+    <disable_collisions link1="victor_right_arm_link_5" link2="victor_right_finger_a_link_0" reason="Never"/>
+    <disable_collisions link1="victor_right_arm_link_5" link2="victor_right_finger_a_link_1" reason="Never"/>
+    <disable_collisions link1="victor_right_arm_link_5" link2="victor_right_finger_a_link_2" reason="Never"/>
+    <disable_collisions link1="victor_right_arm_link_5" link2="victor_right_finger_a_link_3" reason="Never"/>
+    <disable_collisions link1="victor_right_arm_link_5" link2="victor_right_finger_b_link_0" reason="Never"/>
+    <disable_collisions link1="victor_right_arm_link_5" link2="victor_right_finger_b_link_1" reason="Never"/>
+    <disable_collisions link1="victor_right_arm_link_5" link2="victor_right_finger_b_link_2" reason="Never"/>
+    <disable_collisions link1="victor_right_arm_link_5" link2="victor_right_finger_b_link_3" reason="Never"/>
+    <disable_collisions link1="victor_right_arm_link_5" link2="victor_right_finger_c_link_0" reason="Never"/>
+    <disable_collisions link1="victor_right_arm_link_5" link2="victor_right_finger_c_link_1" reason="Never"/>
+    <disable_collisions link1="victor_right_arm_link_5" link2="victor_right_finger_c_link_2" reason="Never"/>
+    <disable_collisions link1="victor_right_arm_link_5" link2="victor_right_finger_c_link_3" reason="Never"/>
     <disable_collisions link1="victor_right_arm_link_5" link2="victor_right_gripper_mounting_bracket" reason="Never"/>
+    <disable_collisions link1="victor_right_arm_link_5" link2="victor_right_palm" reason="Never"/>
     <disable_collisions link1="victor_right_arm_link_6" link2="victor_right_arm_link_7" reason="Adjacent"/>
+    <disable_collisions link1="victor_right_arm_link_6" link2="victor_right_finger_a_link_0" reason="Never"/>
+    <disable_collisions link1="victor_right_arm_link_6" link2="victor_right_finger_a_link_1" reason="Never"/>
+    <disable_collisions link1="victor_right_arm_link_6" link2="victor_right_finger_a_link_2" reason="Never"/>
+    <disable_collisions link1="victor_right_arm_link_6" link2="victor_right_finger_a_link_3" reason="Never"/>
+    <disable_collisions link1="victor_right_arm_link_6" link2="victor_right_finger_b_link_0" reason="Never"/>
+    <disable_collisions link1="victor_right_arm_link_6" link2="victor_right_finger_b_link_1" reason="Never"/>
+    <disable_collisions link1="victor_right_arm_link_6" link2="victor_right_finger_b_link_2" reason="Never"/>
+    <disable_collisions link1="victor_right_arm_link_6" link2="victor_right_finger_b_link_3" reason="Never"/>
+    <disable_collisions link1="victor_right_arm_link_6" link2="victor_right_finger_c_link_0" reason="Never"/>
+    <disable_collisions link1="victor_right_arm_link_6" link2="victor_right_finger_c_link_1" reason="Never"/>
+    <disable_collisions link1="victor_right_arm_link_6" link2="victor_right_finger_c_link_2" reason="Never"/>
+    <disable_collisions link1="victor_right_arm_link_6" link2="victor_right_finger_c_link_3" reason="Never"/>
     <disable_collisions link1="victor_right_arm_link_6" link2="victor_right_gripper_mounting_bracket" reason="Never"/>
+    <disable_collisions link1="victor_right_arm_link_6" link2="victor_right_palm" reason="Never"/>
+    <disable_collisions link1="victor_right_arm_link_7" link2="victor_right_finger_a_link_0" reason="Never"/>
+    <disable_collisions link1="victor_right_arm_link_7" link2="victor_right_finger_a_link_1" reason="Never"/>
+    <disable_collisions link1="victor_right_arm_link_7" link2="victor_right_finger_a_link_2" reason="Never"/>
+    <disable_collisions link1="victor_right_arm_link_7" link2="victor_right_finger_a_link_3" reason="Never"/>
+    <disable_collisions link1="victor_right_arm_link_7" link2="victor_right_finger_b_link_0" reason="Never"/>
+    <disable_collisions link1="victor_right_arm_link_7" link2="victor_right_finger_b_link_1" reason="Never"/>
+    <disable_collisions link1="victor_right_arm_link_7" link2="victor_right_finger_b_link_2" reason="Never"/>
+    <disable_collisions link1="victor_right_arm_link_7" link2="victor_right_finger_b_link_3" reason="Never"/>
+    <disable_collisions link1="victor_right_arm_link_7" link2="victor_right_finger_c_link_0" reason="Never"/>
+    <disable_collisions link1="victor_right_arm_link_7" link2="victor_right_finger_c_link_1" reason="Never"/>
+    <disable_collisions link1="victor_right_arm_link_7" link2="victor_right_finger_c_link_2" reason="Never"/>
+    <disable_collisions link1="victor_right_arm_link_7" link2="victor_right_finger_c_link_3" reason="Never"/>
     <disable_collisions link1="victor_right_arm_link_7" link2="victor_right_gripper_mounting_bracket" reason="Adjacent"/>
+    <disable_collisions link1="victor_right_arm_link_7" link2="victor_right_palm" reason="Never"/>
+    <disable_collisions link1="victor_right_finger_a_link_0" link2="victor_right_finger_a_link_1" reason="Adjacent"/>
+    <disable_collisions link1="victor_right_finger_a_link_0" link2="victor_right_finger_a_link_2" reason="Never"/>
+    <disable_collisions link1="victor_right_finger_a_link_0" link2="victor_right_finger_a_link_3" reason="Never"/>
+    <disable_collisions link1="victor_right_finger_a_link_0" link2="victor_right_finger_b_link_0" reason="Never"/>
+    <disable_collisions link1="victor_right_finger_a_link_0" link2="victor_right_finger_b_link_1" reason="Never"/>
+    <disable_collisions link1="victor_right_finger_a_link_0" link2="victor_right_finger_b_link_2" reason="Never"/>
+    <disable_collisions link1="victor_right_finger_a_link_0" link2="victor_right_finger_b_link_3" reason="Never"/>
+    <disable_collisions link1="victor_right_finger_a_link_0" link2="victor_right_finger_c_link_0" reason="Never"/>
+    <disable_collisions link1="victor_right_finger_a_link_0" link2="victor_right_finger_c_link_1" reason="Never"/>
+    <disable_collisions link1="victor_right_finger_a_link_0" link2="victor_right_finger_c_link_2" reason="Never"/>
+    <disable_collisions link1="victor_right_finger_a_link_0" link2="victor_right_finger_c_link_3" reason="Never"/>
+    <disable_collisions link1="victor_right_finger_a_link_0" link2="victor_right_gripper_mounting_bracket" reason="Never"/>
+    <disable_collisions link1="victor_right_finger_a_link_0" link2="victor_right_palm" reason="Adjacent"/>
+    <disable_collisions link1="victor_right_finger_a_link_1" link2="victor_right_finger_a_link_2" reason="Adjacent"/>
+    <disable_collisions link1="victor_right_finger_a_link_1" link2="victor_right_finger_a_link_3" reason="Never"/>
+    <disable_collisions link1="victor_right_finger_a_link_1" link2="victor_right_finger_b_link_0" reason="Never"/>
+    <disable_collisions link1="victor_right_finger_a_link_1" link2="victor_right_finger_b_link_1" reason="Never"/>
+    <disable_collisions link1="victor_right_finger_a_link_1" link2="victor_right_finger_c_link_0" reason="Never"/>
+    <disable_collisions link1="victor_right_finger_a_link_1" link2="victor_right_finger_c_link_1" reason="Never"/>
+    <disable_collisions link1="victor_right_finger_a_link_1" link2="victor_right_gripper_mounting_bracket" reason="Never"/>
+    <disable_collisions link1="victor_right_finger_a_link_1" link2="victor_right_palm" reason="Default"/>
+    <disable_collisions link1="victor_right_finger_a_link_2" link2="victor_right_finger_a_link_3" reason="Adjacent"/>
+    <disable_collisions link1="victor_right_finger_a_link_2" link2="victor_right_finger_b_link_0" reason="Never"/>
+    <disable_collisions link1="victor_right_finger_a_link_2" link2="victor_right_finger_c_link_0" reason="Never"/>
+    <disable_collisions link1="victor_right_finger_a_link_2" link2="victor_right_gripper_mounting_bracket" reason="Never"/>
+    <disable_collisions link1="victor_right_finger_a_link_2" link2="victor_right_palm" reason="Never"/>
+    <disable_collisions link1="victor_right_finger_a_link_3" link2="victor_right_finger_b_link_0" reason="Never"/>
+    <disable_collisions link1="victor_right_finger_a_link_3" link2="victor_right_finger_c_link_0" reason="Never"/>
+    <disable_collisions link1="victor_right_finger_a_link_3" link2="victor_right_gripper_mounting_bracket" reason="Never"/>
+    <disable_collisions link1="victor_right_finger_b_link_0" link2="victor_right_finger_b_link_1" reason="Adjacent"/>
+    <disable_collisions link1="victor_right_finger_b_link_0" link2="victor_right_finger_b_link_2" reason="Never"/>
+    <disable_collisions link1="victor_right_finger_b_link_0" link2="victor_right_finger_b_link_3" reason="Never"/>
+    <disable_collisions link1="victor_right_finger_b_link_0" link2="victor_right_finger_c_link_0" reason="Never"/>
+    <disable_collisions link1="victor_right_finger_b_link_0" link2="victor_right_finger_c_link_1" reason="Never"/>
+    <disable_collisions link1="victor_right_finger_b_link_0" link2="victor_right_finger_c_link_2" reason="Never"/>
+    <disable_collisions link1="victor_right_finger_b_link_0" link2="victor_right_finger_c_link_3" reason="Never"/>
+    <disable_collisions link1="victor_right_finger_b_link_0" link2="victor_right_gripper_mounting_bracket" reason="Never"/>
+    <disable_collisions link1="victor_right_finger_b_link_0" link2="victor_right_palm" reason="Adjacent"/>
+    <disable_collisions link1="victor_right_finger_b_link_1" link2="victor_right_finger_b_link_2" reason="Adjacent"/>
+    <disable_collisions link1="victor_right_finger_b_link_1" link2="victor_right_finger_b_link_3" reason="Never"/>
+    <disable_collisions link1="victor_right_finger_b_link_1" link2="victor_right_finger_c_link_0" reason="Never"/>
+    <disable_collisions link1="victor_right_finger_b_link_1" link2="victor_right_finger_c_link_1" reason="Never"/>
+    <disable_collisions link1="victor_right_finger_b_link_1" link2="victor_right_finger_c_link_2" reason="Never"/>
+    <disable_collisions link1="victor_right_finger_b_link_1" link2="victor_right_finger_c_link_3" reason="Never"/>
+    <disable_collisions link1="victor_right_finger_b_link_1" link2="victor_right_gripper_mounting_bracket" reason="Never"/>
+    <disable_collisions link1="victor_right_finger_b_link_1" link2="victor_right_palm" reason="Default"/>
+    <disable_collisions link1="victor_right_finger_b_link_2" link2="victor_right_finger_b_link_3" reason="Adjacent"/>
+    <disable_collisions link1="victor_right_finger_b_link_2" link2="victor_right_finger_c_link_0" reason="Never"/>
+    <disable_collisions link1="victor_right_finger_b_link_2" link2="victor_right_finger_c_link_1" reason="Never"/>
+    <disable_collisions link1="victor_right_finger_b_link_2" link2="victor_right_finger_c_link_2" reason="Never"/>
+    <disable_collisions link1="victor_right_finger_b_link_2" link2="victor_right_gripper_mounting_bracket" reason="Never"/>
+    <disable_collisions link1="victor_right_finger_b_link_3" link2="victor_right_finger_c_link_0" reason="Never"/>
+    <disable_collisions link1="victor_right_finger_b_link_3" link2="victor_right_finger_c_link_1" reason="Never"/>
+    <disable_collisions link1="victor_right_finger_b_link_3" link2="victor_right_gripper_mounting_bracket" reason="Never"/>
+    <disable_collisions link1="victor_right_finger_c_link_0" link2="victor_right_finger_c_link_1" reason="Adjacent"/>
+    <disable_collisions link1="victor_right_finger_c_link_0" link2="victor_right_finger_c_link_2" reason="Never"/>
+    <disable_collisions link1="victor_right_finger_c_link_0" link2="victor_right_finger_c_link_3" reason="Never"/>
+    <disable_collisions link1="victor_right_finger_c_link_0" link2="victor_right_gripper_mounting_bracket" reason="Never"/>
+    <disable_collisions link1="victor_right_finger_c_link_0" link2="victor_right_palm" reason="Adjacent"/>
+    <disable_collisions link1="victor_right_finger_c_link_1" link2="victor_right_finger_c_link_2" reason="Adjacent"/>
+    <disable_collisions link1="victor_right_finger_c_link_1" link2="victor_right_finger_c_link_3" reason="Never"/>
+    <disable_collisions link1="victor_right_finger_c_link_1" link2="victor_right_gripper_mounting_bracket" reason="Never"/>
+    <disable_collisions link1="victor_right_finger_c_link_1" link2="victor_right_palm" reason="Default"/>
+    <disable_collisions link1="victor_right_finger_c_link_2" link2="victor_right_finger_c_link_3" reason="Adjacent"/>
+    <disable_collisions link1="victor_right_finger_c_link_2" link2="victor_right_gripper_mounting_bracket" reason="Never"/>
+    <disable_collisions link1="victor_right_finger_c_link_2" link2="victor_right_palm" reason="Never"/>
+    <disable_collisions link1="victor_right_finger_c_link_3" link2="victor_right_gripper_mounting_bracket" reason="Never"/>
+    <disable_collisions link1="victor_right_gripper_mounting_bracket" link2="victor_right_palm" reason="Adjacent"/>
 </robot>

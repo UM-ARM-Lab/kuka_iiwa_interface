@@ -1,0 +1,75 @@
+# This config file is used by ros2_control
+controller_manager:
+  ros__parameters:
+    update_rate: 100  # Hz
+
+    left_arm_controller:
+      type: joint_trajectory_controller/JointTrajectoryController
+
+
+    right_arm_controller:
+      type: joint_trajectory_controller/JointTrajectoryController
+
+
+    both_arms_controller:
+      type: joint_trajectory_controller/JointTrajectoryController
+
+
+    joint_state_broadcaster:
+      type: joint_state_broadcaster/JointStateBroadcaster
+
+left_arm_controller:
+  ros__parameters:
+    joints:
+      - victor_left_arm_joint_1
+      - victor_left_arm_joint_2
+      - victor_left_arm_joint_3
+      - victor_left_arm_joint_4
+      - victor_left_arm_joint_5
+      - victor_left_arm_joint_6
+      - victor_left_arm_joint_7
+    command_interfaces:
+      - position
+    state_interfaces:
+      - position
+      - velocity
+      - effort
+right_arm_controller:
+  ros__parameters:
+    joints:
+      - victor_right_arm_joint_1
+      - victor_right_arm_joint_2
+      - victor_right_arm_joint_3
+      - victor_right_arm_joint_4
+      - victor_right_arm_joint_5
+      - victor_right_arm_joint_6
+      - victor_right_arm_joint_7
+    command_interfaces:
+      - position
+    state_interfaces:
+      - position
+      - velocity
+      - effort
+both_arms_controller:
+  ros__parameters:
+    joints:
+      - victor_left_arm_joint_1
+      - victor_left_arm_joint_2
+      - victor_left_arm_joint_3
+      - victor_left_arm_joint_4
+      - victor_left_arm_joint_5
+      - victor_left_arm_joint_6
+      - victor_left_arm_joint_7
+      - victor_right_arm_joint_1
+      - victor_right_arm_joint_2
+      - victor_right_arm_joint_3
+      - victor_right_arm_joint_4
+      - victor_right_arm_joint_5
+      - victor_right_arm_joint_6
+      - victor_right_arm_joint_7
+    command_interfaces:
+      - position
+    state_interfaces:
+      - position
+      - velocity
+      - effort
