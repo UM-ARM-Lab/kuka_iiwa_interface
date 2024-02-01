@@ -1,0 +1,14 @@
+float64 finger_a_position
+float64 finger_b_position
+float64 finger_c_position
+float64 scissor_position
+
+float64 finger_a_velocity
+float64 finger_b_velocity
+float64 finger_c_velocity
+float64 scissor_velocity
+
+float64 finger_a_force
+float64 finger_b_force
+float64 finger_c_force
+float64 scissor_force

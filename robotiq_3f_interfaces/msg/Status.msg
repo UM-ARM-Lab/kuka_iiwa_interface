@@ -1,0 +1,29 @@
+# Reports whether an object has been gripped or not.
+robotiq_3f_interfaces/ObjectDetectionStatus finger_a_object_detection
+robotiq_3f_interfaces/ObjectDetectionStatus finger_b_object_detection
+robotiq_3f_interfaces/ObjectDetectionStatus finger_c_object_detection
+robotiq_3f_interfaces/ObjectDetectionStatus scissor_object_detection
+
+# Actuator states
+uint8 finger_a_position
+uint8 finger_b_position
+uint8 finger_c_position
+uint8 scissor_position
+
+uint8 finger_a_current
+uint8 finger_b_current
+uint8 finger_c_current
+uint8 scissor_current
+
+uint8 finger_a_cmd_echo
+uint8 finger_b_cmd_echo
+uint8 finger_c_cmd_echo
+uint8 scissor_cmd_echo
+
+robotiq_3f_interfaces/GraspingMode mode
+
+# GripperActivationStatus activation_status
+# GoTo go_to_status
+# GripperStatus gripper_status
+# MotionStatus motion_status
+# GripperFaultStatus fault_status

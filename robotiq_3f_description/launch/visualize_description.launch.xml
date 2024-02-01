@@ -1,0 +1,15 @@
+<launch>
+
+    <arg name="model" default="$(find-pkg-share robotiq_3f_description)/urdf/robotiq_3f_gripper.xacro"/>
+
+    <!-- load and publish the URDF, sub to joint states and publish tf -->
+    <node name="robot_state_publisher" pkg="robot_state_publisher" exec="robot_state_publisher">
+        <param name="robot_description" value="$(command 'xacro $(var model)')"/>
+    </node>
+
+    <!-- publish zero value joint state -->
+    <node name="joint_state_publisher" pkg="joint_state_publisher" exec="joint_state_publisher"/>
+
+    <node name="rviz" pkg="rviz2" exec="rviz2"/>
+
+</launch>

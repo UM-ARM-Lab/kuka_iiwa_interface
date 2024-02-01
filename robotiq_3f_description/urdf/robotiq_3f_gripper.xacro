@@ -1,0 +1,10 @@
+<?xml version="1.0"?>
+<robot name="example_robot" xmlns:xacro="http://www.ros.org/wiki/xacro">
+
+  <xacro:arg name="usb_port" default="/dev/ttyUSB1"/>
+
+  <xacro:include filename="$(find robotiq_3f_description)/urdf/robotiq_3f_gripper_macro.xacro"/>
+
+  <xacro:robotiq_3f_gripper use_fake_hardware="false" usb_port="$(arg usb_port)"/>
+
+</robot>

@@ -1,0 +1,3 @@
+robotiq_3f_interfaces/GraspingMode mode
+---
+bool success
