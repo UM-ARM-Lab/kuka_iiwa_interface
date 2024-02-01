@@ -35,18 +35,14 @@ add_library(
         SHARED
         include/robotiq_3f_driver/crc_utils.hpp
         include/robotiq_3f_driver/data_utils.hpp
-        include/robotiq_3f_driver/default_driver.hpp
-        include/robotiq_3f_driver/default_driver_utils.hpp
-        include/robotiq_3f_driver/default_serial.hpp
         include/robotiq_3f_driver/driver.hpp
+        include/robotiq_3f_driver/driver_utils.hpp
         include/robotiq_3f_driver/driver_exception.hpp
-        include/robotiq_3f_driver/serial.hpp
         include/robotiq_3f_driver/visibility_control.hpp
         src/crc_utils.cpp
         src/data_utils.cpp
-        src/default_driver.cpp
-        src/default_driver_utils.cpp
-        src/default_serial.cpp
+        src/driver.cpp
+        src/driver_utils.cpp
 )
 target_link_libraries(robotiq_3f_driver atomic)
 target_include_directories(

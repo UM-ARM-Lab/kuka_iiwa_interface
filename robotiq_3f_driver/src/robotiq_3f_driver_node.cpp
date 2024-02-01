@@ -26,13 +26,13 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 
-#include <robotiq_3f_driver/default_driver.hpp>
-#include <robotiq_3f_driver/default_serial.hpp>
+#include <robotiq_3f_driver/driver.hpp>
+#include <serial/serial.h>
 #include <rclcpp/rclcpp.hpp>
 #include <rclcpp/logging.hpp>
 #include <rclcpp_action/rclcpp_action.hpp>
 #include <chrono>
-#include <robotiq_3f_driver/default_driver_utils.hpp>
+#include <robotiq_3f_driver/driver_utils.hpp>
 #include <robotiq_3f_interfaces/srv/change_grasping_mode.hpp>
 #include <robotiq_3f_interfaces/msg/status.hpp>
 #include <robotiq_3f_interfaces/msg/simple_control_command.hpp>
@@ -114,10 +114,11 @@ public:
     speed_for_gripper_action_ = get_parameter("speed_for_gripper_action").as_double();
     pub_period_seconds_ = get_parameter("pub_period_seconds").as_double();
 
-    auto serial = std::make_unique<DefaultSerial>();
-    serial->set_port("/dev/ttyUSB1");
-    serial->set_baudrate(115200);
-    serial->set_timeout(500ms);
+    auto serial = std::make_unique<serial::Serial>();
+    serial->setPort("/dev/ttyUSB1");
+    serial->setBaudrate(115200);
+    auto timeout = serial::Timeout::simpleTimeout(500);
+    serial->setTimeout(timeout); // milliseconds
 
     driver_ = std::make_unique<DefaultDriver>(std::move(serial));
     driver_->set_slave_address(0x09);

@@ -32,7 +32,7 @@
 #include <map>
 #include <unordered_map>
 
-#include <robotiq_3f_driver/default_driver_utils.hpp>
+#include <robotiq_3f_driver/driver_utils.hpp>
 #include <rclcpp/logging.hpp>
 
 namespace robotiq_3f_driver::default_driver_utils

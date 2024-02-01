@@ -29,10 +29,15 @@
 #pragma once
 
 #include <chrono>
-#include <string>
+#include <functional>
+#include <memory>
+#include <vector>
+
+#include <serial/serial.h>
 
 namespace robotiq_3f_driver
 {
+
 
 // These structs give us a friendlier interface to the registers of the gripper.
 enum class GripperActivationAction
@@ -159,40 +164,53 @@ struct IndependentControlCommand
 };
 
 /**
- * This is the interface of the driver to control the 3f Gripper.
- * The Driver interface can be easily mocked for testing or implemented to
- * fake the behavior of the real hardware.
+ * This is the default implementation of the Driver to control the 3f Gripper.
  */
-class Driver
+class DefaultDriver
 {
 public:
-  virtual void set_slave_address(uint8_t slave_address) = 0;
-
-  /** Connect to the gripper serial connection. */
-  virtual bool connect() = 0;
-
-  /** Disconnect from the gripper serial connection. */
-  virtual void disconnect() = 0;
-
   /**
-   * @brief Activates the gripper.
-   * @throw serial::IOException on failure to successfully communicate with gripper port
+   * Initialize the interface to control the Robotiq 3f gripper.
+   * @param serial_interface The serial connection.
+   * @param slave_address The slave address as specified in the MODBUS RTU protocol.
    */
-  virtual void activate() = 0;
+  explicit DefaultDriver(std::unique_ptr<serial::Serial> serial);
 
+  virtual ~DefaultDriver();
+
+  void set_slave_address(uint8_t slave_address);
+  bool connect();
+  void disconnect();
+
+  /** Activate the gripper with the specified operation mode and parameters. */
+  void activate();
+
+  /** Deactivate the gripper. */
+  void deactivate();
+
+  FullGripperStatus get_full_status();
+
+  void send_independent_control_command(IndependentControlCommand const& cmd);
+
+  void send_simple_control_command(GraspingMode const& mode, double position, double velocity, double force);
+
+  void clear_faults();
+
+private:
   /**
-   * @brief Deactivates the gripper.
-   * @throw serial::IOException on failure to successfully communicate with gripper port
+   * With this command we send a request and wait for a response of given size.
+   * Behind the scene, if the response is not received, the software makes an attempt
+   * to resend the command up to 5 times before returning an empty response.
+   * @param request The command request.
+   * @param response_size The response expected size.
+   * @return The response or an empty vector if an en error occurred.
    */
-  virtual void deactivate() = 0;
+  std::vector<uint8_t> send(const std::vector<uint8_t>& request, size_t response_size) const;
 
-  virtual FullGripperStatus get_full_status() = 0;
+  void build_request_and_send(std::vector<uint8_t> regs, size_t response_size);
 
-  virtual void send_independent_control_command(IndependentControlCommand const& cmd) = 0;
-
-  virtual void send_simple_control_command(GraspingMode const& mode, double position, double velocity, double force) = 0;
-
-  virtual void clear_faults() = 0;
+  std::unique_ptr<serial::Serial> serial_ = nullptr;
+  uint8_t slave_address_ = 0x00;
+  void wait_until_activated();
 };
-
 }  // namespace robotiq_3f_driver

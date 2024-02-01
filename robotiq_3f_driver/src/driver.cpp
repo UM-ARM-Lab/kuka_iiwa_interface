@@ -31,11 +31,11 @@
 #include <cmath>
 #include <iostream>
 
-#include <robotiq_3f_driver/default_driver.hpp>
+#include <robotiq_3f_driver/driver.hpp>
 
 #include <robotiq_3f_driver/crc_utils.hpp>
 #include <robotiq_3f_driver/data_utils.hpp>
-#include <robotiq_3f_driver/default_driver_utils.hpp>
+#include <robotiq_3f_driver/driver_utils.hpp>
 #include <robotiq_3f_driver/driver_exception.hpp>
 
 #include <rclcpp/logging.hpp>
@@ -79,7 +79,7 @@ constexpr size_t kDeactivateResponseSize = 8;
 constexpr size_t kNumModBusRegisters = 8;
 constexpr size_t kResponseSizeHeaderSize = 5;
 
-DefaultDriver::DefaultDriver(std::unique_ptr<Serial> serial) : serial_{ std::move(serial) }
+DefaultDriver::DefaultDriver(std::unique_ptr<serial::Serial> serial) : serial_{ std::move(serial) }
 {
 }
 
@@ -95,8 +95,25 @@ std::vector<uint8_t> DefaultDriver::send(const std::vector<uint8_t>& request, si
     try
     {
       auto const t0 = std::chrono::high_resolution_clock::now();
-      serial_->write(request);
-      response = serial_->read(response_size);
+      auto const num_bytes_written = serial_->write(request);
+      serial_->flush();
+      if (num_bytes_written != request.size())
+      {
+        const auto error_msg = "Attempted to send_independent_control_command " + std::to_string(request.size()) +
+                              " bytes, but wrote " + std::to_string(num_bytes_written);
+        THROW(serial::IOException, error_msg.c_str());
+      }
+
+
+      std::vector<uint8_t> response;
+      size_t bytes_read = serial_->read(response, response_size);
+      if (bytes_read != response_size)
+      {
+        const auto error_msg = "Requested " + std::to_string(response_size) + " bytes, but got " + std::to_string(bytes_read);
+        THROW(serial::IOException, error_msg.c_str());
+      }
+
+
       auto const t1 = std::chrono::high_resolution_clock::now();
       auto const dt = std::chrono::duration_cast<std::chrono::microseconds>(t1 - t0).count();
       RCLCPP_DEBUG_STREAM(kLogger, "serial dt: " << dt << " us");
@@ -129,7 +146,7 @@ void DefaultDriver::set_slave_address(uint8_t slave_address)
 bool DefaultDriver::connect()
 {
   serial_->open();
-  return serial_->is_open();
+  return serial_->isOpen();
 }
 
 void DefaultDriver::disconnect()

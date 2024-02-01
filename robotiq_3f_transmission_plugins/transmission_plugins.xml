@@ -1,0 +1,9 @@
+<library path="robotiq_3f_driver">
+    <class name="robotiq_3f_transmission_plugins/IndividualControlTransmission"
+           type="robotiq_3f_transmission_plugins::IndividualControlTransmission"
+           base_class_type="transmission_interface::TransmissionLoader">
+        <description>
+            Transmission for controlling each finger individually.
+        </description>
+    </class>
+</library>
