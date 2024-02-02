@@ -17,8 +17,9 @@ import rclpy
 from victor_hardware_interfaces.msg import MotionStatus
 from geometry_msgs.msg import WrenchStamped, Wrench, Vector3
 
-hand_to_frame = {'left': 'victor_left_gripper_palm_surface',
-                 'right': 'victor_right_gripper_palm_surface'}
+# FIXME !!!
+hand_to_frame = {'left': 'victor_left_palm',
+                 'right': 'victor_right_palm'}
 
 def publish_wrench(data, hand, hand_wrench_pub):
     wr = data.estimated_external_wrench
