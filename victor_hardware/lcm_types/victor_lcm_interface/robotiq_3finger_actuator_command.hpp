@@ -9,187 +9,167 @@
 #ifndef __victor_lcm_interface_robotiq_3finger_actuator_command_hpp__
 #define __victor_lcm_interface_robotiq_3finger_actuator_command_hpp__
 
-namespace victor_lcm_interface {
 
-class robotiq_3finger_actuator_command {
- public:
-  double timestamp;
+namespace victor_lcm_interface
+{
 
-  double position;
+class robotiq_3finger_actuator_command
+{
+    public:
+        double     timestamp;
 
-  double speed;
+        double     position;
 
-  double force;
+        double     speed;
 
- public:
-  /**
-   * Encode a message into binary form.
-   *
-   * @param buf The output buffer.
-   * @param offset Encoding starts at thie byte offset into @p buf.
-   * @param maxlen Maximum number of bytes to write.  This should generally be
-   *  equal to getEncodedSize().
-   * @return The number of bytes encoded, or <0 on error.
-   */
-  inline int encode(void *buf, int offset, int maxlen) const;
+        double     force;
 
-  /**
-   * Check how many bytes are required to encode this message.
-   */
-  inline int getEncodedSize() const;
+    public:
+        /**
+         * Encode a message into binary form.
+         *
+         * @param buf The output buffer.
+         * @param offset Encoding starts at thie byte offset into @p buf.
+         * @param maxlen Maximum number of bytes to write.  This should generally be
+         *  equal to getEncodedSize().
+         * @return The number of bytes encoded, or <0 on error.
+         */
+        inline int encode(void *buf, int offset, int maxlen) const;
 
-  /**
-   * Decode a message from binary form into this instance.
-   *
-   * @param buf The buffer containing the encoded message.
-   * @param offset The byte offset into @p buf where the encoded message starts.
-   * @param maxlen The maximum number of bytes to reqad while decoding.
-   * @return The number of bytes decoded, or <0 if an error occured.
-   */
-  inline int decode(const void *buf, int offset, int maxlen);
+        /**
+         * Check how many bytes are required to encode this message.
+         */
+        inline int getEncodedSize() const;
 
-  /**
-   * Retrieve the 64-bit fingerprint identifying the structure of the message.
-   * Note that the fingerprint is the same for all instances of the same
-   * message type, and is a fingerprint on the message type definition, not on
-   * the message contents.
-   */
-  inline static int64_t getHash();
+        /**
+         * Decode a message from binary form into this instance.
+         *
+         * @param buf The buffer containing the encoded message.
+         * @param offset The byte offset into @p buf where the encoded message starts.
+         * @param maxlen The maximum number of bytes to reqad while decoding.
+         * @return The number of bytes decoded, or <0 if an error occured.
+         */
+        inline int decode(const void *buf, int offset, int maxlen);
 
-  /**
-   * Returns "robotiq_3finger_actuator_command"
-   */
-  inline static const char *getTypeName();
+        /**
+         * Retrieve the 64-bit fingerprint identifying the structure of the message.
+         * Note that the fingerprint is the same for all instances of the same
+         * message type, and is a fingerprint on the message type definition, not on
+         * the message contents.
+         */
+        inline static int64_t getHash();
 
-  // LCM support functions. Users should not call these
-  inline int _encodeNoHash(void *buf, int offset, int maxlen) const;
-  inline int _getEncodedSizeNoHash() const;
-  inline int _decodeNoHash(const void *buf, int offset, int maxlen);
-  inline static uint64_t _computeHash(const __lcm_hash_ptr *p);
+        /**
+         * Returns "robotiq_3finger_actuator_command"
+         */
+        inline static const char* getTypeName();
+
+        // LCM support functions. Users should not call these
+        inline int _encodeNoHash(void *buf, int offset, int maxlen) const;
+        inline int _getEncodedSizeNoHash() const;
+        inline int _decodeNoHash(const void *buf, int offset, int maxlen);
+        inline static uint64_t _computeHash(const __lcm_hash_ptr *p);
 };
 
-int robotiq_3finger_actuator_command::encode(void *buf, int offset, int maxlen) const {
-  int pos = 0, tlen;
-  int64_t hash = (int64_t)getHash();
+int robotiq_3finger_actuator_command::encode(void *buf, int offset, int maxlen) const
+{
+    int pos = 0, tlen;
+    int64_t hash = (int64_t)getHash();
 
-  tlen = __int64_t_encode_array(buf, offset + pos, maxlen - pos, &hash, 1);
-  if (tlen < 0)
-    return tlen;
-  else
-    pos += tlen;
+    tlen = __int64_t_encode_array(buf, offset + pos, maxlen - pos, &hash, 1);
+    if(tlen < 0) return tlen; else pos += tlen;
 
-  tlen = this->_encodeNoHash(buf, offset + pos, maxlen - pos);
-  if (tlen < 0)
-    return tlen;
-  else
-    pos += tlen;
+    tlen = this->_encodeNoHash(buf, offset + pos, maxlen - pos);
+    if (tlen < 0) return tlen; else pos += tlen;
 
-  return pos;
+    return pos;
 }
 
-int robotiq_3finger_actuator_command::decode(const void *buf, int offset, int maxlen) {
-  int pos = 0, thislen;
+int robotiq_3finger_actuator_command::decode(const void *buf, int offset, int maxlen)
+{
+    int pos = 0, thislen;
 
-  int64_t msg_hash;
-  thislen = __int64_t_decode_array(buf, offset + pos, maxlen - pos, &msg_hash, 1);
-  if (thislen < 0)
-    return thislen;
-  else
-    pos += thislen;
-  if (msg_hash != getHash()) return -1;
+    int64_t msg_hash;
+    thislen = __int64_t_decode_array(buf, offset + pos, maxlen - pos, &msg_hash, 1);
+    if (thislen < 0) return thislen; else pos += thislen;
+    if (msg_hash != getHash()) return -1;
 
-  thislen = this->_decodeNoHash(buf, offset + pos, maxlen - pos);
-  if (thislen < 0)
-    return thislen;
-  else
-    pos += thislen;
+    thislen = this->_decodeNoHash(buf, offset + pos, maxlen - pos);
+    if (thislen < 0) return thislen; else pos += thislen;
 
-  return pos;
+    return pos;
 }
 
-int robotiq_3finger_actuator_command::getEncodedSize() const { return 8 + _getEncodedSizeNoHash(); }
-
-int64_t robotiq_3finger_actuator_command::getHash() {
-  static int64_t hash = _computeHash(NULL);
-  return hash;
+int robotiq_3finger_actuator_command::getEncodedSize() const
+{
+    return 8 + _getEncodedSizeNoHash();
 }
 
-const char *robotiq_3finger_actuator_command::getTypeName() { return "robotiq_3finger_actuator_command"; }
-
-int robotiq_3finger_actuator_command::_encodeNoHash(void *buf, int offset, int maxlen) const {
-  int pos = 0, tlen;
-
-  tlen = __double_encode_array(buf, offset + pos, maxlen - pos, &this->timestamp, 1);
-  if (tlen < 0)
-    return tlen;
-  else
-    pos += tlen;
-
-  tlen = __double_encode_array(buf, offset + pos, maxlen - pos, &this->position, 1);
-  if (tlen < 0)
-    return tlen;
-  else
-    pos += tlen;
-
-  tlen = __double_encode_array(buf, offset + pos, maxlen - pos, &this->speed, 1);
-  if (tlen < 0)
-    return tlen;
-  else
-    pos += tlen;
-
-  tlen = __double_encode_array(buf, offset + pos, maxlen - pos, &this->force, 1);
-  if (tlen < 0)
-    return tlen;
-  else
-    pos += tlen;
-
-  return pos;
+int64_t robotiq_3finger_actuator_command::getHash()
+{
+    static int64_t hash = _computeHash(NULL);
+    return hash;
 }
 
-int robotiq_3finger_actuator_command::_decodeNoHash(const void *buf, int offset, int maxlen) {
-  int pos = 0, tlen;
-
-  tlen = __double_decode_array(buf, offset + pos, maxlen - pos, &this->timestamp, 1);
-  if (tlen < 0)
-    return tlen;
-  else
-    pos += tlen;
-
-  tlen = __double_decode_array(buf, offset + pos, maxlen - pos, &this->position, 1);
-  if (tlen < 0)
-    return tlen;
-  else
-    pos += tlen;
-
-  tlen = __double_decode_array(buf, offset + pos, maxlen - pos, &this->speed, 1);
-  if (tlen < 0)
-    return tlen;
-  else
-    pos += tlen;
-
-  tlen = __double_decode_array(buf, offset + pos, maxlen - pos, &this->force, 1);
-  if (tlen < 0)
-    return tlen;
-  else
-    pos += tlen;
-
-  return pos;
+const char* robotiq_3finger_actuator_command::getTypeName()
+{
+    return "robotiq_3finger_actuator_command";
 }
 
-int robotiq_3finger_actuator_command::_getEncodedSizeNoHash() const {
-  int enc_size = 0;
-  enc_size += __double_encoded_array_size(NULL, 1);
-  enc_size += __double_encoded_array_size(NULL, 1);
-  enc_size += __double_encoded_array_size(NULL, 1);
-  enc_size += __double_encoded_array_size(NULL, 1);
-  return enc_size;
+int robotiq_3finger_actuator_command::_encodeNoHash(void *buf, int offset, int maxlen) const
+{
+    int pos = 0, tlen;
+
+    tlen = __double_encode_array(buf, offset + pos, maxlen - pos, &this->timestamp, 1);
+    if(tlen < 0) return tlen; else pos += tlen;
+
+    tlen = __double_encode_array(buf, offset + pos, maxlen - pos, &this->position, 1);
+    if(tlen < 0) return tlen; else pos += tlen;
+
+    tlen = __double_encode_array(buf, offset + pos, maxlen - pos, &this->speed, 1);
+    if(tlen < 0) return tlen; else pos += tlen;
+
+    tlen = __double_encode_array(buf, offset + pos, maxlen - pos, &this->force, 1);
+    if(tlen < 0) return tlen; else pos += tlen;
+
+    return pos;
 }
 
-uint64_t robotiq_3finger_actuator_command::_computeHash(const __lcm_hash_ptr *) {
-  uint64_t hash = 0x530204c46cbbbb36LL;
-  return (hash << 1) + ((hash >> 63) & 1);
+int robotiq_3finger_actuator_command::_decodeNoHash(const void *buf, int offset, int maxlen)
+{
+    int pos = 0, tlen;
+
+    tlen = __double_decode_array(buf, offset + pos, maxlen - pos, &this->timestamp, 1);
+    if(tlen < 0) return tlen; else pos += tlen;
+
+    tlen = __double_decode_array(buf, offset + pos, maxlen - pos, &this->position, 1);
+    if(tlen < 0) return tlen; else pos += tlen;
+
+    tlen = __double_decode_array(buf, offset + pos, maxlen - pos, &this->speed, 1);
+    if(tlen < 0) return tlen; else pos += tlen;
+
+    tlen = __double_decode_array(buf, offset + pos, maxlen - pos, &this->force, 1);
+    if(tlen < 0) return tlen; else pos += tlen;
+
+    return pos;
 }
 
-}  // namespace victor_lcm_interface
+int robotiq_3finger_actuator_command::_getEncodedSizeNoHash() const
+{
+    int enc_size = 0;
+    enc_size += __double_encoded_array_size(NULL, 1);
+    enc_size += __double_encoded_array_size(NULL, 1);
+    enc_size += __double_encoded_array_size(NULL, 1);
+    enc_size += __double_encoded_array_size(NULL, 1);
+    return enc_size;
+}
+
+uint64_t robotiq_3finger_actuator_command::_computeHash(const __lcm_hash_ptr *)
+{
+    uint64_t hash = 0x530204c46cbbbb36LL;
+    return (hash<<1) + ((hash>>63)&1);
+}
+
+}
 
 #endif

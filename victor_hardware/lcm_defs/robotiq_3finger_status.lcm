@@ -1,16 +1,16 @@
-package victor_hardware_interface;
+package victor_lcm_interface;
 
 struct robotiq_3finger_status
 {
     double timestamp;
-    victor_hardware_interface.robotiq_3finger_actuator_status finger_a_status;
-    victor_hardware_interface.robotiq_3finger_actuator_status finger_b_status;
-    victor_hardware_interface.robotiq_3finger_actuator_status finger_c_status;
-    victor_hardware_interface.robotiq_3finger_actuator_status scissor_status;
-    victor_hardware_interface.robotiq_3finger_object_status finger_a_object_status;
-    victor_hardware_interface.robotiq_3finger_object_status finger_b_object_status;
-    victor_hardware_interface.robotiq_3finger_object_status finger_c_object_status;
-    victor_hardware_interface.robotiq_3finger_object_status scissor_object_status;
+    victor_lcm_interface.robotiq_3finger_actuator_status finger_a_status;
+    victor_lcm_interface.robotiq_3finger_actuator_status finger_b_status;
+    victor_lcm_interface.robotiq_3finger_actuator_status finger_c_status;
+    victor_lcm_interface.robotiq_3finger_actuator_status scissor_status;
+    victor_lcm_interface.robotiq_3finger_object_status finger_a_object_status;
+    victor_lcm_interface.robotiq_3finger_object_status finger_b_object_status;
+    victor_lcm_interface.robotiq_3finger_object_status finger_c_object_status;
+    victor_lcm_interface.robotiq_3finger_object_status scissor_object_status;
     const int8_t GRIPPER_RESET=0;
     const int8_t GRIPPER_ACTIVATION=1;
     int8_t initialization_status;

@@ -1,4 +1,4 @@
-package victor_hardware_interface;
+package victor_lcm_interface;
 
 struct robotiq_3finger_object_status
 {
