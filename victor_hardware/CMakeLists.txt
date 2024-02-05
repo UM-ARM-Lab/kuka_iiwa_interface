@@ -21,8 +21,6 @@ endforeach ()
 # make all warnings into errors
 add_compile_options(-Werror)
 
-include(GNUInstallDirs)
-
 include_directories(include lcm_types SYSTEM)
 
 add_executable(iiwa_lcm_bridge_node
@@ -46,18 +44,16 @@ ament_target_dependencies(test_victor_utils ${THIS_PACKAGE_INCLUDE_DEPENDS})
 
 # Install
 ament_python_install_package(${PROJECT_NAME})
+ament_python_install_package(victor_lcm_interface)
 
 install(
         TARGETS iiwa_lcm_bridge_node
         EXPORT ${PROJECT_NAME}_targets
-        LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}      # lib
-        ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}      # lib
-        RUNTIME DESTINATION ${CMAKE_INSTALL_LIBDIR}/${PROJECT_NAME}
+        LIBRARY DESTINATION lib
+        ARCHIVE DESTINATION lib
+        RUNTIME DESTINATION bin
 )
-install(
-        DIRECTORY include/
-        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}          # include
-)
+install(DIRECTORY include DESTINATION .)
 install(
   DIRECTORY
     launch
