@@ -68,7 +68,7 @@ install(
         EXPORT ${PROJECT_NAME}_targets
         LIBRARY DESTINATION lib
         ARCHIVE DESTINATION lib
-        RUNTIME DESTINATION bin
+        RUNTIME DESTINATION lib/${PROJECT_NAME}
 )
 install(DIRECTORY include DESTINATION .)
 install(

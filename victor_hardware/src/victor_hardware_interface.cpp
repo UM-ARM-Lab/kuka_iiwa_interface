@@ -22,13 +22,11 @@ CallbackReturn VictorHardwareInterface::on_init(const hardware_interface::Hardwa
   hw_states_velocity_.resize(info_.joints.size(), std::numeric_limits<double>::quiet_NaN());
   hw_states_effort_.resize(info_.joints.size(), std::numeric_limits<double>::quiet_NaN());
   hw_pos_cmds_.resize(info_.joints.size(), std::numeric_limits<double>::quiet_NaN());
-  hw_vel_cmds_.resize(info_.joints.size(), std::numeric_limits<double>::quiet_NaN());
-  hw_states_external_torque_sensor_.resize(info_.joints.size(), std::numeric_limits<double>::quiet_NaN());
+  hw_states_external_torque_sensor_.resize(info_.joints.size(), 0);
 
   return CallbackReturn::SUCCESS;
 }
 
-// ------------------------------------------------------------------------------------------
 std::vector<hardware_interface::StateInterface> VictorHardwareInterface::export_state_interfaces() {
   std::vector<hardware_interface::StateInterface> state_interfaces;
   for (uint i = 0; i < info_.joints.size(); i++) {
@@ -51,21 +49,17 @@ std::vector<hardware_interface::StateInterface> VictorHardwareInterface::export_
   return state_interfaces;
 }
 
-// ------------------------------------------------------------------------------------------
 std::vector<hardware_interface::CommandInterface> VictorHardwareInterface::export_command_interfaces() {
   std::vector<hardware_interface::CommandInterface> command_interfaces;
   for (uint i = 0; i < info_.joints.size(); i++) {
     RCLCPP_INFO(logger, "Exporting command interfaces for joint %s", info_.joints[i].name.c_str());
     command_interfaces.emplace_back(hardware_interface::CommandInterface(
         info_.joints[i].name, hardware_interface::HW_IF_POSITION, &hw_pos_cmds_[i]));
-    command_interfaces.emplace_back(hardware_interface::CommandInterface(
-        info_.joints[i].name, hardware_interface::HW_IF_VELOCITY, &hw_vel_cmds_[i]));
   }
 
   return command_interfaces;
 }
 
-// ------------------------------------------------------------------------------------------
 CallbackReturn VictorHardwareInterface::on_activate(const rclcpp_lifecycle::State& /* previous_state */) {
   RCLCPP_INFO(logger, "Starting on_activate");
 
@@ -76,7 +70,7 @@ CallbackReturn VictorHardwareInterface::on_activate(const rclcpp_lifecycle::Stat
   std::string const left_send_provider = "udp://10.10.10.12:30000";
   std::string const right_send_provider = "udp://10.10.10.11:30000";
 
-  // set default value for sensor
+  // Set default value for sensor
   for (auto i = 0ul; i < hw_states_external_torque_sensor_.size(); i++) {
     if (std::isnan(hw_states_external_torque_sensor_[i])) {
       hw_states_external_torque_sensor_[i] = 0;
@@ -127,6 +121,20 @@ CallbackReturn VictorHardwareInterface::on_activate(const rclcpp_lifecycle::Stat
 
   lcm_thread_running_ = true;
   lcm_thread_ = std::thread(&VictorHardwareInterface::LCMThread, this);
+
+  // Send default control mode parameters, copied from victor_utils.py
+  victor_lcm_interface::control_mode_parameters new_control_mode{};
+  new_control_mode.control_mode.mode = victor_lcm_interface::control_mode::JOINT_POSITION;
+  new_control_mode.joint_path_execution_params.joint_relative_velocity = 0.1;
+  new_control_mode.joint_path_execution_params.joint_relative_acceleration = 0.1;
+  new_control_mode.joint_path_execution_params.override_joint_acceleration = 0.0;
+
+  sleep(1);
+
+  RCLCPP_INFO(logger, "Sending default control mode parameters to both arms.");
+
+  left_send_lcm_ptr_->publish(DEFAULT_CONTROL_MODE_COMMAND_CHANNEL, &new_control_mode);
+  right_send_lcm_ptr_->publish(DEFAULT_CONTROL_MODE_COMMAND_CHANNEL, &new_control_mode);
 
   RCLCPP_INFO(logger, "On Activate finished successfully");
 
@@ -240,11 +248,11 @@ hardware_interface::return_type VictorHardwareInterface::write(const rclcpp::Tim
     }
   }
 
-  victor_lcm_interface::motion_command left_motion_cmd{};
   auto const now = std::chrono::system_clock::now();
   auto const now_tp = std::chrono::time_point_cast<std::chrono::seconds>(now);
   auto const now_seconds = now_tp.time_since_epoch().count();
 
+  victor_lcm_interface::motion_command left_motion_cmd{};
   left_motion_cmd.timestamp = now_seconds;
   left_motion_cmd.control_mode = latest_left_control_mode_;
   left_motion_cmd.joint_position.joint_1 = hw_pos_cmds_[0];
@@ -254,13 +262,13 @@ hardware_interface::return_type VictorHardwareInterface::write(const rclcpp::Tim
   left_motion_cmd.joint_position.joint_5 = hw_pos_cmds_[4];
   left_motion_cmd.joint_position.joint_6 = hw_pos_cmds_[5];
   left_motion_cmd.joint_position.joint_7 = hw_pos_cmds_[6];
-  left_motion_cmd.joint_velocity.joint_1 = hw_vel_cmds_[0];
-  left_motion_cmd.joint_velocity.joint_2 = hw_vel_cmds_[1];
-  left_motion_cmd.joint_velocity.joint_3 = hw_vel_cmds_[2];
-  left_motion_cmd.joint_velocity.joint_4 = hw_vel_cmds_[3];
-  left_motion_cmd.joint_velocity.joint_5 = hw_vel_cmds_[4];
-  left_motion_cmd.joint_velocity.joint_6 = hw_vel_cmds_[5];
-  left_motion_cmd.joint_velocity.joint_7 = hw_vel_cmds_[6];
+  left_motion_cmd.joint_velocity.joint_1 = 0.; // Sending anything other than zero causes an error. Velocity should only be controlled by the control_mode params
+  left_motion_cmd.joint_velocity.joint_2 = 0.;
+  left_motion_cmd.joint_velocity.joint_3 = 0.;
+  left_motion_cmd.joint_velocity.joint_4 = 0.;
+  left_motion_cmd.joint_velocity.joint_5 = 0.;
+  left_motion_cmd.joint_velocity.joint_6 = 0.;
+  left_motion_cmd.joint_velocity.joint_7 = 0.;
 
   victor_lcm_interface::motion_command right_motion_cmd{};
   right_motion_cmd.timestamp = now_seconds;
@@ -272,25 +280,20 @@ hardware_interface::return_type VictorHardwareInterface::write(const rclcpp::Tim
   right_motion_cmd.joint_position.joint_5 = hw_pos_cmds_[11];
   right_motion_cmd.joint_position.joint_6 = hw_pos_cmds_[12];
   right_motion_cmd.joint_position.joint_7 = hw_pos_cmds_[13];
-  right_motion_cmd.joint_velocity.joint_1 = hw_vel_cmds_[7];
-  right_motion_cmd.joint_velocity.joint_2 = hw_vel_cmds_[8];
-  right_motion_cmd.joint_velocity.joint_3 = hw_vel_cmds_[9];
-  right_motion_cmd.joint_velocity.joint_4 = hw_vel_cmds_[10];
-  right_motion_cmd.joint_velocity.joint_5 = hw_vel_cmds_[11];
-  right_motion_cmd.joint_velocity.joint_6 = hw_vel_cmds_[12];
-  right_motion_cmd.joint_velocity.joint_7 = hw_vel_cmds_[13];
+  right_motion_cmd.joint_velocity.joint_1 = 0.;
+  right_motion_cmd.joint_velocity.joint_2 = 0.;
+  right_motion_cmd.joint_velocity.joint_3 = 0.;
+  right_motion_cmd.joint_velocity.joint_4 = 0.;
+  right_motion_cmd.joint_velocity.joint_5 = 0.;
+  right_motion_cmd.joint_velocity.joint_6 = 0.;
+  right_motion_cmd.joint_velocity.joint_7 = 0.;
 
   // print the hw_pos and hw_vel cmds lists
-  // for (auto i = 0ul; i < hw_pos_cmds_.size(); i++) {
-  //   RCLCPP_INFO_STREAM(logger, "hw_pos_cmds_[" << i << "]: " << hw_pos_cmds_[i]);
-  // }
-  // for (auto i = 0ul; i < hw_vel_cmds_.size(); i++) {
-  //   RCLCPP_INFO_STREAM(logger, "hw_vel_cmds_[" << i << "]: " << hw_vel_cmds_[i]);
-  // }
+  // RCLCPP_INFO_STREAM(logger, "left cmd: " << left_motion_cmd.joint_position.joint_1 << " " << left_motion_cmd.joint_position.joint_2 << " " << left_motion_cmd.joint_position.joint_3 << " " << left_motion_cmd.joint_position.joint_4 << " " << left_motion_cmd.joint_position.joint_5 << " " << left_motion_cmd.joint_position.joint_6 << " " << left_motion_cmd.joint_position.joint_7);
+  // RCLCPP_INFO_STREAM(logger, "right cmd: " << right_motion_cmd.joint_position.joint_1 << " " << right_motion_cmd.joint_position.joint_2 << " " << right_motion_cmd.joint_position.joint_3 << " " << right_motion_cmd.joint_position.joint_4 << " " << right_motion_cmd.joint_position.joint_5 << " " << right_motion_cmd.joint_position.joint_6 << " " << right_motion_cmd.joint_position.joint_7);
 
-  // RCLCPP_INFO_STREAM(logger, "Left Motion Command: [" << std::to_string(left_motion_cmd.control_mode.mode) << "]");
   left_send_lcm_ptr_->publish(DEFAULT_MOTION_COMMAND_CHANNEL, &left_motion_cmd);
-  // right_send_lcm_ptr_->publish(DEFAULT_MOTION_COMMAND_CHANNEL, &right_motion_cmd);
+  right_send_lcm_ptr_->publish(DEFAULT_MOTION_COMMAND_CHANNEL, &right_motion_cmd);
 
   return hardware_interface::return_type::OK;
 }
