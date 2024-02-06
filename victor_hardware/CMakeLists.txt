@@ -27,17 +27,18 @@ add_compile_options(-Werror)
 include_directories(include lcm_types SYSTEM)
 
 # C++ Library (Plugin) for use with ros2_control
-add_library(victor_hardware_interface
+add_library(victor_hardware
         SHARED
         src/victor_hardware_interface.cpp
 )
 target_include_directories(
-        victor_hardware_interface
+        victor_hardware
         PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:include>
 )
-ament_target_dependencies(victor_hardware_interface ${THIS_PACKAGE_INCLUDE_DEPENDS})
+ament_target_dependencies(victor_hardware ${THIS_PACKAGE_INCLUDE_DEPENDS})
+
 
 # Node for ROS <--> LCM bridge
 add_executable(iiwa_lcm_bridge_node
@@ -63,7 +64,7 @@ ament_target_dependencies(test_victor_utils ${THIS_PACKAGE_INCLUDE_DEPENDS})
 ament_python_install_package(${PROJECT_NAME})
 
 install(
-        TARGETS iiwa_lcm_bridge_node victor_hardware_interface
+        TARGETS iiwa_lcm_bridge_node victor_hardware
         EXPORT ${PROJECT_NAME}_targets
         LIBRARY DESTINATION lib
         ARCHIVE DESTINATION lib
@@ -83,10 +84,11 @@ install(DIRECTORY
   PATTERN "*.py"
 )
 
+pluginlib_export_plugin_description_file(hardware_interface victor_hardware.xml)
 
 # Export
 ament_export_dependencies(${THIS_PACKAGE_INCLUDE_DEPENDS})
-ament_export_libraries(victor_hardware_interface)
+ament_export_libraries(victor_hardware)
 ament_export_include_directories(include)
 ament_export_targets(${PROJECT_NAME}_targets)
 

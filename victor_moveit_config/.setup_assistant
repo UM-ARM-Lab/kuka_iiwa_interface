@@ -7,10 +7,11 @@ moveit_setup_assistant_config:
   package_settings:
     author_name: Peter Mitrano
     author_email: pmitrano@umich.edu
-    generated_timestamp: 1706468351
+    generated_timestamp: 1707180796
   control_xacro:
     command:
       - position
+      - velocity
     state:
       - position
       - velocity
@@ -21,6 +22,7 @@ moveit_setup_assistant_config:
   control_xacro:
     command:
       - position
+      - velocity
     state:
       - position
       - velocity

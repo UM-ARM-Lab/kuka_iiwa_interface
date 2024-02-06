@@ -10,7 +10,7 @@
 #include <string>
 #include <thread>
 #include <vector>
-#include <victor_lcm_interface/control_mode.hpp>
+#include <victor_lcm_interface/control_mode_parameters.hpp>
 #include <victor_lcm_interface/motion_command.hpp>
 #include <victor_lcm_interface/motion_status.hpp>
 
@@ -49,12 +49,12 @@ class VictorHardwareInterface : public hardware_interface::SystemInterface {
   void LeftMotionStatusCallback(const lcm::ReceiveBuffer* /*buffer*/, const std::string& /*channel*/,
                                 const victor_lcm_interface::motion_status *motion_status);
   void LeftControlModeStatusCallback(const lcm::ReceiveBuffer* /*buffer*/, const std::string& /*channel*/,
-                                     const victor_lcm_interface::control_mode *control_mode);
+                                     const victor_lcm_interface::control_mode_parameters *control_mode_parameters);
 
   void RightMotionStatusCallback(const lcm::ReceiveBuffer* /*buffer*/, const std::string& /*channel*/,
                                  const victor_lcm_interface::motion_status *motion_status);
   void RightControlModeStatusCallback(const lcm::ReceiveBuffer* /*buffer*/, const std::string& /*channel*/,
-                                      const victor_lcm_interface::control_mode *control_mode);
+                                      const victor_lcm_interface::control_mode_parameters *control_mode_parameters);
 
   // Communication
   std::shared_ptr<lcm::LCM> left_send_lcm_ptr_;

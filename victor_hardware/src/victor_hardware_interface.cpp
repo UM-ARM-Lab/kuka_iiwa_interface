@@ -22,8 +22,7 @@ CallbackReturn VictorHardwareInterface::on_init(const hardware_interface::Hardwa
   hw_states_velocity_.resize(info_.joints.size(), std::numeric_limits<double>::quiet_NaN());
   hw_states_effort_.resize(info_.joints.size(), std::numeric_limits<double>::quiet_NaN());
   hw_pos_cmds_.resize(info_.joints.size(), std::numeric_limits<double>::quiet_NaN());
-  hw_states_external_torque_sensor_.resize(info_.sensors[0].state_interfaces.size(),
-                                           std::numeric_limits<double>::quiet_NaN());
+  hw_states_external_torque_sensor_.resize(info_.joints.size(), std::numeric_limits<double>::quiet_NaN());
 
   return CallbackReturn::SUCCESS;
 }
@@ -43,9 +42,9 @@ std::vector<hardware_interface::StateInterface> VictorHardwareInterface::export_
     state_interfaces.emplace_back(hardware_interface::StateInterface(
         info_.joints[i].name, hardware_interface::HW_IF_EFFORT, &hw_states_effort_[i]));
   }
-  for (uint i = 0; i < info_.sensors[0].state_interfaces.size(); i++) {
+  for (uint i = 0; i < info_.joints.size(); i++) {
     state_interfaces.emplace_back(hardware_interface::StateInterface(
-        info_.sensors[0].name, info_.sensors[0].state_interfaces[i].name, &hw_states_external_torque_sensor_[i]));
+        info_.joints[i].name, "external_torque", &hw_states_external_torque_sensor_[i]));
   }
 
   return state_interfaces;
@@ -55,6 +54,7 @@ std::vector<hardware_interface::StateInterface> VictorHardwareInterface::export_
 std::vector<hardware_interface::CommandInterface> VictorHardwareInterface::export_command_interfaces() {
   std::vector<hardware_interface::CommandInterface> command_interfaces;
   for (uint i = 0; i < info_.joints.size(); i++) {
+    RCLCPP_INFO(logger, "Exporting command interfaces for joint %s", info_.joints[i].name.c_str());
     command_interfaces.emplace_back(hardware_interface::CommandInterface(
         info_.joints[i].name, hardware_interface::HW_IF_POSITION, &hw_pos_cmds_[i]));
     command_interfaces.emplace_back(hardware_interface::CommandInterface(
@@ -82,33 +82,43 @@ CallbackReturn VictorHardwareInterface::on_activate(const rclcpp_lifecycle::Stat
     }
   }
 
+  left_send_lcm_ptr_ = std::make_shared<lcm::LCM>(left_send_provider);
+  left_recv_lcm_ptr_ = std::make_shared<lcm::LCM>(left_recv_provider);
+  right_send_lcm_ptr_ = std::make_shared<lcm::LCM>(right_send_provider);
+  right_recv_lcm_ptr_ = std::make_shared<lcm::LCM>(right_recv_provider);
+
   RCLCPP_INFO(logger, "===================================================================================");
   RCLCPP_INFO(logger, "Please start the LCMRobotInterface application on BOTH pendants!");
   RCLCPP_INFO(logger, "===================================================================================");
 
-  left_send_lcm_ptr_ = std::make_shared<lcm::LCM>(left_send_provider);
-  left_recv_lcm_ptr_ = std::make_shared<lcm::LCM>(left_recv_provider);
-
   if (!left_send_lcm_ptr_->good()) {
-    throw std::invalid_argument("Left Send LCM interface is not good");
+    RCLCPP_ERROR(logger, "Left Send LCM interface is not good");
+    return CallbackReturn::ERROR;
   }
+  RCLCPP_DEBUG(logger, "Left send LCM interface is good");
+
   if (!left_recv_lcm_ptr_->good()) {
-    throw std::invalid_argument("Left Receive LCM interface is not good");
+    RCLCPP_ERROR(logger, "Left Receive LCM interface is not good");
+    return CallbackReturn::ERROR;
   }
+  RCLCPP_DEBUG(logger, "Left receive LCM interface is good");
+
+  if (!right_send_lcm_ptr_->good()) {
+    RCLCPP_ERROR(logger, "Right Send LCM interface is not good");
+    return CallbackReturn::ERROR;
+  }
+  RCLCPP_DEBUG(logger, "Right send LCM interface is good");
+
+  if (!right_recv_lcm_ptr_->good()) {
+    RCLCPP_ERROR(logger, "Right Receive LCM interface is not good");
+    return CallbackReturn::ERROR;
+  }
+  RCLCPP_DEBUG(logger, "Right receive LCM interface is good");
+
   left_recv_lcm_ptr_->subscribe(DEFAULT_MOTION_STATUS_CHANNEL, &VictorHardwareInterface::LeftMotionStatusCallback,
                                 this);
   left_recv_lcm_ptr_->subscribe(DEFAULT_CONTROL_MODE_STATUS_CHANNEL,
                                 &VictorHardwareInterface::LeftControlModeStatusCallback, this);
-
-  right_send_lcm_ptr_ = std::make_shared<lcm::LCM>(right_send_provider);
-  right_send_lcm_ptr_ = std::make_shared<lcm::LCM>(right_recv_provider);
-
-  if (!right_send_lcm_ptr_->good()) {
-    throw std::invalid_argument("Right Send LCM interface is not good");
-  }
-  if (!right_recv_lcm_ptr_->good()) {
-    throw std::invalid_argument("Right Receive LCM interface is not good");
-  }
   right_recv_lcm_ptr_->subscribe(DEFAULT_MOTION_STATUS_CHANNEL, &VictorHardwareInterface::RightMotionStatusCallback,
                                  this);
   right_recv_lcm_ptr_->subscribe(DEFAULT_CONTROL_MODE_STATUS_CHANNEL,
@@ -272,9 +282,9 @@ void VictorHardwareInterface::LeftMotionStatusCallback(const lcm::ReceiveBuffer*
 
 void VictorHardwareInterface::LeftControlModeStatusCallback(const lcm::ReceiveBuffer* /*buffer*/,
                                                             const std::string& /*channel*/,
-                                                            const victor_lcm_interface::control_mode *control_mode) {
+                                                            const victor_lcm_interface::control_mode_parameters *control_mode_parameters) {
   std::lock_guard<std::mutex> lock(mutex_);
-  latest_left_control_mode_ = *control_mode;
+  latest_left_control_mode_ = control_mode_parameters->control_mode;
 }
 
 void VictorHardwareInterface::RightMotionStatusCallback(const lcm::ReceiveBuffer* /*buffer*/,
@@ -286,9 +296,9 @@ void VictorHardwareInterface::RightMotionStatusCallback(const lcm::ReceiveBuffer
 
 void VictorHardwareInterface::RightControlModeStatusCallback(const lcm::ReceiveBuffer* /*buffer*/,
                                                              const std::string& /*channel*/,
-                                                             const victor_lcm_interface::control_mode *control_mode) {
+                                                             const victor_lcm_interface::control_mode_parameters *control_mode_parameters) {
   std::lock_guard<std::mutex> lock(mutex_);
-  latest_right_control_mode_ = *control_mode;
+  latest_right_control_mode_ = control_mode_parameters->control_mode;
 }
 
 }  // namespace victor_hardware
