@@ -1,8 +1,8 @@
 #include "victor_hardware/iiwa_lcm_bridge.hpp"
 
 #include <arm_utilities/ros_helpers.hpp>
-#include <rclcpp/time.hpp>
 #include <rclcpp/logging.hpp>
+#include <rclcpp/time.hpp>
 #include <utility>
 
 auto const logger = rclcpp::get_logger("iiwa_lcm_bridge");
@@ -274,6 +274,28 @@ IiwaLcmBridge::IiwaLcmBridge(
 
 bool IiwaLcmBridge::SendMotionCommandMessage(const msg::MotionCommand& command) {
   const victor_lcm_interface::motion_command lcm_command = motionCommandRosToLcm(command);
+  // print everything in the lcm message
+  RCLCPP_INFO(logger, "Sending motion command message: ");
+  RCLCPP_INFO_STREAM(logger, "mode: " << std::to_string(lcm_command.control_mode.mode));
+  RCLCPP_INFO_STREAM(logger, "timestamp: " << lcm_command.timestamp);
+  RCLCPP_INFO_STREAM(
+      logger, "joint_position: " << lcm_command.joint_position.joint_1 << " " << lcm_command.joint_position.joint_2
+                                 << " " << lcm_command.joint_position.joint_3 << " "
+                                 << lcm_command.joint_position.joint_4 << " " << lcm_command.joint_position.joint_5
+                                 << " " << lcm_command.joint_position.joint_6 << " "
+                                 << lcm_command.joint_position.joint_7);
+  RCLCPP_INFO_STREAM(
+      logger, "joint_velocity: " << lcm_command.joint_velocity.joint_1 << " " << lcm_command.joint_velocity.joint_2
+                                 << " " << lcm_command.joint_velocity.joint_3 << " "
+                                 << lcm_command.joint_velocity.joint_4 << " " << lcm_command.joint_velocity.joint_5
+                                 << " " << lcm_command.joint_velocity.joint_6 << " "
+                                 << lcm_command.joint_velocity.joint_7);
+  RCLCPP_INFO_STREAM(logger, "cartesian pose: " << lcm_command.cartesian_pose.xt << " " << lcm_command.cartesian_pose.yt
+                                                << " " << lcm_command.cartesian_pose.zt << " "
+                                                << lcm_command.cartesian_pose.wr << " " << lcm_command.cartesian_pose.xr
+                                                << " " << lcm_command.cartesian_pose.yr << " "
+                                                << lcm_command.cartesian_pose.zr);
+
   const int ret = send_lcm_ptr_->publish(motion_command_channel_name_, &lcm_command);
   if (ret == 0) {
     return true;
@@ -292,7 +314,9 @@ bool IiwaLcmBridge::SendControlModeCommandMessage(const msg::ControlModeParamete
   }
 }
 
-void IiwaLcmBridge::InternalMotionStatusLCMCallback(const lcm::ReceiveBuffer* /*buffer*/, const std::string& /*channel*/, const victor_lcm_interface::motion_status* status_msg) {
+void IiwaLcmBridge::InternalMotionStatusLCMCallback(const lcm::ReceiveBuffer* /*buffer*/,
+                                                    const std::string& /*channel*/,
+                                                    const victor_lcm_interface::motion_status* status_msg) {
   const msg::MotionStatus ros_status = motionStatusLcmToRos(*status_msg);
   motion_status_callback_fn_(ros_status);
 }
