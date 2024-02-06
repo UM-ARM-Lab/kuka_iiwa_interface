@@ -22,6 +22,7 @@ CallbackReturn VictorHardwareInterface::on_init(const hardware_interface::Hardwa
   hw_states_velocity_.resize(info_.joints.size(), std::numeric_limits<double>::quiet_NaN());
   hw_states_effort_.resize(info_.joints.size(), std::numeric_limits<double>::quiet_NaN());
   hw_pos_cmds_.resize(info_.joints.size(), std::numeric_limits<double>::quiet_NaN());
+  hw_vel_cmds_.resize(info_.joints.size(), std::numeric_limits<double>::quiet_NaN());
   hw_states_external_torque_sensor_.resize(info_.joints.size(), std::numeric_limits<double>::quiet_NaN());
 
   return CallbackReturn::SUCCESS;
@@ -66,7 +67,7 @@ std::vector<hardware_interface::CommandInterface> VictorHardwareInterface::expor
 
 // ------------------------------------------------------------------------------------------
 CallbackReturn VictorHardwareInterface::on_activate(const rclcpp_lifecycle::State& /* previous_state */) {
-  RCLCPP_INFO(logger, "Starting ...please wait...");
+  RCLCPP_INFO(logger, "Starting on_activate");
 
   // NOTE: changing these values here requires corresponding changes in the LCMRobotInterface application
   //  and also the victor_lcm_bridge launch file.
@@ -135,10 +136,12 @@ CallbackReturn VictorHardwareInterface::on_activate(const rclcpp_lifecycle::Stat
 // ------------------------------------------------------------------------------------------
 CallbackReturn VictorHardwareInterface::on_deactivate(const rclcpp_lifecycle::State& /* previous_state */) {
   // Stop the LCM processing thread
-  RCLCPP_INFO(logger, "Stopping LCM processing thread");
+  RCLCPP_INFO(logger, "on_deactivate: Stopping LCM processing thread");
 
   lcm_thread_running_ = false;
   lcm_thread_.join();
+
+  RCLCPP_INFO(logger, "LCM thread stopped.");
 
   return CallbackReturn::SUCCESS;
 }
@@ -160,6 +163,7 @@ hardware_interface::return_type VictorHardwareInterface::read(const rclcpp::Time
     left_motion_status = latest_left_motion_status_;
     right_motion_status = latest_right_motion_status_;
   }
+
   hw_states_position_[0] = left_motion_status.measured_joint_position.joint_1;
   hw_states_position_[1] = left_motion_status.measured_joint_position.joint_2;
   hw_states_position_[2] = left_motion_status.measured_joint_position.joint_3;
@@ -229,11 +233,19 @@ hardware_interface::return_type VictorHardwareInterface::write(const rclcpp::Tim
   bool isNan = false;
   for (auto i = 0ul; i < hw_pos_cmds_.size(); i++) {
     if (std::isnan(hw_pos_cmds_[i])) {
-      return hardware_interface::return_type::ERROR;
+      // This is not an error, but we don't want to send NaN commands to the robot.
+      // If you return error the controller will be stopped, so we just return OK.
+      // Although it's weird to me that "write"
+      return hardware_interface::return_type::OK;
     }
   }
 
   victor_lcm_interface::motion_command left_motion_cmd{};
+  auto const now = std::chrono::system_clock::now();
+  auto const now_tp = std::chrono::time_point_cast<std::chrono::seconds>(now);
+  auto const now_seconds = now_tp.time_since_epoch().count();
+
+  left_motion_cmd.timestamp = now_seconds;
   left_motion_cmd.control_mode = latest_left_control_mode_;
   left_motion_cmd.joint_position.joint_1 = hw_pos_cmds_[0];
   left_motion_cmd.joint_position.joint_2 = hw_pos_cmds_[1];
@@ -251,6 +263,7 @@ hardware_interface::return_type VictorHardwareInterface::write(const rclcpp::Tim
   left_motion_cmd.joint_velocity.joint_7 = hw_vel_cmds_[6];
 
   victor_lcm_interface::motion_command right_motion_cmd{};
+  right_motion_cmd.timestamp = now_seconds;
   right_motion_cmd.control_mode = latest_right_control_mode_;
   right_motion_cmd.joint_position.joint_1 = hw_pos_cmds_[7];
   right_motion_cmd.joint_position.joint_2 = hw_pos_cmds_[8];
@@ -267,8 +280,18 @@ hardware_interface::return_type VictorHardwareInterface::write(const rclcpp::Tim
   right_motion_cmd.joint_velocity.joint_6 = hw_vel_cmds_[12];
   right_motion_cmd.joint_velocity.joint_7 = hw_vel_cmds_[13];
 
-  left_send_lcm_ptr_->publish(DEFAULT_MOTION_COMMAND_CHANNEL, &left_motion_cmd);
-  right_send_lcm_ptr_->publish(DEFAULT_MOTION_COMMAND_CHANNEL, &right_motion_cmd);
+  // print the hw_pos and hw_vel cmds lists
+  for (auto i = 0ul; i < hw_pos_cmds_.size(); i++) {
+    RCLCPP_INFO_STREAM(logger, "hw_pos_cmds_[" << i << "]: " << hw_pos_cmds_[i]);
+  }
+  for (auto i = 0ul; i < hw_vel_cmds_.size(); i++) {
+    RCLCPP_INFO_STREAM(logger, "hw_vel_cmds_[" << i << "]: " << hw_vel_cmds_[i]);
+  }
+
+  // RCLCPP_INFO_STREAM(logger, "Left Motion Command: [" << std::to_string(left_motion_cmd.control_mode.mode) << "]");
+  // std::cout << "Right Motion Command: " << right_motion_cmd << std::endl;
+  // left_send_lcm_ptr_->publish(DEFAULT_MOTION_COMMAND_CHANNEL, &left_motion_cmd);
+  // right_send_lcm_ptr_->publish(DEFAULT_MOTION_COMMAND_CHANNEL, &right_motion_cmd);
 
   return hardware_interface::return_type::OK;
 }

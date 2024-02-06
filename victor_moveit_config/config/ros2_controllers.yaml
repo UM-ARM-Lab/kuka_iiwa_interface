@@ -29,8 +29,6 @@ both_arms_controller:
       - victor_right_arm_joint_7
     command_interfaces:
       - position
-      - velocity
     state_interfaces:
       - position
       - velocity
-      - effort
