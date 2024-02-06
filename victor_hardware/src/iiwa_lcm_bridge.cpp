@@ -292,9 +292,7 @@ bool IiwaLcmBridge::SendControlModeCommandMessage(const msg::ControlModeParamete
   }
 }
 
-void IiwaLcmBridge::InternalMotionStatusLCMCallback(const lcm::ReceiveBuffer* /*buffer*/,
-                                                    const std::string& /*channel*/,
-                                                    const victor_lcm_interface::motion_status* status_msg) {
+void IiwaLcmBridge::InternalMotionStatusLCMCallback(const lcm::ReceiveBuffer* /*buffer*/, const std::string& /*channel*/, const victor_lcm_interface::motion_status* status_msg) {
   const msg::MotionStatus ros_status = motionStatusLcmToRos(*status_msg);
   motion_status_callback_fn_(ros_status);
 }

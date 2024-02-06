@@ -7,10 +7,13 @@ set(THIS_PACKAGE_INCLUDE_DEPENDS
         ament_cmake
         ament_cmake_python
         ament_cmake_gtest
+        pluginlib
+        hardware_interface
         arm_utilities
         lcm
         victor_hardware_interfaces
         rclcpp
+        rclcpp_lifecycle
         rclpy
 )
 
@@ -23,6 +26,20 @@ add_compile_options(-Werror)
 
 include_directories(include lcm_types SYSTEM)
 
+# C++ Library (Plugin) for use with ros2_control
+add_library(victor_hardware_interface
+        SHARED
+        src/victor_hardware_interface.cpp
+)
+target_include_directories(
+        victor_hardware_interface
+        PUBLIC
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+        $<INSTALL_INTERFACE:include>
+)
+ament_target_dependencies(victor_hardware_interface ${THIS_PACKAGE_INCLUDE_DEPENDS})
+
+# Node for ROS <--> LCM bridge
 add_executable(iiwa_lcm_bridge_node
         src/iiwa_lcm_bridge_node.cpp
         src/iiwa_lcm_bridge_utils.cpp
@@ -44,10 +61,9 @@ ament_target_dependencies(test_victor_utils ${THIS_PACKAGE_INCLUDE_DEPENDS})
 
 # Install
 ament_python_install_package(${PROJECT_NAME})
-ament_python_install_package(victor_lcm_interface)
 
 install(
-        TARGETS iiwa_lcm_bridge_node
+        TARGETS iiwa_lcm_bridge_node victor_hardware_interface
         EXPORT ${PROJECT_NAME}_targets
         LIBRARY DESTINATION lib
         ARCHIVE DESTINATION lib
@@ -70,6 +86,7 @@ install(DIRECTORY
 
 # Export
 ament_export_dependencies(${THIS_PACKAGE_INCLUDE_DEPENDS})
+ament_export_libraries(victor_hardware_interface)
 ament_export_include_directories(include)
 ament_export_targets(${PROJECT_NAME}_targets)
 

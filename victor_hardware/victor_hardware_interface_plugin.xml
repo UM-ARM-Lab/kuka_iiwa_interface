@@ -1,0 +1,9 @@
+<library path="victor_hardware">
+  <class name="victor_hardware/VictorHardwareInterface"
+         type="victor_hardware::VictorHardwareInterface"
+         base_class_type="hardware_interface::SystemInterface">
+    <description>
+      ROS2 Control System Driver for the KUKA iiwa robot, using LCM
+    </description>
+  </class>
+</library>

@@ -14,8 +14,14 @@
     <buildtool_depend>ament_cmake_python</buildtool_depend>
     <buildtool_depend>ament_cmake_gtest</buildtool_depend>
 
-    <depend>arm_utilities</depend>
+    <depend>hardware_interface</depend>
+    <depend>pluginlib</depend>
     <depend>rclcpp</depend>
+    <depend>rclcpp_lifecycle</depend>
+    <depend>ros2_control</depend>
+    <depend>ros2_controllers</depend>
+
+    <depend>arm_utilities</depend>
     <depend>victor_hardware_interfaces</depend>
     <depend>lcm</depend>
 

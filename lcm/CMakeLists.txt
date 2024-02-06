@@ -16,30 +16,31 @@ message(AUTHOR_WARNING "------- Deprecated definitions disabled for LCM build")
 
 add_definitions(-Wno-deprecated-declarations)
 
-add_library(${PROJECT_NAME} include/${PROJECT_NAME}/dbg.h
-                            include/${PROJECT_NAME}/lcm.h
-                            include/${PROJECT_NAME}/lcm_internal.h
-                            include/${PROJECT_NAME}/lcm_coretypes.h
-                            include/${PROJECT_NAME}/ringbuffer.h
-                            include/${PROJECT_NAME}/udpm_util.h
-                            include/${PROJECT_NAME}/eventlog.h
-                            include/${PROJECT_NAME}/ioutils.h
-                            include/${PROJECT_NAME}/lcm-cpp.hpp
-                            include/${PROJECT_NAME}/lcm-cpp-impl.hpp
-                            include/${PROJECT_NAME}/lcmtypes/channel_port_map_update_t.h
-                            include/${PROJECT_NAME}/lcmtypes/channel_to_port_t.h
-                            src/${PROJECT_NAME}/lcm.c
-                            src/${PROJECT_NAME}/lcm_memq.c
-                            src/${PROJECT_NAME}/lcm_file.c
-                            src/${PROJECT_NAME}/ringbuffer.c
-                            src/${PROJECT_NAME}/udpm_util.c
-                            src/${PROJECT_NAME}/eventlog.c
-                            src/${PROJECT_NAME}/lcm_mpudpm.c
-                            src/${PROJECT_NAME}/lcm_udpm.c
-                            src/${PROJECT_NAME}/lcm_udp.c
-                            src/${PROJECT_NAME}/lcm_tcpq.c
-                            src/${PROJECT_NAME}/lcmtypes/channel_port_map_update_t.c
-                            src/${PROJECT_NAME}/lcmtypes/channel_to_port_t.c)
+add_library(${PROJECT_NAME} SHARED
+        include/${PROJECT_NAME}/dbg.h
+        include/${PROJECT_NAME}/lcm.h
+        include/${PROJECT_NAME}/lcm_internal.h
+        include/${PROJECT_NAME}/lcm_coretypes.h
+        include/${PROJECT_NAME}/ringbuffer.h
+        include/${PROJECT_NAME}/udpm_util.h
+        include/${PROJECT_NAME}/eventlog.h
+        include/${PROJECT_NAME}/ioutils.h
+        include/${PROJECT_NAME}/lcm-cpp.hpp
+        include/${PROJECT_NAME}/lcm-cpp-impl.hpp
+        include/${PROJECT_NAME}/lcmtypes/channel_port_map_update_t.h
+        include/${PROJECT_NAME}/lcmtypes/channel_to_port_t.h
+        src/${PROJECT_NAME}/lcm.c
+        src/${PROJECT_NAME}/lcm_memq.c
+        src/${PROJECT_NAME}/lcm_file.c
+        src/${PROJECT_NAME}/ringbuffer.c
+        src/${PROJECT_NAME}/udpm_util.c
+        src/${PROJECT_NAME}/eventlog.c
+        src/${PROJECT_NAME}/lcm_mpudpm.c
+        src/${PROJECT_NAME}/lcm_udpm.c
+        src/${PROJECT_NAME}/lcm_udp.c
+        src/${PROJECT_NAME}/lcm_tcpq.c
+        src/${PROJECT_NAME}/lcmtypes/channel_port_map_update_t.c
+        src/${PROJECT_NAME}/lcmtypes/channel_to_port_t.c)
 target_link_libraries(${PROJECT_NAME} ${GLib_LIBRARIES})
 target_include_directories(${PROJECT_NAME}
         PUBLIC
