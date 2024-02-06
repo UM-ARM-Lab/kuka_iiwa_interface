@@ -12,6 +12,7 @@ controller_manager:
 
 both_arms_controller:
   ros__parameters:
+    allow_partial_joints_goal: true
     joints:
       - victor_left_arm_joint_1
       - victor_left_arm_joint_2
