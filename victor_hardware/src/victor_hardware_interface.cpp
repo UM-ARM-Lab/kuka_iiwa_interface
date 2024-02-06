@@ -281,16 +281,15 @@ hardware_interface::return_type VictorHardwareInterface::write(const rclcpp::Tim
   right_motion_cmd.joint_velocity.joint_7 = hw_vel_cmds_[13];
 
   // print the hw_pos and hw_vel cmds lists
-  for (auto i = 0ul; i < hw_pos_cmds_.size(); i++) {
-    RCLCPP_INFO_STREAM(logger, "hw_pos_cmds_[" << i << "]: " << hw_pos_cmds_[i]);
-  }
-  for (auto i = 0ul; i < hw_vel_cmds_.size(); i++) {
-    RCLCPP_INFO_STREAM(logger, "hw_vel_cmds_[" << i << "]: " << hw_vel_cmds_[i]);
-  }
+  // for (auto i = 0ul; i < hw_pos_cmds_.size(); i++) {
+  //   RCLCPP_INFO_STREAM(logger, "hw_pos_cmds_[" << i << "]: " << hw_pos_cmds_[i]);
+  // }
+  // for (auto i = 0ul; i < hw_vel_cmds_.size(); i++) {
+  //   RCLCPP_INFO_STREAM(logger, "hw_vel_cmds_[" << i << "]: " << hw_vel_cmds_[i]);
+  // }
 
   // RCLCPP_INFO_STREAM(logger, "Left Motion Command: [" << std::to_string(left_motion_cmd.control_mode.mode) << "]");
-  // std::cout << "Right Motion Command: " << right_motion_cmd << std::endl;
-  // left_send_lcm_ptr_->publish(DEFAULT_MOTION_COMMAND_CHANNEL, &left_motion_cmd);
+  left_send_lcm_ptr_->publish(DEFAULT_MOTION_COMMAND_CHANNEL, &left_motion_cmd);
   // right_send_lcm_ptr_->publish(DEFAULT_MOTION_COMMAND_CHANNEL, &right_motion_cmd);
 
   return hardware_interface::return_type::OK;
