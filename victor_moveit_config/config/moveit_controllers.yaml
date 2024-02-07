@@ -5,6 +5,8 @@ moveit_controller_manager: moveit_simple_controller_manager/MoveItSimpleControll
 moveit_simple_controller_manager:
   controller_names:
     - both_arms_controller
+    - left_force_torque_broadcaster
+    - right_force_torque_broadcaster
 
   both_arms_controller:
     type: FollowJointTrajectory

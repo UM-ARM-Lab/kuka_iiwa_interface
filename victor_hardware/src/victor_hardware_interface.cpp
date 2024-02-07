@@ -22,6 +22,8 @@ CallbackReturn VictorHardwareInterface::on_init(const hardware_interface::Hardwa
   hw_states_position_.resize(info_.joints.size(), std::numeric_limits<double>::quiet_NaN());
   hw_states_effort_.resize(info_.joints.size(), std::numeric_limits<double>::quiet_NaN());
   hw_states_external_torque_sensor_.resize(info_.joints.size(), 0);
+  left_hw_ft_.fill(0);
+  right_hw_ft_.fill(0);
 
   return CallbackReturn::SUCCESS;
 }

@@ -238,15 +238,6 @@
             </joint>
 
             <sensor name="left_force_torque_sensor">
-                <!-- <param name="chain_root">${chain_root}</param>
-                <param name="chain_tip">${chain_tip}</param>
-                <param name="damping">${damping}</param>
-                <param name="force_x_th">${force_x_th}</param>
-                <param name="force_y_th">${force_y_th}</param>
-                <param name="force_z_th">${force_z_th}</param>
-                <param name="torque_x_th">${torque_x_th}</param>
-                <param name="torque_y_th">${torque_y_th}</param>
-                <param name="torque_z_th">${torque_z_th}</param> -->
                 <state_interface name="force.x" />
                 <state_interface name="force.y" />
                 <state_interface name="force.z" />
