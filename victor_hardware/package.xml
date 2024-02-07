@@ -23,6 +23,7 @@
 
     <depend>arm_utilities</depend>
     <depend>victor_hardware_interfaces</depend>
+    <depend>robotiq_3f_transmission_plugins</depend>
     <depend>lcm</depend>
 
     <exec_depend>victor_description</exec_depend>

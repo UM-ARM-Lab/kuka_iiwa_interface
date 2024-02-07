@@ -623,7 +623,7 @@ class IiwaLcmBridgeNode : public rclcpp::Node {
   }
 
   /*
-   * LCM callback used by the LCM subsystem when a LCM status message is recieved. Republishes the motion status
+   * LCM callback used by the LCM subsystem when a LCM status message is received. Republishes the motion status
    * on the correct ROS topic
    */
   void motionStatusLCMCallback(const msg::MotionStatus& motion_status) { motion_status_pub_->publish(motion_status); }

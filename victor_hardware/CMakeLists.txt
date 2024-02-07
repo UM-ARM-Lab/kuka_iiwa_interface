@@ -12,6 +12,7 @@ set(THIS_PACKAGE_INCLUDE_DEPENDS
         arm_utilities
         lcm
         victor_hardware_interfaces
+        robotiq_3f_transmission_plugins
         rclcpp
         rclcpp_lifecycle
         rclpy
@@ -30,6 +31,7 @@ include_directories(include lcm_types SYSTEM)
 add_library(victor_hardware
         SHARED
         src/victor_hardware_interface.cpp
+        include/victor_hardware/lcm_listener.hpp
 )
 target_include_directories(
         victor_hardware
