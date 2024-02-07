@@ -33,13 +33,13 @@
 
 const auto kLogger = rclcpp::get_logger("Robotiq3fGripperHardwareInterface");
 
+namespace robotiq_3f_transmission_plugins
+{
+
 double double_to_uint8(double const value)
 {
   return value * 255.0;
 };
-
-namespace robotiq_3f_transmission_plugins
-{
 
 std::array<double, 3> get_finger_thetas(double const g)
 {

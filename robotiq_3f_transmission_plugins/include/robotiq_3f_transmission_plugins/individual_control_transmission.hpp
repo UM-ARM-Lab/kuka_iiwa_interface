@@ -36,6 +36,8 @@
 namespace robotiq_3f_transmission_plugins
 {
 
+double double_to_uint8(double const value);
+
 std::array<double, 3> get_finger_thetas(double g);
 double get_palm_finger_pos(double scissor_pos);
 
