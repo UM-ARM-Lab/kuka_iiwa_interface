@@ -9,6 +9,12 @@ controller_manager:
     joint_state_broadcaster:
       type: joint_state_broadcaster/JointStateBroadcaster
 
+    left_force_torque_broadcaster:
+      type: force_torque_sensor_broadcaster/ForceTorqueSensorBroadcaster
+
+    right_force_torque_broadcaster:
+      type: force_torque_sensor_broadcaster/ForceTorqueSensorBroadcaster
+
 both_arms_controller:
   ros__parameters:
     allow_partial_joints_goal: true
@@ -32,3 +38,13 @@ both_arms_controller:
     state_interfaces:
       - position
       - velocity
+
+left_force_torque_broadcaster:
+  ros__parameters:
+    frame_id: victor_left_palm
+    sensor_name: left_force_torque_sensor
+
+right_force_torque_broadcaster:
+  ros__parameters:
+    frame_id: victor_right_palm
+    sensor_name: right_force_torque_sensor

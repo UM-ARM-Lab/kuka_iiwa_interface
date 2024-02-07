@@ -71,6 +71,8 @@ class VictorHardwareInterface : public hardware_interface::SystemInterface {
   std::vector<double> hw_states_position_;
   std::vector<double> hw_states_effort_;
   std::vector<double> hw_states_external_torque_sensor_;
+  std::array<double, 6> left_hw_ft_;
+  std::array<double, 6> right_hw_ft_;
 };
 
 }  // namespace victor_hardware

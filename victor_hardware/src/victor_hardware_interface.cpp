@@ -46,6 +46,20 @@ std::vector<hardware_interface::StateInterface> VictorHardwareInterface::export_
     }
   }
 
+  // export state interfaces for force torque sensor
+  state_interfaces.emplace_back("left_force_torque_sensor", "force.x", &left_hw_ft_[0]);
+  state_interfaces.emplace_back("left_force_torque_sensor", "force.y", &left_hw_ft_[1]);
+  state_interfaces.emplace_back("left_force_torque_sensor", "force.z", &left_hw_ft_[2]);
+  state_interfaces.emplace_back("left_force_torque_sensor", "torque.x", &left_hw_ft_[3]);
+  state_interfaces.emplace_back("left_force_torque_sensor", "torque.y", &left_hw_ft_[4]);
+  state_interfaces.emplace_back("left_force_torque_sensor", "torque.z", &left_hw_ft_[5]);
+  state_interfaces.emplace_back("right_force_torque_sensor", "force.x", &right_hw_ft_[0]);
+  state_interfaces.emplace_back("right_force_torque_sensor", "force.y", &right_hw_ft_[1]);
+  state_interfaces.emplace_back("right_force_torque_sensor", "force.z", &right_hw_ft_[2]);
+  state_interfaces.emplace_back("right_force_torque_sensor", "torque.x", &right_hw_ft_[3]);
+  state_interfaces.emplace_back("right_force_torque_sensor", "torque.y", &right_hw_ft_[4]);
+  state_interfaces.emplace_back("right_force_torque_sensor", "torque.z", &right_hw_ft_[5]);
+
   return state_interfaces;
 }
 
@@ -203,10 +217,14 @@ hardware_interface::return_type VictorHardwareInterface::read(const rclcpp::Time
 
   // now also fill out the positions for the finger joints
   auto const& left_gripper_status = left_gripper_status_listener_->getLatestMessage();
-  auto const& left_finger_a_pos = robotiq_3f_transmission_plugins::double_to_uint8(left_gripper_status.finger_a_status.position);
-  auto const& left_finger_b_pos = robotiq_3f_transmission_plugins::double_to_uint8(left_gripper_status.finger_b_status.position);
-  auto const& left_finger_c_pos = robotiq_3f_transmission_plugins::double_to_uint8(left_gripper_status.finger_c_status.position);
-  auto const& left_scissor_pos = robotiq_3f_transmission_plugins::double_to_uint8(left_gripper_status.scissor_status.position);
+  auto const& left_finger_a_pos =
+      robotiq_3f_transmission_plugins::double_to_uint8(left_gripper_status.finger_a_status.position);
+  auto const& left_finger_b_pos =
+      robotiq_3f_transmission_plugins::double_to_uint8(left_gripper_status.finger_b_status.position);
+  auto const& left_finger_c_pos =
+      robotiq_3f_transmission_plugins::double_to_uint8(left_gripper_status.finger_c_status.position);
+  auto const& left_scissor_pos =
+      robotiq_3f_transmission_plugins::double_to_uint8(left_gripper_status.scissor_status.position);
   auto const& left_finger_a_thetas = robotiq_3f_transmission_plugins::get_finger_thetas(left_finger_a_pos);
   auto const& left_finger_b_thetas = robotiq_3f_transmission_plugins::get_finger_thetas(left_finger_b_pos);
   auto const& left_finger_c_thetas = robotiq_3f_transmission_plugins::get_finger_thetas(left_finger_c_pos);
@@ -224,10 +242,14 @@ hardware_interface::return_type VictorHardwareInterface::read(const rclcpp::Time
   hw_states_position_[24] = left_finger_c_thetas[2];
 
   auto const& right_gripper_status = right_gripper_status_listener_->getLatestMessage();
-  auto const& right_finger_a_pos = robotiq_3f_transmission_plugins::double_to_uint8(right_gripper_status.finger_a_status.position);
-  auto const& right_finger_b_pos = robotiq_3f_transmission_plugins::double_to_uint8(right_gripper_status.finger_b_status.position);
-  auto const& right_finger_c_pos = robotiq_3f_transmission_plugins::double_to_uint8(right_gripper_status.finger_c_status.position);
-  auto const& right_scissor_pos = robotiq_3f_transmission_plugins::double_to_uint8(right_gripper_status.scissor_status.position);
+  auto const& right_finger_a_pos =
+      robotiq_3f_transmission_plugins::double_to_uint8(right_gripper_status.finger_a_status.position);
+  auto const& right_finger_b_pos =
+      robotiq_3f_transmission_plugins::double_to_uint8(right_gripper_status.finger_b_status.position);
+  auto const& right_finger_c_pos =
+      robotiq_3f_transmission_plugins::double_to_uint8(right_gripper_status.finger_c_status.position);
+  auto const& right_scissor_pos =
+      robotiq_3f_transmission_plugins::double_to_uint8(right_gripper_status.scissor_status.position);
   auto const& right_finger_a_thetas = robotiq_3f_transmission_plugins::get_finger_thetas(right_finger_a_pos);
   auto const& right_finger_b_thetas = robotiq_3f_transmission_plugins::get_finger_thetas(right_finger_b_pos);
   auto const& right_finger_c_thetas = robotiq_3f_transmission_plugins::get_finger_thetas(right_finger_c_pos);
@@ -243,6 +265,20 @@ hardware_interface::return_type VictorHardwareInterface::read(const rclcpp::Time
   hw_states_position_[33] = right_finger_c_thetas[0];
   hw_states_position_[34] = right_finger_c_thetas[1];
   hw_states_position_[35] = right_finger_c_thetas[2];
+
+  // Copy the estimated external force torque readings from the motion status into the state interface
+  left_hw_ft_[0] = left_motion_status.estimated_external_wrench.x;
+  left_hw_ft_[1] = left_motion_status.estimated_external_wrench.y;
+  left_hw_ft_[2] = left_motion_status.estimated_external_wrench.z;
+  left_hw_ft_[3] = left_motion_status.estimated_external_wrench.a;
+  left_hw_ft_[4] = left_motion_status.estimated_external_wrench.b;
+  left_hw_ft_[5] = left_motion_status.estimated_external_wrench.c;
+  right_hw_ft_[0] = right_motion_status.estimated_external_wrench.x;
+  right_hw_ft_[1] = right_motion_status.estimated_external_wrench.y;
+  right_hw_ft_[2] = right_motion_status.estimated_external_wrench.z;
+  right_hw_ft_[3] = right_motion_status.estimated_external_wrench.a;
+  right_hw_ft_[4] = right_motion_status.estimated_external_wrench.b;
+  right_hw_ft_[5] = right_motion_status.estimated_external_wrench.c;
 
   return hardware_interface::return_type::OK;
 }
@@ -301,7 +337,6 @@ hardware_interface::return_type VictorHardwareInterface::write(const rclcpp::Tim
   right_motion_cmd.joint_velocity.joint_5 = 0.;
   right_motion_cmd.joint_velocity.joint_6 = 0.;
   right_motion_cmd.joint_velocity.joint_7 = 0.;
-
 
   left_send_lcm_ptr_->publish(DEFAULT_MOTION_COMMAND_CHANNEL, &left_motion_cmd);
   right_send_lcm_ptr_->publish(DEFAULT_MOTION_COMMAND_CHANNEL, &right_motion_cmd);
