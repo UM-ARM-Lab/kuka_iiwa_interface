@@ -36,6 +36,7 @@ std::vector<hardware_interface::StateInterface> VictorHardwareInterface::export_
     };
 
     if (has_state_interface("position")) {
+      RCLCPP_INFO_STREAM(logger, "Adding position interface for joint " << joint.name << " at index " << i);
       state_interfaces.emplace_back(joint.name, hardware_interface::HW_IF_POSITION, &hw_states_position_[i]);
     }
     if (has_state_interface("effort")) {
@@ -127,18 +128,18 @@ CallbackReturn VictorHardwareInterface::on_activate(const rclcpp_lifecycle::Stat
 
   // Send default control mode parameters, copied from victor_utils.py
   // FIXME: is this actually necessary?
-  victor_lcm_interface::control_mode_parameters new_control_mode{};
-  new_control_mode.control_mode.mode = victor_lcm_interface::control_mode::JOINT_POSITION;
-  new_control_mode.joint_path_execution_params.joint_relative_velocity = 0.1;
-  new_control_mode.joint_path_execution_params.joint_relative_acceleration = 0.1;
-  new_control_mode.joint_path_execution_params.override_joint_acceleration = 0.0;
+  // victor_lcm_interface::control_mode_parameters new_control_mode{};
+  // new_control_mode.control_mode.mode = victor_lcm_interface::control_mode::JOINT_POSITION;
+  // new_control_mode.joint_path_execution_params.joint_relative_velocity = 0.1;
+  // new_control_mode.joint_path_execution_params.joint_relative_acceleration = 0.1;
+  // new_control_mode.joint_path_execution_params.override_joint_acceleration = 0.0;
 
-  sleep(1);
+  // sleep(1);
 
-  RCLCPP_INFO(logger, "Sending default control mode parameters to both arms.");
+  // RCLCPP_INFO(logger, "Sending default control mode parameters to both arms.");
 
-  left_send_lcm_ptr_->publish(DEFAULT_CONTROL_MODE_COMMAND_CHANNEL, &new_control_mode);
-  right_send_lcm_ptr_->publish(DEFAULT_CONTROL_MODE_COMMAND_CHANNEL, &new_control_mode);
+  // left_send_lcm_ptr_->publish(DEFAULT_CONTROL_MODE_COMMAND_CHANNEL, &new_control_mode);
+  // right_send_lcm_ptr_->publish(DEFAULT_CONTROL_MODE_COMMAND_CHANNEL, &new_control_mode);
 
   RCLCPP_INFO(logger, "On Activate finished successfully");
 
@@ -225,14 +226,15 @@ hardware_interface::return_type VictorHardwareInterface::read(const rclcpp::Time
   auto const& left_finger_a_thetas = robotiq_3f_transmission_plugins::get_finger_thetas(left_finger_a_pos);
   auto const& left_finger_b_thetas = robotiq_3f_transmission_plugins::get_finger_thetas(left_finger_b_pos);
   auto const& left_finger_c_thetas = robotiq_3f_transmission_plugins::get_finger_thetas(left_finger_c_pos);
+  auto const& left_scissor_theta = robotiq_3f_transmission_plugins::get_palm_finger_pos(left_scissor_pos);
   hw_states_position_[14] = left_finger_a_thetas[0];
   hw_states_position_[15] = left_finger_a_thetas[1];
   hw_states_position_[16] = left_finger_a_thetas[2];
-  hw_states_position_[17] = left_scissor_pos;
+  hw_states_position_[17] = left_scissor_theta;
   hw_states_position_[18] = left_finger_b_thetas[0];
   hw_states_position_[19] = left_finger_b_thetas[1];
   hw_states_position_[20] = left_finger_b_thetas[2];
-  hw_states_position_[21] = -left_scissor_pos;
+  hw_states_position_[21] = -left_scissor_theta;
   hw_states_position_[22] = left_finger_c_thetas[0];
   hw_states_position_[23] = left_finger_c_thetas[1];
   hw_states_position_[24] = left_finger_c_thetas[2];
@@ -245,17 +247,18 @@ hardware_interface::return_type VictorHardwareInterface::read(const rclcpp::Time
   auto const& right_finger_a_thetas = robotiq_3f_transmission_plugins::get_finger_thetas(right_finger_a_pos);
   auto const& right_finger_b_thetas = robotiq_3f_transmission_plugins::get_finger_thetas(right_finger_b_pos);
   auto const& right_finger_c_thetas = robotiq_3f_transmission_plugins::get_finger_thetas(right_finger_c_pos);
-  hw_states_position_[23] = right_finger_a_thetas[0];
-  hw_states_position_[24] = right_finger_a_thetas[1];
-  hw_states_position_[25] = right_finger_a_thetas[2];
-  hw_states_position_[26] = right_scissor_pos;
-  hw_states_position_[27] = right_finger_b_thetas[0];
-  hw_states_position_[28] = right_finger_b_thetas[1];
-  hw_states_position_[29] = right_finger_b_thetas[2];
-  hw_states_position_[30] = -right_scissor_pos;
-  hw_states_position_[31] = right_finger_c_thetas[0];
-  hw_states_position_[32] = right_finger_c_thetas[1];
-  hw_states_position_[33] = right_finger_c_thetas[2];
+  auto const& right_scissor_theta = robotiq_3f_transmission_plugins::get_palm_finger_pos(right_scissor_pos);
+  hw_states_position_[25] = right_finger_a_thetas[0];
+  hw_states_position_[26] = right_finger_a_thetas[1];
+  hw_states_position_[27] = right_finger_a_thetas[2];
+  hw_states_position_[28] = right_scissor_theta;
+  hw_states_position_[29] = right_finger_b_thetas[0];
+  hw_states_position_[30] = right_finger_b_thetas[1];
+  hw_states_position_[31] = right_finger_b_thetas[2];
+  hw_states_position_[32] = -right_scissor_theta;
+  hw_states_position_[33] = right_finger_c_thetas[0];
+  hw_states_position_[34] = right_finger_c_thetas[1];
+  hw_states_position_[35] = right_finger_c_thetas[2];
 
   return hardware_interface::return_type::OK;
 }

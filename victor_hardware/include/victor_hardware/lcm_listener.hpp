@@ -1,5 +1,6 @@
 #pragma once
 
+#include <iostream>
 #include <lcm/lcm-cpp.hpp>
 #include <mutex>
 

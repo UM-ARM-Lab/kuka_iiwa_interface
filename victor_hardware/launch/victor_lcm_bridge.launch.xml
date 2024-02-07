@@ -6,14 +6,10 @@
 
     <arg name="model" default="$(find-pkg-share victor_description)/urdf/victor.urdf.xacro"/>
 
-    <!-- <include file="$(find-pkg-share victor_moveit_config)/launch/planning_context.launch.xml">
-        <arg name="load_robot_description" value=""/>
-    </include> -->
-
-    <node pkg="robot_state_publisher" exec="robot_state_publisher" name="robot_state_publisher" namespace="victor">
+    <!-- <node pkg="robot_state_publisher" exec="robot_state_publisher" name="robot_state_publisher" namespace="victor">
         <param name="robot_description" value="$(command 'xacro $(var model)')"/>
     </node>
-    <node pkg="victor_hardware" exec="joint_state_publisher.py" name="joint_state_publisher" namespace="victor"/>
+    <node pkg="victor_hardware" exec="joint_state_publisher.py" name="joint_state_publisher" namespace="victor"/> -->
     <node pkg="victor_hardware" exec="arm_command_gui.py" name="arm_command_gui" if="$(var arm_command_gui)" namespace="victor"/>
     <node pkg="victor_hardware" exec="iiwa_lcm_bridge_node" name="left_arm_lcm_bridge_node" output="screen" namespace="victor/left_arm">
         <param name="cartesian_pose_frame" value="victor_left_arm_world_frame_kuka"/>
