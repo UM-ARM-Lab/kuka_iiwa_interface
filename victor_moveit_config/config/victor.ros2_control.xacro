@@ -132,6 +132,112 @@
                 <state_interface name="effort"/>
             </joint>
 
+            <joint name="victor_left_finger_a_joint_2">
+                <state_interface name="position"/>
+                <state_interface name="effort"/>
+            </joint>
+
+            <joint name="victor_left_finger_a_joint_3">
+                <state_interface name="position"/>
+                <state_interface name="effort"/>
+            </joint>
+
+            <joint name="victor_left_palm_finger_b_joint">
+                <state_interface name="position"/>
+                <state_interface name="effort"/>
+            </joint>
+
+            <joint name="victor_left_finger_b_joint_1">
+                <state_interface name="position"/>
+                <state_interface name="effort"/>
+            </joint>
+
+            <joint name="victor_left_finger_b_joint_2">
+                <state_interface name="position"/>
+                <state_interface name="effort"/>
+            </joint>
+
+            <joint name="victor_left_finger_b_joint_3">
+                <state_interface name="position"/>
+                <state_interface name="effort"/>
+            </joint>
+
+            <joint name="victor_left_palm_finger_c_joint">
+                <state_interface name="position"/>
+                <state_interface name="effort"/>
+            </joint>
+
+            <joint name="victor_left_finger_c_joint_1">
+                <state_interface name="position"/>
+                <state_interface name="effort"/>
+            </joint>
+
+            <joint name="victor_left_finger_c_joint_2">
+                <state_interface name="position"/>
+                <state_interface name="effort"/>
+            </joint>
+
+            <joint name="victor_left_finger_c_joint_3">
+                <state_interface name="position"/>
+                <state_interface name="effort"/>
+            </joint>
+
+            <joint name="victor_right_finger_a_joint_1">
+                <state_interface name="position"/>
+                <state_interface name="effort"/>
+            </joint>
+
+            <joint name="victor_right_finger_a_joint_2">
+                <state_interface name="position"/>
+                <state_interface name="effort"/>
+            </joint>
+
+            <joint name="victor_right_finger_a_joint_3">
+                <state_interface name="position"/>
+                <state_interface name="effort"/>
+            </joint>
+
+            <joint name="victor_right_palm_finger_b_joint">
+                <state_interface name="position"/>
+                <state_interface name="effort"/>
+            </joint>
+
+            <joint name="victor_right_finger_b_joint_1">
+                <state_interface name="position"/>
+                <state_interface name="effort"/>
+            </joint>
+
+            <joint name="victor_right_finger_b_joint_2">
+                <state_interface name="position"/>
+                <state_interface name="effort"/>
+            </joint>
+
+            <joint name="victor_right_finger_b_joint_3">
+                <state_interface name="position"/>
+                <state_interface name="effort"/>
+            </joint>
+
+            <joint name="victor_right_palm_finger_c_joint">
+                <state_interface name="position"/>
+                <state_interface name="effort"/>
+            </joint>
+
+            <joint name="victor_right_finger_c_joint_1">
+                <state_interface name="position"/>
+                <state_interface name="effort"/>
+            </joint>
+
+            <joint name="victor_right_finger_c_joint_2">
+                <state_interface name="position"/>
+                <state_interface name="effort"/>
+            </joint>
+
+            <joint name="victor_right_finger_c_joint_3">
+                <state_interface name="position"/>
+                <state_interface name="effort"/>
+            </joint>
+
+
         </ros2_control>
     </xacro:macro>
 </robot>
