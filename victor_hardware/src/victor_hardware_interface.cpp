@@ -3,6 +3,7 @@
 #include <span>
 #include <victor_hardware/constants.hpp>
 #include <victor_hardware/victor_hardware_interface.hpp>
+#include <victor_hardware/lcm_ros_conversions.hpp>
 
 #include "rclcpp/rclcpp.hpp"
 
@@ -25,13 +26,17 @@ CallbackReturn VictorHardwareInterface::on_init(const hardware_interface::Hardwa
   left_hw_ft_.fill(0);
   right_hw_ft_.fill(0);
 
-  sink_ = std::make_shared<DataTamer::MCAPSink>("/home/armlab/victor_hw_if.mcap");
+  //  sink_ = std::make_shared<DataTamer::MCAPSink>("/home/armlab/victor_hw_if.mcap");
+  //
+  //  // Create a channel and attach a sink. A channel can have multiple sinks
+  //  channel_ = DataTamer::LogChannel::create("hw_pos_cmds");
+  //  channel_->addDataSink(sink_);
+  //
+  //  value_ = channel_->registerValue("values", &hw_pos_cmds_);
 
-  // Create a channel and attach a sink. A channel can have multiple sinks
-  channel_ = DataTamer::LogChannel::create("hw_pos_cmds");
-  channel_->addDataSink(sink_);
-
-  value_ = channel_->registerValue("values", &hw_pos_cmds_);
+  executor_ = std::make_shared<rclcpp::executors::SingleThreadedExecutor>();
+  node_ = std::make_shared<rclcpp::Node>("victor_hardware_interface");
+  executor_->add_node(node_);
 
   return CallbackReturn::SUCCESS;
 }
@@ -149,6 +154,27 @@ CallbackReturn VictorHardwareInterface::on_activate(const rclcpp_lifecycle::Stat
   lcm_thread_running_ = true;
   lcm_thread_ = std::thread(&VictorHardwareInterface::LCMThread, this);
 
+  ros_thread_ = std::thread(&VictorHardwareInterface::RosThread, this);
+
+  set_left_control_mode_srv_ = node_->create_service<victor_hardware_interfaces::srv::SetControlMode>(
+      "left_arm/set_control_mode",
+      [this](const victor_hardware_interfaces::srv::SetControlMode::Request::SharedPtr req,
+             victor_hardware_interfaces::srv::SetControlMode::Response::SharedPtr res) {
+        auto const &lcm_msg = victor_hardware::controlModeParamsRosToLcm(req->new_control_mode);
+        left_send_lcm_ptr_->publish(DEFAULT_CONTROL_MODE_COMMAND_CHANNEL, &lcm_msg);
+        res->success = true;
+        res->message = "Control mode set successfully";
+      });
+  set_right_control_mode_srv_ = node_->create_service<victor_hardware_interfaces::srv::SetControlMode>(
+      "right_arm/set_control_mode",
+      [this](const victor_hardware_interfaces::srv::SetControlMode::Request::SharedPtr req,
+             victor_hardware_interfaces::srv::SetControlMode::Response::SharedPtr res) {
+        auto const &lcm_msg = victor_hardware::controlModeParamsRosToLcm(req->new_control_mode);
+        right_send_lcm_ptr_->publish(DEFAULT_CONTROL_MODE_COMMAND_CHANNEL, &lcm_msg);
+        res->success = true;
+        res->message = "Control mode set successfully";
+      });
+
   RCLCPP_INFO(logger, "On Activate finished successfully");
 
   return CallbackReturn::SUCCESS;
@@ -174,7 +200,8 @@ void VictorHardwareInterface::LCMThread() {
   }
 }
 
-// ------------------------------------------------------------------------------------------
+void VictorHardwareInterface::RosThread() { executor_->spin(); }
+
 hardware_interface::return_type VictorHardwareInterface::read(const rclcpp::Time& /*time*/,
                                                               const rclcpp::Duration& /*period*/) {
   auto const& left_motion_status = left_motion_status_listener_->getLatestMessage();
@@ -295,7 +322,6 @@ hardware_interface::return_type VictorHardwareInterface::read(const rclcpp::Time
 
 hardware_interface::return_type VictorHardwareInterface::write(const rclcpp::Time& /*time*/,
                                                                const rclcpp::Duration& /*period*/) {
-
   auto const& has_left_motion_status = left_motion_status_listener_->hasLatestMessage();
   auto const& has_right_motion_status = right_motion_status_listener_->hasLatestMessage();
 
@@ -381,7 +407,7 @@ hardware_interface::return_type VictorHardwareInterface::write(const rclcpp::Tim
   left_send_lcm_ptr_->publish(DEFAULT_MOTION_COMMAND_CHANNEL, &left_motion_cmd);
   right_send_lcm_ptr_->publish(DEFAULT_MOTION_COMMAND_CHANNEL, &right_motion_cmd);
 
-  channel_->takeSnapshot();
+  //  channel_->takeSnapshot();
 
   return hardware_interface::return_type::OK;
 }
