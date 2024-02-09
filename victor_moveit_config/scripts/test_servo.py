@@ -1,4 +1,5 @@
 # Simple ros node that sends TwistStamped messages to move the EE forward and backward
+from math import sin
 
 import time
 import rclpy
@@ -29,7 +30,7 @@ class TestServo(Node):
         # self.msg.twist.angular.z = 0.0
 
         self.msg = JointJog()
-        self.msg.joint_names = ["victor_left_arm_joint_7"]
+        self.msg.joint_names = ["victor_left_arm_joint_6"]
 
         self.pub_idx = 0
 
@@ -40,49 +41,8 @@ class TestServo(Node):
     def timer_callback(self):
         self.msg.header.stamp = self.get_clock().now().to_msg()
 
-        # js = self.js_listener.get()
-
-        # if js is None:
-        #     print("No joint states received yet")
-        #     return
-
-        # ordered_names = [
-        #     "victor_left_arm_joint_1",
-        #     "victor_left_arm_joint_2",
-        #     "victor_left_arm_joint_3",
-        #     "victor_left_arm_joint_4",
-        #     "victor_left_arm_joint_5",
-        #     "victor_left_arm_joint_6",
-        #     "victor_left_arm_joint_7",
-        #     "victor_right_arm_joint_1",
-        #     "victor_right_arm_joint_2",
-        #     "victor_right_arm_joint_3",
-        #     "victor_right_arm_joint_4",
-        #     "victor_right_arm_joint_5",
-        #     "victor_right_arm_joint_6",
-        #     "victor_right_arm_joint_7",
-        # ]
-        # ordered_positions = [js.position[js.name.index(name)] for name in ordered_names]
-        # msg = Float64MultiArray()
-        # msg.data = ordered_positions
-        # msg.data[6] += 0.5
-        # print(msg)
-        # self.publisher.publish(msg)
-
-        # if self.pub_idx < 200:
-        #     self.msg.twist.linear.y = 0.03
-        #     self.publisher.publish(self.msg)
-        # elif self.pub_idx < 400:
-        if self.pub_idx < 400:
-            # self.msg.twist.linear.y = 0.05
-            self.msg.velocities = [-0.18] 
-            self.publisher.publish(self.msg)
-        else:
-            # self.msg.twist.linear.y = 0.
-            self.msg.velocities = [0.0] 
-            self.publisher.publish(self.msg)
-            print("done!")
-            rclpy.shutdown()
+        self.msg.velocities = [1.5 * sin(self.pub_idx/100.0)] 
+        self.publisher.publish(self.msg)
         
         self.pub_idx += 1
 
