@@ -11,6 +11,7 @@ set(THIS_PACKAGE_INCLUDE_DEPENDS
         hardware_interface
         arm_utilities
         lcm
+        data_tamer_cpp
         victor_hardware_interfaces
         robotiq_3f_transmission_plugins
         rclcpp

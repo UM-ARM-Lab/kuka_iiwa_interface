@@ -14,6 +14,7 @@ class LcmListener {
   void callback(const lcm::ReceiveBuffer* /*buf*/, const std::string& /*channel*/, const T* message) {
     std::lock_guard<std::mutex> lock(mutex_);
     latest_message_ = *message;
+    has_latest_message_ = true;
   }
 
   /**
@@ -25,9 +26,15 @@ class LcmListener {
     return latest_message_;
   }
 
+  bool hasLatestMessage() const {
+    std::lock_guard<std::mutex> lock(mutex_);
+    return has_latest_message_;
+  }
+
  private:
   std::shared_ptr<lcm::LCM> lcm_;
   std::string channel_;
   T latest_message_{};
+  bool has_latest_message_{false};
   mutable std::mutex mutex_;
 };

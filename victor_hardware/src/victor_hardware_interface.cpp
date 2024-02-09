@@ -25,6 +25,14 @@ CallbackReturn VictorHardwareInterface::on_init(const hardware_interface::Hardwa
   left_hw_ft_.fill(0);
   right_hw_ft_.fill(0);
 
+  sink_ = std::make_shared<DataTamer::MCAPSink>("/home/armlab/victor_hw_if.mcap");
+
+  // Create a channel and attach a sink. A channel can have multiple sinks
+  channel_ = DataTamer::LogChannel::create("hw_pos_cmds");
+  channel_->addDataSink(sink_);
+
+  value_ = channel_->registerValue("values", &hw_pos_cmds_);
+
   return CallbackReturn::SUCCESS;
 }
 
@@ -287,13 +295,43 @@ hardware_interface::return_type VictorHardwareInterface::read(const rclcpp::Time
 
 hardware_interface::return_type VictorHardwareInterface::write(const rclcpp::Time& /*time*/,
                                                                const rclcpp::Duration& /*period*/) {
-  // convert hw_pos_cmds_ to LCM messages and publish
-  auto const any_nan =
-      std::any_of(hw_pos_cmds_.begin(), hw_pos_cmds_.end(), [](auto const& cmd) { return std::isnan(cmd); });
-  if (any_nan) {
+
+  auto const& has_left_motion_status = left_motion_status_listener_->hasLatestMessage();
+  auto const& has_right_motion_status = right_motion_status_listener_->hasLatestMessage();
+
+  if (!has_left_motion_status || !has_right_motion_status) {
+    RCLCPP_WARN(logger, "No motion status received, not sending commands");
     return hardware_interface::return_type::OK;
   }
 
+  auto const& left_motion_status = left_motion_status_listener_->getLatestMessage();
+  auto const& right_motion_status = right_motion_status_listener_->getLatestMessage();
+
+  std::array<double, 14> current_commanded_positions;
+  current_commanded_positions[0] = left_motion_status.commanded_joint_position.joint_1;
+  current_commanded_positions[1] = left_motion_status.commanded_joint_position.joint_2;
+  current_commanded_positions[2] = left_motion_status.commanded_joint_position.joint_3;
+  current_commanded_positions[3] = left_motion_status.commanded_joint_position.joint_4;
+  current_commanded_positions[4] = left_motion_status.commanded_joint_position.joint_5;
+  current_commanded_positions[5] = left_motion_status.commanded_joint_position.joint_6;
+  current_commanded_positions[6] = left_motion_status.commanded_joint_position.joint_7;
+  current_commanded_positions[7] = right_motion_status.commanded_joint_position.joint_1;
+  current_commanded_positions[8] = right_motion_status.commanded_joint_position.joint_2;
+  current_commanded_positions[9] = right_motion_status.commanded_joint_position.joint_3;
+  current_commanded_positions[10] = right_motion_status.commanded_joint_position.joint_4;
+  current_commanded_positions[11] = right_motion_status.commanded_joint_position.joint_5;
+  current_commanded_positions[12] = right_motion_status.commanded_joint_position.joint_6;
+  current_commanded_positions[13] = right_motion_status.commanded_joint_position.joint_7;
+
+  rclcpp::Clock clock;
+  for (int i = 0; i < 14; i++) {
+    if (std::isnan(hw_pos_cmds_[i])) {
+      RCLCPP_WARN_THROTTLE(logger, clock, 500, "Joint %d is NaN, using commanded position from LCM", i);
+      hw_pos_cmds_[i] = current_commanded_positions[i];
+    }
+  }
+
+  // convert hw_pos_cmds_ to LCM messages and publish
   auto const now = std::chrono::system_clock::now();
   auto const now_tp = std::chrono::time_point_cast<std::chrono::seconds>(now);
   std::chrono::duration<double> const now_dur_seconds = now_tp.time_since_epoch();
@@ -342,6 +380,8 @@ hardware_interface::return_type VictorHardwareInterface::write(const rclcpp::Tim
 
   left_send_lcm_ptr_->publish(DEFAULT_MOTION_COMMAND_CHANNEL, &left_motion_cmd);
   right_send_lcm_ptr_->publish(DEFAULT_MOTION_COMMAND_CHANNEL, &right_motion_cmd);
+
+  channel_->takeSnapshot();
 
   return hardware_interface::return_type::OK;
 }

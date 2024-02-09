@@ -14,6 +14,7 @@
     <buildtool_depend>ament_cmake_python</buildtool_depend>
     <buildtool_depend>ament_cmake_gtest</buildtool_depend>
 
+    <depend>data_tamer_cpp</depend>
     <depend>hardware_interface</depend>
     <depend>pluginlib</depend>
     <depend>rclcpp</depend>

@@ -36,6 +36,7 @@
   <exec_depend>moveit_setup_assistant</exec_depend>
   <exec_depend>robot_state_publisher</exec_depend>
   <exec_depend>victor_description</exec_depend>
+  <exec_depend>victor_hardware</exec_depend>
   <exec_depend>xacro</exec_depend>
 
 
