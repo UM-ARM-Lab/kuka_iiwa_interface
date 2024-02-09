@@ -54,8 +54,8 @@ class RobotiqGrippersJoystickNode(Node):
         self.declare_parameter("enable_scissor_open_close_control", True)
 
         self.gripper_status = {
-            "right": Listener(self, "right_arm/gripper_status", Robotiq3FingerStatus),
-            "left": Listener(self, "left_arm/gripper_status", Robotiq3FingerStatus)
+            "right": Listener(self, Robotiq3FingerStatus, "right_arm/gripper_status"),
+            "left": Listener(self, Robotiq3FingerStatus, "left_arm/gripper_status")
         }
 
         self.gripper_command_publisher = {

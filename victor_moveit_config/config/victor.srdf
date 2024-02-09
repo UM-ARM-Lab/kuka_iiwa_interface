@@ -19,6 +19,40 @@
         <group name="left_arm"/>
         <group name="right_arm"/>
     </group>
+
+    <group_state name="up_and_back" group="both_arms">
+        <joint name="victor_left_arm_joint_1" value="-2.017"/>
+        <joint name="victor_left_arm_joint_2" value="1.141"/>
+        <joint name="victor_left_arm_joint_3" value="-0.737"/>
+        <joint name="victor_left_arm_joint_4" value="-1.319"/>
+        <joint name="victor_left_arm_joint_5" value="0.703"/>
+        <joint name="victor_left_arm_joint_6" value="1.534"/>
+        <joint name="victor_left_arm_joint_7" value="1.153"/>
+        <joint name="victor_right_arm_joint_1" value="-0.972"/>
+        <joint name="victor_right_arm_joint_2" value="-1.558"/>
+        <joint name="victor_right_arm_joint_3" value="0.505"/>
+        <joint name="victor_right_arm_joint_4" value="1.552"/>
+        <joint name="victor_right_arm_joint_5" value="-1.765"/>
+        <joint name="victor_right_arm_joint_6" value="-1.331"/>
+        <joint name="victor_right_arm_joint_7" value="-2.261"/>
+    </group_state>
+    <group_state name="impedance_switch" group="both_arms">
+        <joint name="victor_left_arm_joint_1" value="-0.694"/>
+        <joint name="victor_left_arm_joint_2" value="0.140"/>
+        <joint name="victor_left_arm_joint_3" value="-0.229"/>
+        <joint name="victor_left_arm_joint_4" value="-1.110"/>
+        <joint name="victor_left_arm_joint_5" value="-0.512"/>
+        <joint name="victor_left_arm_joint_6" value="1.272"/>
+        <joint name="victor_left_arm_joint_7" value="0.077"/>
+        <joint name="victor_right_arm_joint_1" value="0.724"/>
+        <joint name="victor_right_arm_joint_2" value="0.451"/>
+        <joint name="victor_right_arm_joint_3" value="0.940"/>
+        <joint name="victor_right_arm_joint_4" value="-1.425"/>
+        <joint name="victor_right_arm_joint_5" value="0.472"/>
+        <joint name="victor_right_arm_joint_6" value="0.777"/>
+        <joint name="victor_right_arm_joint_7" value="-0.809"/>
+    </group_state>
+
     <!--END EFFECTOR: Purpose: Represent information about an end effector.-->
     <end_effector name="left_tool" parent_link="left_tool" group="left_arm"/>
     <end_effector name="right_tool" parent_link="right_tool" group="right_arm"/>

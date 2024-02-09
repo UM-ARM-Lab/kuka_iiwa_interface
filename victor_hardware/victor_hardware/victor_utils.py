@@ -262,3 +262,18 @@ def is_gripper_closed(status: Robotiq3FingerStatus):
     finger_b_closed = status.finger_b_status.position > 0.5 - 1e-2
     finger_c_closed = status.finger_c_status.position > 0.5 - 1e-2
     return finger_a_closed and finger_b_closed and finger_c_closed
+
+
+DEFAULT_JOINT_VEL = 0.1
+
+
+def get_gripper_open_fraction_msg(position: float):
+    """
+    Args:
+        position: 0.0 is open, 1.0 is closed
+    """
+    msg = default_gripper_command()
+    msg.finger_a_command.position = position
+    msg.finger_b_command.position = position
+    msg.finger_c_command.position = position
+    return msg
