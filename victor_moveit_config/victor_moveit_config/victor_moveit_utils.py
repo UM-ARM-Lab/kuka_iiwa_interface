@@ -1,3 +1,7 @@
+"""
+See the README.md file for more information on how to set up a robot for these functions (the MoveIt Python API) to work properly.
+"""
+
 from ament_index_python import get_package_share_directory
 from moveit.planning import MoveItPy
 
