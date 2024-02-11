@@ -157,7 +157,7 @@ CallbackReturn VictorHardwareInterface::on_activate(const rclcpp_lifecycle::Stat
   ros_thread_ = std::thread(&VictorHardwareInterface::RosThread, this);
 
   set_left_control_mode_srv_ = node_->create_service<victor_hardware_interfaces::srv::SetControlMode>(
-      "left_arm/set_control_mode",
+      "/victor/left_arm/set_control_mode",
       [this](const victor_hardware_interfaces::srv::SetControlMode::Request::SharedPtr req,
              victor_hardware_interfaces::srv::SetControlMode::Response::SharedPtr res) {
         auto const &lcm_msg = victor_hardware::controlModeParamsRosToLcm(req->new_control_mode);
@@ -166,7 +166,7 @@ CallbackReturn VictorHardwareInterface::on_activate(const rclcpp_lifecycle::Stat
         res->message = "Control mode set successfully";
       });
   set_right_control_mode_srv_ = node_->create_service<victor_hardware_interfaces::srv::SetControlMode>(
-      "right_arm/set_control_mode",
+      "/victor/right_arm/set_control_mode",
       [this](const victor_hardware_interfaces::srv::SetControlMode::Request::SharedPtr req,
              victor_hardware_interfaces::srv::SetControlMode::Response::SharedPtr res) {
         auto const &lcm_msg = victor_hardware::controlModeParamsRosToLcm(req->new_control_mode);
