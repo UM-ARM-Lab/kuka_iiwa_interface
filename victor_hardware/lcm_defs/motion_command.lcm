@@ -3,6 +3,8 @@ package victor_lcm_interface;
 struct motion_command
 {
     victor_lcm_interface.joint_value_quantity joint_position;
+    // (Peter) I've had trouble getting velocity to behave properly, so currently
+    // the hardware_interface ignores it and sends zeros.
     victor_lcm_interface.joint_value_quantity joint_velocity;
     victor_lcm_interface.cartesian_pose cartesian_pose;
     victor_lcm_interface.control_mode control_mode;

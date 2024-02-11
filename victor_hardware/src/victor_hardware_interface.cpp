@@ -2,8 +2,8 @@
 #include <robotiq_3f_transmission_plugins/individual_control_transmission.hpp>
 #include <span>
 #include <victor_hardware/constants.hpp>
-#include <victor_hardware/victor_hardware_interface.hpp>
 #include <victor_hardware/lcm_ros_conversions.hpp>
+#include <victor_hardware/victor_hardware_interface.hpp>
 
 #include "rclcpp/rclcpp.hpp"
 
@@ -14,9 +14,6 @@ CallbackReturn VictorHardwareInterface::on_init(const hardware_interface::Hardwa
   if (hardware_interface::SystemInterface::on_init(info) != CallbackReturn::SUCCESS) {
     return CallbackReturn::ERROR;
   }
-
-  // Some of these arrays will be bigger than they need to be, since not all joints are actuated (e.g. finger joints)
-  RCLCPP_INFO_STREAM(logger, "Found " << info_.joints.size() << " joints");
 
   hw_pos_cmds_.resize(info_.joints.size(), std::numeric_limits<double>::quiet_NaN());
 
@@ -155,25 +152,6 @@ CallbackReturn VictorHardwareInterface::on_activate(const rclcpp_lifecycle::Stat
   lcm_thread_ = std::thread(&VictorHardwareInterface::LCMThread, this);
 
   ros_thread_ = std::thread(&VictorHardwareInterface::RosThread, this);
-
-  set_left_control_mode_srv_ = node_->create_service<victor_hardware_interfaces::srv::SetControlMode>(
-      "/victor/left_arm/set_control_mode",
-      [this](const victor_hardware_interfaces::srv::SetControlMode::Request::SharedPtr req,
-             victor_hardware_interfaces::srv::SetControlMode::Response::SharedPtr res) {
-        auto const &lcm_msg = victor_hardware::controlModeParamsRosToLcm(req->new_control_mode);
-        left_send_lcm_ptr_->publish(DEFAULT_CONTROL_MODE_COMMAND_CHANNEL, &lcm_msg);
-        res->success = true;
-        res->message = "Control mode set successfully";
-      });
-  set_right_control_mode_srv_ = node_->create_service<victor_hardware_interfaces::srv::SetControlMode>(
-      "/victor/right_arm/set_control_mode",
-      [this](const victor_hardware_interfaces::srv::SetControlMode::Request::SharedPtr req,
-             victor_hardware_interfaces::srv::SetControlMode::Response::SharedPtr res) {
-        auto const &lcm_msg = victor_hardware::controlModeParamsRosToLcm(req->new_control_mode);
-        right_send_lcm_ptr_->publish(DEFAULT_CONTROL_MODE_COMMAND_CHANNEL, &lcm_msg);
-        res->success = true;
-        res->message = "Control mode set successfully";
-      });
 
   RCLCPP_INFO(logger, "On Activate finished successfully");
 
