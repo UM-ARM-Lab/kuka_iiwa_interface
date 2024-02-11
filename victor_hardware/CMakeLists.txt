@@ -11,7 +11,7 @@ set(THIS_PACKAGE_INCLUDE_DEPENDS
         hardware_interface
         arm_utilities
         lcm
-#        data_tamer_cpp
+        data_tamer_cpp
         victor_hardware_interfaces
         robotiq_3f_transmission_plugins
         rclcpp
@@ -31,7 +31,6 @@ include_directories(include lcm_types SYSTEM)
 # C++ Library (Plugin) for use with ros2_control
 add_library(victor_hardware
         SHARED
-        src/lcm_ros_conversions.cpp
         src/victor_hardware_interface.cpp
         include/victor_hardware/lcm_listener.hpp
 )
@@ -45,20 +44,20 @@ ament_target_dependencies(victor_hardware ${THIS_PACKAGE_INCLUDE_DEPENDS})
 
 
 # Node for ROS <--> LCM bridge
-#add_executable(iiwa_lcm_bridge_node
-#        src/iiwa_lcm_bridge_node.cpp
-#        src/iiwa_lcm_bridge_utils.cpp
-#        src/iiwa_lcm_bridge.cpp
-#        src/robotiq_3f_lcm_bridge.cpp
-#        include/victor_hardware/victor_utils.hpp
-#)
-#target_include_directories(
-#        iiwa_lcm_bridge_node
-#        PUBLIC
-#        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-#        $<INSTALL_INTERFACE:include>
-#)
-#ament_target_dependencies(iiwa_lcm_bridge_node ${THIS_PACKAGE_INCLUDE_DEPENDS})
+add_executable(iiwa_lcm_bridge_node
+        src/iiwa_lcm_bridge_node.cpp
+        src/iiwa_lcm_bridge_utils.cpp
+        src/iiwa_lcm_bridge.cpp
+        src/robotiq_3f_lcm_bridge.cpp
+        include/victor_hardware/victor_utils.hpp
+)
+target_include_directories(
+        iiwa_lcm_bridge_node
+        PUBLIC
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+        $<INSTALL_INTERFACE:include>
+)
+ament_target_dependencies(iiwa_lcm_bridge_node ${THIS_PACKAGE_INCLUDE_DEPENDS})
 
 # Testing
 ament_add_gtest(test_victor_utils tests/test_victor_utils.cpp)
@@ -68,7 +67,7 @@ ament_target_dependencies(test_victor_utils ${THIS_PACKAGE_INCLUDE_DEPENDS})
 ament_python_install_package(${PROJECT_NAME})
 
 install(
-        TARGETS victor_hardware # iiwa_lcm_bridge_node
+        TARGETS iiwa_lcm_bridge_node victor_hardware
         EXPORT ${PROJECT_NAME}_targets
         LIBRARY DESTINATION lib
         ARCHIVE DESTINATION lib

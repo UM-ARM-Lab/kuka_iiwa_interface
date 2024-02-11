@@ -2,7 +2,6 @@
 #include <robotiq_3f_transmission_plugins/individual_control_transmission.hpp>
 #include <span>
 #include <victor_hardware/constants.hpp>
-#include <victor_hardware/lcm_ros_conversions.hpp>
 #include <victor_hardware/victor_hardware_interface.hpp>
 
 #include "rclcpp/rclcpp.hpp"
@@ -15,6 +14,9 @@ CallbackReturn VictorHardwareInterface::on_init(const hardware_interface::Hardwa
     return CallbackReturn::ERROR;
   }
 
+  // Some of these arrays will be bigger than they need to be, since not all joints are actuated (e.g. finger joints)
+  RCLCPP_INFO_STREAM(logger, "Found " << info_.joints.size() << " joints");
+
   hw_pos_cmds_.resize(info_.joints.size(), std::numeric_limits<double>::quiet_NaN());
 
   hw_states_position_.resize(info_.joints.size(), std::numeric_limits<double>::quiet_NaN());
@@ -23,17 +25,13 @@ CallbackReturn VictorHardwareInterface::on_init(const hardware_interface::Hardwa
   left_hw_ft_.fill(0);
   right_hw_ft_.fill(0);
 
-  //  sink_ = std::make_shared<DataTamer::MCAPSink>("/home/armlab/victor_hw_if.mcap");
-  //
-  //  // Create a channel and attach a sink. A channel can have multiple sinks
-  //  channel_ = DataTamer::LogChannel::create("hw_pos_cmds");
-  //  channel_->addDataSink(sink_);
-  //
-  //  value_ = channel_->registerValue("values", &hw_pos_cmds_);
+  sink_ = std::make_shared<DataTamer::MCAPSink>("/home/armlab/victor_hw_if.mcap");
 
-  executor_ = std::make_shared<rclcpp::executors::SingleThreadedExecutor>();
-  node_ = std::make_shared<rclcpp::Node>("victor_hardware_interface");
-  executor_->add_node(node_);
+  // Create a channel and attach a sink. A channel can have multiple sinks
+  channel_ = DataTamer::LogChannel::create("hw_pos_cmds");
+  channel_->addDataSink(sink_);
+
+  value_ = channel_->registerValue("values", &hw_pos_cmds_);
 
   return CallbackReturn::SUCCESS;
 }
@@ -151,8 +149,6 @@ CallbackReturn VictorHardwareInterface::on_activate(const rclcpp_lifecycle::Stat
   lcm_thread_running_ = true;
   lcm_thread_ = std::thread(&VictorHardwareInterface::LCMThread, this);
 
-  ros_thread_ = std::thread(&VictorHardwareInterface::RosThread, this);
-
   RCLCPP_INFO(logger, "On Activate finished successfully");
 
   return CallbackReturn::SUCCESS;
@@ -178,8 +174,7 @@ void VictorHardwareInterface::LCMThread() {
   }
 }
 
-void VictorHardwareInterface::RosThread() { executor_->spin(); }
-
+// ------------------------------------------------------------------------------------------
 hardware_interface::return_type VictorHardwareInterface::read(const rclcpp::Time& /*time*/,
                                                               const rclcpp::Duration& /*period*/) {
   auto const& left_motion_status = left_motion_status_listener_->getLatestMessage();
@@ -300,6 +295,7 @@ hardware_interface::return_type VictorHardwareInterface::read(const rclcpp::Time
 
 hardware_interface::return_type VictorHardwareInterface::write(const rclcpp::Time& /*time*/,
                                                                const rclcpp::Duration& /*period*/) {
+
   auto const& has_left_motion_status = left_motion_status_listener_->hasLatestMessage();
   auto const& has_right_motion_status = right_motion_status_listener_->hasLatestMessage();
 
@@ -385,7 +381,7 @@ hardware_interface::return_type VictorHardwareInterface::write(const rclcpp::Tim
   left_send_lcm_ptr_->publish(DEFAULT_MOTION_COMMAND_CHANNEL, &left_motion_cmd);
   right_send_lcm_ptr_->publish(DEFAULT_MOTION_COMMAND_CHANNEL, &right_motion_cmd);
 
-  //  channel_->takeSnapshot();
+  channel_->takeSnapshot();
 
   return hardware_interface::return_type::OK;
 }
