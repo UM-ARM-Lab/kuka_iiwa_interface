@@ -16,8 +16,9 @@
 #include <victor_lcm_interface/motion_status.hpp>
 #include <victor_lcm_interface/robotiq_3finger_status.hpp>
 
-#include "data_tamer/data_tamer.hpp"
-#include "data_tamer/sinks/mcap_sink.hpp"
+//#include "data_tamer/data_tamer.hpp"
+//#include "data_tamer/sinks/mcap_sink.hpp"
+
 
 #define VICTOR_HARDWARE_PUBLIC __attribute__((visibility("default")))
 
@@ -77,9 +78,9 @@ class VictorHardwareInterface : public hardware_interface::SystemInterface {
   std::array<double, 6> left_hw_ft_;
   std::array<double, 6> right_hw_ft_;
 
-  std::shared_ptr<DataTamer::MCAPSink> sink_;
-  std::shared_ptr<DataTamer::LogChannel> channel_;
-  DataTamer::RegistrationID value_;
+//  std::shared_ptr<DataTamer::MCAPSink> sink_;
+//  std::shared_ptr<DataTamer::LogChannel> channel_;
+//  DataTamer::RegistrationID value_;
 };
 
 }  // namespace victor_hardware

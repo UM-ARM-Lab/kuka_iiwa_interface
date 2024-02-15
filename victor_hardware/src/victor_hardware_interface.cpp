@@ -25,13 +25,13 @@ CallbackReturn VictorHardwareInterface::on_init(const hardware_interface::Hardwa
   left_hw_ft_.fill(0);
   right_hw_ft_.fill(0);
 
-  sink_ = std::make_shared<DataTamer::MCAPSink>("/home/armlab/victor_hw_if.mcap");
+//  sink_ = std::make_shared<DataTamer::MCAPSink>("/home/armlab/victor_hw_if.mcap");
+//
+//  // Create a channel and attach a sink. A channel can have multiple sinks
+//  channel_ = DataTamer::LogChannel::create("hw_pos_cmds");
+//  channel_->addDataSink(sink_);
 
-  // Create a channel and attach a sink. A channel can have multiple sinks
-  channel_ = DataTamer::LogChannel::create("hw_pos_cmds");
-  channel_->addDataSink(sink_);
-
-  value_ = channel_->registerValue("values", &hw_pos_cmds_);
+//  value_ = channel_->registerValue("values", &hw_pos_cmds_);
 
   return CallbackReturn::SUCCESS;
 }
@@ -381,7 +381,7 @@ hardware_interface::return_type VictorHardwareInterface::write(const rclcpp::Tim
   left_send_lcm_ptr_->publish(DEFAULT_MOTION_COMMAND_CHANNEL, &left_motion_cmd);
   right_send_lcm_ptr_->publish(DEFAULT_MOTION_COMMAND_CHANNEL, &right_motion_cmd);
 
-  channel_->takeSnapshot();
+//  channel_->takeSnapshot();
 
   return hardware_interface::return_type::OK;
 }

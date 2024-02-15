@@ -78,7 +78,7 @@ bool controlModeParamsEqual(const msg::ControlModeParameters& params1, const msg
   // Control mode parameter
   const bool cm_equal = (params1.control_mode.mode == params2.control_mode.mode);
 
-  // Path Execuition mode parameters
+  // Path Execution mode parameters
   const bool jpexp_equal = jointPexpEqual(params1.joint_path_execution_params, params2.joint_path_execution_params);
   const bool cpexp_equal =
       cartesianPexpEqual(params1.cartesian_path_execution_params, params2.cartesian_path_execution_params);

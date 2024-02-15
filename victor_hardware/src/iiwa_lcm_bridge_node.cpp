@@ -102,14 +102,22 @@ class IiwaLcmBridgeNode : public rclcpp::Node {
     motion_status_pub_ = create_publisher<msg::MotionStatus>(motion_status_topic, 1);
     control_mode_status_pub_ = create_publisher<msg::ControlModeParameters>(control_mode_status_topic, 1);
     gripper_status_pub_ = create_publisher<msg::Robotiq3FingerStatus>(gripper_status_topic, 1);
+
+    // Callback groups are needed to ensure that the SetControlMode service can run in parallel with the LCM handling
+    // as well as the subscriber callbacks.
+    getter_callback_group_ = create_callback_group(rclcpp::CallbackGroupType::Reentrant);
+    setter_callback_group_ = create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
+    rclcpp::SubscriptionOptions getter_options;
+    getter_options.callback_group = getter_callback_group_;
+
     motion_command_sub_ = create_subscription<msg::MotionCommand>(
-        motion_command_topic, 1, std::bind(&IiwaLcmBridgeNode::motionCommandROSCallback, this, _1));
+        motion_command_topic, 1, std::bind(&IiwaLcmBridgeNode::motionCommandROSCallback, this, _1), getter_options);
     gripper_command_sub_ = create_subscription<msg::Robotiq3FingerCommand>(
-        gripper_command_topic, 1, std::bind(&IiwaLcmBridgeNode::gripperCommandROSCallback, this, _1));
+        gripper_command_topic, 1, std::bind(&IiwaLcmBridgeNode::gripperCommandROSCallback, this, _1), getter_options);
     set_control_mode_server_ = create_service<srv::SetControlMode>(
-        set_control_mode_service, std::bind(&IiwaLcmBridgeNode::setControlModeCallback, this, _1, _2));
+        set_control_mode_service, std::bind(&IiwaLcmBridgeNode::setControlModeCallback, this, _1, _2), rmw_qos_profile_services_default, setter_callback_group_);
     get_control_mode_server_ = create_service<srv::GetControlMode>(
-        get_control_mode_service, std::bind(&IiwaLcmBridgeNode::getControlModeCallback, this, _1, _2));
+        get_control_mode_service, std::bind(&IiwaLcmBridgeNode::getControlModeCallback, this, _1, _2), rmw_qos_profile_services_default, getter_callback_group_);
 
     // Create a timer callback that runs every 1 millisecond
     auto timer_callback = [&]() { handle_lcm(); };
@@ -117,6 +125,7 @@ class IiwaLcmBridgeNode : public rclcpp::Node {
   }
 
   void handle_lcm() {
+    // This is sort of like spin_once() for LCM, and will call the LCM callbacks if necessary
     const int ret = recv_lcm_ptr_->handleTimeout(LCM_HANDLE_TIMEOUT);
     if (ret < 0) {
       RCLCPP_ERROR_STREAM(logger, "LCM error: " << ret);
@@ -500,7 +509,6 @@ class IiwaLcmBridgeNode : public rclcpp::Node {
           control_mode_matches = controlModeParamsEqual(merged_command, active_control_mode_.value());
         } while (!control_mode_matches &&
                  std::chrono::duration<double>(end_time - start_time).count() < set_control_mode_timeout_);
-
         // Check the results of the timeout
         if (control_mode_matches) {
           res->success = true;
@@ -849,6 +857,10 @@ class IiwaLcmBridgeNode : public rclcpp::Node {
   rclcpp::Service<srv::SetControlMode>::SharedPtr set_control_mode_server_;
   rclcpp::Service<srv::GetControlMode>::SharedPtr get_control_mode_server_;
 
+  // callback groups for each ROS thing
+  rclcpp::CallbackGroup::SharedPtr getter_callback_group_;
+  rclcpp::CallbackGroup::SharedPtr setter_callback_group_;
+
   mutable std::mutex control_mode_status_mutex_;
   std::optional<msg::ControlModeParameters> active_control_mode_;
   double set_control_mode_timeout_;
@@ -866,7 +878,11 @@ int main(int argc, char** argv) {
   rclcpp::init(argc, argv);
 
   auto const node = std::make_shared<IiwaLcmBridgeNode>();
-  rclcpp::spin(node);
+
+  rclcpp::executors::MultiThreadedExecutor executor;
+  executor.add_node(node);
+  executor.spin();
+
 
   return 0;
 }

@@ -210,3 +210,4 @@ Session.vim
 tags
 
 .vscode
+*.idea
