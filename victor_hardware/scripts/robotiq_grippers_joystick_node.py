@@ -71,15 +71,12 @@ class RobotiqGrippersJoystickNode(Node):
         """
         Assumes that we are using xboxdrv without mimic mode
         """
-        xbox_msg = joy_to_xbox(joy_msg, xpad=False)
+        xbox_msg = joy_to_xbox(joy_msg, xpad=True)
         if self.prev_xbox_msg is None:
             self.prev_xbox_msg = xbox_msg
 
-        enable_finger_open_close_control = self.get_parameter("~enable_finger_open_close_control")
-        enable_scissor_open_close_control = self.get_parameter("~enable_scissor_open_close_control")
-
-        logger.info(f"{enable_finger_open_close_control=}", throttle_duration_sec=self.output_throttle_period)
-        logger.info(f"{enable_scissor_open_close_control=}", throttle_duration_sec=self.output_throttle_period)
+        enable_finger_open_close_control = self.get_parameter("enable_finger_open_close_control")
+        enable_scissor_open_close_control = self.get_parameter("enable_scissor_open_close_control")
 
         if enable_finger_open_close_control:
             self.finger_open_close_callback(xbox_msg)
