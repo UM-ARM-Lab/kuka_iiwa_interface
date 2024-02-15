@@ -22,8 +22,9 @@ from rclpy.node import Node
 from victor_hardware import victor_utils
 from victor_hardware_interfaces.msg import Robotiq3FingerCommand, MotionCommand, MotionStatus, Robotiq3FingerStatus, \
     ControlMode
-from victor_hardware_interfaces.srv import GetControlMode
+from victor_hardware_interfaces.srv import GetControlMode, SetControlMode
 from std_srvs.srv import Empty
+
 finger_range_discretization = 1000
 arm_joint_limit_margin = 1
 
@@ -66,16 +67,6 @@ class Widget(QWidget):
         self.right_arm = Arm(self.v_layout, 'right_arm', 1)
 
         self.setLayout(self.v_layout)
-        # create a timer callback with qt
-    #     self.timer = QTimer()
-    #     self.timer.timeout.connect(self.timer_callback)
-    #     self.timer.start(1)  # 1000 ms = 1 s
-    #
-    # def timer_callback(self):
-    #     print("timer callback")
-    #     rclpy.spin_once(self.left_arm)
-    #     rclpy.spin_once(self.right_arm)
-
 
 
 class Arm(Node):
@@ -182,7 +173,8 @@ class Arm(Node):
         self.finger_command.scissor_command.speed = 1.0
         self.finger_command_publisher = self.create_publisher(Robotiq3FingerCommand,
                                                               '/victor/' + self.name + '/gripper_command', 10)
-        self.arm_command_publisher = self.create_publisher(MotionCommand, '/victor/' + self.name + '/motion_command', 10)
+        self.arm_command_publisher = self.create_publisher(MotionCommand, '/victor/' + self.name + '/motion_command',
+                                                           10)
 
         self.gripper_status_subscriber = self.create_subscription(
             Robotiq3FingerStatus, '/victor/' + self.name + '/gripper_status',
@@ -200,7 +192,7 @@ class Arm(Node):
 
         print('Getting', self.name, 'current joint values ...')
         print('/victor/' + self.name + '/motion_status')
-        print( '/victor/' + self.name + '/gripper_status')
+        print('/victor/' + self.name + '/gripper_status')
         sys.stdout.flush()
         while (not self.arm_status_updated) or (not self.gripper_status_updated):
             rclpy.spin_once(self)
@@ -221,11 +213,16 @@ class Arm(Node):
         rclpy.spin_until_future_complete(self, control_mode)
         self.active_control_mode_int = control_mode.result().active_control_mode.control_mode.mode
         self.control_mode_combobox.setCurrentIndex(self.active_control_mode_int)
+
+        print("Create service client for /victor/" + self.name + "/set_control_mode_service")
+        self.set_control_mode_client = self.create_client(SetControlMode,
+                                                          '/victor/' + self.name + '/set_control_mode_service')
+        while not self.set_control_mode_client.wait_for_service(timeout_sec=1.0):
+            self.get_logger().info('Set control mode service not available, waiting again...')
+
         print('Arm created')
 
-
     def arm_status_callback(self, data):
-        print( self.name, " arm status callback")
         self.arm_status = data
         self.arm_status_updated = True
 
@@ -411,7 +408,7 @@ class Arm(Node):
         print("Stiffness: ".format(self.stiffness))
         self.change_control_mode(self.active_control_mode_int)
 
-    def change_control_mode(self, control_mode):
+    def change_control_mode(self, control_mode, vel=0.1, accel=0.1):
         if control_mode == ControlMode.JOINT_POSITION:
             self.enable_arm_sliders()
             print('Switching to JOINT_POSITION mode.')
@@ -425,15 +422,23 @@ class Arm(Node):
             self.disable_arm_sliders()
             print('Switching to CARTESIAN_IMPEDANCE mode')
 
-        result = victor_utils.set_control_mode(control_mode, self.name, self.stiffness)
+        new_control_mode = victor_utils.get_control_mode_params(control_mode, self.stiffness, vel, accel)
+        req = SetControlMode.Request()
+        req.new_control_mode = new_control_mode
+        set_control_mode_result = self.set_control_mode_client.call_async(req)
+        # set_control_mode_result = self.set_control_mode_client.call(req)
 
+        rclpy.spin_until_future_complete(self, set_control_mode_result)
+        if not set_control_mode_result.result().success:
+            print("Failed to switch to control mode: " + str(control_mode))
+        result = set_control_mode_result.result()
         if result.success:
             print('Control mode switch success.')
+            self.active_control_mode_int = control_mode
+            self.arm_command.control_mode.mode = control_mode
         else:
             print('Control mode switch failure.')
             print(result.message)
-        self.active_control_mode_int = control_mode
-        self.arm_command.control_mode.mode = control_mode
 
 
 def main():
@@ -445,13 +450,6 @@ def main():
     widget = Widget()
     widget.setWindowTitle("Arm Command Widget")
     widget.show()
-    # while 1:
-    #     print("spin once")
-    #     rclpy.spin_once(widget.left_arm)
-    #     rclpy.spin_once(widget.right_arm)
-    #     # time.sleep(0.01)
-
-
     sys.exit(app.exec_())
 
 
