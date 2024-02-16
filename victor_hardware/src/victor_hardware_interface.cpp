@@ -25,6 +25,59 @@ CallbackReturn VictorHardwareInterface::on_init(const hardware_interface::Hardwa
   left_hw_ft_.fill(0);
   right_hw_ft_.fill(0);
 
+  // NOTE: changing these values here requires corresponding changes in the LCMRobotInterface application
+  //  and also the victor_lcm_bridge launch file.
+  std::string const left_recv_provider = "udp://10.10.10.108:30002";
+  std::string const right_recv_provider = "udp://10.10.10.108:30001";
+  std::string const left_send_provider = "udp://10.10.10.12:30000";
+  std::string const right_send_provider = "udp://10.10.10.11:30000";
+
+  left_send_lcm_ptr_ = std::make_shared<lcm::LCM>(left_send_provider);
+  left_recv_lcm_ptr_ = std::make_shared<lcm::LCM>(left_recv_provider);
+  right_send_lcm_ptr_ = std::make_shared<lcm::LCM>(right_send_provider);
+  right_recv_lcm_ptr_ = std::make_shared<lcm::LCM>(right_recv_provider);
+
+  RCLCPP_INFO(logger, "===================================================================================");
+  RCLCPP_INFO(logger, "Please start the LCMRobotInterface application on BOTH pendants!");
+  RCLCPP_INFO(logger, "===================================================================================");
+
+  if (!left_send_lcm_ptr_->good()) {
+    RCLCPP_ERROR(logger, "Left Send LCM interface is not good");
+    return CallbackReturn::ERROR;
+  }
+  RCLCPP_DEBUG(logger, "Left send LCM interface is good");
+
+  if (!left_recv_lcm_ptr_->good()) {
+    RCLCPP_ERROR(logger, "Left Receive LCM interface is not good");
+    return CallbackReturn::ERROR;
+  }
+  RCLCPP_DEBUG(logger, "Left receive LCM interface is good");
+
+  if (!right_send_lcm_ptr_->good()) {
+    RCLCPP_ERROR(logger, "Right Send LCM interface is not good");
+    return CallbackReturn::ERROR;
+  }
+  RCLCPP_DEBUG(logger, "Right send LCM interface is good");
+
+  if (!right_recv_lcm_ptr_->good()) {
+    RCLCPP_ERROR(logger, "Right Receive LCM interface is not good");
+    return CallbackReturn::ERROR;
+  }
+  RCLCPP_DEBUG(logger, "Right receive LCM interface is good");
+
+  left_motion_status_listener_ = std::make_unique<LcmListener<victor_lcm_interface::motion_status>>(
+      left_recv_lcm_ptr_, DEFAULT_MOTION_STATUS_CHANNEL);
+  right_motion_status_listener_ = std::make_unique<LcmListener<victor_lcm_interface::motion_status>>(
+      right_recv_lcm_ptr_, DEFAULT_MOTION_STATUS_CHANNEL);
+  left_control_mode_listener_ = std::make_unique<LcmListener<victor_lcm_interface::control_mode_parameters>>(
+      left_recv_lcm_ptr_, DEFAULT_CONTROL_MODE_STATUS_CHANNEL);
+  right_control_mode_listener_ = std::make_unique<LcmListener<victor_lcm_interface::control_mode_parameters>>(
+      right_recv_lcm_ptr_, DEFAULT_CONTROL_MODE_STATUS_CHANNEL);
+  left_gripper_status_listener_ = std::make_unique<LcmListener<victor_lcm_interface::robotiq_3finger_status>>(
+      left_recv_lcm_ptr_, DEFAULT_GRIPPER_STATUS_CHANNEL);
+  right_gripper_status_listener_ = std::make_unique<LcmListener<victor_lcm_interface::robotiq_3finger_status>>(
+      right_recv_lcm_ptr_, DEFAULT_GRIPPER_STATUS_CHANNEL);
+
 //  sink_ = std::make_shared<DataTamer::MCAPSink>("/home/armlab/victor_hw_if.mcap");
 //
 //  // Create a channel and attach a sink. A channel can have multiple sinks
@@ -91,65 +144,10 @@ std::vector<hardware_interface::CommandInterface> VictorHardwareInterface::expor
 }
 
 CallbackReturn VictorHardwareInterface::on_activate(const rclcpp_lifecycle::State& /* previous_state */) {
-  RCLCPP_INFO(logger, "Starting on_activate");
-
-  // NOTE: changing these values here requires corresponding changes in the LCMRobotInterface application
-  //  and also the victor_lcm_bridge launch file.
-  std::string const left_recv_provider = "udp://10.10.10.108:30002";
-  std::string const right_recv_provider = "udp://10.10.10.108:30001";
-  std::string const left_send_provider = "udp://10.10.10.12:30000";
-  std::string const right_send_provider = "udp://10.10.10.11:30000";
-
-  left_send_lcm_ptr_ = std::make_shared<lcm::LCM>(left_send_provider);
-  left_recv_lcm_ptr_ = std::make_shared<lcm::LCM>(left_recv_provider);
-  right_send_lcm_ptr_ = std::make_shared<lcm::LCM>(right_send_provider);
-  right_recv_lcm_ptr_ = std::make_shared<lcm::LCM>(right_recv_provider);
-
-  RCLCPP_INFO(logger, "===================================================================================");
-  RCLCPP_INFO(logger, "Please start the LCMRobotInterface application on BOTH pendants!");
-  RCLCPP_INFO(logger, "===================================================================================");
-
-  if (!left_send_lcm_ptr_->good()) {
-    RCLCPP_ERROR(logger, "Left Send LCM interface is not good");
-    return CallbackReturn::ERROR;
-  }
-  RCLCPP_DEBUG(logger, "Left send LCM interface is good");
-
-  if (!left_recv_lcm_ptr_->good()) {
-    RCLCPP_ERROR(logger, "Left Receive LCM interface is not good");
-    return CallbackReturn::ERROR;
-  }
-  RCLCPP_DEBUG(logger, "Left receive LCM interface is good");
-
-  if (!right_send_lcm_ptr_->good()) {
-    RCLCPP_ERROR(logger, "Right Send LCM interface is not good");
-    return CallbackReturn::ERROR;
-  }
-  RCLCPP_DEBUG(logger, "Right send LCM interface is good");
-
-  if (!right_recv_lcm_ptr_->good()) {
-    RCLCPP_ERROR(logger, "Right Receive LCM interface is not good");
-    return CallbackReturn::ERROR;
-  }
-  RCLCPP_DEBUG(logger, "Right receive LCM interface is good");
-
-  left_motion_status_listener_ = std::make_unique<LcmListener<victor_lcm_interface::motion_status>>(
-      left_recv_lcm_ptr_, DEFAULT_MOTION_STATUS_CHANNEL);
-  right_motion_status_listener_ = std::make_unique<LcmListener<victor_lcm_interface::motion_status>>(
-      right_recv_lcm_ptr_, DEFAULT_MOTION_STATUS_CHANNEL);
-  left_control_mode_listener_ = std::make_unique<LcmListener<victor_lcm_interface::control_mode_parameters>>(
-      left_recv_lcm_ptr_, DEFAULT_CONTROL_MODE_STATUS_CHANNEL);
-  right_control_mode_listener_ = std::make_unique<LcmListener<victor_lcm_interface::control_mode_parameters>>(
-      right_recv_lcm_ptr_, DEFAULT_CONTROL_MODE_STATUS_CHANNEL);
-  left_gripper_status_listener_ = std::make_unique<LcmListener<victor_lcm_interface::robotiq_3finger_status>>(
-      left_recv_lcm_ptr_, DEFAULT_GRIPPER_STATUS_CHANNEL);
-  right_gripper_status_listener_ = std::make_unique<LcmListener<victor_lcm_interface::robotiq_3finger_status>>(
-      right_recv_lcm_ptr_, DEFAULT_GRIPPER_STATUS_CHANNEL);
-
   lcm_thread_running_ = true;
   lcm_thread_ = std::thread(&VictorHardwareInterface::LCMThread, this);
 
-  RCLCPP_INFO(logger, "On Activate finished successfully");
+  RCLCPP_INFO(logger, "on_activate: LCM processing thread started");
 
   return CallbackReturn::SUCCESS;
 }
@@ -169,14 +167,26 @@ CallbackReturn VictorHardwareInterface::on_deactivate(const rclcpp_lifecycle::St
 
 void VictorHardwareInterface::LCMThread() {
   while (lcm_thread_running_) {
+    // RCLCPP_WARN(logger, "start handle");
     left_recv_lcm_ptr_->handleTimeout(1000);
     right_recv_lcm_ptr_->handleTimeout(1000);
+    // RCLCPP_WARN(logger, "end handle");
   }
 }
 
 // ------------------------------------------------------------------------------------------
 hardware_interface::return_type VictorHardwareInterface::read(const rclcpp::Time& /*time*/,
                                                               const rclcpp::Duration& /*period*/) {
+  if (get_state().id() != lifecycle_msgs::msg::State::PRIMARY_STATE_ACTIVE) {
+    return hardware_interface::return_type::OK;
+  }
+
+  if (!left_motion_status_listener_->hasLatestMessage() ||
+      !right_motion_status_listener_->hasLatestMessage() ||
+      !left_gripper_status_listener_->hasLatestMessage() ||
+      !right_gripper_status_listener_->hasLatestMessage()) {
+    return hardware_interface::return_type::OK;
+  }
   auto const& left_motion_status = left_motion_status_listener_->getLatestMessage();
   auto const& right_motion_status = right_motion_status_listener_->getLatestMessage();
 
@@ -296,11 +306,16 @@ hardware_interface::return_type VictorHardwareInterface::read(const rclcpp::Time
 hardware_interface::return_type VictorHardwareInterface::write(const rclcpp::Time& /*time*/,
                                                                const rclcpp::Duration& /*period*/) {
 
+  if (get_state().id() != lifecycle_msgs::msg::State::PRIMARY_STATE_ACTIVE) {
+    return hardware_interface::return_type::OK;
+  }
+
   auto const& has_left_motion_status = left_motion_status_listener_->hasLatestMessage();
   auto const& has_right_motion_status = right_motion_status_listener_->hasLatestMessage();
+  auto const& has_left_control_mode = left_control_mode_listener_->hasLatestMessage();
+  auto const& has_right_control_mode = right_control_mode_listener_->hasLatestMessage();
 
-  if (!has_left_motion_status || !has_right_motion_status) {
-    RCLCPP_WARN(logger, "No motion status received, not sending commands");
+  if (!has_left_motion_status || !has_right_motion_status || !has_left_control_mode || !has_right_control_mode) {
     return hardware_interface::return_type::OK;
   }
 
@@ -326,7 +341,7 @@ hardware_interface::return_type VictorHardwareInterface::write(const rclcpp::Tim
   rclcpp::Clock clock;
   for (int i = 0; i < 14; i++) {
     if (std::isnan(hw_pos_cmds_[i])) {
-      RCLCPP_WARN_THROTTLE(logger, clock, 500, "Joint %d is NaN, using commanded position from LCM", i);
+      RCLCPP_WARN_THROTTLE(logger, clock, 500, "Joint %d is NaN, using current commanded position according to the robot", i);
       hw_pos_cmds_[i] = current_commanded_positions[i];
     }
   }
