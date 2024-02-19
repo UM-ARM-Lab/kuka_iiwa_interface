@@ -1,13 +1,15 @@
 from typing import Sequence, Optional
 
+from arm_utilities.listener import Listener
+from victor_hardware_interfaces.msg import MotionCommand, MotionStatus, Robotiq3FingerStatus, Robotiq3FingerCommand, \
+    ControlMode
+from victor_hardware_interfaces.srv import SetControlMode, GetControlMode
+
 from rclpy.node import Node
 from sensor_msgs.msg import JointState
+from victor_hardware.victor_utils import get_control_mode_params, is_gripper_closed, get_gripper_open_fraction_msg
 
-from arm_utilities.listener import Listener
-from victor_hardware.victor_utils import get_control_mode_params, is_gripper_closed, DEFAULT_JOINT_VEL, \
-    get_gripper_open_fraction_msg
-from victor_hardware_interfaces.msg import MotionCommand, MotionStatus, Robotiq3FingerStatus, Robotiq3FingerCommand, ControlMode
-from victor_hardware_interfaces.srv import SetControlMode, GetControlMode
+
 # from arm_robots.robot import Robot
 
 # TODO: inherit from Robot in arm_robots.robot
@@ -18,12 +20,15 @@ class Victor:
         self.left_arm_cmd_pub = node.create_publisher(MotionCommand, "victor/left_arm/motion_command", 10)
         self.right_arm_cmd_pub = node.create_publisher(MotionCommand, "victor/right_arm/motion_command", 10)
         self.left_gripper_cmd_pub = node.create_publisher(Robotiq3FingerCommand, "victor/left_arm/gripper_command", 10)
-        self.right_gripper_cmd_pub = node.create_publisher(Robotiq3FingerCommand, "victor/right_arm/gripper_command", 10)
+        self.right_gripper_cmd_pub = node.create_publisher(Robotiq3FingerCommand, "victor/right_arm/gripper_command",
+                                                           10)
 
         self.left_set_control_mode_srv = node.create_client(SetControlMode, "victor/left_arm/set_control_mode_service")
-        self.right_set_control_mode_srv = node.create_client(SetControlMode, "victor/right_arm/set_control_mode_service")
+        self.right_set_control_mode_srv = node.create_client(SetControlMode,
+                                                             "victor/right_arm/set_control_mode_service")
         self.left_get_control_mode_srv = node.create_client(SetControlMode, "victor/left_arm/get_control_mode_service")
-        self.right_get_control_mode_srv = node.create_client(SetControlMode, "victor/right_arm/get_control_mode_service")
+        self.right_get_control_mode_srv = node.create_client(SetControlMode,
+                                                             "victor/right_arm/get_control_mode_service")
 
         self.joint_states_listener = Listener(node, JointState, "joint_states", 10)
         self.left_arm_status_listener = Listener(node, MotionStatus, "victor/left_arm/motion_status", 10)
@@ -81,7 +86,7 @@ class Victor:
     def get_control_modes(self):
         return {'left': self.get_left_arm_control_mode(), 'right': self.get_right_arm_control_mode()}
 
-    def set_control_modes(self, control_mode: ControlMode, vel=DEFAULT_JOINT_VEL, **kwargs):
+    def set_control_modes(self, control_mode: ControlMode, vel: float, **kwargs):
         left_res = self.set_left_arm_control_mode(control_mode, vel=vel, **kwargs)
         right_res = self.set_right_arm_control_mode(control_mode, vel=vel, **kwargs)
         return left_res, right_res

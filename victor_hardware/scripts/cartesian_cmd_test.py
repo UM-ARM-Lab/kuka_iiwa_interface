@@ -11,6 +11,8 @@ see the vr_ros2_bridge repo for setup instructions.
 """
 
 import tf2_ros
+
+from rclpy.time import Time
 from tf2_py import TransformException
 
 from victor_hardware.victor import Victor
@@ -42,7 +44,7 @@ class CartesianCommandTestNode(Node):
         if self.t0 is None:
             # try to get the current pose of the left gripper
             try:
-                self.t0 = self.tf_buffer.lookup_transform('victor_left_palm', 'victor_left_arm_link0', rclpy.time.Time())
+                self.t0 = self.tf_buffer.lookup_transform('victor_left_palm', 'victor_left_arm_link0', Time())
                 print(f"Got transform: {self.t0}")
             except TransformException as ex:
                 self.get_logger().info(f'Could not transform: {ex}')
