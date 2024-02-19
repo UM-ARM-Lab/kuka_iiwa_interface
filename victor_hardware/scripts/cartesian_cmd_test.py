@@ -10,10 +10,8 @@ The motion will be relative in gripper frame to the pose of the gripper when you
 see the vr_ros2_bridge repo for setup instructions.
 """
 
-import tf2_ros
-
-from rclpy.time import Time
-from tf2_py import TransformException
+from math import cos, sin
+from copy import deepcopy
 
 from victor_hardware.victor import Victor
 from victor_hardware_interfaces.msg import MotionCommand, ControlMode
@@ -29,40 +27,35 @@ class CartesianCommandTestNode(Node):
 
         self.victor = Victor(self)
 
-        # create a TF listener
-        self.tf_buffer = tf2_ros.Buffer()
-        self.tf_listener = tf2_ros.TransformListener(self.tf_buffer, self)
+        self.timer = self.create_timer(0.2, self.timer_cb)
 
-        # Set up ros timer
-        self.timer = self.create_timer(0.1, self.timer_cb)
+        self.initial_pose = None
+        self.mode_set = False
 
-        self.victor.set_left_arm_control_mode(ControlMode.CARTESIAN_IMPEDANCE)
-
-        self.t0 = None
+        self.pub_idx = 0
 
     def timer_cb(self):
-        if self.t0 is None:
-            # try to get the current pose of the left gripper
-            try:
-                self.t0 = self.tf_buffer.lookup_transform('victor_left_palm', 'victor_left_arm_link0', Time())
-                print(f"Got transform: {self.t0}")
-            except TransformException as ex:
-                self.get_logger().info(f'Could not transform: {ex}')
-                return
+        # if not self.mode_set:
+        #     self.mode_set = True
+        #     self.victor.set_left_arm_control_mode(ControlMode.CARTESIAN_IMPEDANCE)
+
+        if self.initial_pose is None:
+            status = self.victor.left_arm_status_listener.get()
+            if status:
+                self.initial_pose = status.commanded_cartesian_pose
         else:
             msg = MotionCommand()
             msg.header.stamp = self.get_clock().now().to_msg()
+            msg.header.frame_id = "base"
             msg.control_mode.mode = ControlMode.CARTESIAN_IMPEDANCE
 
-            msg.cartesian_pose.position.x = self.t0.transform.translation.x
-            msg.cartesian_pose.position.y = self.t0.transform.translation.y
-            msg.cartesian_pose.position.z = self.t0.transform.translation.z
-            msg.cartesian_pose.orientation.x = self.t0.transform.rotation.x
-            msg.cartesian_pose.orientation.y = self.t0.transform.rotation.y
-            msg.cartesian_pose.orientation.z = self.t0.transform.rotation.z
-            msg.cartesian_pose.orientation.w = self.t0.transform.rotation.w
+            msg.cartesian_pose = deepcopy(self.initial_pose)
+            dz = 0.1 * sin(self.pub_idx / 5)
+            msg.cartesian_pose.position.z = self.initial_pose.position.z + dz
 
             self.victor.left_arm_cmd_pub.publish(msg)
+
+            self.pub_idx += 1
 
 
 def main():

@@ -107,7 +107,9 @@ class Victor:
 
     def set_control_mode(self, service_server, name: str, control_mode: ControlMode, **kwargs):
         new_control_mode = get_control_mode_params(control_mode, **kwargs)
-        res: SetControlMode.Response = service_server.call(new_control_mode)
+        req = SetControlMode.Request()
+        req.new_control_mode = new_control_mode
+        res: SetControlMode.Response = service_server.call(req)
 
         if not res.success:
             print(f"Failed to switch {name} to control mode: {control_mode}")
