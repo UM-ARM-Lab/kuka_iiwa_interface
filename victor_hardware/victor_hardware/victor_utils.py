@@ -1,12 +1,8 @@
-#! /usr/bin/env python
-
 from enum import Enum
 
 from typing import List, Sequence
 
-import rclpy
-from victor_hardware_interfaces.msg import *
-from victor_hardware_interfaces.srv import *
+from victor_hardware_interfaces.msg import ControlMode, ControlModeParameters, Robotiq3FingerStatus, Robotiq3FingerCommand, JointValueQuantity
 
 
 class Stiffness(Enum):
@@ -28,37 +24,6 @@ def get_control_mode_params(control_mode: ControlMode, stiffness=Stiffness.MEDIU
     else:
         raise NotImplementedError(f"Unknown control mode requested: {control_mode}")
 
-
-def set_control_mode(control_mode, arm, stiffness=Stiffness.MEDIUM, vel=0.1, accel=0.1):
-    """
-    Sets Victor's control mode.
-
-    Parameters:
-    control_mode (ControlMode): The control mode to enter
-    arm (string):               The name of the arm: "right_arm" or "left_arm"
-    stiffness (Stiffness):      For impedance modes, uses a set of stiffness values
-    """
-    new_control_mode = get_control_mode_params(control_mode, stiffness, vel, accel)
-    result = send_new_control_mode(arm, new_control_mode)
-    if not result.success:
-        print("Failed to switch to control mode: " + str(control_mode))
-    return result
-
-
-def send_new_control_mode(arm, msg: SetControlMode):
-    """
-    Sets the control mode for victor.
-
-    Args:
-        arm: "right_arm" or "left_arm" (or e.g. "/victor/right_arm" if run from the global namespace)
-        msg: The control mode message to send
-
-    Returns:
-
-    """
-    send_new_control_mode_srv = rospy.ServiceProxy(arm + "/set_control_mode_service",
-                                                   SetControlMode)
-    return send_new_control_mode_srv(msg)
 
 
 def get_joint_position_params(vel, accel):
@@ -143,9 +108,9 @@ def get_joint_impedance_params(stiffness, vel=0.1, accel=0.1):
 
 def get_cartesian_impedance_params(velocity=2.5):
     """
-    Returns predefined cartesian impedance parameters
+    Returns predefined cartesian impedance parameters. Uniform across XYZ and RPY
     """
-    # TODO allow sub-modes such as xy planar motion
+    # TODO create specific configs for things like XY planar motion
     new_control_mode = ControlModeParameters()
     new_control_mode.control_mode.mode = ControlMode.CARTESIAN_IMPEDANCE
     new_control_mode.cartesian_path_execution_params.max_velocity.x = velocity
@@ -262,9 +227,6 @@ def is_gripper_closed(status: Robotiq3FingerStatus):
     finger_b_closed = status.finger_b_status.position > 0.5 - 1e-2
     finger_c_closed = status.finger_c_status.position > 0.5 - 1e-2
     return finger_a_closed and finger_b_closed and finger_c_closed
-
-
-DEFAULT_JOINT_VEL = 0.1
 
 
 def get_gripper_open_fraction_msg(position: float):
