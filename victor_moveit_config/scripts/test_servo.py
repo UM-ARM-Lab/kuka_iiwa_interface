@@ -16,7 +16,7 @@ class TestServo(Node):
         # self.publisher = self.create_publisher(TwistStamped, '/moveit_servo/delta_twist_cmds', 10)
         self.publisher = self.create_publisher(JointJog, '/moveit_servo/delta_joint_cmds', 10)
         # self.publisher = self.create_publisher(Float64MultiArray, '/joint_group_position_controller/commands', 10)
-        # self.js_listener = Listener(self, '/joint_states', JointState)
+        # self.js_listener = Listener(self, JointState, '/joint_states')
 
         # self.msg = TwistStamped()
         # self.msg.header.frame_id = "victor_left_palm"
