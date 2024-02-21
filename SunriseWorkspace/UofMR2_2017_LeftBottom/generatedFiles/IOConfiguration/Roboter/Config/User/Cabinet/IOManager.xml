@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="utf-8"?>
+<IOManager xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+  <Version Label="">
+    <Info Version="IOManager V0.1.0" />
+    <Schema Version="1" />
+  </Version>
+  <WarnMultipleUsageOfInputs printWarning="false" />
+  <BusList>
+    <Bus BusDriverName="ECatIODriver" BusInstanceName="SYS-X48">
+      <IOList>
+        <DigitalIO Name="Robotiq3Finger.ActionRequest" Type="OUTPUT" Scope="USER_IO" StartBit="12728" BitSize="8" Signed="false">
+          <Description />
+        </DigitalIO>
+        <DigitalIO Name="Robotiq3Finger.GripperOptions" Type="OUTPUT" Scope="USER_IO" StartBit="12736" BitSize="8" Signed="false">
+          <Description />
+        </DigitalIO>
+        <DigitalIO Name="Robotiq3Finger.GripperOptions2" Type="OUTPUT" Scope="USER_IO" StartBit="12744" BitSize="8" Signed="false">
+          <Description />
+        </DigitalIO>
+        <DigitalIO Name="Robotiq3Finger.FirstFingerPositionRequest" Type="OUTPUT" Scope="USER_IO" StartBit="12752" BitSize="8" Signed="false">
+          <Description />
+        </DigitalIO>
+        <DigitalIO Name="Robotiq3Finger.FirstFingerSpeedRequest" Type="OUTPUT" Scope="USER_IO" StartBit="12760" BitSize="8" Signed="false">
+          <Description />
+        </DigitalIO>
+        <DigitalIO Name="Robotiq3Finger.FirstFingerForceRequest" Type="OUTPUT" Scope="USER_IO" StartBit="12768" BitSize="8" Signed="false">
+          <Description />
+        </DigitalIO>
+        <DigitalIO Name="Robotiq3Finger.MiddleFingerPositionRequest" Type="OUTPUT" Scope="USER_IO" StartBit="12776" BitSize="8" Signed="false">
+          <Description />
+        </DigitalIO>
+        <DigitalIO Name="Robotiq3Finger.MiddleFingerSpeedRequest" Type="OUTPUT" Scope="USER_IO" StartBit="12784" BitSize="8" Signed="false">
+          <Description />
+        </DigitalIO>
+        <DigitalIO Name="Robotiq3Finger.MiddleFingerForceRequest" Type="OUTPUT" Scope="USER_IO" StartBit="12792" BitSize="8" Signed="false">
+          <Description />
+        </DigitalIO>
+        <DigitalIO Name="Robotiq3Finger.ThumbPositionRequest" Type="OUTPUT" Scope="USER_IO" StartBit="12800" BitSize="8" Signed="false">
+          <Description />
+        </DigitalIO>
+        <DigitalIO Name="Robotiq3Finger.ThumbSpeedRequest" Type="OUTPUT" Scope="USER_IO" StartBit="12808" BitSize="8" Signed="false">
+          <Description />
+        </DigitalIO>
+        <DigitalIO Name="Robotiq3Finger.ThumbForceRequest" Type="OUTPUT" Scope="USER_IO" StartBit="12816" BitSize="8" Signed="false">
+          <Description />
+        </DigitalIO>
+        <DigitalIO Name="Robotiq3Finger.ScissorPositionRequest" Type="OUTPUT" Scope="USER_IO" StartBit="12824" BitSize="8" Signed="false">
+          <Description />
+        </DigitalIO>
+        <DigitalIO Name="Robotiq3Finger.ScissorSpeedRequest" Type="OUTPUT" Scope="USER_IO" StartBit="12832" BitSize="8" Signed="false">
+          <Description />
+        </DigitalIO>
+        <DigitalIO Name="Robotiq3Finger.ScissorForceRequest" Type="OUTPUT" Scope="USER_IO" StartBit="12840" BitSize="8" Signed="false">
+          <Description />
+        </DigitalIO>
+        <DigitalIO Name="Robotiq3Finger.GripperStatus" Type="INPUT" Scope="USER_IO" StartBit="360" BitSize="8" Signed="false">
+          <Description />
+        </DigitalIO>
+        <DigitalIO Name="Robotiq3Finger.ObjectStatus" Type="INPUT" Scope="USER_IO" StartBit="368" BitSize="8" Signed="false">
+          <Description />
+        </DigitalIO>
+        <DigitalIO Name="Robotiq3Finger.FaultStatus" Type="INPUT" Scope="USER_IO" StartBit="376" BitSize="8" Signed="false">
+          <Description />
+        </DigitalIO>
+        <DigitalIO Name="Robotiq3Finger.FirstFingerPositionRequestEcho" Type="INPUT" Scope="USER_IO" StartBit="384" BitSize="8" Signed="false">
+          <Description />
+        </DigitalIO>
+        <DigitalIO Name="Robotiq3Finger.FirstFingerPosition" Type="INPUT" Scope="USER_IO" StartBit="392" BitSize="8" Signed="false">
+          <Description />
+        </DigitalIO>
+        <DigitalIO Name="Robotiq3Finger.FirstFingerCurrent" Type="INPUT" Scope="USER_IO" StartBit="400" BitSize="8" Signed="false">
+          <Description />
+        </DigitalIO>
+        <DigitalIO Name="Robotiq3Finger.MidFingerPositionRequestEcho" Type="INPUT" Scope="USER_IO" StartBit="408" BitSize="8" Signed="false">
+          <Description />
+        </DigitalIO>
+        <DigitalIO Name="Robotiq3Finger.MidFingerPosition" Type="INPUT" Scope="USER_IO" StartBit="416" BitSize="8" Signed="false">
+          <Description />
+        </DigitalIO>
+        <DigitalIO Name="Robotiq3Finger.MidFingerCurrent" Type="INPUT" Scope="USER_IO" StartBit="424" BitSize="8" Signed="false">
+          <Description />
+        </DigitalIO>
+        <DigitalIO Name="Robotiq3Finger.ThumbPositionRequestEcho" Type="INPUT" Scope="USER_IO" StartBit="432" BitSize="8" Signed="false">
+          <Description />
+        </DigitalIO>
+        <DigitalIO Name="Robotiq3Finger.ThumbPosition" Type="INPUT" Scope="USER_IO" StartBit="440" BitSize="8" Signed="false">
+          <Description />
+        </DigitalIO>
+        <DigitalIO Name="Robotiq3Finger.ThumbCurrent" Type="INPUT" Scope="USER_IO" StartBit="448" BitSize="8" Signed="false">
+          <Description />
+        </DigitalIO>
+        <DigitalIO Name="Robotiq3Finger.ScissorPositionRequestEcho" Type="INPUT" Scope="USER_IO" StartBit="456" BitSize="8" Signed="false">
+          <Description />
+        </DigitalIO>
+        <DigitalIO Name="Robotiq3Finger.ScissorPosition" Type="INPUT" Scope="USER_IO" StartBit="464" BitSize="8" Signed="false">
+          <Description />
+        </DigitalIO>
+        <DigitalIO Name="Robotiq3Finger.ScissorCurrent" Type="INPUT" Scope="USER_IO" StartBit="472" BitSize="8" Signed="false">
+          <Description />
+        </DigitalIO>
+      </IOList>
+    </Bus>
+  </BusList>
+</IOManager>

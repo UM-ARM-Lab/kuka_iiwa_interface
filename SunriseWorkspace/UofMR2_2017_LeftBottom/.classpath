@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<classpath>
+	<classpathentry kind="src" path="src"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
+	<classpathentry kind="src" path="examples"/>
+	<classpathentry kind="lib" path="KUKAJavaLib/javax.inject_1.0.0.v20091030.jar"/>
+	<classpathentry kind="lib" path="KUKAJavaLib/com.kuka.common.datatypes_1.15.0.7.jar">
+		<attributes>
+			<attribute name="javadoc_location" value="jar:platform:/resource/UofMR2_2017_LeftBottom/KUKAJavaLib/com.kuka.common.datatypes_1.15.0.7-javadoc.jar!/"/>
+		</attributes>
+	</classpathentry>
+	<classpathentry kind="lib" path="KUKAJavaLib/com.kuka.common.utilities_1.5.0.7.jar">
+		<attributes>
+			<attribute name="javadoc_location" value="jar:platform:/resource/UofMR2_2017_LeftBottom/KUKAJavaLib/com.kuka.common.utilities_1.5.0.7-javadoc.jar!/"/>
+		</attributes>
+	</classpathentry>
+	<classpathentry kind="lib" path="KUKAJavaLib/com.kuka.connectivity.common.JniExtractor_1.15.0.Con1-11-0_5.jar">
+		<attributes>
+			<attribute name="javadoc_location" value="jar:platform:/resource/UofMR2_2017_LeftBottom/KUKAJavaLib/com.kuka.connectivity.common.JniExtractor_1.15.0.Con1-11-0_5-javadoc.jar!/"/>
+		</attributes>
+	</classpathentry>
+	<classpathentry kind="lib" path="KUKAJavaLib/com.kuka.connectivity.directServo_1.15.0.Con1-11-0_5.jar">
+		<attributes>
+			<attribute name="javadoc_location" value="jar:platform:/resource/UofMR2_2017_LeftBottom/KUKAJavaLib/com.kuka.connectivity.directServo_1.15.0.Con1-11-0_5-javadoc.jar!/"/>
+		</attributes>
+	</classpathentry>
+	<classpathentry kind="lib" path="KUKAJavaLib/com.kuka.connectivity.fastRobotInterface_1.15.1.Con1-11-0_5.jar">
+		<attributes>
+			<attribute name="javadoc_location" value="jar:platform:/resource/UofMR2_2017_LeftBottom/KUKAJavaLib/com.kuka.connectivity.fastRobotInterface_1.15.1.Con1-11-0_5-javadoc.jar!/"/>
+		</attributes>
+	</classpathentry>
+	<classpathentry kind="lib" path="KUKAJavaLib/com.kuka.connectivity.smartServo_1.16.0.Con1-11-0_5.jar">
+		<attributes>
+			<attribute name="javadoc_location" value="jar:platform:/resource/UofMR2_2017_LeftBottom/KUKAJavaLib/com.kuka.connectivity.smartServo_1.16.0.Con1-11-0_5-javadoc.jar!/"/>
+		</attributes>
+	</classpathentry>
+	<classpathentry kind="lib" path="KUKAJavaLib/com.kuka.connectivity.smartServoLIN_1.15.0.Con1-11-0_5.jar">
+		<attributes>
+			<attribute name="javadoc_location" value="jar:platform:/resource/UofMR2_2017_LeftBottom/KUKAJavaLib/com.kuka.connectivity.smartServoLIN_1.15.0.Con1-11-0_5-javadoc.jar!/"/>
+		</attributes>
+	</classpathentry>
+	<classpathentry kind="lib" path="KUKAJavaLib/com.kuka.mastering.provider.api_1.5.0.7.jar">
+		<attributes>
+			<attribute name="javadoc_location" value="jar:platform:/resource/UofMR2_2017_LeftBottom/KUKAJavaLib/#Bundle-JavaDoc#!/"/>
+		</attributes>
+	</classpathentry>
+	<classpathentry kind="lib" path="KUKAJavaLib/com.kuka.resource.api_1.0.0.7.jar">
+		<attributes>
+			<attribute name="javadoc_location" value="jar:platform:/resource/UofMR2_2017_LeftBottom/KUKAJavaLib/com.kuka.resource.api_1.0.0.7-javadoc.jar!/"/>
+		</attributes>
+	</classpathentry>
+	<classpathentry kind="lib" path="KUKAJavaLib/com.kuka.roboticsAPI_1.15.1.7.jar">
+		<attributes>
+			<attribute name="javadoc_location" value="jar:platform:/resource/UofMR2_2017_LeftBottom/KUKAJavaLib/com.kuka.roboticsAPI_1.15.1.7-javadoc.jar!/"/>
+		</attributes>
+	</classpathentry>
+	<classpathentry kind="lib" path="KUKAJavaLib/com.kuka.roboticsAPI.handGuiding_1.16.0.7.jar">
+		<attributes>
+			<attribute name="javadoc_location" value="jar:platform:/resource/UofMR2_2017_LeftBottom/KUKAJavaLib/com.kuka.roboticsAPI.handGuiding_1.16.0.7-javadoc.jar!/"/>
+		</attributes>
+	</classpathentry>
+	<classpathentry kind="lib" path="KUKAJavaLib/com.kuka.sunrise.common_1.0.0.7.jar">
+		<attributes>
+			<attribute name="javadoc_location" value="jar:platform:/resource/UofMR2_2017_LeftBottom/KUKAJavaLib/com.kuka.sunrise.common_1.0.0.7-javadoc.jar!/"/>
+		</attributes>
+	</classpathentry>
+	<classpathentry kind="lib" path="KUKAJavaLib/com.kuka.task.api_1.0.0.7.jar">
+		<attributes>
+			<attribute name="javadoc_location" value="jar:platform:/resource/UofMR2_2017_LeftBottom/KUKAJavaLib/com.kuka.task.api_1.0.0.7-javadoc.jar!/"/>
+		</attributes>
+	</classpathentry>
+	<classpathentry kind="lib" path="KUKAJavaLib/com.kuka.jogging.provider.api_1.0.0.7.jar">
+		<attributes>
+			<attribute name="javadoc_location" value="jar:platform:/resource/UofMR2_2017_LeftBottom/KUKAJavaLib/#Bundle-JavaDoc#!/"/>
+		</attributes>
+	</classpathentry>
+	<classpathentry kind="output" path="bin"/>
+</classpath>

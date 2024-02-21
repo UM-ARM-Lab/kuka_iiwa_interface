@@ -211,3 +211,6 @@ tags
 
 .vscode
 *.idea
+
+# Sunrise/Java 
+*.class
