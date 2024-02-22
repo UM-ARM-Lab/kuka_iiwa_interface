@@ -1,8 +1,8 @@
 <launch>
     <arg name="arm_command_gui" default="true"/>
     <!-- Note that changing these from the default requires matching changes in the Java code -->
-    <arg name="left_arm_recv_url" default="udp://10.10.10.108:30002"/>
-    <arg name="right_arm_recv_url" default="udp://10.10.10.108:30001"/>
+    <arg name="left_arm_recv_url" default="udp://10.10.10.169:30002"/>
+    <arg name="right_arm_recv_url" default="udp://10.10.10.169:30001"/>
 
     <arg name="model" default="$(find-pkg-share victor_description)/urdf/victor.urdf.xacro"/>
 

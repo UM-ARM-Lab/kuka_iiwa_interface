@@ -1,18 +1,15 @@
 #!/usr/bin/env python3
 
-# Python imports
-from __future__ import print_function
-
+import traceback
 import copy
 import math
-import pdb
 import signal
 import sys
 import time
 from functools import partial
 
 # Qt imports
-from PyQt5.QtCore import Qt, QTimer
+from PyQt5.QtCore import Qt
 from PyQt5.QtGui import *
 from PyQt5.QtWidgets import *
 
@@ -288,7 +285,7 @@ class Arm(Node):
         for text in option_texts:
             combobox.addItem(text)
         self.v_layout.addWidget(combobox, self.row_count[col], col)
-        combobox.currentIndexChanged.connect(slot_function)
+        combobox.activated.connect(slot_function)
         self.row_count[col] += 1
 
         return combobox

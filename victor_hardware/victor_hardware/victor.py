@@ -8,6 +8,7 @@ from victor_hardware_interfaces.srv import SetControlMode, GetControlMode
 from rclpy.node import Node
 from sensor_msgs.msg import JointState
 from victor_hardware.victor_utils import get_control_mode_params, is_gripper_closed, get_gripper_open_fraction_msg
+from rclpy.callback_groups import MutuallyExclusiveCallbackGroup
 
 
 # from arm_robots.robot import Robot
@@ -17,24 +18,28 @@ class Victor:
     def __init__(self, node: Node):
         self.node = node
 
-        self.left_arm_cmd_pub = node.create_publisher(MotionCommand, "victor/left_arm/motion_command", 10)
-        self.right_arm_cmd_pub = node.create_publisher(MotionCommand, "victor/right_arm/motion_command", 10)
-        self.left_gripper_cmd_pub = node.create_publisher(Robotiq3FingerCommand, "victor/left_arm/gripper_command", 10)
+        self.pub_group = MutuallyExclusiveCallbackGroup()
+        self.srv_group = MutuallyExclusiveCallbackGroup()
+        self.listener_group = MutuallyExclusiveCallbackGroup()
+
+        self.left_arm_cmd_pub = node.create_publisher(MotionCommand, "victor/left_arm/motion_command", 10, callback_group=self.pub_group)
+        self.right_arm_cmd_pub = node.create_publisher(MotionCommand, "victor/right_arm/motion_command", 10, callback_group=self.pub_group)
+        self.left_gripper_cmd_pub = node.create_publisher(Robotiq3FingerCommand, "victor/left_arm/gripper_command", 10, callback_group=self.pub_group)
         self.right_gripper_cmd_pub = node.create_publisher(Robotiq3FingerCommand, "victor/right_arm/gripper_command",
-                                                           10)
+                                                           10, callback_group=self.pub_group)
 
-        self.left_set_control_mode_srv = node.create_client(SetControlMode, "victor/left_arm/set_control_mode_service")
+        self.left_set_control_mode_srv = node.create_client(SetControlMode, "victor/left_arm/set_control_mode_service", callback_group=self.srv_group)
         self.right_set_control_mode_srv = node.create_client(SetControlMode,
-                                                             "victor/right_arm/set_control_mode_service")
-        self.left_get_control_mode_srv = node.create_client(SetControlMode, "victor/left_arm/get_control_mode_service")
+                                                             "victor/right_arm/set_control_mode_service", callback_group=self.srv_group)
+        self.left_get_control_mode_srv = node.create_client(SetControlMode, "victor/left_arm/get_control_mode_service", callback_group=self.srv_group)
         self.right_get_control_mode_srv = node.create_client(SetControlMode,
-                                                             "victor/right_arm/get_control_mode_service")
+                                                             "victor/right_arm/get_control_mode_service", callback_group=self.srv_group)
 
-        self.joint_states_listener = Listener(node, JointState, "joint_states", 10)
-        self.left_arm_status_listener = Listener(node, MotionStatus, "victor/left_arm/motion_status", 10)
-        self.right_arm_status_listener = Listener(node, MotionStatus, "victor/right_arm/motion_status", 10)
-        self.left_gripper_status_listener = Listener(node, Robotiq3FingerStatus, "victor/left_arm/gripper_status", 10)
-        self.right_gripper_status_listener = Listener(node, Robotiq3FingerStatus, "victor/right_arm/gripper_status", 10)
+        self.joint_states_listener = Listener(node, JointState, "joint_states", 10, callback_group=self.listener_group)
+        self.left_arm_status_listener = Listener(node, MotionStatus, "victor/left_arm/motion_status", 10, callback_group=self.listener_group)
+        self.right_arm_status_listener = Listener(node, MotionStatus, "victor/right_arm/motion_status", 10, callback_group=self.listener_group)
+        self.left_gripper_status_listener = Listener(node, Robotiq3FingerStatus, "victor/left_arm/gripper_status", 10, callback_group=self.listener_group)
+        self.right_gripper_status_listener = Listener(node, Robotiq3FingerStatus, "victor/right_arm/gripper_status", 10, callback_group=self.listener_group)
 
     def open_left_gripper(self, position=1.):
         self.left_gripper_cmd_pub.publish(get_gripper_open_fraction_msg(position))

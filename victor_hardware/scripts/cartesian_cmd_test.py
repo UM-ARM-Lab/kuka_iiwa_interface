@@ -14,9 +14,12 @@ from math import cos, sin
 from copy import deepcopy
 
 from victor_hardware.victor import Victor
+from victor_hardware.victor_utils import get_cartesian_impedance_params
 from victor_hardware_interfaces.msg import MotionCommand, ControlMode
+from victor_hardware_interfaces.srv import SetControlMode
 
 import rclpy
+from rclpy.executors import MultiThreadedExecutor
 from rclpy.node import Node
 
 
@@ -35,11 +38,15 @@ class CartesianCommandTestNode(Node):
         self.pub_idx = 0
 
     def timer_cb(self):
-        # if not self.mode_set:
-        #     self.mode_set = True
-        #     self.victor.set_left_arm_control_mode(ControlMode.CARTESIAN_IMPEDANCE)
+        if not self.mode_set:
+            self.mode_set = True
+            new_control_mode = get_cartesian_impedance_params(velocity=3.)
+            req = SetControlMode.Request()
+            req.new_control_mode = new_control_mode
+            self.victor.left_set_control_mode_srv.call(req)
 
         if self.initial_pose is None:
+            print("Waiting for initial status from left arm...")
             status = self.victor.left_arm_status_listener.get()
             if status:
                 self.initial_pose = status.commanded_cartesian_pose
@@ -50,7 +57,7 @@ class CartesianCommandTestNode(Node):
             msg.control_mode.mode = ControlMode.CARTESIAN_IMPEDANCE
 
             msg.cartesian_pose = deepcopy(self.initial_pose)
-            dz = 0.1 * sin(self.pub_idx / 5)
+            dz = 0.04 * sin(self.pub_idx / 5)
             msg.cartesian_pose.position.z = self.initial_pose.position.z + dz
 
             self.victor.left_arm_cmd_pub.publish(msg)
@@ -63,8 +70,11 @@ def main():
 
     node = CartesianCommandTestNode()
 
+    executor = MultiThreadedExecutor()
+    executor.add_node(node)
+
     try:
-        rclpy.spin(node)
+        executor.spin()
     except SystemExit:
         pass
 
