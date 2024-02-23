@@ -63,19 +63,13 @@
         <joint name="left_gripper_joint" type="fixed">
             <parent link="$(arg robot_name)_left_gripper_mounting_bracket"/>
             <child link="$(arg robot_name)_left_palm"/>
-            <origin xyz="0 0 0.0715" rpy="1.5707 0 0"/>
+            <origin xyz="0 0 0.0715" rpy="1.5707 0 0.78539"/>
         </joint>
 
         <joint name="right_gripper_joint" type="fixed">
             <parent link="$(arg robot_name)_right_gripper_mounting_bracket"/>
             <child link="$(arg robot_name)_right_palm"/>
-            <origin xyz="0 0 0.0715" rpy="1.5707 0 0"/>
+            <origin xyz="0 0 0.0715" rpy="1.5707 0 0.78539"/>
         </joint>
     </xacro:if>
-    <!-- could have other grippers here for different values of "gripper"-->
-
-    <!-- Define additional links as "tools", which are useful for planning and getting transforms -->
-    <xacro:include filename="$(find victor_description)/urdf/robotiq_pinch_grasp_tools.xacro"/>
-    <xacro:robotiq_pinch_grasp_tools robot_name="$(arg robot_name)"/>
-
 </robot>

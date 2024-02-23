@@ -70,10 +70,10 @@ joint_trajectory_controller:
 
 left_force_torque_broadcaster:
   ros__parameters:
-    frame_id: victor_left_palm
+    frame_id: victor_left_sunrise_palm_surface
     sensor_name: left_force_torque_sensor
 
 right_force_torque_broadcaster:
   ros__parameters:
-    frame_id: victor_right_palm
+    frame_id: victor_right_sunrise_palm_surface
     sensor_name: right_force_torque_sensor

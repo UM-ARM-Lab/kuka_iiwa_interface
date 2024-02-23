@@ -17,9 +17,10 @@ import rclpy
 from victor_hardware_interfaces.msg import MotionStatus
 from geometry_msgs.msg import WrenchStamped, Wrench, Vector3
 
-# FIXME !!!
-hand_to_frame = {'left': 'victor_left_palm',
-                 'right': 'victor_right_palm'}
+# This frame has to match the frame in the URDF,
+# which must match the frame used in the Sunrise code when computing external wrench
+hand_to_frame = {'left': 'victor_left_sunrise_palm_surface',
+                 'right': 'victor_right_sunrise_palm_surface'}
 
 def publish_wrench(data, hand, hand_wrench_pub):
     wr = data.estimated_external_wrench

@@ -294,13 +294,13 @@
         <link name="${robot_name}_flange">
         </link>
 
-        <!-- Our usage above has been tweaked to match Kuka's internal usage, so identity transform -->
+        <!-- This is the frame in which the external wrench is computer by the Kuka Java code (Sunrise). -->
         <joint name="${robot_name}_flange_kuka_joint" type="fixed">
             <parent link="${robot_name}_flange"/>
-            <child link="${robot_name}_flange_kuka"/>
-            <origin xyz="0 0 0" rpy="0 0 0"/>
+            <child link="${robot_name}_sunrise_palm_surface"/>
+            <origin xyz="0 0 0.119" rpy="0 0 0.78539"/>
         </joint>
-        <link name="${robot_name}_flange_kuka">
+        <link name="${robot_name}_sunrise_palm_surface">
         </link>
 
     </xacro:macro>
