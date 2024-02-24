@@ -3,15 +3,8 @@ See the README.md file for more information on how to set up a robot for these f
 """
 
 from ament_index_python import get_package_share_directory
-from moveit.planning import MoveItPy
 
 from moveit_configs_utils import MoveItConfigsBuilder
-
-
-def load_moveit_robot():
-    moveit_config_dict = load_moveit_config_dict()
-    robot = MoveItPy(node_name="moveit_py", config_dict=moveit_config_dict)
-    return robot
 
 
 def load_moveit_config_dict():

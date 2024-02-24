@@ -6,23 +6,24 @@ import threading
 from pathlib import Path
 
 import numpy as np
-from PyQt5 import uic
-from PyQt5.QtCore import QTimer, pyqtSignal
-from PyQt5.QtWidgets import QApplication, QMainWindow, QWidget, QHBoxLayout
-from urdf_parser_py.urdf import URDF, Robot
-from urdf_parser_py.xml_reflection import core
-from victor_hardware_interfaces.msg import Robotiq3FingerCommand, MotionCommand, ControlMode, Robotiq3FingerStatus, \
-    Robotiq3FingerActuatorStatus, Robotiq3FingerActuatorCommand
-from victor_hardware_interfaces.srv import GetControlMode, SetControlMode
-
 import rclpy
+from PyQt5 import uic
+from PyQt5.QtCore import pyqtSignal
+from PyQt5.QtWidgets import QApplication, QMainWindow, QWidget, QHBoxLayout, QTreeWidgetItem, QTreeWidget, \
+    QHeaderView, QSpinBox, QDoubleSpinBox, QCheckBox, QLineEdit
 from rclpy.executors import MultiThreadedExecutor
 from rclpy.node import Node
 from rclpy.qos import QoSDurabilityPolicy, QoSProfile
 from std_msgs.msg import String
+from urdf_parser_py.urdf import URDF, Robot
+from urdf_parser_py.xml_reflection import core
+
 from victor_hardware.victor import Victor, Side, ROBOTIQ_OPEN, ROBOTIQ_CLOSED
 from victor_hardware.victor_utils import list_to_jvq, Stiffness, get_control_mode_params, \
     get_gripper_closed_fraction_msg
+from victor_hardware_interfaces.msg import Robotiq3FingerCommand, MotionCommand, ControlMode, Robotiq3FingerStatus, \
+    Robotiq3FingerActuatorStatus, Robotiq3FingerActuatorCommand
+from victor_hardware_interfaces.srv import GetControlMode, SetControlMode
 
 # Suppress error messages from urdf_parser_py
 core.on_error = lambda *args: None
@@ -349,8 +350,22 @@ class ControlModeParamsWidget(QWidget):
 
         self.send_button.clicked.connect(self.send_params)
 
+        # auto-resize the tree columns
+        self.params_tree.header().setSectionResizeMode(QHeaderView.ResizeToContents)
+
         # Add items to the tree view based on the control mode
-        self.params_tree
+        self.reset_params_tree()
+
+    def reset_params_tree(self):
+        self.params_tree.clear()
+
+        # active_control_mode: ControlModeParameters = self.side.get_control_mode.call(GetControlMode.Request()).active_control_mode
+        active_control_mode = get_control_mode_params(ControlMode.JOINT_IMPEDANCE)
+
+        populate_tree_from_msg(self.params_tree, active_control_mode)
+
+        # expand all items
+        self.params_tree.expandAll()
 
     def send_params(self):
         req = SetControlMode.Request()
@@ -361,6 +376,65 @@ class ControlModeParamsWidget(QWidget):
 
     def tree_to_control_mode_params(self):
         pass
+
+
+# FIXME: get this from rosidl_parser?
+
+def populate_tree_from_msg(tree: QTreeWidget, msg):
+    def _populate_items(item: QTreeWidgetItem, msg):
+        for field_name, field_type_str in msg.get_fields_and_field_types().items():
+            field = getattr(msg, field_name)
+
+            if field_type_str in ['uint8', 'int32', 'uint32']:
+                child_item = QTreeWidgetItem([field_name])
+                item.addChild(child_item)
+                item_widget = QSpinBox()
+                item_widget.setValue(int(field))
+                tree.setItemWidget(child_item, 1, item_widget)
+            elif field_type_str == 'double':
+                child_item = QTreeWidgetItem([field_name])
+                item.addChild(child_item)
+                item_widget = QDoubleSpinBox()
+                item_widget.setRange(-1e6, 1e6)  # don't want to limit the range
+                item_widget.setValue(float(field))
+                tree.setItemWidget(child_item, 1, item_widget)
+            elif field_type_str == 'string':
+                child_item = QTreeWidgetItem([field_name])
+                item.addChild(child_item)
+                item_widget = QLineEdit()
+                item_widget.setText(str(field))
+                tree.setItemWidget(child_item, 1, item_widget)
+            elif field_type_str == 'boolean':
+                child_item = QTreeWidgetItem([field_name])
+                item.addChild(child_item)
+                item_widget = QCheckBox()
+                item_widget.setChecked(bool(field))
+                tree.setItemWidget(child_item, 1, item_widget)
+            else:
+                child_item = QTreeWidgetItem([field_name])
+                item.addChild(child_item)
+                _populate_items(child_item, field)
+
+    # Create the top-level items
+    top_level_items = []
+    for field_name, field_type_str in msg.get_fields_and_field_types().items():
+        field = getattr(msg, field_name)
+
+        top_level_item = QTreeWidgetItem([field_name])
+        top_level_items.append(top_level_item)
+
+        if is_value_type_str(field_type_str):
+            top_level_item.addChild(QTreeWidgetItem([str(field)]))
+        else:
+            _populate_items(top_level_item, field)
+
+        top_level_item.setExpanded(True)
+
+    tree.insertTopLevelItems(0, top_level_items)
+
+
+def is_value_type_str(field_type_str):
+    return field_type_str in ['uint8', 'int32', 'uint32', 'double', 'string', 'boolean']
 
 
 def main():
