@@ -1,14 +1,15 @@
-from enum import Enum
+from enum import Enum, auto
 
 from typing import List, Sequence
 
-from victor_hardware_interfaces.msg import ControlMode, ControlModeParameters, Robotiq3FingerStatus, Robotiq3FingerCommand, JointValueQuantity
+from victor_hardware_interfaces.msg import ControlMode, ControlModeParameters, Robotiq3FingerStatus, \
+    Robotiq3FingerCommand, JointValueQuantity
 
 
 class Stiffness(Enum):
-    STIFF = 1
-    MEDIUM = 3
-    SOFT = 2
+    STIFF = 0  # we rely on this being 0 for indexing reasons
+    MEDIUM = auto()
+    SOFT = auto()
 
 
 def get_control_mode_params(control_mode: ControlMode, stiffness=Stiffness.MEDIUM, vel=0.1, accel=0.1):
@@ -23,7 +24,6 @@ def get_control_mode_params(control_mode: ControlMode, stiffness=Stiffness.MEDIU
         raise NotImplementedError("Cartesian Mode not yet implemented")
     else:
         raise NotImplementedError(f"Unknown control mode requested: {control_mode}")
-
 
 
 def get_joint_position_params(vel, accel):
@@ -229,7 +229,7 @@ def is_gripper_closed(status: Robotiq3FingerStatus):
     return finger_a_closed and finger_b_closed and finger_c_closed
 
 
-def get_gripper_open_fraction_msg(position: float):
+def get_gripper_closed_fraction_msg(position: float):
     """
     Args:
         position: 0.0 is open, 1.0 is closed

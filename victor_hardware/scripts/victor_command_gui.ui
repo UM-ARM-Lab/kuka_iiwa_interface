@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>ArmCommandWindow</class>
+ <widget class="QMainWindow" name="ArmCommandWindow">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>1168</width>
+    <height>600</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Victor Command GUI</string>
+  </property>
+  <widget class="QWidget" name="centralwidget">
+   <layout class="QHBoxLayout" name="horizontalLayout">
+    <item>
+     <widget class="QTabWidget" name="tabs">
+      <property name="currentIndex">
+       <number>1</number>
+      </property>
+      <widget class="QWidget" name="motion_tab">
+       <attribute name="title">
+        <string>Motion Commands</string>
+       </attribute>
+       <layout class="QVBoxLayout" name="verticalLayout_2">
+        <item>
+         <widget class="QGroupBox" name="left_motion_group">
+          <property name="title">
+           <string>Left</string>
+          </property>
+          <layout class="QVBoxLayout" name="verticalLayout"/>
+         </widget>
+        </item>
+        <item>
+         <widget class="QGroupBox" name="right_motion_group">
+          <property name="title">
+           <string>Right</string>
+          </property>
+          <layout class="QVBoxLayout" name="verticalLayout_4"/>
+         </widget>
+        </item>
+       </layout>
+      </widget>
+      <widget class="QWidget" name="control_mode_tab">
+       <attribute name="title">
+        <string>Control Mode Parameters</string>
+       </attribute>
+       <layout class="QVBoxLayout" name="verticalLayout_3">
+        <item>
+         <widget class="QGroupBox" name="left_params_group">
+          <property name="title">
+           <string>Left</string>
+          </property>
+          <layout class="QVBoxLayout" name="verticalLayout_5"/>
+         </widget>
+        </item>
+        <item>
+         <widget class="QGroupBox" name="right_params_group">
+          <property name="title">
+           <string>Right</string>
+          </property>
+          <layout class="QVBoxLayout" name="verticalLayout_6"/>
+         </widget>
+        </item>
+       </layout>
+      </widget>
+     </widget>
+    </item>
+   </layout>
+  </widget>
+  <widget class="QStatusBar" name="statusbar"/>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>

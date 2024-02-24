@@ -1,0 +1,391 @@
+#!/usr/bin/env python3
+
+import signal
+import sys
+import threading
+from pathlib import Path
+
+import numpy as np
+from PyQt5 import uic
+from PyQt5.QtCore import QTimer, pyqtSignal
+from PyQt5.QtWidgets import QApplication, QMainWindow, QWidget, QHBoxLayout
+from urdf_parser_py.urdf import URDF, Robot
+from urdf_parser_py.xml_reflection import core
+from victor_hardware_interfaces.msg import Robotiq3FingerCommand, MotionCommand, ControlMode, Robotiq3FingerStatus, \
+    Robotiq3FingerActuatorStatus, Robotiq3FingerActuatorCommand
+from victor_hardware_interfaces.srv import GetControlMode, SetControlMode
+
+import rclpy
+from rclpy.executors import MultiThreadedExecutor
+from rclpy.node import Node
+from rclpy.qos import QoSDurabilityPolicy, QoSProfile
+from std_msgs.msg import String
+from victor_hardware.victor import Victor, Side, ROBOTIQ_OPEN, ROBOTIQ_CLOSED
+from victor_hardware.victor_utils import list_to_jvq, Stiffness, get_control_mode_params, \
+    get_gripper_closed_fraction_msg
+
+# Suppress error messages from urdf_parser_py
+core.on_error = lambda *args: None
+
+ui_dir = Path(__file__).resolve().parent
+
+name_to_control_mode_map = {
+    "Joint Position": ControlMode.JOINT_POSITION,
+    "Joint Impedance": ControlMode.JOINT_IMPEDANCE,
+    "Cartesian Impedance": ControlMode.CARTESIAN_IMPEDANCE,
+}
+control_mode_to_name_map = {v: k for k, v in name_to_control_mode_map.items()}
+
+
+def joint_angle_to_slider_pos(pos):
+    return int(np.rad2deg(pos))
+
+
+def slider_pos_to_joint_angle(slider_pos):
+    return np.deg2rad(slider_pos)
+
+
+class VictorCommandWindow(QMainWindow):
+    def __init__(self, node: Node, parent=None):
+        QMainWindow.__init__(self, parent)
+        uic.loadUi(ui_dir / 'victor_command_gui.ui', self)
+
+        self.victor = Victor(node)
+
+        self.arm_cmd_pub = self.victor.left_arm_cmd_pub
+
+        self.left_arm = ArmWidget(node, self.victor, 'left_arm', self.victor.left)
+        self.right_arm = ArmWidget(node, self.victor, 'right_arm', self.victor.right)
+
+        self.left_motion_group.layout().addWidget(self.left_arm)
+        self.right_motion_group.layout().addWidget(self.right_arm)
+
+        self.left_params_widget = ControlModeParamsWidget(self.left_arm)
+        self.right_params_widget = ControlModeParamsWidget(self.right_arm)
+
+        self.left_params_group.layout().addWidget(self.left_params_widget)
+        self.right_params_group.layout().addWidget(self.right_params_widget)
+
+        # subscribe to robot description we can get the joints and joint limits
+        qos = QoSProfile(depth=1, durability=QoSDurabilityPolicy.TRANSIENT_LOCAL)
+        self.sub = node.create_subscription(String, '/victor/robot_description', self.robot_description_callback, qos)
+
+    def robot_description_callback(self, msg):
+        robot = URDF.from_xml_string(msg.data)
+
+        self.left_arm.on_robot_description(robot)
+        self.right_arm.on_robot_description(robot)
+
+
+class ArmWidget(QWidget):
+
+    def __init__(self, node: Node, victor: Victor, arm_name: str, side: Side):
+        QWidget.__init__(self)
+        uic.loadUi(ui_dir / 'arm_widget.ui', self)
+        self.node = node
+        self.victor = victor
+        self.arm_name = arm_name
+        self.side = side
+
+        # Create the command objects which we will update in the callbacks and publish
+        self.gripper_cmd = Robotiq3FingerCommand()
+        self.motion_cmd = MotionCommand()
+        self.stiffness = Stiffness.MEDIUM
+
+        # Add slider widgets for each joint, but we don't have values yet
+        self.slider_widgets = []
+        for joint_idx in range(7):
+            slider_widget = SliderWidget(f"Joint {joint_idx + 1} Command")
+            slider_widget.setEnabled(False)
+            self.slider_widgets.append(slider_widget)
+            self.arm_layout.addWidget(slider_widget)
+
+        self.control_mode_combo.addItems(name_to_control_mode_map.keys())
+        self.stiffness_combo.addItems([str(stiffness) for stiffness in Stiffness])
+
+        # Add widgets for each finger
+        self.finger_a_widget = FingerWidget("Finger A")
+        self.finger_b_widget = FingerWidget("Finger B")
+        self.finger_c_widget = FingerWidget("Finger C")
+        self.scissor_widget = FingerWidget("Scissor")
+        self.fingers_layout.addWidget(self.finger_a_widget)
+        self.fingers_layout.addWidget(self.finger_b_widget)
+        self.fingers_layout.addWidget(self.finger_c_widget)
+        self.fingers_layout.addWidget(self.scissor_widget)
+
+        # connect
+        self.open_gripper_button.clicked.connect(self.on_open_gripper)
+        self.close_gripper_button.clicked.connect(self.on_close_gripper)
+        self.reset_sliders_button.clicked.connect(self.reset_sliders)
+        self.finger_a_widget.cmdChanged.connect(self.on_finger_a_cmd_changed)
+        self.finger_b_widget.cmdChanged.connect(self.on_finger_b_cmd_changed)
+        self.finger_c_widget.cmdChanged.connect(self.on_finger_c_cmd_changed)
+        self.scissor_widget.cmdChanged.connect(self.on_scissor_cmd_changed)
+
+        # Start things as disabled, since we have to wait for the robot description to enable them
+        self.reset_sliders_button.setEnabled(False)
+        self.control_mode_combo.setEnabled(False)
+        self.stiffness_combo.setEnabled(False)
+
+    def on_robot_description(self, robot_description: Robot):
+        # Initialize the command objects to the current state
+        joint_states = self.victor.get_joint_positions_dict()
+        current_control_mode_res = self.side.get_control_mode.call(GetControlMode.Request())
+        self.motion_cmd.control_mode = current_control_mode_res.active_control_mode.control_mode
+
+        joint_positions_list = []
+        for joint_idx in range(7):
+            expected_joint_name = f"victor_{self.arm_name}_joint_{joint_idx + 1}"
+            joint = robot_description.joint_map[expected_joint_name]
+            lower_deg = joint_angle_to_slider_pos(joint.limit.lower)
+            upper_deg = joint_angle_to_slider_pos(joint.limit.upper)
+
+            current_rad = joint_states[expected_joint_name]
+            joint_positions_list.append(current_rad)
+
+            slider_pos = joint_angle_to_slider_pos(current_rad)
+
+            slider_widget = self.slider_widgets[joint_idx]
+            # Set the range and current position of the joint from the current joint state
+            slider_widget.slider.setRange(lower_deg, upper_deg)
+            slider_widget.set_value(slider_pos)
+
+        # Set the values of the gripper sliders
+        gripper_status: Robotiq3FingerStatus = self.side.gripper_status.get()
+        self.finger_a_widget.set_status(gripper_status.finger_a_status)
+        self.finger_b_widget.set_status(gripper_status.finger_b_status)
+        self.finger_c_widget.set_status(gripper_status.finger_c_status)
+
+        self.motion_cmd.joint_position = list_to_jvq(joint_positions_list)
+
+        # Set the control mode
+        control_mode_name = control_mode_to_name_map[current_control_mode_res.active_control_mode.control_mode.mode]
+        self.control_mode_combo.setCurrentText(control_mode_name)
+
+        # TODO: setup the params widget
+
+        # Connect combo box
+        self.control_mode_combo.activated.connect(self.change_control_mode)
+        self.stiffness_combo.activated.connect(self.set_stiffness)
+
+        # Enable things
+        self.reset_sliders_button.setEnabled(True)
+        self.control_mode_combo.setEnabled(True)
+        self.stiffness_combo.setEnabled(True)
+
+        # Connect the sliders
+        for joint_idx in range(7):
+            slider_widget = self.slider_widgets[joint_idx]
+            slider_widget.setEnabled(True)
+            slider_widget.connect()
+            slider_widget.slider.valueChanged.connect(self.publish_arm_cmd)
+
+    def reset_sliders(self):
+        # Read the current joint states and update the sliders
+        joint_states = self.victor.get_joint_positions_dict()
+        for joint_idx in range(7):
+            expected_joint_name = f"victor_{self.arm_name}_joint_{joint_idx + 1}"
+            current_rad = joint_states[expected_joint_name]
+            slider_pos = joint_angle_to_slider_pos(current_rad)
+            self.slider_widgets[joint_idx].set_value(slider_pos)
+
+    def on_finger_a_cmd_changed(self, cmd: Robotiq3FingerActuatorCommand):
+        self.gripper_cmd.finger_a_command = cmd
+        self.publish_gripper_cmd()
+
+    def on_finger_b_cmd_changed(self, cmd: Robotiq3FingerActuatorCommand):
+        self.gripper_cmd.finger_b_command = cmd
+        self.publish_gripper_cmd()
+
+    def on_finger_c_cmd_changed(self, cmd: Robotiq3FingerActuatorCommand):
+        self.gripper_cmd.finger_c_command = cmd
+        self.publish_gripper_cmd()
+
+    def on_scissor_cmd_changed(self, cmd: Robotiq3FingerActuatorCommand):
+        self.gripper_cmd.scissor_command = cmd
+        self.publish_gripper_cmd()
+
+    def publish_arm_cmd(self):
+        self.motion_cmd.joint_position = self.get_jvq_from_sliders()
+        print(self.motion_cmd)
+        # self.side.motion_command.publish(self.motion_cmd)
+
+    def publish_gripper_cmd(self):
+        print(self.gripper_cmd)
+        self.side.gripper_command.publish(self.gripper_cmd)
+
+    def on_open_gripper(self):
+        self.gripper_cmd = get_gripper_closed_fraction_msg(ROBOTIQ_OPEN)
+        self.publish_gripper_cmd()
+
+    def on_close_gripper(self):
+        self.gripper_cmd = get_gripper_closed_fraction_msg(ROBOTIQ_CLOSED)
+        self.publish_gripper_cmd()
+
+    def get_jvq_from_sliders(self):
+        return list_to_jvq(
+            [slider_pos_to_joint_angle(slider_widget.get_value()) for slider_widget in self.slider_widgets])
+
+    def change_control_mode(self, item_idx: int):
+        self.send_change_control_mode(name_to_control_mode_map[self.control_mode_combo.itemText(item_idx)])
+
+    def set_stiffness(self, item_idx: int):
+        self.stiffness = Stiffness(item_idx)
+        self.send_change_control_mode(self.motion_cmd.control_mode)
+
+    def send_change_control_mode(self, control_mode: ControlMode):
+        request = SetControlMode.Request()
+        request.new_control_mode = get_control_mode_params(control_mode.mode, self.stiffness)
+        self.side.set_control_mode.call(request)
+
+
+class SliderWidget(QWidget):
+
+    def __init__(self, label: str):
+        QWidget.__init__(self)
+        uic.loadUi(ui_dir / 'slider_widget.ui', self)
+        self.label.setText(label)
+
+    def connect(self):
+        self.slider.valueChanged.connect(self.slider_changed)
+        self.value_edit.textChanged.connect(self.value_edit_changed)
+
+    def value_edit_changed(self, text):
+        self.slider.setValue(int(text))
+
+    def slider_changed(self, value):
+        self.value_edit.setText(str(value))
+
+    def get_value(self):
+        return self.slider.value()
+
+    def set_value(self, value):
+        self.slider.setValue(value)
+        self.value_edit.setText(str(value))
+
+
+class FingerSliderWidget(SliderWidget):
+
+    def __init__(self, label: str):
+        SliderWidget.__init__(self, label)
+
+    def value_edit_changed(self, text):
+        try:
+            fraction = self.fraction_to_slider_pos(float(text))
+            self.slider.setValue(int(fraction))
+        except ValueError:
+            print(f"Invalid float: {text}")
+
+    def slider_changed(self, value):
+        self.value_edit.setText(str(self.slider_pos_to_fraction(value)))
+
+    def set_value(self, value):
+        self.slider.setValue(value)
+        self.value_edit.setText(str(self.slider_pos_to_fraction(value)))
+
+    @staticmethod
+    def fraction_to_slider_pos(position):
+        return int(position * 100)
+
+    @staticmethod
+    def slider_pos_to_fraction(slider_pos):
+        return slider_pos / 100
+
+
+class FingerWidget(QWidget):
+    # Define a custom signal
+    cmdChanged = pyqtSignal(Robotiq3FingerActuatorCommand)
+
+    def __init__(self, label: str):
+        QWidget.__init__(self)
+
+        # The finger widget itself is a vertical layout
+        self.layout = QHBoxLayout()
+        self.setLayout(self.layout)
+
+        self.position_slider_widget = FingerSliderWidget(f"{label} Position")
+        self.speed_slider_widget = FingerSliderWidget(f"{label} Speed")
+        self.force_slider_widget = FingerSliderWidget(f"{label} Force")
+
+        self.position_slider_widget.slider.setRange(0, 100)
+        self.speed_slider_widget.slider.setRange(0, 100)
+        self.force_slider_widget.slider.setRange(0, 100)
+
+        self.layout.addWidget(self.position_slider_widget)
+        self.layout.addWidget(self.speed_slider_widget)
+        self.layout.addWidget(self.force_slider_widget)
+
+        self.position_slider_widget.connect()
+        self.speed_slider_widget.connect()
+        self.force_slider_widget.connect()
+
+        self.position_slider_widget.slider.valueChanged.connect(self.on_position_change)
+        self.speed_slider_widget.slider.valueChanged.connect(self.on_speed_change)
+        self.force_slider_widget.slider.valueChanged.connect(self.on_force_change)
+
+        self.finger_cmd = Robotiq3FingerActuatorCommand()
+
+    def on_position_change(self, value):
+        self.finger_cmd.position = FingerSliderWidget.slider_pos_to_fraction(value)
+        self.cmdChanged.emit(self.finger_cmd)
+
+    def on_speed_change(self, value):
+        self.finger_cmd.speed = FingerSliderWidget.slider_pos_to_fraction(value)
+        self.cmdChanged.emit(self.finger_cmd)
+
+    def on_force_change(self, value):
+        self.finger_cmd.force = FingerSliderWidget.slider_pos_to_fraction(value)
+        self.cmdChanged.emit(self.finger_cmd)
+
+    def set_status(self, status: Robotiq3FingerActuatorStatus):
+        self.position_slider_widget.set_value(FingerSliderWidget.fraction_to_slider_pos(status.position))
+
+
+class ControlModeParamsWidget(QWidget):
+    def __init__(self, side):
+        QWidget.__init__(self)
+        uic.loadUi(ui_dir / 'control_mode_params_widget.ui', self)
+        self.side = side
+
+        self.send_button.clicked.connect(self.send_params)
+
+        # Add items to the tree view based on the control mode
+        self.params_tree
+
+    def send_params(self):
+        req = SetControlMode.Request()
+        req.new_control_mode.control_mode = self.control_mode_combo.currentItem()
+        req.new_control_mode = self.tree_to_control_mode_params()
+        print(req)
+        # self.side.set_control_mode.call(req)
+
+    def tree_to_control_mode_params(self):
+        pass
+
+
+def main():
+    rclpy.init()
+    signal.signal(signal.SIGINT, signal.SIG_DFL)
+
+    node = Node('victor_command_gui')
+
+    executor = MultiThreadedExecutor()
+    executor.add_node(node)
+
+    spin_thread = threading.Thread(target=executor.spin)
+    spin_thread.start()
+
+    app = QApplication(sys.argv)
+
+    widget = VictorCommandWindow(node)
+    widget.showMaximized()
+
+    exit_code = app.exec_()
+
+    executor.shutdown()
+    spin_thread.join()
+    sys.exit(exit_code)
+
+
+if __name__ == "__main__":
+    main()

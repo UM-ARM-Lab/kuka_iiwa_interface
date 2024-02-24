@@ -1,17 +1,36 @@
+from dataclasses import dataclass
 from typing import Sequence, Optional
 
 from arm_utilities.listener import Listener
+from urdf_parser_py.urdf import URDF, Robot
 from victor_hardware_interfaces.msg import MotionCommand, MotionStatus, Robotiq3FingerStatus, Robotiq3FingerCommand, \
     ControlMode
 from victor_hardware_interfaces.srv import SetControlMode, GetControlMode
 
-from rclpy.node import Node
-from sensor_msgs.msg import JointState
-from victor_hardware.victor_utils import get_control_mode_params, is_gripper_closed, get_gripper_open_fraction_msg
+import rclpy
 from rclpy.callback_groups import MutuallyExclusiveCallbackGroup
+from rclpy.node import Node
+from rclpy.qos import QoSDurabilityPolicy, QoSProfile
+from sensor_msgs.msg import JointState
+from std_msgs.msg import String
+from victor_hardware.victor_utils import get_control_mode_params, is_gripper_closed, get_gripper_closed_fraction_msg
+
+ROBOTIQ_OPEN = 0.0
+ROBOTIQ_CLOSED = 1.0
 
 
 # from arm_robots.robot import Robot
+
+@dataclass
+class Side:
+    name: str
+    motion_command: rclpy.node.Publisher
+    gripper_command: rclpy.node.Publisher
+    motion_status: Listener
+    gripper_status: Listener
+    set_control_mode: rclpy.node.Client
+    get_control_mode: rclpy.node.Client
+
 
 # TODO: inherit from Robot in arm_robots.robot
 class Victor:
@@ -22,39 +41,71 @@ class Victor:
         self.srv_group = MutuallyExclusiveCallbackGroup()
         self.listener_group = MutuallyExclusiveCallbackGroup()
 
-        self.left_arm_cmd_pub = node.create_publisher(MotionCommand, "victor/left_arm/motion_command", 10, callback_group=self.pub_group)
-        self.right_arm_cmd_pub = node.create_publisher(MotionCommand, "victor/right_arm/motion_command", 10, callback_group=self.pub_group)
-        self.left_gripper_cmd_pub = node.create_publisher(Robotiq3FingerCommand, "victor/left_arm/gripper_command", 10, callback_group=self.pub_group)
+        self.left_arm_cmd_pub = node.create_publisher(MotionCommand, "victor/left_arm/motion_command", 10,
+                                                      callback_group=self.pub_group)
+        self.right_arm_cmd_pub = node.create_publisher(MotionCommand, "victor/right_arm/motion_command", 10,
+                                                       callback_group=self.pub_group)
+        self.left_gripper_cmd_pub = node.create_publisher(Robotiq3FingerCommand, "victor/left_arm/gripper_command", 10,
+                                                          callback_group=self.pub_group)
         self.right_gripper_cmd_pub = node.create_publisher(Robotiq3FingerCommand, "victor/right_arm/gripper_command",
                                                            10, callback_group=self.pub_group)
 
-        self.left_set_control_mode_srv = node.create_client(SetControlMode, "victor/left_arm/set_control_mode_service", callback_group=self.srv_group)
+        self.left_set_control_mode_srv = node.create_client(SetControlMode, "victor/left_arm/set_control_mode_service",
+                                                            callback_group=self.srv_group)
         self.right_set_control_mode_srv = node.create_client(SetControlMode,
-                                                             "victor/right_arm/set_control_mode_service", callback_group=self.srv_group)
-        self.left_get_control_mode_srv = node.create_client(SetControlMode, "victor/left_arm/get_control_mode_service", callback_group=self.srv_group)
-        self.right_get_control_mode_srv = node.create_client(SetControlMode,
-                                                             "victor/right_arm/get_control_mode_service", callback_group=self.srv_group)
+                                                             "victor/right_arm/set_control_mode_service",
+                                                             callback_group=self.srv_group)
+        self.left_get_control_mode_srv = node.create_client(GetControlMode, "victor/left_arm/get_control_mode_service",
+                                                            callback_group=self.srv_group)
+        self.right_get_control_mode_srv = node.create_client(GetControlMode,
+                                                             "victor/right_arm/get_control_mode_service",
+                                                             callback_group=self.srv_group)
 
-        self.joint_states_listener = Listener(node, JointState, "joint_states", 10, callback_group=self.listener_group)
-        self.left_arm_status_listener = Listener(node, MotionStatus, "victor/left_arm/motion_status", 10, callback_group=self.listener_group)
-        self.right_arm_status_listener = Listener(node, MotionStatus, "victor/right_arm/motion_status", 10, callback_group=self.listener_group)
-        self.left_gripper_status_listener = Listener(node, Robotiq3FingerStatus, "victor/left_arm/gripper_status", 10, callback_group=self.listener_group)
-        self.right_gripper_status_listener = Listener(node, Robotiq3FingerStatus, "victor/right_arm/gripper_status", 10, callback_group=self.listener_group)
+        self.joint_states_listener = Listener(node, JointState, "/victor/joint_states", 10,
+                                              callback_group=self.listener_group)
+        self.left_arm_status_listener = Listener(node, MotionStatus, "victor/left_arm/motion_status", 10,
+                                                 callback_group=self.listener_group)
+        self.right_arm_status_listener = Listener(node, MotionStatus, "victor/right_arm/motion_status", 10,
+                                                  callback_group=self.listener_group)
+        self.left_gripper_status_listener = Listener(node, Robotiq3FingerStatus, "victor/left_arm/gripper_status", 10,
+                                                     callback_group=self.listener_group)
+        self.right_gripper_status_listener = Listener(node, Robotiq3FingerStatus, "victor/right_arm/gripper_status", 10,
+                                                      callback_group=self.listener_group)
 
-    def open_left_gripper(self, position=1.):
-        self.left_gripper_cmd_pub.publish(get_gripper_open_fraction_msg(position))
+        self.left = Side('left', self.left_arm_cmd_pub, self.left_gripper_cmd_pub, self.left_arm_status_listener,
+                         self.left_gripper_status_listener, self.left_set_control_mode_srv,
+                         self.left_get_control_mode_srv)
+        self.right = Side('right', self.right_arm_cmd_pub, self.right_gripper_cmd_pub, self.right_arm_status_listener,
+                          self.right_gripper_status_listener, self.right_set_control_mode_srv,
+                          self.right_get_control_mode_srv)
 
-    def open_right_gripper(self, position=1.):
-        self.right_gripper_cmd_pub.publish(get_gripper_open_fraction_msg(position))
+        # subscribe to robot description we can get the joints and joint limits
+        qos = QoSProfile(depth=1, durability=QoSDurabilityPolicy.TRANSIENT_LOCAL)
+        self.sub = node.create_subscription(String, '/victor/robot_description', self.robot_description_callback, qos)
+
+        self.urdf: Optional[Robot] = None
+
+    def wait_for_urdf(self):
+        while self.urdf is None:
+            rclpy.spin_once(self.node)
+
+    def robot_description_callback(self, msg: String):
+        self.urdf = URDF.from_xml_string(msg.data)
+
+    def open_left_gripper(self):
+        self.left_gripper_cmd_pub.publish(get_gripper_closed_fraction_msg(ROBOTIQ_OPEN))
+
+    def open_right_gripper(self):
+        self.right_gripper_cmd_pub.publish(get_gripper_closed_fraction_msg(ROBOTIQ_OPEN))
 
     def close_left_gripper(self):
         # TODO: implementing blocking grasping
-        self.left_gripper_cmd_pub.publish(get_gripper_open_fraction_msg(0.0))
+        self.left_gripper_cmd_pub.publish(get_gripper_closed_fraction_msg(ROBOTIQ_CLOSED))
 
     def close_right_gripper(self):
-        self.right_gripper_cmd_pub.publish(get_gripper_open_fraction_msg(0.0))
+        self.right_gripper_cmd_pub.publish(get_gripper_closed_fraction_msg(ROBOTIQ_CLOSED))
 
-    def get_joint_states(self):
+    def get_joint_states(self) -> JointState:
         return self.joint_states_listener.get()
 
     def get_right_gripper_status(self) -> Robotiq3FingerStatus:
