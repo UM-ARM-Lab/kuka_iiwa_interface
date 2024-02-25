@@ -106,7 +106,7 @@ def get_joint_impedance_params(stiffness, vel=0.1, accel=0.1):
     return new_control_mode
 
 
-def get_cartesian_impedance_params(velocity=2.5):
+def get_cartesian_impedance_params(velocity=75.):
     """
     Returns predefined cartesian impedance parameters. Uniform across XYZ and RPY
     """
@@ -120,12 +120,12 @@ def get_cartesian_impedance_params(velocity=2.5):
     new_control_mode.cartesian_path_execution_params.max_velocity.b = velocity * 0.25
     new_control_mode.cartesian_path_execution_params.max_velocity.c = velocity * 0.25
     new_control_mode.cartesian_path_execution_params.max_nullspace_velocity = 750.0
-    new_control_mode.cartesian_path_execution_params.max_acceleration.x = 100.0
-    new_control_mode.cartesian_path_execution_params.max_acceleration.y = 100.0
-    new_control_mode.cartesian_path_execution_params.max_acceleration.z = 100.0
-    new_control_mode.cartesian_path_execution_params.max_acceleration.a = 100.0
-    new_control_mode.cartesian_path_execution_params.max_acceleration.b = 100.0
-    new_control_mode.cartesian_path_execution_params.max_acceleration.c = 100.0
+    new_control_mode.cartesian_path_execution_params.max_acceleration.x = 0.1
+    new_control_mode.cartesian_path_execution_params.max_acceleration.y = 0.1
+    new_control_mode.cartesian_path_execution_params.max_acceleration.z = 0.1
+    new_control_mode.cartesian_path_execution_params.max_acceleration.a = 0.1
+    new_control_mode.cartesian_path_execution_params.max_acceleration.b = 0.1
+    new_control_mode.cartesian_path_execution_params.max_acceleration.c = 0.1
     new_control_mode.cartesian_path_execution_params.max_nullspace_acceleration = 100.0
     new_control_mode.cartesian_impedance_params.cartesian_damping.x = 0.25
     new_control_mode.cartesian_impedance_params.cartesian_damping.y = 0.25

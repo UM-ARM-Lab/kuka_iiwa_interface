@@ -22,7 +22,7 @@ from victor_hardware.victor import Victor, Side, ROBOTIQ_OPEN, ROBOTIQ_CLOSED
 from victor_hardware.victor_utils import list_to_jvq, Stiffness, get_control_mode_params, \
     get_gripper_closed_fraction_msg
 from victor_hardware_interfaces.msg import Robotiq3FingerCommand, MotionCommand, ControlMode, Robotiq3FingerStatus, \
-    Robotiq3FingerActuatorStatus, Robotiq3FingerActuatorCommand
+    Robotiq3FingerActuatorStatus, Robotiq3FingerActuatorCommand, ControlModeParameters
 from victor_hardware_interfaces.srv import GetControlMode, SetControlMode
 
 # Suppress error messages from urdf_parser_py
@@ -46,6 +46,19 @@ def slider_pos_to_joint_angle(slider_pos):
     return np.deg2rad(slider_pos)
 
 
+def tree_iterator(tree: QTreeWidget):
+    def _tree_iterator(item: QTreeWidgetItem):
+        for i in range(item.childCount()):
+            child_item = item.child(i)
+            yield item
+            yield from _tree_iterator(child_item)
+
+    for i in range(tree.topLevelItemCount()):
+        item = tree.topLevelItem(i)
+        yield item
+        yield from _tree_iterator(item)
+
+
 class VictorCommandWindow(QMainWindow):
     def __init__(self, node: Node, parent=None):
         QMainWindow.__init__(self, parent)
@@ -61,8 +74,8 @@ class VictorCommandWindow(QMainWindow):
         self.left_motion_group.layout().addWidget(self.left_arm)
         self.right_motion_group.layout().addWidget(self.right_arm)
 
-        self.left_params_widget = ControlModeParamsWidget(self.left_arm)
-        self.right_params_widget = ControlModeParamsWidget(self.right_arm)
+        self.left_params_widget = ControlModeParamsWidget(self.victor.left)
+        self.right_params_widget = ControlModeParamsWidget(self.victor.right)
 
         self.left_params_group.layout().addWidget(self.left_params_widget)
         self.right_params_group.layout().addWidget(self.right_params_widget)
@@ -209,7 +222,7 @@ class ArmWidget(QWidget):
     def publish_arm_cmd(self):
         self.motion_cmd.joint_position = self.get_jvq_from_sliders()
         print(self.motion_cmd)
-        # self.side.motion_command.publish(self.motion_cmd)
+        self.side.motion_command.publish(self.motion_cmd)
 
     def publish_gripper_cmd(self):
         print(self.gripper_cmd)
@@ -228,7 +241,9 @@ class ArmWidget(QWidget):
             [slider_pos_to_joint_angle(slider_widget.get_value()) for slider_widget in self.slider_widgets])
 
     def change_control_mode(self, item_idx: int):
-        self.send_change_control_mode(name_to_control_mode_map[self.control_mode_combo.itemText(item_idx)])
+        control_mode = ControlMode()
+        control_mode.mode = name_to_control_mode_map[self.control_mode_combo.itemText(item_idx)]
+        self.send_change_control_mode(control_mode)
 
     def set_stiffness(self, item_idx: int):
         self.stiffness = Stiffness(item_idx)
@@ -310,7 +325,10 @@ class FingerWidget(QWidget):
 
         self.position_slider_widget.slider.setRange(0, 100)
         self.speed_slider_widget.slider.setRange(0, 100)
+        self.speed_slider_widget.set_value(100)
         self.force_slider_widget.slider.setRange(0, 100)
+        self.force_slider_widget.set_value(100)
+
 
         self.layout.addWidget(self.position_slider_widget)
         self.layout.addWidget(self.speed_slider_widget)
@@ -359,8 +377,7 @@ class ControlModeParamsWidget(QWidget):
     def reset_params_tree(self):
         self.params_tree.clear()
 
-        # active_control_mode: ControlModeParameters = self.side.get_control_mode.call(GetControlMode.Request()).active_control_mode
-        active_control_mode = get_control_mode_params(ControlMode.JOINT_IMPEDANCE)
+        active_control_mode: ControlModeParameters = self.side.get_control_mode.call(GetControlMode.Request()).active_control_mode
 
         populate_tree_from_msg(self.params_tree, active_control_mode)
 
@@ -369,13 +386,46 @@ class ControlModeParamsWidget(QWidget):
 
     def send_params(self):
         req = SetControlMode.Request()
-        req.new_control_mode.control_mode = self.control_mode_combo.currentItem()
-        req.new_control_mode = self.tree_to_control_mode_params()
+        tree_to_control_mode_params(self.params_tree, req.new_control_mode)
         print(req)
-        # self.side.set_control_mode.call(req)
+        self.side.set_control_mode.call(req)
 
-    def tree_to_control_mode_params(self):
-        pass
+
+def tree_item_to_control_mode_params(tree: QTreeWidget, item: QTreeWidgetItem, msg):
+    for i in range(item.childCount()):
+        child_item = item.child(i)
+        field_name = child_item.text(0)
+        field = getattr(msg, field_name)
+        recurse = item_to_control_mode_params(tree, child_item, msg, field_name)
+        if recurse:
+            tree_item_to_control_mode_params(tree, child_item, field)
+
+
+def item_to_control_mode_params(tree: QTreeWidget, item: QTreeWidgetItem, msg, field_name: str):
+    widget = tree.itemWidget(item, 1)
+    if isinstance(widget, QDoubleSpinBox):
+        setattr(msg, field_name, widget.value())
+    elif isinstance(widget, QSpinBox):
+        setattr(msg, field_name, widget.value())
+    elif isinstance(widget, QLineEdit):
+        setattr(msg, field_name, widget.text())
+    elif isinstance(widget, QCheckBox):
+        setattr(msg, field_name, widget.isChecked())
+    else:
+        return True
+    return False
+
+
+def tree_to_control_mode_params(tree: QTreeWidget, msg: ControlModeParameters):
+    # iterate over the top level items
+    for i in range(tree.topLevelItemCount()):
+        item = tree.topLevelItem(i)
+        field_name = item.text(0)
+        field = getattr(msg, field_name)
+
+        recurse = item_to_control_mode_params(tree, item, field, field_name)
+        if recurse:
+            tree_item_to_control_mode_params(tree, item, field)
 
 
 # FIXME: get this from rosidl_parser?
@@ -389,12 +439,14 @@ def populate_tree_from_msg(tree: QTreeWidget, msg):
                 child_item = QTreeWidgetItem([field_name])
                 item.addChild(child_item)
                 item_widget = QSpinBox()
+                item_widget.wheelEvent = lambda event: None  # disable mouse wheel
                 item_widget.setValue(int(field))
                 tree.setItemWidget(child_item, 1, item_widget)
             elif field_type_str == 'double':
                 child_item = QTreeWidgetItem([field_name])
                 item.addChild(child_item)
                 item_widget = QDoubleSpinBox()
+                item_widget.wheelEvent = lambda event: None  # disable mouse wheel
                 item_widget.setRange(-1e6, 1e6)  # don't want to limit the range
                 item_widget.setValue(float(field))
                 tree.setItemWidget(child_item, 1, item_widget)

@@ -30,7 +30,7 @@ class CartesianCommandTestNode(Node):
 
         self.victor = Victor(self)
 
-        self.timer = self.create_timer(0.2, self.timer_cb)
+        self.timer = self.create_timer(0.1, self.timer_cb)
 
         self.initial_pose = None
         self.mode_set = False
@@ -40,7 +40,7 @@ class CartesianCommandTestNode(Node):
     def timer_cb(self):
         if not self.mode_set:
             self.mode_set = True
-            new_control_mode = get_cartesian_impedance_params(velocity=3.)
+            new_control_mode = get_cartesian_impedance_params()
             req = SetControlMode.Request()
             req.new_control_mode = new_control_mode
             self.victor.left_set_control_mode_srv.call(req)
@@ -57,8 +57,8 @@ class CartesianCommandTestNode(Node):
             msg.control_mode.mode = ControlMode.CARTESIAN_IMPEDANCE
 
             msg.cartesian_pose = deepcopy(self.initial_pose)
-            dz = 0.04 * sin(self.pub_idx / 5)
-            msg.cartesian_pose.position.z = self.initial_pose.position.z + dz
+            delta = 0.04 * sin(self.pub_idx / 5)
+            msg.cartesian_pose.position.x = self.initial_pose.position.x + delta
 
             self.victor.left_arm_cmd_pub.publish(msg)
 
