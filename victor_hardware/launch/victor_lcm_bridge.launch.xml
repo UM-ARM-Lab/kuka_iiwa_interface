@@ -1,5 +1,5 @@
 <launch>
-    <arg name="arm_command_gui" default="true"/>
+    <arg name="victor_command_gui" default="true"/>
     <!-- Note that changing these from the default requires matching changes in the Java code -->
     <arg name="left_arm_recv_url" default="udp://10.10.10.169:30002"/>
     <arg name="right_arm_recv_url" default="udp://10.10.10.169:30001"/>
@@ -11,7 +11,7 @@
     </node>
     <node pkg="victor_hardware" exec="joint_state_publisher.py" name="joint_state_publisher" namespace="victor"/>
     <include file="$(find-pkg-share victor_hardware)/launch/victor_lcm_bridge_core.launch.xml">
-        <arg name="arm_command_gui" value="$(var arm_command_gui)"/>
+        <arg name="victor_command_gui" value="$(var victor_command_gui)"/>
         <arg name="left_arm_recv_url" value="$(var left_arm_recv_url)"/>
         <arg name="right_arm_recv_url" value="$(var right_arm_recv_url)"/>
     </include>

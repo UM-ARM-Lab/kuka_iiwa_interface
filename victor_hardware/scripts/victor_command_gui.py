@@ -1,21 +1,19 @@
 #!/usr/bin/env python3
+import threading
 
 import signal
 import sys
-import threading
 from pathlib import Path
 
 import numpy as np
 import rclpy
 from PyQt5 import uic
-from PyQt5.QtCore import pyqtSignal
+from PyQt5.QtCore import pyqtSignal, QTimer
 from PyQt5.QtWidgets import QApplication, QMainWindow, QWidget, QHBoxLayout, QTreeWidgetItem, QTreeWidget, \
     QHeaderView, QSpinBox, QDoubleSpinBox, QCheckBox, QLineEdit
 from rclpy.executors import MultiThreadedExecutor
 from rclpy.node import Node
-from rclpy.qos import QoSDurabilityPolicy, QoSProfile
-from std_msgs.msg import String
-from urdf_parser_py.urdf import URDF, Robot
+from urdf_parser_py.urdf import Robot
 from urdf_parser_py.xml_reflection import core
 
 from victor_hardware.victor import Victor, Side, ROBOTIQ_OPEN, ROBOTIQ_CLOSED
@@ -64,7 +62,7 @@ class VictorCommandWindow(QMainWindow):
         QMainWindow.__init__(self, parent)
         uic.loadUi(ui_dir / 'victor_command_gui.ui', self)
 
-        self.victor = Victor(node)
+        self.victor = Victor(node, robot_description_cb=self.robot_description_callback)
 
         self.arm_cmd_pub = self.victor.left_arm_cmd_pub
 
@@ -74,19 +72,14 @@ class VictorCommandWindow(QMainWindow):
         self.left_motion_group.layout().addWidget(self.left_arm)
         self.right_motion_group.layout().addWidget(self.right_arm)
 
-        self.left_params_widget = ControlModeParamsWidget(self.victor.left)
-        self.right_params_widget = ControlModeParamsWidget(self.victor.right)
+        self.left_params_widget = ControlModeParamsWidget(node, self.victor.left)
+        self.right_params_widget = ControlModeParamsWidget(node, self.victor.right)
 
         self.left_params_group.layout().addWidget(self.left_params_widget)
         self.right_params_group.layout().addWidget(self.right_params_widget)
 
-        # subscribe to robot description we can get the joints and joint limits
-        qos = QoSProfile(depth=1, durability=QoSDurabilityPolicy.TRANSIENT_LOCAL)
-        self.sub = node.create_subscription(String, '/victor/robot_description', self.robot_description_callback, qos)
-
-    def robot_description_callback(self, msg):
-        robot = URDF.from_xml_string(msg.data)
-
+    def robot_description_callback(self, robot: Robot):
+        # NOTE: this callback gets called on its own thread, so don't directly call functions on QtWidgets here.
         self.left_arm.on_robot_description(robot)
         self.right_arm.on_robot_description(robot)
 
@@ -143,9 +136,16 @@ class ArmWidget(QWidget):
 
     def on_robot_description(self, robot_description: Robot):
         # Initialize the command objects to the current state
+        print("Arm on_robot_description")
         joint_states = self.victor.get_joint_positions_dict()
-        current_control_mode_res = self.side.get_control_mode.call(GetControlMode.Request())
-        self.motion_cmd.control_mode = current_control_mode_res.active_control_mode.control_mode
+        print("got joint positions")
+
+        client = self.side.get_control_mode
+        future = client.call_async(GetControlMode.Request())
+        rclpy.spin_until_future_complete(self.node, future)
+        active_control_mode_res: ControlModeParameters = future.result()
+
+        self.motion_cmd.control_mode = active_control_mode_res.active_control_mode.control_mode
 
         joint_positions_list = []
         for joint_idx in range(7):
@@ -173,10 +173,8 @@ class ArmWidget(QWidget):
         self.motion_cmd.joint_position = list_to_jvq(joint_positions_list)
 
         # Set the control mode
-        control_mode_name = control_mode_to_name_map[current_control_mode_res.active_control_mode.control_mode.mode]
+        control_mode_name = control_mode_to_name_map[active_control_mode_res.active_control_mode.control_mode.mode]
         self.control_mode_combo.setCurrentText(control_mode_name)
-
-        # TODO: setup the params widget
 
         # Connect combo box
         self.control_mode_combo.activated.connect(self.change_control_mode)
@@ -221,11 +219,9 @@ class ArmWidget(QWidget):
 
     def publish_arm_cmd(self):
         self.motion_cmd.joint_position = self.get_jvq_from_sliders()
-        print(self.motion_cmd)
         self.side.motion_command.publish(self.motion_cmd)
 
     def publish_gripper_cmd(self):
-        print(self.gripper_cmd)
         self.side.gripper_command.publish(self.gripper_cmd)
 
     def on_open_gripper(self):
@@ -252,7 +248,11 @@ class ArmWidget(QWidget):
     def send_change_control_mode(self, control_mode: ControlMode):
         request = SetControlMode.Request()
         request.new_control_mode = get_control_mode_params(control_mode.mode, self.stiffness)
-        self.side.set_control_mode.call(request)
+
+        client = self.side.set_control_mode
+        future = client.call_async(request)
+        rclpy.spin_until_future_complete(self.node, future)
+        future.result()
 
 
 class SliderWidget(QWidget):
@@ -361,9 +361,11 @@ class FingerWidget(QWidget):
 
 
 class ControlModeParamsWidget(QWidget):
-    def __init__(self, side):
+
+    def __init__(self, node: Node, side):
         QWidget.__init__(self)
         uic.loadUi(ui_dir / 'control_mode_params_widget.ui', self)
+        self.node = node
         self.side = side
 
         self.send_button.clicked.connect(self.send_params)
@@ -371,13 +373,16 @@ class ControlModeParamsWidget(QWidget):
         # auto-resize the tree columns
         self.params_tree.header().setSectionResizeMode(QHeaderView.ResizeToContents)
 
-        # Add items to the tree view based on the control mode
         self.reset_params_tree()
 
     def reset_params_tree(self):
         self.params_tree.clear()
 
-        active_control_mode: ControlModeParameters = self.side.get_control_mode.call(GetControlMode.Request()).active_control_mode
+        print("init params widget", threading.get_ident())
+        client = self.side.get_control_mode
+        future = client.call_async(GetControlMode.Request())
+        rclpy.spin_until_future_complete(self.node, future)
+        active_control_mode: ControlModeParameters = future.result().active_control_mode
 
         populate_tree_from_msg(self.params_tree, active_control_mode)
 
@@ -387,8 +392,11 @@ class ControlModeParamsWidget(QWidget):
     def send_params(self):
         req = SetControlMode.Request()
         tree_to_control_mode_params(self.params_tree, req.new_control_mode)
-        print(req)
-        self.side.set_control_mode.call(req)
+
+        client = self.side.set_control_mode
+        future = client.call_async(req)
+        rclpy.spin_until_future_complete(self.node, future)
+        future.result()
 
 
 def tree_item_to_control_mode_params(tree: QTreeWidget, item: QTreeWidgetItem, msg):
@@ -488,6 +496,11 @@ def populate_tree_from_msg(tree: QTreeWidget, msg):
 def is_value_type_str(field_type_str):
     return field_type_str in ['uint8', 'int32', 'uint32', 'double', 'string', 'boolean']
 
+def my_spin(executor):
+    while True:
+        print("spinning...", threading.get_ident())
+        executor.spin_once()
+
 
 def main():
     rclpy.init()
@@ -498,19 +511,22 @@ def main():
     executor = MultiThreadedExecutor()
     executor.add_node(node)
 
-    spin_thread = threading.Thread(target=executor.spin)
-    spin_thread.start()
-
     app = QApplication(sys.argv)
 
     widget = VictorCommandWindow(node)
     widget.showMaximized()
 
+    spin_thread = threading.Thread(target=my_spin, args=(executor,))
+    spin_thread.start()
+
     exit_code = app.exec_()
 
     executor.shutdown()
+
     spin_thread.join()
+
     sys.exit(exit_code)
+
 
 
 if __name__ == "__main__":

@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Sequence, Optional
+from typing import Sequence, Optional, Callable
 
 from arm_utilities.listener import Listener
 from urdf_parser_py.urdf import URDF, Robot
@@ -34,8 +34,9 @@ class Side:
 
 # TODO: inherit from Robot in arm_robots.robot
 class Victor:
-    def __init__(self, node: Node):
+    def __init__(self, node: Node, robot_description_cb: Optional[Callable[[Robot], None]] = None):
         self.node = node
+        self.robot_description_user_cb = robot_description_cb
 
         self.pub_group = MutuallyExclusiveCallbackGroup()
         self.srv_group = MutuallyExclusiveCallbackGroup()
@@ -79,9 +80,12 @@ class Victor:
                           self.right_gripper_status_listener, self.right_set_control_mode_srv,
                           self.right_get_control_mode_srv)
 
-        # subscribe to robot description we can get the joints and joint limits
+        # Subscribe to robot description we can get the joints and joint limits
+        # This callback will only be called once at the beginning.
+        # To get the parsed URDF, either pass in a user callback or use `victor.urdf`.
+        self.robot_description_callback_group = MutuallyExclusiveCallbackGroup()
         qos = QoSProfile(depth=1, durability=QoSDurabilityPolicy.TRANSIENT_LOCAL)
-        self.sub = node.create_subscription(String, '/victor/robot_description', self.robot_description_callback, qos)
+        self.sub = node.create_subscription(String, '/victor/robot_description', self.robot_description_callback, qos, callback_group=self.robot_description_callback_group)
 
         self.urdf: Optional[Robot] = None
 
@@ -91,6 +95,8 @@ class Victor:
 
     def robot_description_callback(self, msg: String):
         self.urdf = URDF.from_xml_string(msg.data)
+        if self.robot_description_user_cb:
+            self.robot_description_user_cb(self.urdf)
 
     def open_left_gripper(self):
         self.left_gripper_cmd_pub.publish(get_gripper_closed_fraction_msg(ROBOTIQ_OPEN))
