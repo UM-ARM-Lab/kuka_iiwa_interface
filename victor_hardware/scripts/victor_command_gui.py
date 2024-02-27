@@ -1,9 +1,8 @@
 #!/usr/bin/env python3
-import threading
-
-import signal
 import sys
+import threading
 from pathlib import Path
+from typing import Dict
 
 import numpy as np
 import rclpy
@@ -44,33 +43,21 @@ def slider_pos_to_joint_angle(slider_pos):
     return np.deg2rad(slider_pos)
 
 
-def tree_iterator(tree: QTreeWidget):
-    def _tree_iterator(item: QTreeWidgetItem):
-        for i in range(item.childCount()):
-            child_item = item.child(i)
-            yield item
-            yield from _tree_iterator(child_item)
-
-    for i in range(tree.topLevelItemCount()):
-        item = tree.topLevelItem(i)
-        yield item
-        yield from _tree_iterator(item)
-
-
 class VictorCommandWindow(QMainWindow):
     def __init__(self, node: Node, parent=None):
         QMainWindow.__init__(self, parent)
         uic.loadUi(ui_dir / 'victor_command_gui.ui', self)
+        self.node = node
 
         self.victor = Victor(node, robot_description_cb=self.robot_description_callback)
 
         self.arm_cmd_pub = self.victor.left_arm_cmd_pub
 
-        self.left_arm = ArmWidget(node, self.victor, 'left_arm', self.victor.left)
-        self.right_arm = ArmWidget(node, self.victor, 'right_arm', self.victor.right)
+        self.left_arm_widget = ArmWidget(node, self.victor, 'left_arm', self.victor.left)
+        self.right_arm_widget = ArmWidget(node, self.victor, 'right_arm', self.victor.right)
 
-        self.left_motion_group.layout().addWidget(self.left_arm)
-        self.right_motion_group.layout().addWidget(self.right_arm)
+        self.left_motion_group.layout().addWidget(self.left_arm_widget)
+        self.right_motion_group.layout().addWidget(self.right_arm_widget)
 
         self.left_params_widget = ControlModeParamsWidget(node, self.victor.left)
         self.right_params_widget = ControlModeParamsWidget(node, self.victor.right)
@@ -80,11 +67,15 @@ class VictorCommandWindow(QMainWindow):
 
     def robot_description_callback(self, robot: Robot):
         # NOTE: this callback gets called on its own thread, so don't directly call functions on QtWidgets here.
-        self.left_arm.on_robot_description(robot)
-        self.right_arm.on_robot_description(robot)
+        self.left_arm_widget.on_robot_description(robot)
+        self.right_arm_widget.on_robot_description(robot)
+
+        self.left_params_widget.reset_params_tree()
+        self.right_params_widget.reset_params_tree()
 
 
 class ArmWidget(QWidget):
+    initial_robot_data = pyqtSignal(Robot, dict, ControlModeParameters, Robotiq3FingerStatus)
 
     def __init__(self, node: Node, victor: Victor, arm_name: str, side: Side):
         QWidget.__init__(self)
@@ -129,32 +120,42 @@ class ArmWidget(QWidget):
         self.finger_c_widget.cmdChanged.connect(self.on_finger_c_cmd_changed)
         self.scissor_widget.cmdChanged.connect(self.on_scissor_cmd_changed)
 
+        self.initial_robot_data.connect(self.on_initial_robot_data)
+
         # Start things as disabled, since we have to wait for the robot description to enable them
         self.reset_sliders_button.setEnabled(False)
         self.control_mode_combo.setEnabled(False)
         self.stiffness_combo.setEnabled(False)
 
     def on_robot_description(self, robot_description: Robot):
+        """ Called off the main thread """
+
         # Initialize the command objects to the current state
-        print("Arm on_robot_description")
-        joint_states = self.victor.get_joint_positions_dict()
-        print("got joint positions")
+        joint_states_dict = self.victor.get_joint_positions_dict()
+        gripper_status: Robotiq3FingerStatus = self.side.gripper_status.get()
 
         client = self.side.get_control_mode
-        future = client.call_async(GetControlMode.Request())
-        rclpy.spin_until_future_complete(self.node, future)
-        active_control_mode_res: ControlModeParameters = future.result()
+        active_control_mode_res = client.call(GetControlMode.Request())
 
-        self.motion_cmd.control_mode = active_control_mode_res.active_control_mode.control_mode
+        # Emit back to the main thread
+        self.initial_robot_data.emit(robot_description, joint_states_dict, active_control_mode_res.active_control_mode, gripper_status)
+
+    def on_initial_robot_data(self,
+                              robot: Robot,
+                              joint_states_dict: Dict,
+                              active_control_mode: ControlModeParameters,
+                              gripper_status: Robotiq3FingerStatus):
+        """ Called on the main thread """
+        self.motion_cmd.control_mode = active_control_mode.control_mode
 
         joint_positions_list = []
         for joint_idx in range(7):
             expected_joint_name = f"victor_{self.arm_name}_joint_{joint_idx + 1}"
-            joint = robot_description.joint_map[expected_joint_name]
+            joint = robot.joint_map[expected_joint_name]
             lower_deg = joint_angle_to_slider_pos(joint.limit.lower)
             upper_deg = joint_angle_to_slider_pos(joint.limit.upper)
 
-            current_rad = joint_states[expected_joint_name]
+            current_rad = joint_states_dict[expected_joint_name]
             joint_positions_list.append(current_rad)
 
             slider_pos = joint_angle_to_slider_pos(current_rad)
@@ -165,7 +166,6 @@ class ArmWidget(QWidget):
             slider_widget.set_value(slider_pos)
 
         # Set the values of the gripper sliders
-        gripper_status: Robotiq3FingerStatus = self.side.gripper_status.get()
         self.finger_a_widget.set_status(gripper_status.finger_a_status)
         self.finger_b_widget.set_status(gripper_status.finger_b_status)
         self.finger_c_widget.set_status(gripper_status.finger_c_status)
@@ -173,7 +173,7 @@ class ArmWidget(QWidget):
         self.motion_cmd.joint_position = list_to_jvq(joint_positions_list)
 
         # Set the control mode
-        control_mode_name = control_mode_to_name_map[active_control_mode_res.active_control_mode.control_mode.mode]
+        control_mode_name = control_mode_to_name_map[active_control_mode.control_mode.mode]
         self.control_mode_combo.setCurrentText(control_mode_name)
 
         # Connect combo box
@@ -194,10 +194,10 @@ class ArmWidget(QWidget):
 
     def reset_sliders(self):
         # Read the current joint states and update the sliders
-        joint_states = self.victor.get_joint_positions_dict()
+        joint_states_dict = self.victor.get_joint_positions_dict()
         for joint_idx in range(7):
             expected_joint_name = f"victor_{self.arm_name}_joint_{joint_idx + 1}"
-            current_rad = joint_states[expected_joint_name]
+            current_rad = joint_states_dict[expected_joint_name]
             slider_pos = joint_angle_to_slider_pos(current_rad)
             self.slider_widgets[joint_idx].set_value(slider_pos)
 
@@ -239,20 +239,23 @@ class ArmWidget(QWidget):
     def change_control_mode(self, item_idx: int):
         control_mode = ControlMode()
         control_mode.mode = name_to_control_mode_map[self.control_mode_combo.itemText(item_idx)]
-        self.send_change_control_mode(control_mode)
+        self.send_change_control_mode_async(control_mode)
 
     def set_stiffness(self, item_idx: int):
         self.stiffness = Stiffness(item_idx)
-        self.send_change_control_mode(self.motion_cmd.control_mode)
+
+        self.send_change_control_mode_async(self.motion_cmd.control_mode)
+
+    def send_change_control_mode_async(self, control_mode: ControlMode):
+        thread = threading.Thread(target=self.send_change_control_mode, args=(control_mode,))
+        thread.start()
 
     def send_change_control_mode(self, control_mode: ControlMode):
+        """ Must not be called from the main thread, or the ROS Executor and the QT Gui will both be blocked. """
         request = SetControlMode.Request()
         request.new_control_mode = get_control_mode_params(control_mode.mode, self.stiffness)
-
         client = self.side.set_control_mode
-        future = client.call_async(request)
-        rclpy.spin_until_future_complete(self.node, future)
-        future.result()
+        client.call(request)
 
 
 class SliderWidget(QWidget):
@@ -329,7 +332,6 @@ class FingerWidget(QWidget):
         self.force_slider_widget.slider.setRange(0, 100)
         self.force_slider_widget.set_value(100)
 
-
         self.layout.addWidget(self.position_slider_widget)
         self.layout.addWidget(self.speed_slider_widget)
         self.layout.addWidget(self.force_slider_widget)
@@ -361,6 +363,7 @@ class FingerWidget(QWidget):
 
 
 class ControlModeParamsWidget(QWidget):
+    reset_params_tree_signal = pyqtSignal(ControlModeParameters)
 
     def __init__(self, node: Node, side):
         QWidget.__init__(self)
@@ -368,35 +371,36 @@ class ControlModeParamsWidget(QWidget):
         self.node = node
         self.side = side
 
-        self.send_button.clicked.connect(self.send_params)
+        self.send_button.clicked.connect(self.send_params_async)
+        self.reset_params_tree_signal.connect(self.on_reset_params_tree)
 
         # auto-resize the tree columns
         self.params_tree.header().setSectionResizeMode(QHeaderView.ResizeToContents)
 
-        self.reset_params_tree()
-
     def reset_params_tree(self):
-        self.params_tree.clear()
-
-        print("init params widget", threading.get_ident())
+        """ Not called from the main thread """
         client = self.side.get_control_mode
-        future = client.call_async(GetControlMode.Request())
-        rclpy.spin_until_future_complete(self.node, future)
-        active_control_mode: ControlModeParameters = future.result().active_control_mode
+        res = client.call(GetControlMode.Request())
 
+        # Emit back to the main thread
+        self.reset_params_tree_signal.emit(res.active_control_mode)
+
+    def on_reset_params_tree(self, active_control_mode: ControlModeParameters):
+        """ Called on the main thread """
+        self.params_tree.clear()
         populate_tree_from_msg(self.params_tree, active_control_mode)
-
-        # expand all items
         self.params_tree.expandAll()
+
+    def send_params_async(self):
+        thread = threading.Thread(target=self.send_params)
+        thread.start()
 
     def send_params(self):
         req = SetControlMode.Request()
         tree_to_control_mode_params(self.params_tree, req.new_control_mode)
 
         client = self.side.set_control_mode
-        future = client.call_async(req)
-        rclpy.spin_until_future_complete(self.node, future)
-        future.result()
+        client.call(req)
 
 
 def tree_item_to_control_mode_params(tree: QTreeWidget, item: QTreeWidgetItem, msg):
@@ -496,15 +500,9 @@ def populate_tree_from_msg(tree: QTreeWidget, msg):
 def is_value_type_str(field_type_str):
     return field_type_str in ['uint8', 'int32', 'uint32', 'double', 'string', 'boolean']
 
-def my_spin(executor):
-    while True:
-        print("spinning...", threading.get_ident())
-        executor.spin_once()
-
 
 def main():
     rclpy.init()
-    signal.signal(signal.SIGINT, signal.SIG_DFL)
 
     node = Node('victor_command_gui')
 
@@ -516,17 +514,19 @@ def main():
     widget = VictorCommandWindow(node)
     widget.showMaximized()
 
-    spin_thread = threading.Thread(target=my_spin, args=(executor,))
-    spin_thread.start()
+    # use a QTimer to call spin regularly
+    def _spin_once():
+        executor.spin_once()
+
+    timer = QTimer()
+    timer.timeout.connect(_spin_once)
+    timer.start(10)
 
     exit_code = app.exec_()
 
     executor.shutdown()
 
-    spin_thread.join()
-
     sys.exit(exit_code)
-
 
 
 if __name__ == "__main__":

@@ -1,19 +1,19 @@
 from dataclasses import dataclass
 from typing import Sequence, Optional, Callable
 
-from arm_utilities.listener import Listener
-from urdf_parser_py.urdf import URDF, Robot
-from victor_hardware_interfaces.msg import MotionCommand, MotionStatus, Robotiq3FingerStatus, Robotiq3FingerCommand, \
-    ControlMode
-from victor_hardware_interfaces.srv import SetControlMode, GetControlMode
-
 import rclpy
 from rclpy.callback_groups import MutuallyExclusiveCallbackGroup
 from rclpy.node import Node
 from rclpy.qos import QoSDurabilityPolicy, QoSProfile
 from sensor_msgs.msg import JointState
 from std_msgs.msg import String
+from urdf_parser_py.urdf import URDF, Robot
+
+from arm_utilities.listener import Listener
 from victor_hardware.victor_utils import get_control_mode_params, is_gripper_closed, get_gripper_closed_fraction_msg
+from victor_hardware_interfaces.msg import MotionCommand, MotionStatus, Robotiq3FingerStatus, Robotiq3FingerCommand, \
+    ControlMode
+from victor_hardware_interfaces.srv import SetControlMode, GetControlMode
 
 ROBOTIQ_OPEN = 0.0
 ROBOTIQ_CLOSED = 1.0
@@ -39,7 +39,8 @@ class Victor:
         self.robot_description_user_cb = robot_description_cb
 
         self.pub_group = MutuallyExclusiveCallbackGroup()
-        self.srv_group = MutuallyExclusiveCallbackGroup()
+        self.set_srv_group = MutuallyExclusiveCallbackGroup()
+        self.get_srv_group = MutuallyExclusiveCallbackGroup()
         self.listener_group = MutuallyExclusiveCallbackGroup()
 
         self.left_arm_cmd_pub = node.create_publisher(MotionCommand, "victor/left_arm/motion_command", 10,
@@ -52,15 +53,15 @@ class Victor:
                                                            10, callback_group=self.pub_group)
 
         self.left_set_control_mode_srv = node.create_client(SetControlMode, "victor/left_arm/set_control_mode_service",
-                                                            callback_group=self.srv_group)
+                                                            callback_group=self.set_srv_group)
         self.right_set_control_mode_srv = node.create_client(SetControlMode,
                                                              "victor/right_arm/set_control_mode_service",
-                                                             callback_group=self.srv_group)
+                                                             callback_group=self.set_srv_group)
         self.left_get_control_mode_srv = node.create_client(GetControlMode, "victor/left_arm/get_control_mode_service",
-                                                            callback_group=self.srv_group)
+                                                            callback_group=self.get_srv_group)
         self.right_get_control_mode_srv = node.create_client(GetControlMode,
                                                              "victor/right_arm/get_control_mode_service",
-                                                             callback_group=self.srv_group)
+                                                             callback_group=self.get_srv_group)
 
         self.joint_states_listener = Listener(node, JointState, "/victor/joint_states", 10,
                                               callback_group=self.listener_group)
@@ -83,9 +84,10 @@ class Victor:
         # Subscribe to robot description we can get the joints and joint limits
         # This callback will only be called once at the beginning.
         # To get the parsed URDF, either pass in a user callback or use `victor.urdf`.
-        self.robot_description_callback_group = MutuallyExclusiveCallbackGroup()
+        self.description_callback_group = None #MutuallyExclusiveCallbackGroup()
         qos = QoSProfile(depth=1, durability=QoSDurabilityPolicy.TRANSIENT_LOCAL)
-        self.sub = node.create_subscription(String, '/victor/robot_description', self.robot_description_callback, qos, callback_group=self.robot_description_callback_group)
+        self.sub = node.create_subscription(String, '/victor/robot_description', self.robot_description_callback, qos,
+                                            callback_group=self.description_callback_group)
 
         self.urdf: Optional[Robot] = None
 
