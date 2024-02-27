@@ -62,7 +62,7 @@ class Victor:
                                                              "victor/right_arm/get_control_mode_service",
                                                              callback_group=self.get_srv_group)
 
-        self.joint_states_listener = Listener(node, JointState, "victor/joint_states", 10)
+        self.joint_states_listener = Listener(node, JointState, "joint_states", 10)
         self.left_arm_status_listener = Listener(node, MotionStatus, "victor/left_arm/motion_status", 10)
         self.right_arm_status_listener = Listener(node, MotionStatus, "victor/right_arm/motion_status", 10)
         self.left_gripper_status_listener = Listener(node, Robotiq3FingerStatus, "victor/left_arm/gripper_status", 10)
@@ -80,7 +80,7 @@ class Victor:
         # To get the parsed URDF, either pass in a user callback or use `victor.urdf`.
         self.description_callback_group = None  # MutuallyExclusiveCallbackGroup()
         qos = QoSProfile(depth=1, durability=QoSDurabilityPolicy.TRANSIENT_LOCAL)
-        self.sub = node.create_subscription(String, '/victor/robot_description', self.robot_description_callback, qos,
+        self.sub = node.create_subscription(String, 'robot_description', self.robot_description_callback, qos,
                                             callback_group=self.description_callback_group)
 
         self.urdf: Optional[Robot] = None

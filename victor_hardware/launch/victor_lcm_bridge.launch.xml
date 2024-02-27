@@ -6,10 +6,10 @@
 
     <arg name="model" default="$(find-pkg-share victor_description)/urdf/victor.urdf.xacro"/>
 
-    <node pkg="robot_state_publisher" exec="robot_state_publisher" name="robot_state_publisher" namespace="victor">
+    <node pkg="robot_state_publisher" exec="robot_state_publisher" name="robot_state_publisher">
         <param name="robot_description" value="$(command 'xacro $(var model)')"/>
     </node>
-    <node pkg="victor_hardware" exec="joint_state_publisher.py" name="joint_state_publisher" namespace="victor"/>
+    <node pkg="victor_hardware" exec="joint_state_publisher.py" name="joint_state_publisher"/>
     <include file="$(find-pkg-share victor_hardware)/launch/victor_lcm_bridge_core.launch.xml">
         <arg name="victor_command_gui" value="$(var victor_command_gui)"/>
         <arg name="left_arm_recv_url" value="$(var left_arm_recv_url)"/>

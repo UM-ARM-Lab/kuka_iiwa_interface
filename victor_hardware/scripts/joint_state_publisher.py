@@ -100,11 +100,11 @@ class VictorJointStatePublisher(Node):
         print(self.joint_state_msg.position)
         # Set up the publishers and subscribers that will be used
         self.joint_state_pub = self.create_publisher(JointState, "joint_states", 10)
-        self.left_arm_sub = self.create_subscription(MotionStatus, "left_arm/motion_status", self.left_arm_motion_status_callback, 10)
-        self.right_arm_sub = self.create_subscription(MotionStatus, "right_arm/motion_status", self.right_arm_motion_status_callback, 10)
-        self.left_gripper_sub = self.create_subscription(Robotiq3FingerStatus, "left_arm/gripper_status", self.left_gripper_motion_status_callback,
+        self.left_arm_sub = self.create_subscription(MotionStatus, "victor/left_arm/motion_status", self.left_arm_motion_status_callback, 10)
+        self.right_arm_sub = self.create_subscription(MotionStatus, "victor/right_arm/motion_status", self.right_arm_motion_status_callback, 10)
+        self.left_gripper_sub = self.create_subscription(Robotiq3FingerStatus, "victor/left_arm/gripper_status", self.left_gripper_motion_status_callback,
                                                          10)
-        self.right_gripper_sub = self.create_subscription(Robotiq3FingerStatus, "right_arm/gripper_status", self.right_gripper_motion_status_callback,
+        self.right_gripper_sub = self.create_subscription(Robotiq3FingerStatus, "victor/right_arm/gripper_status", self.right_gripper_motion_status_callback,
                                                           10)
         print("?s?S?S?")
         # Create timer to publish joint states at 100Hz
