@@ -41,7 +41,6 @@ class Victor:
         self.pub_group = MutuallyExclusiveCallbackGroup()
         self.set_srv_group = MutuallyExclusiveCallbackGroup()
         self.get_srv_group = MutuallyExclusiveCallbackGroup()
-        self.listener_group = MutuallyExclusiveCallbackGroup()
 
         self.left_arm_cmd_pub = node.create_publisher(MotionCommand, "victor/left_arm/motion_command", 10,
                                                       callback_group=self.pub_group)
@@ -63,16 +62,11 @@ class Victor:
                                                              "victor/right_arm/get_control_mode_service",
                                                              callback_group=self.get_srv_group)
 
-        self.joint_states_listener = Listener(node, JointState, "/victor/joint_states", 10,
-                                              callback_group=self.listener_group)
-        self.left_arm_status_listener = Listener(node, MotionStatus, "victor/left_arm/motion_status", 10,
-                                                 callback_group=self.listener_group)
-        self.right_arm_status_listener = Listener(node, MotionStatus, "victor/right_arm/motion_status", 10,
-                                                  callback_group=self.listener_group)
-        self.left_gripper_status_listener = Listener(node, Robotiq3FingerStatus, "victor/left_arm/gripper_status", 10,
-                                                     callback_group=self.listener_group)
-        self.right_gripper_status_listener = Listener(node, Robotiq3FingerStatus, "victor/right_arm/gripper_status", 10,
-                                                      callback_group=self.listener_group)
+        self.joint_states_listener = Listener(node, JointState, "/victor/joint_states", 10)
+        self.left_arm_status_listener = Listener(node, MotionStatus, "victor/left_arm/motion_status", 10)
+        self.right_arm_status_listener = Listener(node, MotionStatus, "victor/right_arm/motion_status", 10)
+        self.left_gripper_status_listener = Listener(node, Robotiq3FingerStatus, "victor/left_arm/gripper_status", 10)
+        self.right_gripper_status_listener = Listener(node, Robotiq3FingerStatus, "victor/right_arm/gripper_status", 10)
 
         self.left = Side('left', self.left_arm_cmd_pub, self.left_gripper_cmd_pub, self.left_arm_status_listener,
                          self.left_gripper_status_listener, self.left_set_control_mode_srv,
@@ -84,7 +78,7 @@ class Victor:
         # Subscribe to robot description we can get the joints and joint limits
         # This callback will only be called once at the beginning.
         # To get the parsed URDF, either pass in a user callback or use `victor.urdf`.
-        self.description_callback_group = None #MutuallyExclusiveCallbackGroup()
+        self.description_callback_group = None  # MutuallyExclusiveCallbackGroup()
         qos = QoSProfile(depth=1, durability=QoSDurabilityPolicy.TRANSIENT_LOCAL)
         self.sub = node.create_subscription(String, '/victor/robot_description', self.robot_description_callback, qos,
                                             callback_group=self.description_callback_group)
