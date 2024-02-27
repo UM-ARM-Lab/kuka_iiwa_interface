@@ -9,6 +9,10 @@ from sensor_msgs.msg import JointState
 from std_msgs.msg import String
 from urdf_parser_py.urdf import URDF, Robot
 
+# Suppress error messages from urdf_parser_py
+from urdf_parser_py.xml_reflection import core
+core.on_error = lambda *args: None
+
 from arm_utilities.listener import Listener
 from victor_hardware.victor_utils import get_control_mode_params, is_gripper_closed, get_gripper_closed_fraction_msg, jvq_to_list
 from victor_hardware_interfaces.msg import MotionCommand, MotionStatus, Robotiq3FingerStatus, Robotiq3FingerCommand, \
