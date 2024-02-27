@@ -194,7 +194,7 @@ class ArmWidget(QWidget):
 
     def reset_sliders(self):
         # Read the current joint states and update the sliders
-        joint_states_dict = self.victor.get_joint_positions_dict()
+        joint_states_dict = self.victor.get_joint_cmd_dict()
         for joint_idx in range(7):
             expected_joint_name = f"victor_{self.arm_name}_joint_{joint_idx + 1}"
             current_rad = joint_states_dict[expected_joint_name]
