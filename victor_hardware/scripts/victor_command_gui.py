@@ -130,7 +130,6 @@ class ArmWidget(QWidget):
 
     def on_robot_description(self, robot_description: Robot):
         """ Called off the main thread """
-
         # Initialize the command objects to the current state
         joint_states_dict = self.victor.get_joint_cmd_dict()
         gripper_status: Robotiq3FingerStatus = self.side.gripper_status.get()
@@ -255,7 +254,6 @@ class ArmWidget(QWidget):
 
     def send_change_control_mode(self, control_mode: ControlMode):
         """ Must not be called from the main thread, or the ROS Executor and the QT Gui will both be blocked. """
-        print(f"send_change_control_mode {threading.current_thread().name}")
         request = SetControlMode.Request()
         request.new_control_mode = get_control_mode_params(control_mode.mode, self.stiffness)
         client = self.side.set_control_mode
@@ -388,7 +386,6 @@ class ControlModeParamsWidget(QWidget):
 
     def reset_params_tree(self):
         """ Not called from the main thread """
-        print(f"reset_params_tree {threading.current_thread().name}")
         client = self.side.get_control_mode
         res = client.call(GetControlMode.Request())
 
@@ -406,7 +403,6 @@ class ControlModeParamsWidget(QWidget):
         thread.start()
 
     def send_params(self):
-        print(f"send_params {threading.current_thread().name}")
         req = SetControlMode.Request()
         tree_to_control_mode_params(self.params_tree, req.new_control_mode)
 

@@ -62,7 +62,7 @@ class Victor:
                                                              "victor/right_arm/get_control_mode_service",
                                                              callback_group=self.get_srv_group)
 
-        self.joint_states_listener = Listener(node, JointState, "/victor/joint_states", 10)
+        self.joint_states_listener = Listener(node, JointState, "victor/joint_states", 10)
         self.left_arm_status_listener = Listener(node, MotionStatus, "victor/left_arm/motion_status", 10)
         self.right_arm_status_listener = Listener(node, MotionStatus, "victor/right_arm/motion_status", 10)
         self.left_gripper_status_listener = Listener(node, Robotiq3FingerStatus, "victor/left_arm/gripper_status", 10)
