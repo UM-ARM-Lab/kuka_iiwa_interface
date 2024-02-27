@@ -247,6 +247,8 @@ class ArmWidget(QWidget):
         self.send_change_control_mode_async(self.motion_cmd.control_mode)
 
     def send_change_control_mode_async(self, control_mode: ControlMode):
+        self.motion_cmd.control_mode = control_mode
+
         thread = threading.Thread(target=self.send_change_control_mode, args=(control_mode,))
         thread.start()
 
