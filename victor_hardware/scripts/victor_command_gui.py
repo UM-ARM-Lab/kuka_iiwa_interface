@@ -146,8 +146,6 @@ class ArmWidget(QWidget):
                               active_control_mode: ControlModeParameters,
                               gripper_status: Robotiq3FingerStatus):
         """ Called on the main thread """
-        self.motion_cmd.control_mode = active_control_mode.control_mode
-
         joint_positions_list = []
         for joint_idx in range(7):
             expected_joint_name = f"victor_{self.arm_name}_joint_{joint_idx + 1}"
@@ -190,7 +188,7 @@ class ArmWidget(QWidget):
             slider_widget = self.slider_widgets[joint_idx]
             slider_widget.setEnabled(True)
             slider_widget.connect()
-            slider_widget.slider.valueChanged.connect(self.publish_arm_cmd)
+            slider_widget.slider.valueChanged.connect(self.publish_arm_cmd_async)
 
     def reset_sliders(self):
         # Read the current joint states and update the sliders
@@ -217,7 +215,13 @@ class ArmWidget(QWidget):
         self.gripper_cmd.scissor_command = cmd
         self.publish_gripper_cmd()
 
+    def publish_arm_cmd_async(self):
+        thread = threading.Thread(target=self.publish_arm_cmd)
+        thread.start()
+
     def publish_arm_cmd(self):
+        active_control_mode = self.side.get_control_mode.call(GetControlMode.Request()).active_control_mode
+        self.motion_cmd.control_mode = active_control_mode.control_mode
         self.motion_cmd.joint_position = self.get_jvq_from_sliders()
         self.side.motion_command.publish(self.motion_cmd)
 
@@ -247,8 +251,6 @@ class ArmWidget(QWidget):
         self.send_change_control_mode_async(self.motion_cmd.control_mode)
 
     def send_change_control_mode_async(self, control_mode: ControlMode):
-        self.motion_cmd.control_mode = control_mode
-
         thread = threading.Thread(target=self.send_change_control_mode, args=(control_mode,))
         thread.start()
 
@@ -465,6 +467,7 @@ def populate_tree_from_msg(tree: QTreeWidget, msg):
                 child_item = QTreeWidgetItem([field_name])
                 item.addChild(child_item)
                 item_widget = QDoubleSpinBox()
+                item_widget.setDecimals(3)
                 item_widget.wheelEvent = lambda event: None  # disable mouse wheel
                 item_widget.setRange(-1e6, 1e6)  # don't want to limit the range
                 item_widget.setValue(float(field))

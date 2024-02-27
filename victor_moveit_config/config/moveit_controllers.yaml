@@ -4,14 +4,12 @@ moveit_controller_manager: moveit_simple_controller_manager/MoveItSimpleControll
 
 moveit_simple_controller_manager:
   controller_names:
-    # TODO: how is the order determined??? since both the trajectory and position controllers claim the same hardware resources???
     # - left_arm_position_controller
     # - right_arm_position_controller
     - joint_trajectory_controller
     - left_force_torque_broadcaster
     - right_force_torque_broadcaster
 
-  # Needed otherwise moveit node complains about action namespace not being set
   joint_trajectory_controller:
     action_ns: follow_joint_trajectory
     type: FollowJointTrajectory

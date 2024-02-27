@@ -41,7 +41,7 @@ class TestServo(Node):
     def timer_callback(self):
         self.msg.header.stamp = self.get_clock().now().to_msg()
 
-        self.msg.velocities = [1.5 * sin(self.pub_idx/100.0)] 
+        self.msg.velocities = [2.5 * sin(self.pub_idx/100.0)]
         self.publisher.publish(self.msg)
         
         self.pub_idx += 1
