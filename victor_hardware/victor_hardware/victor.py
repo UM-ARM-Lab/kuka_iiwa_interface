@@ -10,7 +10,7 @@ from std_msgs.msg import String
 from urdf_parser_py.urdf import URDF, Robot
 
 from arm_utilities.listener import Listener
-from victor_hardware.victor_utils import get_control_mode_params, is_gripper_closed, get_gripper_closed_fraction_msg
+from victor_hardware.victor_utils import get_control_mode_params, is_gripper_closed, get_gripper_closed_fraction_msg, jvq_to_list
 from victor_hardware_interfaces.msg import MotionCommand, MotionStatus, Robotiq3FingerStatus, Robotiq3FingerCommand, \
     ControlMode
 from victor_hardware_interfaces.srv import SetControlMode, GetControlMode
@@ -182,3 +182,15 @@ class Victor:
         joint_state = self.get_joint_states()
         joint_positions = dict(zip(joint_state.name, joint_state.position))
         return joint_positions
+
+    def get_joint_cmd_dict(self):
+        left_status : MotionStatus = self.left_arm_status_listener.get()
+        left_commanded_positions = jvq_to_list(left_status.commanded_joint_position)
+        left_names = [f"victor_left_arm_joint_{i}" for i in range(1, 8)]
+
+        right_status = self.right_arm_status_listener.get()
+        right_commanded_positions = jvq_to_list(right_status.commanded_joint_position)
+        right_names = [f"victor_right_arm_joint_{i}" for i in range(1, 8)]
+
+        joint_positions = dict(zip(left_names + right_names, left_commanded_positions + right_commanded_positions))
+        return joint_positions 

@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+import signal
 import sys
 import threading
 from pathlib import Path
@@ -131,7 +132,7 @@ class ArmWidget(QWidget):
         """ Called off the main thread """
 
         # Initialize the command objects to the current state
-        joint_states_dict = self.victor.get_joint_positions_dict()
+        joint_states_dict = self.victor.get_joint_cmd_dict()
         gripper_status: Robotiq3FingerStatus = self.side.gripper_status.get()
 
         client = self.side.get_control_mode
@@ -513,6 +514,7 @@ def is_value_type_str(field_type_str):
 
 def main():
     rclpy.init()
+    signal.signal(signal.SIGINT, signal.SIG_DFL)
 
     node = Node('victor_command_gui')
 
