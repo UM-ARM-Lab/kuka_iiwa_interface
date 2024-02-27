@@ -1,72 +1,3 @@
-
-# Created by https://www.gitignore.io/api/vim,macos,emacs,python
-
-### Emacs ###
-# -*- mode: gitignore; -*-
-*~
-\#*\#
-/.emacs.desktop
-/.emacs.desktop.lock
-*.elc
-auto-save-list
-tramp
-.\#*
-
-# Org-mode
-.org-id-locations
-*_archive
-
-# flymake-mode
-*_flymake.*
-
-# eshell files
-/eshell/history
-/eshell/lastdir
-
-# elpa packages
-/elpa/
-
-# reftex files
-*.rel
-
-# AUCTeX auto folder
-/auto/
-
-# cask packages
-.cask/
-dist/
-
-# Flycheck
-flycheck_*.el
-
-# server auth directory
-/server/
-
-# projectiles files
-.projectile
-projectile-bookmarks.eld
-
-# directory configuration
-.dir-locals.el
-
-# saveplace
-places
-
-# url cache
-url/cache/
-
-# cedet
-ede-projects.el
-
-# smex
-smex-items
-
-# company-statistics
-company-statistics-cache.el
-
-# anaconda-mode
-anaconda-mode/
-
 ### macOS ###
 *.DS_Store
 .AppleDouble
@@ -78,30 +9,11 @@ Icon
 # Thumbnails
 ._*
 
-# Files that might appear in the root of a volume
-.DocumentRevisions-V100
-.fseventsd
-.Spotlight-V100
-.TemporaryItems
-.Trashes
-.VolumeIcon.icns
-.com.apple.timemachine.donotpresent
-
-# Directories potentially created on remote AFP share
-.AppleDB
-.AppleDesktop
-Network Trash Folder
-Temporary Items
-.apdisk
-
 ### Python ###
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
 *$py.class
-
-# C extensions
-*.so
 
 # Distribution / packaging
 .Python
@@ -140,18 +52,6 @@ nosetests.xml
 coverage.xml
 *.cover
 .hypothesis/
-
-# Translations
-*.mo
-*.pot
-
-# Django stuff:
-*.log
-local_settings.py
-
-# Flask stuff:
-instance/
-.webassets-cache
 
 # Scrapy stuff:
 .scrapy
@@ -214,3 +114,6 @@ tags
 
 # Sunrise/Java 
 *.class
+
+# MoveIt
+*.ikcache

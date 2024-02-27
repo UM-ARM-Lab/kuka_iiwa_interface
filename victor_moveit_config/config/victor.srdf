@@ -10,10 +10,10 @@
     <!--CHAINS: When a chain is specified, all the links along the chain (including endpoints) are included in the group. Additionally, all the joints that are parents to included links are also included. This means that joints along the chain and the parent joint of the base link are included in the group-->
     <!--SUBGROUPS: Groups can also be formed by referencing to already defined group names-->
     <group name="left_arm">
-        <chain base_link="victor_left_arm_link_0" tip_link="left_tool"/>
+        <chain base_link="victor_left_arm_link_0" tip_link="victor_left_tool0"/>
     </group>
     <group name="right_arm">
-        <chain base_link="victor_right_arm_link_0" tip_link="right_tool"/>
+        <chain base_link="victor_right_arm_link_0" tip_link="victor_right_tool0"/>
     </group>
     <group name="both_arms">
         <group name="left_arm"/>
@@ -54,8 +54,8 @@
     </group_state>
 
     <!--END EFFECTOR: Purpose: Represent information about an end effector.-->
-    <end_effector name="left_tool" parent_link="left_tool" group="left_arm"/>
-    <end_effector name="right_tool" parent_link="right_tool" group="right_arm"/>
+    <end_effector name="left_tool" parent_link="victor_left_tool0" group="left_arm"/>
+    <end_effector name="right_tool" parent_link="victor_right_tool0" group="right_arm"/>
     <!--DISABLE COLLISIONS: By default it is assumed that any link of the robot could potentially come into collision with any other link in the robot. This tag disables collision checking between a specified pair of links. -->
     <disable_collisions link1="victor_base_plate" link2="victor_left_arm_link_0" reason="Default"/>
     <disable_collisions link1="victor_base_plate" link2="victor_left_arm_link_1" reason="Never"/>

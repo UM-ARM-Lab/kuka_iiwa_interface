@@ -5,33 +5,29 @@ moveit_controller_manager: moveit_simple_controller_manager/MoveItSimpleControll
 moveit_simple_controller_manager:
   controller_names:
     # TODO: how is the order determined??? since both the trajectory and position controllers claim the same hardware resources???
-    - left_arm_position_controller
-    - right_arm_position_controller
+    # - left_arm_position_controller
+    # - right_arm_position_controller
     - joint_trajectory_controller
     - left_force_torque_broadcaster
     - right_force_torque_broadcaster
 
   # Needed otherwise moveit node complains about action namespace not being set
-  left_arm_position_controller:
-    action_ns: left_arm_position_controller/follow_joint_trajectory
+  joint_trajectory_controller:
+    action_ns: follow_joint_trajectory
     type: FollowJointTrajectory
+    default: true
     joints:
-      - left_arm_1_joint
-      - left_arm_2_joint
-      - left_arm_3_joint
-      - left_arm_4_joint
-      - left_arm_5_joint
-      - left_arm_6_joint
-      - left_arm_7_joint
-
-  right_arm_position_controller:
-      action_ns: right_arm_position_controller/follow_joint_trajectory
-      type: FollowJointTrajectory
-      joints:
-          - right_arm_1_joint
-          - right_arm_2_joint
-          - right_arm_3_joint
-          - right_arm_4_joint
-          - right_arm_5_joint
-          - right_arm_6_joint
-          - right_arm_7_joint
+      - victor_left_arm_joint_1
+      - victor_left_arm_joint_2
+      - victor_left_arm_joint_3
+      - victor_left_arm_joint_4
+      - victor_left_arm_joint_5
+      - victor_left_arm_joint_6
+      - victor_left_arm_joint_7
+      - victor_right_arm_joint_1
+      - victor_right_arm_joint_2
+      - victor_right_arm_joint_3
+      - victor_right_arm_joint_4
+      - victor_right_arm_joint_5
+      - victor_right_arm_joint_6
+      - victor_right_arm_joint_7

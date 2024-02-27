@@ -21,6 +21,7 @@ controller_manager:
     right_force_torque_broadcaster:
       type: force_torque_sensor_broadcaster/ForceTorqueSensorBroadcaster
 
+
 left_arm_position_controller:
   ros__parameters:
     joints:
