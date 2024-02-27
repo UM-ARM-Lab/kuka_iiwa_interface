@@ -254,6 +254,7 @@ class ArmWidget(QWidget):
 
     def send_change_control_mode(self, control_mode: ControlMode):
         """ Must not be called from the main thread, or the ROS Executor and the QT Gui will both be blocked. """
+        print(f"send_change_control_mode {threading.current_thread().name}")
         request = SetControlMode.Request()
         request.new_control_mode = get_control_mode_params(control_mode.mode, self.stiffness)
         client = self.side.set_control_mode
@@ -375,12 +376,18 @@ class ControlModeParamsWidget(QWidget):
 
         self.send_button.clicked.connect(self.send_params_async)
         self.reset_params_tree_signal.connect(self.on_reset_params_tree)
+        self.get_control_mode_button.clicked.connect(self.reset_params_tree_async)
 
         # auto-resize the tree columns
         self.params_tree.header().setSectionResizeMode(QHeaderView.ResizeToContents)
 
+    def reset_params_tree_async(self):
+        thread = threading.Thread(target=self.reset_params_tree)
+        thread.start()
+
     def reset_params_tree(self):
         """ Not called from the main thread """
+        print(f"reset_params_tree {threading.current_thread().name}")
         client = self.side.get_control_mode
         res = client.call(GetControlMode.Request())
 
@@ -398,6 +405,7 @@ class ControlModeParamsWidget(QWidget):
         thread.start()
 
     def send_params(self):
+        print(f"send_params {threading.current_thread().name}")
         req = SetControlMode.Request()
         tree_to_control_mode_params(self.params_tree, req.new_control_mode)
 

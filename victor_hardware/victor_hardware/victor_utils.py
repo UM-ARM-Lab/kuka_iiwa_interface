@@ -91,13 +91,13 @@ def get_joint_impedance_params(stiffness, vel=0.1, accel=0.1):
         new_control_mode.joint_impedance_params.joint_damping.joint_5 = 0.7
         new_control_mode.joint_impedance_params.joint_damping.joint_6 = 0.7
         new_control_mode.joint_impedance_params.joint_damping.joint_7 = 0.7
-        new_control_mode.joint_impedance_params.joint_stiffness.joint_1 = 10.0
-        new_control_mode.joint_impedance_params.joint_stiffness.joint_2 = 10.0
-        new_control_mode.joint_impedance_params.joint_stiffness.joint_3 = 5.0
-        new_control_mode.joint_impedance_params.joint_stiffness.joint_4 = 5.0
-        new_control_mode.joint_impedance_params.joint_stiffness.joint_5 = 3.0
-        new_control_mode.joint_impedance_params.joint_stiffness.joint_6 = 3.0
-        new_control_mode.joint_impedance_params.joint_stiffness.joint_7 = 1.0
+        new_control_mode.joint_impedance_params.joint_stiffness.joint_1 = 30.0
+        new_control_mode.joint_impedance_params.joint_stiffness.joint_2 = 30.0
+        new_control_mode.joint_impedance_params.joint_stiffness.joint_3 = 15.0
+        new_control_mode.joint_impedance_params.joint_stiffness.joint_4 = 15.0
+        new_control_mode.joint_impedance_params.joint_stiffness.joint_5 = 9.0
+        new_control_mode.joint_impedance_params.joint_stiffness.joint_6 = 9.0
+        new_control_mode.joint_impedance_params.joint_stiffness.joint_7 = 3.0
 
     else:
         print("Unknown stiffness for Joint Impedance")
