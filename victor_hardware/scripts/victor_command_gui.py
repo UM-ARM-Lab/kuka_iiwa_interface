@@ -252,7 +252,8 @@ class ArmWidget(QWidget):
         request = SetControlMode.Request()
         request.new_control_mode = get_control_mode_params(control_mode.mode, self.stiffness)
         self.side.set_control_mode.call(request)
-
+        active_control_mode = self.side.get_control_mode.call(GetControlMode.Request()).active_control_mode
+        self.motion_cmd.control_mode = active_control_mode.control_mode
 
 class SliderWidget(QWidget):
 
