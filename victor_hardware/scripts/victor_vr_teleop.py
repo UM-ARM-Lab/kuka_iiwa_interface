@@ -17,25 +17,39 @@ import numpy as np
 import rerun as rr
 
 import rclpy
-from victor_hardware.victor import Victor
 from geometry_msgs.msg import Pose
 from geometry_msgs.msg import TransformStamped
 from rclpy.node import Node
 from tf2_ros import TransformBroadcaster
-from vr.constants import VR_FRAME_NAME, ARM_POSE_CMD_DURATION, ARM_POSE_CMD_PERIOD
-from vr.controller_utils import AxisVelocityHandler
+from tf2_ros.buffer import Buffer
+from tf2_ros.transform_listener import TransformListener
+from victor_hardware.victor import Victor
 from vr_ros2_bridge_msgs.msg import ControllersInfo, ControllerInfo
+
+
+def get_identity(parent_frame_id: str, child_frame_id: str):
+    msg = TransformStamped()
+    msg.transform.rotation.w = 1.
+    msg.header.frame_id = parent_frame_id
+    msg.child_frame_id = child_frame_id
+    return msg
 
 
 def controller_info_to_se3_pose(controller_info):
     pose_msg: Pose = controller_info.controller_pose
     return TransformStamped(x=pose_msg.position.x,
-                   y=pose_msg.position.y,
-                   z=pose_msg.position.z,
-                   rot=Quat(w=pose_msg.orientation.w,
-                            x=pose_msg.orientation.x,
-                            y=pose_msg.orientation.y,
-                            z=pose_msg.orientation.z))
+                            y=pose_msg.position.y,
+                            z=pose_msg.position.z,
+                            rot=Quat(w=pose_msg.orientation.w,
+                                     x=pose_msg.orientation.x,
+                                     y=pose_msg.orientation.y,
+                                     z=pose_msg.orientation.z))
+
+
+VISION_FRAME_NAME = "vision"
+HAND_FRAME_NAME = "hand"
+VR_FRAME_NAME = "vr"
+CONTROLLER_FRAME_NAME = "controller"
 
 
 class GenerateDataVRNode(Node):
@@ -45,11 +59,13 @@ class GenerateDataVRNode(Node):
 
         self.victor = Victor(self)
 
-        self.latest_action = TransformStamped.from_identity()
+        self.tf_buffer = Buffer()
+        self.tf_listener = TransformListener(self.tf_buffer, self)
+
+        self.latest_action = None
         self.linear_velocity_scale = 1.
-        self.trackpad_y_axis_velocity_handler = AxisVelocityHandler()
-        self.hand_in_vision0 = SE3Pose.from_identity()
-        self.controller_in_vr0 = SE3Pose.from_identity()
+        self.hand_in_vision0 = get_identity(VISION_FRAME_NAME, HAND_FRAME_NAME)
+        self.controller_in_vr0 = get_identity(VR_FRAME_NAME, CONTROLLER_FRAME_NAME)
 
         now = int(time.time())
         root = Path(f"data/victor_vr_data_{now}")
@@ -63,26 +79,16 @@ class GenerateDataVRNode(Node):
 
         self.on_reset()
 
-    def send_cmd(self, target_hand_in_vision: SE3Pose, open_fraction: float):
+    def send_cmd(self, target_hand_in_vision: TransformStamped, open_fraction: float):
         hand_pose_msg = target_hand_in_vision.to_proto()
-        arm_cmd = RobotCommandBuilder.arm_pose_command_from_pose(hand_pose_msg, VISION_FRAME_NAME,
-                                                                 seconds=ARM_POSE_CMD_DURATION)
-        if self.follow_arm_with_body:
-            arm_body_cmd = add_follow_with_body(arm_cmd)
-        else:
-            arm_body_cmd = arm_cmd
+        arm_cmd = RobotCommandBuilder.arm_pose_command_from_pose(hand_pose_msg, VISION_FRAME_NAME, seconds=ARM_POSE_CMD_DURATION)
 
-        gripper_cmd = RobotCommandBuilder.claw_gripper_open_fraction_command(open_fraction)
-        arm_body_gripper_cmd = RobotCommandBuilder.build_synchro_command(arm_body_cmd, gripper_cmd)
-
-        self.conq_clients.command.robot_command(arm_body_gripper_cmd)
+        self.victor.left_arm_cmd_pub.publish(left_arm_cmd)
+        self.victor.right_arm_cmd_pub.publish(right_arm_cmd)
 
     def on_done(self):
-        if not self.viz_only:
-            self.recorder.stop()
-
-        open_gripper(self.conq_clients)
-        blocking_arm_command(self.conq_clients, RobotCommandBuilder.arm_stow_command())
+        self.victor.open_left_gripper()
+        self.victor.open_right_gripper()
 
         raise SystemExit("Done!")
 
@@ -108,10 +114,6 @@ class GenerateDataVRNode(Node):
         if not self.is_recording and controller_info.trackpad_button:
             self.on_reset()
 
-        trackpad_y_velocity = self.trackpad_y_axis_velocity_handler.update(controller_info.trackpad_axis_touch_y)
-        self.linear_velocity_scale += trackpad_y_velocity * 0.1
-        rr.log('linear_velocity_scale', rr.TimeSeriesScalar(self.linear_velocity_scale))
-
         if self.is_recording:
             # for debugging purposes, we publish a fixed transform from "VR" frame to "VISION" frame,
             # even though we don't ever actually use this transform for controlling the robot.
@@ -125,8 +127,8 @@ class GenerateDataVRNode(Node):
 
             target_hand_in_vision = self.get_target_in_vision(controller_info)
 
-            snapshot = self.conq_clients.state.get_robot_state().kinematic_state.transforms_snapshot
-            hand_in_vision = get_a_tform_b(snapshot, VISION_FRAME_NAME, HAND_FRAME_NAME)
+            # hand_in_vision = get_a_tform_b(snapshot, VISION_FRAME_NAME, HAND_FRAME_NAME)
+            hand_in_vision: TransformStamped = self.tf
 
             open_fraction = 1 - controller_info.trigger_axis
 
@@ -136,15 +138,15 @@ class GenerateDataVRNode(Node):
                 'open_fraction': open_fraction
             }
 
+            self.tf_broadcaster.sendTransform(vr_to_vision)
             self.pub_se3_pose_to_tf(self.controller_in_vr0, 'controller_in_vr0', VR_FRAME_NAME)
             self.pub_se3_pose_to_tf(self.hand_in_vision0, 'hand_in_vision0', VISION_FRAME_NAME)
             self.pub_se3_pose_to_tf(hand_in_vision, 'hand_in_vision', VISION_FRAME_NAME)
             self.pub_se3_pose_to_tf(target_hand_in_vision, 'target_in_vision', VISION_FRAME_NAME)
 
-            if not self.viz_only:
-                self.send_cmd(target_hand_in_vision, open_fraction)
+            self.send_cmd(target_hand_in_vision, open_fraction)
 
-    def get_target_in_vision(self, controller_info: ControllerInfo) -> SE3Pose:
+    def get_target_in_vision(self, controller_info: ControllerInfo) -> TransformStamped:
         """ Translate delta pose in VR frame to delta pose in VISION frame and send a command to the robot! """
         current_controller_in_vr = controller_info_to_se3_pose(controller_info)
         self.pub_se3_pose_to_tf(current_controller_in_vr, 'current VR', VR_FRAME_NAME)
@@ -154,26 +156,12 @@ class GenerateDataVRNode(Node):
         #  hand frame to be the same orientation?
         delta_in_vision = delta_in_vr
 
-        delta_in_vision_scaled = self.scale_control(delta_in_vision)
-
-        target_hand_in_vision = self.hand_in_vision0 * delta_in_vision_scaled
+        target_hand_in_vision = self.hand_in_vision0 * delta_in_vision
         return target_hand_in_vision
 
-    def scale_control(self, delta_in_vision: SE3Pose):
-        delta_in_vision_scaled = delta_in_vision
-        # TODO: also scale rotational velocity
-        delta_in_vision_scaled.x *= self.linear_velocity_scale
-        delta_in_vision_scaled.y *= self.linear_velocity_scale
-        delta_in_vision_scaled.z *= self.linear_velocity_scale
-        return delta_in_vision_scaled
-
     def on_reset(self):
-        if self.viz_only:
-            return
-
-        open_gripper(self.conq_clients)
-        look_cmd = hand_pose_cmd(self.conq_clients, 0.8, 0, 0.2, 0, np.deg2rad(0), 0, duration=0.5)
-        blocking_arm_command(self.conq_clients, look_cmd)
+        self.victor.open_left_gripper()
+        self.victor.open_right_gripper()
 
     def on_start_recording(self, controller_info: ControllerInfo):
         # Store the initial pose of the hand in vision frame, as well as the controller pose which is in VR frame
@@ -183,14 +171,8 @@ class GenerateDataVRNode(Node):
         snapshot = self.conq_clients.state.get_robot_state().kinematic_state.transforms_snapshot
         self.hand_in_vision0 = get_a_tform_b(snapshot, VISION_FRAME_NAME, HAND_FRAME_NAME)
 
-        mode = "unsorted"
-        if not self.viz_only:
-            self.recorder.start_episode(mode, "grasp hose")
-
     def on_stop_recording(self):
         print(f"Stopping recording episode {self.recorder.episode_idx}")
-        if not self.viz_only:
-            self.recorder.next_episode()
 
     def pub_se3_pose_to_tf(self, pose: SE3Pose, child_frame_name: str, parent_frame_name: str):
         t = TransformStamped()
