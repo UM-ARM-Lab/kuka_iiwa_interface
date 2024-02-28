@@ -83,6 +83,8 @@ class GenerateDataVRNode(Node):
         hand_pose_msg = target_hand_in_vision.to_proto()
         arm_cmd = RobotCommandBuilder.arm_pose_command_from_pose(hand_pose_msg, VISION_FRAME_NAME, seconds=ARM_POSE_CMD_DURATION)
 
+        self.left_gripper_cmd_pub.publish(get_gripper_closed_fraction_msg(left_open_fraction))
+
         self.victor.left_arm_cmd_pub.publish(left_arm_cmd)
         self.victor.right_arm_cmd_pub.publish(right_arm_cmd)
 

@@ -1,4 +1,3 @@
-from dataclasses import dataclass
 from typing import Sequence, Optional, Callable
 
 import rclpy
@@ -11,10 +10,12 @@ from urdf_parser_py.urdf import URDF, Robot
 
 # Suppress error messages from urdf_parser_py
 from urdf_parser_py.xml_reflection import core
+
 core.on_error = lambda *args: None
 
 from arm_utilities.listener import Listener
-from victor_hardware.victor_utils import get_control_mode_params, is_gripper_closed, get_gripper_closed_fraction_msg, jvq_to_list
+from victor_hardware.victor_utils import get_control_mode_params, is_gripper_closed, get_gripper_closed_fraction_msg, \
+    jvq_to_list
 from victor_hardware_interfaces.msg import MotionCommand, MotionStatus, Robotiq3FingerStatus, Robotiq3FingerCommand, \
     ControlMode
 from victor_hardware_interfaces.srv import SetControlMode, GetControlMode
@@ -23,17 +24,73 @@ ROBOTIQ_OPEN = 0.0
 ROBOTIQ_CLOSED = 1.0
 
 
-# from arm_robots.robot import Robot
-
-@dataclass
 class Side:
-    name: str
-    motion_command: rclpy.node.Publisher
-    gripper_command: rclpy.node.Publisher
-    motion_status: Listener
-    gripper_status: Listener
-    set_control_mode: rclpy.node.Client
-    get_control_mode: rclpy.node.Client
+
+    def __init__(self, node: Node, name: str):
+        """
+
+        Args:
+            name: either "left" or "right"
+        """
+        self.node = node
+        self.name = name
+        self.arm_name = f"{self.name}_arm"
+
+        self.pub_group = MutuallyExclusiveCallbackGroup()
+        self.set_srv_group = MutuallyExclusiveCallbackGroup()
+        self.get_srv_group = MutuallyExclusiveCallbackGroup()
+
+        self.motion_command = node.create_publisher(MotionCommand, f"victor/{self.arm_name}/motion_command", 10,
+                                                    callback_group=self.pub_group)
+        self.gripper_command = node.create_publisher(Robotiq3FingerCommand, f"victor/{self.arm_name}/gripper_command",
+                                                     10, callback_group=self.pub_group)
+
+        self.set_control_mode = node.create_client(SetControlMode, f"victor/{self.arm_name}/set_control_mode_service",
+                                                   callback_group=self.set_srv_group)
+        self.get_control_mode = node.create_client(GetControlMode, f"victor/{self.arm_name}/get_control_mode_service",
+                                                   callback_group=self.get_srv_group)
+
+        self.motion_status = Listener(node, MotionStatus, f"victor/{self.arm_name}/motion_status", 10)
+        self.gripper_status = Listener(node, Robotiq3FingerStatus, f"victor/{self.arm_name}/gripper_status", 10)
+
+    def open_gripper(self):
+        # TODO: implementing blocking grasping
+        self.gripper_command.publish(get_gripper_closed_fraction_msg(ROBOTIQ_OPEN))
+
+    def close_gripper(self):
+        # TODO: implementing blocking grasping
+        self.gripper_command.publish(get_gripper_closed_fraction_msg(ROBOTIQ_CLOSED))
+
+    def get_gripper_status(self) -> Robotiq3FingerStatus:
+        return self.gripper_status.get()
+
+    def is_gripper_closed(self):
+        status: Robotiq3FingerStatus = self.get_gripper_status()
+        return is_gripper_closed(status)
+
+    def get_motion_status(self) -> MotionStatus:
+        return self.motion_status.get()
+
+    def get_arm_control_mode(self):
+        control_mode_res: GetControlMode.Response = self.get_control_mode.call(GetControlMode.Request())
+        return control_mode_res.active_control_mode.control_mode
+
+    def set_arm_control_mode(self, control_mode: ControlMode, **kwargs):
+        new_control_mode = get_control_mode_params(control_mode, **kwargs)
+        req = SetControlMode.Request()
+        req.new_control_mode = new_control_mode
+        res: SetControlMode.Response = self.get_control_mode.call(req)
+
+        if not res.success:
+            print(f"Failed to switch {self.arm_name} to control mode: {control_mode}")
+            print(res.message)
+        return res
+
+    def get_names_and_cmd(self):
+        status: MotionStatus = self.motion_status.get()
+        commanded_positions = jvq_to_list(status.commanded_joint_position)
+        names = [f"victor_{self.arm_name}_joint_{i}" for i in range(1, 8)]
+        return names, commanded_positions
 
 
 # TODO: inherit from Robot in arm_robots.robot
@@ -42,42 +99,10 @@ class Victor:
         self.node = node
         self.robot_description_user_cb = robot_description_cb
 
-        self.pub_group = MutuallyExclusiveCallbackGroup()
-        self.set_srv_group = MutuallyExclusiveCallbackGroup()
-        self.get_srv_group = MutuallyExclusiveCallbackGroup()
+        self.left = Side(node, 'left')
+        self.right = Side(node, 'right')
 
-        self.left_arm_cmd_pub = node.create_publisher(MotionCommand, "victor/left_arm/motion_command", 10,
-                                                      callback_group=self.pub_group)
-        self.right_arm_cmd_pub = node.create_publisher(MotionCommand, "victor/right_arm/motion_command", 10,
-                                                       callback_group=self.pub_group)
-        self.left_gripper_cmd_pub = node.create_publisher(Robotiq3FingerCommand, "victor/left_arm/gripper_command", 10,
-                                                          callback_group=self.pub_group)
-        self.right_gripper_cmd_pub = node.create_publisher(Robotiq3FingerCommand, "victor/right_arm/gripper_command",
-                                                           10, callback_group=self.pub_group)
-
-        self.left_set_control_mode_srv = node.create_client(SetControlMode, "victor/left_arm/set_control_mode_service",
-                                                            callback_group=self.set_srv_group)
-        self.right_set_control_mode_srv = node.create_client(SetControlMode,
-                                                             "victor/right_arm/set_control_mode_service",
-                                                             callback_group=self.set_srv_group)
-        self.left_get_control_mode_srv = node.create_client(GetControlMode, "victor/left_arm/get_control_mode_service",
-                                                            callback_group=self.get_srv_group)
-        self.right_get_control_mode_srv = node.create_client(GetControlMode,
-                                                             "victor/right_arm/get_control_mode_service",
-                                                             callback_group=self.get_srv_group)
-
-        self.joint_states_listener = Listener(node, JointState, "joint_states", 10)
-        self.left_arm_status_listener = Listener(node, MotionStatus, "victor/left_arm/motion_status", 10)
-        self.right_arm_status_listener = Listener(node, MotionStatus, "victor/right_arm/motion_status", 10)
-        self.left_gripper_status_listener = Listener(node, Robotiq3FingerStatus, "victor/left_arm/gripper_status", 10)
-        self.right_gripper_status_listener = Listener(node, Robotiq3FingerStatus, "victor/right_arm/gripper_status", 10)
-
-        self.left = Side('left', self.left_arm_cmd_pub, self.left_gripper_cmd_pub, self.left_arm_status_listener,
-                         self.left_gripper_status_listener, self.left_set_control_mode_srv,
-                         self.left_get_control_mode_srv)
-        self.right = Side('right', self.right_arm_cmd_pub, self.right_gripper_cmd_pub, self.right_arm_status_listener,
-                          self.right_gripper_status_listener, self.right_set_control_mode_srv,
-                          self.right_get_control_mode_srv)
+        self.joint_states_listener = Listener(node, JointState, 'joint_states', 10)
 
         # Subscribe to robot description we can get the joints and joint limits
         # This callback will only be called once at the beginning.
@@ -98,85 +123,19 @@ class Victor:
         if self.robot_description_user_cb:
             self.robot_description_user_cb(self.urdf)
 
-    def open_left_gripper(self):
-        self.left_gripper_cmd_pub.publish(get_gripper_closed_fraction_msg(ROBOTIQ_OPEN))
-
-    def open_right_gripper(self):
-        self.right_gripper_cmd_pub.publish(get_gripper_closed_fraction_msg(ROBOTIQ_OPEN))
-
-    def close_left_gripper(self):
-        # TODO: implementing blocking grasping
-        self.left_gripper_cmd_pub.publish(get_gripper_closed_fraction_msg(ROBOTIQ_CLOSED))
-
-    def close_right_gripper(self):
-        self.right_gripper_cmd_pub.publish(get_gripper_closed_fraction_msg(ROBOTIQ_CLOSED))
-
     def get_joint_states(self) -> JointState:
         return self.joint_states_listener.get()
 
-    def get_right_gripper_status(self) -> Robotiq3FingerStatus:
-        return self.right_gripper_status_listener.get()
-
-    def get_left_gripper_status(self) -> Robotiq3FingerStatus:
-        return self.left_gripper_status_listener.get()
-
-    def is_left_gripper_closed(self):
-        return self.is_gripper_closed('left')
-
-    def is_right_gripper_closed(self):
-        return self.is_gripper_closed('right')
-
-    def is_gripper_closed(self, gripper: str):
-        if gripper == 'left':
-            status = self.get_left_gripper_status()
-        elif gripper == 'right':
-            status = self.get_right_gripper_status()
-        else:
-            raise NotImplementedError(f"invalid gripper {gripper}")
-        return is_gripper_closed(status)
-
-    def get_arms_statuses(self):
-        return {'left': self.get_left_arm_status(),
-                'right': self.get_right_arm_status()}
-
-    def get_right_arm_status(self) -> MotionStatus:
-        return self.right_arm_status_listener.get()
-
-    def get_left_arm_status(self) -> MotionStatus:
-        return self.left_arm_status_listener.get()
+    def get_motion_statuses(self):
+        return {'left': self.left.get_motion_status(), 'right': self.right.get_motion_status()}
 
     def get_control_modes(self):
-        return {'left': self.get_left_arm_control_mode(), 'right': self.get_right_arm_control_mode()}
+        return {'left': self.left.get_arm_control_mode(), 'right': self.right.get_arm_control_mode()}
 
     def set_control_modes(self, control_mode: ControlMode, vel: float, **kwargs):
-        left_res = self.set_left_arm_control_mode(control_mode, vel=vel, **kwargs)
-        right_res = self.set_right_arm_control_mode(control_mode, vel=vel, **kwargs)
+        left_res = self.left.set_arm_control_mode(control_mode, vel=vel, **kwargs)
+        right_res = self.right.set_arm_control_mode(control_mode, vel=vel, **kwargs)
         return left_res, right_res
-
-    def get_left_arm_control_mode(self):
-        left_control_mode_res: GetControlMode.Response = self.left_get_control_mode_srv.call(GetControlMode.Request())
-        return left_control_mode_res.active_control_mode.control_mode
-
-    def get_right_arm_control_mode(self):
-        right_control_mode_res: GetControlMode.Response = self.right_get_control_mode_srv.call(GetControlMode.Request())
-        return right_control_mode_res.active_control_mode.control_mode
-
-    def set_right_arm_control_mode(self, control_mode: ControlMode, **kwargs):
-        return self.set_control_mode(self.right_set_control_mode_srv, 'right', control_mode, **kwargs)
-
-    def set_left_arm_control_mode(self, control_mode: ControlMode, **kwargs):
-        return self.set_control_mode(self.left_set_control_mode_srv, 'left', control_mode, **kwargs)
-
-    def set_control_mode(self, service_server, name: str, control_mode: ControlMode, **kwargs):
-        new_control_mode = get_control_mode_params(control_mode, **kwargs)
-        req = SetControlMode.Request()
-        req.new_control_mode = new_control_mode
-        res: SetControlMode.Response = service_server.call(req)
-
-        if not res.success:
-            print(f"Failed to switch {name} to control mode: {control_mode}")
-            print(res.message)
-        return res
 
     def get_joint_positions(self, joint_names: Optional[Sequence[str]] = None):
         position_of_joint = self.get_joint_positions_dict()
@@ -188,13 +147,8 @@ class Victor:
         return joint_positions
 
     def get_joint_cmd_dict(self):
-        left_status : MotionStatus = self.left_arm_status_listener.get()
-        left_commanded_positions = jvq_to_list(left_status.commanded_joint_position)
-        left_names = [f"victor_left_arm_joint_{i}" for i in range(1, 8)]
-
-        right_status = self.right_arm_status_listener.get()
-        right_commanded_positions = jvq_to_list(right_status.commanded_joint_position)
-        right_names = [f"victor_right_arm_joint_{i}" for i in range(1, 8)]
+        left_names, left_commanded_positions = self.left.get_names_and_cmd()
+        right_names, right_commanded_positions = self.right.get_names_and_cmd()
 
         joint_positions = dict(zip(left_names + right_names, left_commanded_positions + right_commanded_positions))
-        return joint_positions 
+        return joint_positions

@@ -48,8 +48,6 @@ class VictorCommandWindow(QMainWindow):
 
         self.victor = Victor(node, robot_description_cb=self.robot_description_callback)
 
-        self.arm_cmd_pub = self.victor.left_arm_cmd_pub
-
         self.left_arm_widget = ArmWidget(node, self.victor, 'left_arm', self.victor.left)
         self.right_arm_widget = ArmWidget(node, self.victor, 'right_arm', self.victor.right)
 
@@ -130,8 +128,7 @@ class ArmWidget(QWidget):
         joint_states_dict = self.victor.get_joint_cmd_dict()
         gripper_status: Robotiq3FingerStatus = self.side.gripper_status.get()
 
-        client = self.side.get_control_mode
-        active_control_mode_res = client.call(GetControlMode.Request())
+        active_control_mode_res = self.side.get_control_mode.call(GetControlMode.Request())
 
         # Emit back to the main thread
         self.initial_robot_data.emit(robot_description, joint_states_dict, active_control_mode_res.active_control_mode, gripper_status)
@@ -254,8 +251,7 @@ class ArmWidget(QWidget):
         """ Must not be called from the main thread, or the ROS Executor and the QT Gui will both be blocked. """
         request = SetControlMode.Request()
         request.new_control_mode = get_control_mode_params(control_mode.mode, self.stiffness)
-        client = self.side.set_control_mode
-        client.call(request)
+        self.side.set_control_mode.call(request)
 
 
 class SliderWidget(QWidget):
@@ -384,8 +380,7 @@ class ControlModeParamsWidget(QWidget):
 
     def reset_params_tree(self):
         """ Not called from the main thread """
-        client = self.side.get_control_mode
-        res = client.call(GetControlMode.Request())
+        res = self.side.get_control_mode.call(GetControlMode.Request())
 
         # Emit back to the main thread
         self.reset_params_tree_signal.emit(res.active_control_mode)
@@ -404,8 +399,7 @@ class ControlModeParamsWidget(QWidget):
         req = SetControlMode.Request()
         tree_to_control_mode_params(self.params_tree, req.new_control_mode)
 
-        client = self.side.set_control_mode
-        client.call(req)
+        self.side.set_control_mode.call(req)
 
 
 def tree_item_to_control_mode_params(tree: QTreeWidget, item: QTreeWidgetItem, msg):
