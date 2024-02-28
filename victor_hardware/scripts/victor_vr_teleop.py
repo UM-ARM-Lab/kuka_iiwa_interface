@@ -29,7 +29,7 @@ from vr_ros2_bridge_msgs.msg import ControllersInfo, ControllerInfo
 
 def controller_info_to_se3_pose(controller_info):
     pose_msg: Pose = controller_info.controller_pose
-    return SE3Pose(x=pose_msg.position.x,
+    return TransformStamped(x=pose_msg.position.x,
                    y=pose_msg.position.y,
                    z=pose_msg.position.z,
                    rot=Quat(w=pose_msg.orientation.w,
@@ -45,7 +45,7 @@ class GenerateDataVRNode(Node):
 
         self.victor = Victor(self)
 
-        self.latest_action = SE3Pose.from_identity()
+        self.latest_action = TransformStamped.from_identity()
         self.linear_velocity_scale = 1.
         self.trackpad_y_axis_velocity_handler = AxisVelocityHandler()
         self.hand_in_vision0 = SE3Pose.from_identity()
