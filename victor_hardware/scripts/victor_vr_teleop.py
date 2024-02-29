@@ -4,55 +4,96 @@ This script receives teleop commands from the Unity VR system, and sends them to
 Press and hold the grip button on the VR controller to start recording an episode.
 Release the grip button to stop recording an episode.
 Press the menu button to stop the script.
-Press the trackpad to reset
 Use the trigger to open and close the gripper, it's mapped to the open fraction of the gripper.
 The motion will be relative in gripper frame to the pose of the gripper when you started recording.
 see the vr_ros2_bridge repo for setup instructions.
 """
 
-import time
-from pathlib import Path
-
 import numpy as np
-import rerun as rr
-
-import rclpy
-from geometry_msgs.msg import Pose
-from geometry_msgs.msg import TransformStamped
-from rclpy.node import Node
 from tf2_ros import TransformBroadcaster
 from tf2_ros.buffer import Buffer
 from tf2_ros.transform_listener import TransformListener
-from victor_hardware.victor import Victor
+
+import rclpy
+from arm_utilities.numpy_conversions import transform_to_mat, mat_to_transform
+from arm_utilities.transformation_helper import np_tf_inv
+from geometry_msgs.msg import Pose
+from geometry_msgs.msg import TransformStamped
+from rclpy.node import Node
+from victor_hardware.victor import Victor, Side
+from victor_hardware.victor_utils import get_gripper_closed_fraction_msg
 from vr_ros2_bridge_msgs.msg import ControllersInfo, ControllerInfo
 
-
-def get_identity(parent_frame_id: str, child_frame_id: str):
-    msg = TransformStamped()
-    msg.transform.rotation.w = 1.
-    msg.header.frame_id = parent_frame_id
-    msg.child_frame_id = child_frame_id
-    return msg
-
-
-def controller_info_to_se3_pose(controller_info):
-    pose_msg: Pose = controller_info.controller_pose
-    return TransformStamped(x=pose_msg.position.x,
-                            y=pose_msg.position.y,
-                            z=pose_msg.position.z,
-                            rot=Quat(w=pose_msg.orientation.w,
-                                     x=pose_msg.orientation.x,
-                                     y=pose_msg.orientation.y,
-                                     z=pose_msg.orientation.z))
-
-
-VISION_FRAME_NAME = "vision"
-HAND_FRAME_NAME = "hand"
 VR_FRAME_NAME = "vr"
-CONTROLLER_FRAME_NAME = "controller"
 
 
-class GenerateDataVRNode(Node):
+def controller_info_to_tf(node: Node, controller_info: ControllerInfo):
+    pose_msg: Pose = controller_info.controller_pose
+    tf = TransformStamped()
+    tf.header.frame_id = VR_FRAME_NAME
+    tf.header.stamp = node.get_clock().now().to_msg()
+    tf.child_frame_id = controller_info.controller_name
+    tf.transform.translation.x = pose_msg.position.x
+    tf.transform.translation.y = pose_msg.position.y
+    tf.transform.translation.z = pose_msg.position.z
+    tf.transform.rotation = pose_msg.orientation
+    return tf
+
+
+class SideTeleop:
+
+    def __init__(self, node: Node, side: Side, tf_broadcaster: TransformBroadcaster, tf_buffer: Buffer):
+        self.node = node
+        self.side = side
+        self.tf_broadcaster = tf_broadcaster
+        self.tf_buffer = tf_buffer
+
+        self.controller_in_vr0 = np.eye(4)
+        self.tool_in_base0 = np.eye(4)
+
+    def send_cmd(self, target_tool_in_base: TransformStamped, open_fraction: float):
+        self.side.send_cartesian_cmd(target_tool_in_base)
+        # self.side.gripper_command.publish(get_gripper_closed_fraction_msg(open_fraction))
+
+    def on_start_recording(self, controller_info: ControllerInfo):
+        controller_in_vr0_msg = controller_info_to_tf(self.node, controller_info)
+        self.controller_in_vr0 = transform_to_mat(controller_in_vr0_msg.transform)
+
+        self.tf_broadcaster.sendTransform(controller_in_vr0_msg)
+
+        tool_in_base0_msg = self.tf_buffer.lookup_transform(self.side.base_frame, self.side.tool_frame, rclpy.time.Time())
+        self.tool_in_base0 = transform_to_mat(tool_in_base0_msg.transform)
+
+    def on_stop_recording(self):
+        print(f"Recording stopped for {self.side.name} side.")
+
+    def get_target_in_base(self, controller_info: ControllerInfo) -> TransformStamped:
+        """ Translate delta pose in VR frame to delta pose in VISION frame and send a command to the robot! """
+        current_controller_in_vr_msg = controller_info_to_tf(self.node, controller_info)
+        current_controller_in_vr = transform_to_mat(current_controller_in_vr_msg.transform)
+        delta_in_controller = np_tf_inv(self.controller_in_vr0) @ current_controller_in_vr
+
+        tool_in_base_msg = self.tf_buffer.lookup_transform(self.side.base_frame, self.side.tool_frame, rclpy.time.Time())
+        tool_in_base = transform_to_mat(tool_in_base_msg.transform)
+        tool_to_base_rot_mat = tool_in_base[:3, :3]
+        target_in_base_rot_mat = delta_in_controller[:3, :3] @ tool_to_base_rot_mat
+        target_in_base = np.eye(4)
+        target_in_base[:3, :3] = target_in_base_rot_mat
+        target_in_base[:3, 3] = tool_in_base[:3, 3] + delta_in_controller[:3, 3]
+
+        self.tf_broadcaster.sendTransform(current_controller_in_vr_msg)
+        target_tool_in_base_msg = TransformStamped()
+        target_tool_in_base_msg.transform = mat_to_transform(target_in_base)
+        target_tool_in_base_msg.header.frame_id = self.side.base_frame
+        # Just for debugging!
+        target_tool_in_base_msg.child_frame_id = f"target_{self.side.tool_frame}"
+        self.tf_broadcaster.sendTransform(target_tool_in_base_msg)
+
+        target_tool_in_base_msg.child_frame_id = self.side.tool_frame
+        return target_tool_in_base_msg
+
+
+class VictorTeleopNode(Node):
 
     def __init__(self):
         super().__init__("victor_vr_teleop")
@@ -62,155 +103,96 @@ class GenerateDataVRNode(Node):
         self.tf_buffer = Buffer()
         self.tf_listener = TransformListener(self.tf_buffer, self)
 
-        self.latest_action = None
+        self.latest_action_dict = None
         self.linear_velocity_scale = 1.
-        self.hand_in_vision0 = get_identity(VISION_FRAME_NAME, HAND_FRAME_NAME)
-        self.controller_in_vr0 = get_identity(VR_FRAME_NAME, CONTROLLER_FRAME_NAME)
-
-        now = int(time.time())
-        root = Path(f"data/victor_vr_data_{now}")
 
         self.tf_broadcaster = TransformBroadcaster(self)
         self.vr_sub = self.create_subscription(ControllersInfo, "vr_controller_info", self.on_controllers_info, 10)
+
+        self.left = SideTeleop(self, self.victor.left, self.tf_broadcaster, self.tf_buffer)
+        self.right = SideTeleop(self, self.victor.right, self.tf_broadcaster, self.tf_buffer)
 
         self.has_started = False
         self.is_recording = False
         self.is_done = False
 
-        self.on_reset()
-
-    def send_cmd(self, target_hand_in_vision: TransformStamped, open_fraction: float):
-        hand_pose_msg = target_hand_in_vision.to_proto()
-        arm_cmd = RobotCommandBuilder.arm_pose_command_from_pose(hand_pose_msg, VISION_FRAME_NAME, seconds=ARM_POSE_CMD_DURATION)
-
-        self.left_gripper_cmd_pub.publish(get_gripper_closed_fraction_msg(left_open_fraction))
-
-        self.victor.left_arm_cmd_pub.publish(left_arm_cmd)
-        self.victor.right_arm_cmd_pub.publish(right_arm_cmd)
-
-    def on_done(self):
-        self.victor.open_left_gripper()
-        self.victor.open_right_gripper()
-
-        raise SystemExit("Done!")
-
     def on_controllers_info(self, msg: ControllersInfo):
         if len(msg.controllers_info) == 0:
             return
 
-        controller_info: ControllerInfo = msg.controllers_info[0]
+        any_grip_button = any([controller_info.grip_button for controller_info in msg.controllers_info])
+        any_menu_button = any([controller_info.menu_button for controller_info in msg.controllers_info])
+
+        # viz controllers in rviz
+        vr_to_root = TransformStamped()
+        vr_to_root.header.stamp = self.get_clock().now().to_msg()
+        vr_to_root.header.frame_id = "victor_root"
+        vr_to_root.child_frame_id = VR_FRAME_NAME
+        vr_to_root.transform.translation.x = 1.5
+        vr_to_root.transform.rotation.w = 1.
+        self.tf_broadcaster.sendTransform(vr_to_root)
+        for controller_info in msg.controllers_info:
+            self.tf_broadcaster.sendTransform(controller_info_to_tf(self, controller_info))
 
         # set the flags for recording and done
-        if not self.is_recording and controller_info.grip_button:
+        if not self.is_recording and any_grip_button:
             self.is_recording = True
             self.has_started = True
-            self.on_start_recording(controller_info)
-        elif self.is_recording and not controller_info.grip_button:
+            for controller_info in msg.controllers_info:
+                if 'left' in controller_info.controller_name:
+                    self.left.on_start_recording(controller_info)
+                elif 'right' in controller_info.controller_name:
+                    self.right.on_start_recording(controller_info)
+        elif self.is_recording and not any_grip_button:
             self.is_recording = False
-            self.on_stop_recording()
+            for controller_info in msg.controllers_info:
+                if 'left' in controller_info.controller_name:
+                    self.left.on_stop_recording()
+                elif 'right' in controller_info.controller_name:
+                    self.right.on_stop_recording()
 
-        if self.has_started and controller_info.menu_button:
+        if self.has_started and any_menu_button:
             self.is_done = True
             self.on_done()
 
-        if not self.is_recording and controller_info.trackpad_button:
-            self.on_reset()
-
         if self.is_recording:
-            # for debugging purposes, we publish a fixed transform from "VR" frame to "VISION" frame,
-            # even though we don't ever actually use this transform for controlling the robot.
-            vr_to_vision = TransformStamped()
-            vr_to_vision.header.stamp = self.get_clock().now().to_msg()
-            vr_to_vision.header.frame_id = VR_FRAME_NAME
-            vr_to_vision.child_frame_id = VISION_FRAME_NAME
-            vr_to_vision.transform.translation.x = 1.5
-            vr_to_vision.transform.rotation.w = 1.
-            self.tf_broadcaster.sendTransform(vr_to_vision)
 
-            target_hand_in_vision = self.get_target_in_vision(controller_info)
+            self.latest_action_dict = {}
+            controller_info: ControllerInfo
+            for controller_info in msg.controllers_info:
+                if controller_info.grip_button:
+                    open_fraction = controller_info.trigger_axis
+                    if 'left' in controller_info.controller_name:
+                        left_target_in_base = self.left.get_target_in_base(controller_info)
+                        self.latest_action_dict['left_open_fraction'] = open_fraction
+                        self.latest_action_dict['left_target_in_base'] = left_target_in_base
+                        self.left.send_cmd(left_target_in_base, open_fraction)
+                    elif 'right' in controller_info.controller_name:
+                        right_target_in_base = self.right.get_target_in_base(controller_info)
+                        self.latest_action_dict['right_open_fraction'] = open_fraction
+                        self.latest_action_dict['right_target_in_base'] = right_target_in_base
+                        # self.right.send_cmd(right_target_in_base, open_fraction)
 
-            # hand_in_vision = get_a_tform_b(snapshot, VISION_FRAME_NAME, HAND_FRAME_NAME)
-            hand_in_vision: TransformStamped = self.tf
+    def on_done(self):
+        self.victor.left.open_gripper()
+        self.victor.right.open_gripper()
 
-            open_fraction = 1 - controller_info.trigger_axis
-
-            # Save for the data recorder
-            self.latest_action = {
-                'target_hand_in_vision': target_hand_in_vision,
-                'open_fraction': open_fraction
-            }
-
-            self.tf_broadcaster.sendTransform(vr_to_vision)
-            self.pub_se3_pose_to_tf(self.controller_in_vr0, 'controller_in_vr0', VR_FRAME_NAME)
-            self.pub_se3_pose_to_tf(self.hand_in_vision0, 'hand_in_vision0', VISION_FRAME_NAME)
-            self.pub_se3_pose_to_tf(hand_in_vision, 'hand_in_vision', VISION_FRAME_NAME)
-            self.pub_se3_pose_to_tf(target_hand_in_vision, 'target_in_vision', VISION_FRAME_NAME)
-
-            self.send_cmd(target_hand_in_vision, open_fraction)
-
-    def get_target_in_vision(self, controller_info: ControllerInfo) -> TransformStamped:
-        """ Translate delta pose in VR frame to delta pose in VISION frame and send a command to the robot! """
-        current_controller_in_vr = controller_info_to_se3_pose(controller_info)
-        self.pub_se3_pose_to_tf(current_controller_in_vr, 'current VR', VR_FRAME_NAME)
-        delta_in_vr = self.controller_in_vr0.inverse() * current_controller_in_vr
-
-        # TODO: add a rotation here to account for the fact that we might not want VR controller frame and
-        #  hand frame to be the same orientation?
-        delta_in_vision = delta_in_vr
-
-        target_hand_in_vision = self.hand_in_vision0 * delta_in_vision
-        return target_hand_in_vision
-
-    def on_reset(self):
-        self.victor.open_left_gripper()
-        self.victor.open_right_gripper()
-
-    def on_start_recording(self, controller_info: ControllerInfo):
-        # Store the initial pose of the hand in vision frame, as well as the controller pose which is in VR frame
-        print(f"Starting recording episode {self.recorder.episode_idx}")
-
-        self.controller_in_vr0 = controller_info_to_se3_pose(controller_info)
-        snapshot = self.conq_clients.state.get_robot_state().kinematic_state.transforms_snapshot
-        self.hand_in_vision0 = get_a_tform_b(snapshot, VISION_FRAME_NAME, HAND_FRAME_NAME)
-
-    def on_stop_recording(self):
-        print(f"Stopping recording episode {self.recorder.episode_idx}")
-
-    def pub_se3_pose_to_tf(self, pose: SE3Pose, child_frame_name: str, parent_frame_name: str):
-        t = TransformStamped()
-
-        t.header.stamp = self.get_clock().now().to_msg()
-        t.header.frame_id = parent_frame_name
-        t.child_frame_id = child_frame_name
-
-        t.transform.translation.x = float(pose.x)
-        t.transform.translation.y = float(pose.y)
-        t.transform.translation.z = float(pose.z)
-
-        t.transform.rotation.x = float(pose.rot.x)
-        t.transform.rotation.y = float(pose.rot.y)
-        t.transform.rotation.z = float(pose.rot.z)
-        t.transform.rotation.w = float(pose.rot.w)
-
-        self.tf_broadcaster.sendTransform(t)
-
-    def get_latest_action(self, _):
-        return self.latest_action
+        raise SystemExit("Done!")
 
 
 def main():
     np.seterr(all='raise')
     np.set_printoptions(precision=3, suppress=True)
 
-    rr.init("generate_data_from_vr")
-    rr.connect()
-
     rclpy.init()
 
-    node = GenerateDataVRNode()
+    node = VictorTeleopNode()
+
+    executor = rclpy.executors.MultiThreadedExecutor()
+    executor.add_node(node)
 
     try:
-        rclpy.spin(node)
+        executor.spin()
     except SystemExit:
         pass
 

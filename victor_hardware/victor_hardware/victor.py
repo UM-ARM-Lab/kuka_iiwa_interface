@@ -1,6 +1,7 @@
 from typing import Sequence, Optional, Callable
 
 import rclpy
+from geometry_msgs.msg import TransformStamped
 from rclpy.callback_groups import MutuallyExclusiveCallbackGroup
 from rclpy.node import Node
 from rclpy.qos import QoSDurabilityPolicy, QoSProfile
@@ -22,6 +23,16 @@ from victor_hardware_interfaces.srv import SetControlMode, GetControlMode
 
 ROBOTIQ_OPEN = 0.0
 ROBOTIQ_CLOSED = 1.0
+# This must match what the IIWA_LCM_BRIDGE checks for
+CARTESIAN_CMD_BASE_FRAME = "base"
+# This matches the URDF, but the URDF is written to match the Sunrise Workbench.
+# Changing the URDF or this name will not change the frame in which Cartesian commands are interpreted.
+# The only way to do that is to change the Sunrise Workbench code.
+TOOL_FRAME_SUFFIX = "tool0"
+CARTESIAN_CMD_FRAME_SUFFIX = "sunrise_palm_surface"
+
+class ControlModeError(Exception):
+    pass
 
 
 class Side:
@@ -35,6 +46,8 @@ class Side:
         self.node = node
         self.name = name
         self.arm_name = f"{self.name}_arm"
+        self.tool_frame = f'victor_{self.arm_name}_{CARTESIAN_CMD_FRAME_SUFFIX}'
+        self.base_frame = f'victor_{self.arm_name}_cartesian_cmd'
 
         self.pub_group = MutuallyExclusiveCallbackGroup()
         self.set_srv_group = MutuallyExclusiveCallbackGroup()
@@ -91,6 +104,31 @@ class Side:
         commanded_positions = jvq_to_list(status.commanded_joint_position)
         names = [f"victor_{self.arm_name}_joint_{i}" for i in range(1, 8)]
         return names, commanded_positions
+
+    def send_cartesian_cmd(self, target_hand_in_root: TransformStamped):
+        """
+        Fills out, validates, and sends a MotionCommand in cartesian impedance mode.
+        """
+        active_mode: ControlMode = self.get_control_mode.call(GetControlMode.Request()).active_control_mode.control_mode
+        if active_mode.mode != ControlMode.CARTESIAN_IMPEDANCE:
+            raise ControlModeError(f"Cannot send cartesian command in {active_mode} mode")
+
+        if target_hand_in_root.header.frame_id != self.base_frame:
+            raise ValueError(f"header.frame_id must be {self.base_frame}")
+        if target_hand_in_root.child_frame_id != self.tool_frame:
+            raise ValueError(f"child_frame_id must be {self.tool_frame}")
+
+        msg = MotionCommand()
+        msg.control_mode.mode = ControlMode.CARTESIAN_IMPEDANCE
+        msg.header.stamp = self.node.get_clock().now().to_msg()
+        # Override the frame_id to match the base frame, since the IIWA_LCM_BRIDGE checks for this.
+        msg.header.frame_id = CARTESIAN_CMD_BASE_FRAME
+        msg.cartesian_pose.position.x = target_hand_in_root.transform.translation.x
+        msg.cartesian_pose.position.y = target_hand_in_root.transform.translation.y
+        msg.cartesian_pose.position.z = target_hand_in_root.transform.translation.z
+        msg.cartesian_pose.orientation = target_hand_in_root.transform.rotation
+
+        self.motion_command.publish(msg)
 
 
 # TODO: inherit from Robot in arm_robots.robot
