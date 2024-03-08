@@ -51,29 +51,31 @@ class SideTeleop:
         self.controller_in_vr0 = np.eye(4)
         self.tool_in_base0 = np.eye(4)
 
-    def send_cmd(self, target_tool_in_base: TransformStamped, open_fraction: float):
-        self.side.send_cartesian_cmd(target_tool_in_base)
-        # self.side.gripper_command.publish(get_gripper_closed_fraction_msg(open_fraction))
-
     def on_start_recording(self, controller_info: ControllerInfo):
         controller_in_vr0_msg = controller_info_to_tf(self.node, controller_info)
         self.controller_in_vr0 = transform_to_mat(controller_in_vr0_msg.transform)
 
         self.tf_broadcaster.sendTransform(controller_in_vr0_msg)
 
-        tool_in_base0_msg = self.tf_buffer.lookup_transform(self.side.base_frame, self.side.tool_frame, rclpy.time.Time())
+        tool_in_base0_msg = self.tf_buffer.lookup_transform(self.side.cartesian_cmd_base_frame, self.side.cartesian_cmd_tool_frame,
+                                                            rclpy.time.Time())
         self.tool_in_base0 = transform_to_mat(tool_in_base0_msg.transform)
 
     def on_stop_recording(self):
         print(f"Recording stopped for {self.side.name} side.")
 
+    def send_cmd(self, controller_info: ControllerInfo, open_fraction: float):
+        target_in_base = self.get_target_in_base(controller_info)
+        self.side.send_cartesian_cmd(target_in_base)
+        self.side.gripper_command.publish(get_gripper_closed_fraction_msg(open_fraction))
+
     def get_target_in_base(self, controller_info: ControllerInfo) -> TransformStamped:
-        """ Translate delta pose in VR frame to delta pose in VISION frame and send a command to the robot! """
         current_controller_in_vr_msg = controller_info_to_tf(self.node, controller_info)
         current_controller_in_vr = transform_to_mat(current_controller_in_vr_msg.transform)
         delta_in_controller = np_tf_inv(self.controller_in_vr0) @ current_controller_in_vr
 
-        tool_in_base_msg = self.tf_buffer.lookup_transform(self.side.base_frame, self.side.tool_frame, rclpy.time.Time())
+        tool_in_base_msg = self.tf_buffer.lookup_transform(self.side.cartesian_cmd_base_frame, self.side.cartesian_cmd_tool_frame,
+                                                           rclpy.time.Time())
         tool_in_base = transform_to_mat(tool_in_base_msg.transform)
         tool_to_base_rot_mat = tool_in_base[:3, :3]
         target_in_base_rot_mat = delta_in_controller[:3, :3] @ tool_to_base_rot_mat
@@ -84,12 +86,12 @@ class SideTeleop:
         self.tf_broadcaster.sendTransform(current_controller_in_vr_msg)
         target_tool_in_base_msg = TransformStamped()
         target_tool_in_base_msg.transform = mat_to_transform(target_in_base)
-        target_tool_in_base_msg.header.frame_id = self.side.base_frame
+        target_tool_in_base_msg.header.frame_id = self.side.cartesian_cmd_base_frame
         # Just for debugging!
-        target_tool_in_base_msg.child_frame_id = f"target_{self.side.tool_frame}"
+        target_tool_in_base_msg.child_frame_id = f"target_{self.side.cartesian_cmd_tool_frame}"
         self.tf_broadcaster.sendTransform(target_tool_in_base_msg)
 
-        target_tool_in_base_msg.child_frame_id = self.side.tool_frame
+        target_tool_in_base_msg.child_frame_id = self.side.cartesian_cmd_tool_frame
         return target_tool_in_base_msg
 
 
@@ -163,15 +165,13 @@ class VictorTeleopNode(Node):
                 if controller_info.grip_button:
                     open_fraction = controller_info.trigger_axis
                     if 'left' in controller_info.controller_name:
-                        left_target_in_base = self.left.get_target_in_base(controller_info)
                         self.latest_action_dict['left_open_fraction'] = open_fraction
-                        self.latest_action_dict['left_target_in_base'] = left_target_in_base
-                        self.left.send_cmd(left_target_in_base, open_fraction)
+                        # self.latest_action_dict['left_target_in_base'] = left_target_in_base
+                        self.left.send_cmd(controller_info, open_fraction)
                     elif 'right' in controller_info.controller_name:
-                        right_target_in_base = self.right.get_target_in_base(controller_info)
                         self.latest_action_dict['right_open_fraction'] = open_fraction
-                        self.latest_action_dict['right_target_in_base'] = right_target_in_base
-                        # self.right.send_cmd(right_target_in_base, open_fraction)
+                        # self.latest_action_dict['right_target_in_base'] = right_target_in_base
+                        self.right.send_cmd(controller_info, open_fraction)
 
     def on_done(self):
         self.victor.left.open_gripper()

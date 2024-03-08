@@ -25,6 +25,5 @@
     </node>
     <node pkg="victor_hardware" exec="arm_wrench_republisher.py" name="arm_wrench_republisher"
           output="screen" namespace="victor"/>
-    <!-- <node pkg="victor_hardware" exec="grasp_status_node.py" name="grasp_status"/> -->
 
 </launch>

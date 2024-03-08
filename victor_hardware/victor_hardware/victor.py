@@ -1,13 +1,18 @@
 from typing import Sequence, Optional, Callable
 
+from moveit import MoveItPy
+
 import rclpy
+import transformations
 from geometry_msgs.msg import TransformStamped
 from rclpy.callback_groups import MutuallyExclusiveCallbackGroup
 from rclpy.node import Node
 from rclpy.qos import QoSDurabilityPolicy, QoSProfile
 from sensor_msgs.msg import JointState
 from std_msgs.msg import String
-from urdf_parser_py.urdf import URDF, Robot
+from urdf_parser_py.urdf import URDF
+from urdf_parser_py.urdf import Robot as RobotURDF
+from arm_robots.robot import Robot
 
 # Suppress error messages from urdf_parser_py
 from urdf_parser_py.xml_reflection import core
@@ -31,23 +36,29 @@ CARTESIAN_CMD_BASE_FRAME = "base"
 TOOL_FRAME_SUFFIX = "tool0"
 CARTESIAN_CMD_FRAME_SUFFIX = "sunrise_palm_surface"
 
+
 class ControlModeError(Exception):
     pass
 
 
 class Side:
 
-    def __init__(self, node: Node, name: str):
+    def __init__(self, node: Node, name: str):  # , moveitpy_robot: MoveItPy):
         """
-
         Args:
+            node: rclpy node
             name: either "left" or "right"
+            moveitpy_robot: an instance of MoveItPy
         """
         self.node = node
         self.name = name
         self.arm_name = f"{self.name}_arm"
-        self.tool_frame = f'victor_{self.arm_name}_{CARTESIAN_CMD_FRAME_SUFFIX}'
-        self.base_frame = f'victor_{self.arm_name}_cartesian_cmd'
+        self.cartesian_cmd_tool_frame = f'victor_{self.arm_name}_{CARTESIAN_CMD_FRAME_SUFFIX}'
+        self.cartesian_cmd_base_frame = f'victor_{self.arm_name}_cartesian_cmd'
+        # self.moveitpy_robot = moveitpy_robot
+        # # Defined by the .srdf
+        # self.moveit_base_frame = f'victor_{self.arm_name}_link0'
+        # self.moveit_tool_frame = f'victor_{self.name}_tool0'
 
         self.pub_group = MutuallyExclusiveCallbackGroup()
         self.set_srv_group = MutuallyExclusiveCallbackGroup()
@@ -57,6 +68,8 @@ class Side:
                                                     callback_group=self.pub_group)
         self.gripper_command = node.create_publisher(Robotiq3FingerCommand, f"victor/{self.arm_name}/gripper_command",
                                                      10, callback_group=self.pub_group)
+        self.cartesian_cmd_abc_pub = node.create_publisher(MotionStatus, f"victor_{self.arm_name}/cartesian_cmd_abc",
+                                                           10)
 
         self.set_control_mode = node.create_client(SetControlMode, f"victor/{self.arm_name}/set_control_mode_service",
                                                    callback_group=self.set_srv_group)
@@ -113,10 +126,10 @@ class Side:
         if active_mode.mode != ControlMode.CARTESIAN_IMPEDANCE:
             raise ControlModeError(f"Cannot send cartesian command in {active_mode} mode")
 
-        if target_hand_in_root.header.frame_id != self.base_frame:
-            raise ValueError(f"header.frame_id must be {self.base_frame}")
-        if target_hand_in_root.child_frame_id != self.tool_frame:
-            raise ValueError(f"child_frame_id must be {self.tool_frame}")
+        if target_hand_in_root.header.frame_id != self.cartesian_cmd_base_frame:
+            raise ValueError(f"header.frame_id must be {self.cartesian_cmd_base_frame}")
+        if target_hand_in_root.child_frame_id != self.cartesian_cmd_tool_frame:
+            raise ValueError(f"child_frame_id must be {self.cartesian_cmd_tool_frame}")
 
         msg = MotionCommand()
         msg.control_mode.mode = ControlMode.CARTESIAN_IMPEDANCE
@@ -128,17 +141,32 @@ class Side:
         msg.cartesian_pose.position.z = target_hand_in_root.transform.translation.z
         msg.cartesian_pose.orientation = target_hand_in_root.transform.rotation
 
+        # FIXME: remove ths, it's just for debugging
+        #  publish the commanded RPY
+        q_wxyz = [msg.cartesian_pose.orientation.w, msg.cartesian_pose.orientation.x,
+                  msg.cartesian_pose.orientation.y, msg.cartesian_pose.orientation.z]
+        q_abc = transformations.euler_from_quaternion(q_wxyz)
+        cartesian_cmd_abc_msg = MotionStatus()
+        cartesian_cmd_abc_msg.header.stamp = msg.header.stamp
+        cartesian_cmd_abc_msg.commanded_cartesian_pose_abc.a = q_abc[0]
+        cartesian_cmd_abc_msg.commanded_cartesian_pose_abc.b = q_abc[1]
+        cartesian_cmd_abc_msg.commanded_cartesian_pose_abc.c = q_abc[2]
+        self.cartesian_cmd_abc_pub.publish(cartesian_cmd_abc_msg)
+
         self.motion_command.publish(msg)
 
 
-# TODO: inherit from Robot in arm_robots.robot
+# class Victor(Robot):
 class Victor:
-    def __init__(self, node: Node, robot_description_cb: Optional[Callable[[Robot], None]] = None):
+
+    def __init__(self, node: Node, robot_description_cb: Optional[Callable[[RobotURDF], None]] = None):
+        # super().__init__("victor")
+        super().__init__()
         self.node = node
         self.robot_description_user_cb = robot_description_cb
 
-        self.left = Side(node, 'left')
-        self.right = Side(node, 'right')
+        self.left = Side(node, 'left')  # , self.moveitpy_robot)
+        self.right = Side(node, 'right')  # , self.moveitpy_robot)
 
         self.joint_states_listener = Listener(node, JointState, 'joint_states', 10)
 
@@ -150,7 +178,7 @@ class Victor:
         self.sub = node.create_subscription(String, 'robot_description', self.robot_description_callback, qos,
                                             callback_group=self.description_callback_group)
 
-        self.urdf: Optional[Robot] = None
+        self.urdf: Optional[RobotURDF] = None
 
     def wait_for_urdf(self):
         while self.urdf is None:
