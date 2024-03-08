@@ -53,6 +53,23 @@
         <origin xyz="0 0 -0.01" rpy="0 0 0"/>
     </xacro:iia7_to_robotiq_adapter>
 
+    <!-- Cartesian commands -->
+    <joint name="$(arg robot_name)_left_arm_cartesian_cmd_joint" type="fixed">
+        <origin xyz="0 0 0" rpy="${PI/2} 0 0"/>
+        <parent link="$(arg robot_name)_left_arm_link_0"/>
+        <child link="$(arg robot_name)_left_arm_cartesian_cmd"/>
+    </joint>
+    <link name="$(arg robot_name)_left_arm_cartesian_cmd">
+    </link>
+
+    <joint name="$(arg robot_name)_right_arm_cartesian_cmd_joint" type="fixed">
+        <origin xyz="0 0 0" rpy="-${PI/2} 0 0"/>
+        <parent link="$(arg robot_name)_right_arm_link_0"/>
+        <child link="$(arg robot_name)_right_arm_cartesian_cmd"/>
+    </joint>
+    <link name="$(arg robot_name)_right_arm_cartesian_cmd">
+    </link>
+
 
     <!-- Robotiq grippers -->
     <xacro:if value="${gripper == 'robotiq'}">

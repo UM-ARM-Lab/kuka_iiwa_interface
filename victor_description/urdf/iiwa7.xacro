@@ -49,17 +49,6 @@
 
         </link>
 
-        <!--joint and link for cartesian commands -->
-        <joint name="${robot_name}_cartesian_cmd_joint" type="fixed">
-            <origin xyz="0 0 0" rpy="${PI/2} 0 0"/>
-            <parent link="${robot_name}_link_0"/>
-            <child link="${robot_name}_cartesian_cmd"/>
-        </joint>
-
-        <link name="${robot_name}_cartesian_cmd">
-        </link>
-
-
         <!-- joint between link_0 and link_1 -->
         <joint name="${robot_name}_joint_1" type="revolute">
             <parent link="${robot_name}_link_0"/>
