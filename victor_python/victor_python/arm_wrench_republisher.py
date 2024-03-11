@@ -29,7 +29,7 @@ def publish_wrench(data, hand, hand_wrench_pub):
     hand_wrench_pub[hand].publish(wrench_stamped_msg)
 
 
-def listener():
+def main():
     rclpy.init()
     node = rclpy.create_node('wrench_republisher')
     node.get_logger().info('Wrench republisher started')
@@ -48,4 +48,4 @@ def listener():
 
 
 if __name__ == '__main__':
-    listener()
+    main()

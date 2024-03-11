@@ -1,4 +1,6 @@
 from setuptools import find_packages, setup
+from os.path import join
+from glob import glob
 
 package_name = 'victor_python'
 
@@ -7,8 +9,9 @@ setup(
     version='0.0.1',
     packages=find_packages(exclude=['test']),
     data_files=[
-        ('share/' + package_name, ['package.xml']),
-        ('share/ament_index/resource_index/packages', [package_name]),
+        ('share/ament_index/resource_index/packages', [join('resource', package_name)]),
+        (join('share/', package_name), ['package.xml']),
+        (join('share', package_name, 'launch'), glob(join('launch', '*.launch.xml')))
     ],
     install_requires=['setuptools'],
     zip_safe=True,
@@ -19,13 +22,13 @@ setup(
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
-            'victor_vr_teleop = victor_python.victor_vr_teleop:main',
-            'victor_command_guide = victor_python.victor_command_guide:main',
-            'manual_motion = victor_python.manual_motion:main',
-            'robotiq_grippers_joystick_node = victor_python.robotiq_grippers_joystick_node:main',
-            'joint_state_publisher = victor_python.joint_state_publisher:main',
-            'arm_wrench_republisher = victor_python.arm_wrench_republisher:main',
-            'mock_victor_ros = victor_python.mock_victor_ros:main',
+            'victor_vr_teleop.py = victor_python.victor_vr_teleop:main',
+            'victor_command_gui.py = victor_python.victor_command_gui:main',
+            'manual_motion.py = victor_python.manual_motion:main',
+            'robotiq_grippers_joystick_node.py = victor_python.robotiq_grippers_joystick_node:main',
+            'joint_state_publisher.py = victor_python.joint_state_publisher:main',
+            'arm_wrench_republisher.py = victor_python.arm_wrench_republisher:main',
+            'mock_victor_ros.py = victor_python.mock_victor_ros:main',
         ],
     },
 )

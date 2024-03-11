@@ -5,7 +5,6 @@ set(CMAKE_CXX_STANDARD 20)
 
 set(THIS_PACKAGE_INCLUDE_DEPENDS
         ament_cmake
-        ament_cmake_python
         ament_cmake_gtest
         pluginlib
         hardware_interface
@@ -63,9 +62,6 @@ ament_target_dependencies(iiwa_lcm_bridge_node ${THIS_PACKAGE_INCLUDE_DEPENDS})
 ament_add_gtest(test_victor_utils tests/test_victor_utils.cpp)
 ament_target_dependencies(test_victor_utils ${THIS_PACKAGE_INCLUDE_DEPENDS})
 
-# Install
-ament_python_install_package(${PROJECT_NAME})
-
 install(
         TARGETS iiwa_lcm_bridge_node victor_hardware
         EXPORT ${PROJECT_NAME}_targets
@@ -74,18 +70,6 @@ install(
         RUNTIME DESTINATION lib/${PROJECT_NAME}
 )
 install(DIRECTORY include DESTINATION .)
-install(
-  DIRECTORY
-    launch
-  DESTINATION
-    share/${PROJECT_NAME}
-)
-# Install Python nodes
-install(DIRECTORY
-  scripts/
-  DESTINATION lib/${PROJECT_NAME}
-  PATTERN "*.py"
-)
 
 pluginlib_export_plugin_description_file(hardware_interface victor_hardware.xml)
 

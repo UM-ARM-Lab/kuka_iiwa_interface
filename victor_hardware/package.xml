@@ -4,14 +4,15 @@
     <version>0.0.0</version>
     <description>A ROS 2 C++ node that bridges ROS and LCM, which talks to the Kuka Java code</description>
 
-    <maintainer email="calder.pg@gmail.com">Calder Phillips-Grafflin</maintainer>
+    <author email="calder.pg@gmail.com">Calder Phillips-Grafflin</author>
     <author email="dmcconac@umich.edu">Dale McConachie</author>
     <author email="pmitrano@umich.edu">Peter Mitrano</author>
+    <maintainer email="zixuanh@umich.edu">Zixuan Huang</maintainer>
+    <maintainer email="yatlin@umich.edu">Yating Lin</maintainer>
 
     <license>BSD</license>
 
     <buildtool_depend>ament_cmake</buildtool_depend>
-    <buildtool_depend>ament_cmake_python</buildtool_depend>
     <buildtool_depend>ament_cmake_gtest</buildtool_depend>
 
 <!--    <depend>data_tamer_cpp</depend>-->
