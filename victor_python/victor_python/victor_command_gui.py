@@ -15,8 +15,8 @@ from rclpy.executors import MultiThreadedExecutor
 from rclpy.node import Node
 from urdf_parser_py.urdf import Robot
 
-from victor_hardware.victor import Victor, Side, ROBOTIQ_OPEN, ROBOTIQ_CLOSED
-from victor_hardware.victor_utils import list_to_jvq, Stiffness, get_control_mode_params, \
+from victor_python.victor import Victor, Side, ROBOTIQ_OPEN, ROBOTIQ_CLOSED
+from victor_python.victor_utils import list_to_jvq, Stiffness, get_control_mode_params, \
     get_gripper_closed_fraction_msg
 from victor_hardware_interfaces.msg import Robotiq3FingerCommand, MotionCommand, ControlMode, Robotiq3FingerStatus, \
     Robotiq3FingerActuatorStatus, Robotiq3FingerActuatorCommand, ControlModeParameters

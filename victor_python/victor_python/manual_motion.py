@@ -4,8 +4,8 @@ from victor_hardware_interfaces.msg import MotionCommand, MotionStatus
 import numpy as np
 
 import rclpy
-from victor_hardware.victor import Victor, Side
-from victor_hardware.victor_utils import jvq_to_list, list_to_jvq
+from victor_python.victor import Victor, Side
+from victor_python.victor_utils import jvq_to_list, list_to_jvq
 from rclpy.node import Node
 
 

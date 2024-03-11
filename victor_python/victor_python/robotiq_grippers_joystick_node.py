@@ -12,7 +12,7 @@ from sensor_msgs.msg import Joy
 
 from arm_utilities.listener import Listener
 from arm_utilities.ros_helpers import joy_to_xbox
-from victor_hardware.victor_utils import default_gripper_command
+from victor_python.victor_utils import default_gripper_command
 from victor_hardware_interfaces.msg import Robotiq3FingerStatus, Robotiq3FingerCommand
 
 logger = rclpy.logging.get_logger("robotiq_grippers_joystick_node")

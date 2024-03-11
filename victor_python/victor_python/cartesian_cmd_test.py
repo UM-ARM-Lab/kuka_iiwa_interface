@@ -10,11 +10,11 @@ The motion will be relative in gripper frame to the pose of the gripper when you
 see the vr_ros2_bridge repo for setup instructions.
 """
 
-from math import cos, sin
+from math import sin
 from copy import deepcopy
 
-from victor_hardware.victor import Victor
-from victor_hardware.victor_utils import get_cartesian_impedance_params
+from victor_python.victor import Victor
+from victor_python.victor_utils import get_cartesian_impedance_params
 from victor_hardware_interfaces.msg import MotionCommand, ControlMode
 from victor_hardware_interfaces.srv import SetControlMode
 

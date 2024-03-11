@@ -20,8 +20,8 @@ from arm_utilities.transformation_helper import np_tf_inv
 from geometry_msgs.msg import Pose
 from geometry_msgs.msg import TransformStamped
 from rclpy.node import Node
-from victor_hardware.victor import Victor, Side
-from victor_hardware.victor_utils import get_gripper_closed_fraction_msg
+from victor_python.victor import Victor, Side
+from victor_python.victor_utils import get_gripper_closed_fraction_msg
 from vr_ros2_bridge_msgs.msg import ControllersInfo, ControllerInfo
 
 VR_FRAME_NAME = "vr"

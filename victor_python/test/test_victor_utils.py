@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 
-import pytest
-from victor_hardware import victor_utils as vu
+from victor_python import victor_utils as vu
 
 
 def test_jvq_conversions(self):

@@ -1,9 +1,8 @@
 from typing import Sequence, Optional, Callable
 
-from moveit import MoveItPy
+from transforms3d.euler import quat2euler
 
 import rclpy
-import transformations
 from geometry_msgs.msg import TransformStamped
 from rclpy.callback_groups import MutuallyExclusiveCallbackGroup
 from rclpy.node import Node
@@ -12,7 +11,6 @@ from sensor_msgs.msg import JointState
 from std_msgs.msg import String
 from urdf_parser_py.urdf import URDF
 from urdf_parser_py.urdf import Robot as RobotURDF
-from arm_robots.robot import Robot
 
 # Suppress error messages from urdf_parser_py
 from urdf_parser_py.xml_reflection import core
@@ -20,7 +18,7 @@ from urdf_parser_py.xml_reflection import core
 core.on_error = lambda *args: None
 
 from arm_utilities.listener import Listener
-from victor_hardware.victor_utils import get_control_mode_params, is_gripper_closed, get_gripper_closed_fraction_msg, \
+from victor_python.victor_utils import get_control_mode_params, is_gripper_closed, get_gripper_closed_fraction_msg, \
     jvq_to_list
 from victor_hardware_interfaces.msg import MotionCommand, MotionStatus, Robotiq3FingerStatus, Robotiq3FingerCommand, \
     ControlMode
@@ -145,7 +143,7 @@ class Side:
         #  publish the commanded RPY
         q_wxyz = [msg.cartesian_pose.orientation.w, msg.cartesian_pose.orientation.x,
                   msg.cartesian_pose.orientation.y, msg.cartesian_pose.orientation.z]
-        q_abc = transformations.euler_from_quaternion(q_wxyz)
+        q_abc = quat2euler(q_wxyz)
         cartesian_cmd_abc_msg = MotionStatus()
         cartesian_cmd_abc_msg.header.stamp = msg.header.stamp
         cartesian_cmd_abc_msg.commanded_cartesian_pose_abc.a = q_abc[0]
