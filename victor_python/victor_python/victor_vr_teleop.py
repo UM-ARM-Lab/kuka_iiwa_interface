@@ -62,7 +62,7 @@ class SideTeleop:
         self.tool_in_base0 = transform_to_mat(tool_in_base0_msg.transform)
 
     def on_stop_recording(self):
-        print(f"Recording stopped for {self.side.name} side.")
+        pass
 
     def send_cmd(self, controller_info: ControllerInfo, open_fraction: float):
         target_in_base = self.get_target_in_base(controller_info)
@@ -87,6 +87,7 @@ class SideTeleop:
         target_tool_in_base_msg = TransformStamped()
         target_tool_in_base_msg.transform = mat_to_transform(target_in_base)
         target_tool_in_base_msg.header.frame_id = self.side.cartesian_cmd_base_frame
+
         # Just for debugging!
         target_tool_in_base_msg.child_frame_id = f"target_{self.side.cartesian_cmd_tool_frame}"
         self.tf_broadcaster.sendTransform(target_tool_in_base_msg)
@@ -131,6 +132,7 @@ class VictorTeleopNode(Node):
         vr_to_root.header.frame_id = "victor_root"
         vr_to_root.child_frame_id = VR_FRAME_NAME
         vr_to_root.transform.translation.x = 1.5
+        vr_to_root.transform.translation.z = 1.5
         vr_to_root.transform.rotation.w = 1.
         self.tf_broadcaster.sendTransform(vr_to_root)
         for controller_info in msg.controllers_info:
@@ -190,6 +192,8 @@ def main():
 
     executor = rclpy.executors.MultiThreadedExecutor()
     executor.add_node(node)
+
+    print("ready!")
 
     try:
         executor.spin()
