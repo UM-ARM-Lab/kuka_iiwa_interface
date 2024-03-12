@@ -2,8 +2,10 @@ import os
 
 import numpy as np
 from moveit.core.planning_interface import MotionPlanResponse
+from moveit.core.robot_model import JointModelGroup
 from moveit.core.robot_state import RobotState
 from moveit.planning import MoveItPy
+from moveit_msgs.msg import MoveItErrorCodes
 
 import rclpy
 from ament_index_python.packages import get_package_share_directory
@@ -15,7 +17,7 @@ from victor_python.victor import Victor
 def main():
     # this node isn't actually spun or used!
     rclpy.init()
-    node = Node('test_moveitpyk')
+    node = Node('test_moveitpy')
     victor = Victor(node)
 
     moveit_config = (
@@ -38,26 +40,39 @@ def main():
     # instantiate a RobotState instance using the current robot model
     robot_model = moveitpy_robot.get_robot_model()
     start_state = RobotState(robot_model)
-    start_state.set_to_random_positions()
+    left_arm_jmg: JointModelGroup = robot_model.get_joint_model_group("left_arm")
+    start_state.set_joint_group_positions("left_arm", np.zeros_like(left_arm_jmg.joint_model_names, dtype=np.float64))
 
     goal_state = RobotState(robot_model)
-    goal_state.set_to_random_positions()
 
-    left_arm.set_start_state(robot_state=start_state)
-    left_arm.set_goal_state(robot_state=goal_state)
+    while True:
+        goal_state.set_to_random_positions()
 
-    plan_result: MotionPlanResponse = left_arm.plan()
+        left_arm.set_start_state(robot_state=start_state)
+        left_arm.set_goal_state(robot_state=goal_state)
 
-    keys = list(filter(lambda k: 'arm' in k, start_state.joint_positions.keys()))
-    start_position_list = np.array([start_state.joint_positions[k] for k in keys])
-    goal_position_list = np.array([goal_state.joint_positions[k] for k in keys])
+        plan_result: MotionPlanResponse = left_arm.plan()
 
-    np.set_printoptions(precision=3, suppress=True, linewidth=150)
-    print("Start state", start_position_list)
-    print("Goal state", goal_position_list)
-    print("Plan result:")
-    print(f"Error code: {plan_result.error_code}")
-    print(f"Duration: {plan_result.trajectory.duration}")
+        if plan_result.error_code.val != MoveItErrorCodes.SUCCESS:
+            print("Plan failed! Replanning...")
+            continue
+
+
+        keys = list(filter(lambda k: 'arm' in k, start_state.joint_positions.keys()))
+        start_position_list = np.array([start_state.joint_positions[k] for k in keys])
+        goal_position_list = np.array([goal_state.joint_positions[k] for k in keys])
+
+        np.set_printoptions(precision=3, suppress=True, linewidth=150)
+        print("Start state", start_position_list)
+        print("Goal state", goal_position_list)
+        print("Plan result:")
+        print(f"Error code: {plan_result.error_code}")
+        print(f"Duration: {plan_result.trajectory.duration}")
+
+        break
+
+    moveitpy_robot.shutdown()
+    rclpy.shutdown()
 
 
 if __name__ == '__main__':
