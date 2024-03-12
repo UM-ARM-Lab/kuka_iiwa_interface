@@ -13,7 +13,7 @@ def generate_launch_description():
     moveit_config = MoveItConfigsBuilder("victor", package_name="victor_moveit_config").to_moveit_configs()
 
     ld = LaunchDescription()
-    ld.add_action(DeclareBooleanLaunchArg("use_rviz", default_value=False))
+    ld.add_action(DeclareBooleanLaunchArg("use_rviz", default_value=True))
 
     # Given the published joint states, publish tf for the robot links
     ld.add_action(
@@ -36,7 +36,6 @@ def generate_launch_description():
         Node(
             package="controller_manager",
             executable="ros2_control_node",
-            # namespace="victor",
             parameters=[
                 moveit_config.robot_description,
                 str(moveit_config.package_path / "config/ros2_controllers.yaml"),
