@@ -115,9 +115,9 @@ class IiwaLcmBridgeNode : public rclcpp::Node {
     gripper_command_sub_ = create_subscription<msg::Robotiq3FingerCommand>(
         gripper_command_topic, 1, std::bind(&IiwaLcmBridgeNode::gripperCommandROSCallback, this, _1), getter_options);
     set_control_mode_server_ = create_service<srv::SetControlMode>(
-        set_control_mode_service, std::bind(&IiwaLcmBridgeNode::setControlModeCallback, this, _1, _2), rmw_qos_profile_services_default, setter_callback_group_);
+        set_control_mode_service, std::bind(&IiwaLcmBridgeNode::setControlModeCallback, this, _1, _2), rclcpp::ServicesQoS(), setter_callback_group_);
     get_control_mode_server_ = create_service<srv::GetControlMode>(
-        get_control_mode_service, std::bind(&IiwaLcmBridgeNode::getControlModeCallback, this, _1, _2), rmw_qos_profile_services_default, getter_callback_group_);
+        get_control_mode_service, std::bind(&IiwaLcmBridgeNode::getControlModeCallback, this, _1, _2), rclcpp::ServicesQoS(), getter_callback_group_);
 
     // Create a timer callback that runs every 1 millisecond
     auto timer_callback = [&]() { handle_lcm(); };
