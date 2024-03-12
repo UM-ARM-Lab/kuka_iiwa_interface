@@ -1,28 +1,29 @@
 from typing import Sequence, Optional, Callable
 
+import numpy as np
 from transforms3d.euler import quat2euler
+from urdf_parser_py.urdf import Robot as RobotURDF
+from urdf_parser_py.urdf import URDF
+from urdf_parser_py.xml_reflection import core
 
 import rclpy
+from arm_robots.robot import load_moveit_config
 from geometry_msgs.msg import TransformStamped
 from rclpy.callback_groups import MutuallyExclusiveCallbackGroup
 from rclpy.node import Node
 from rclpy.qos import QoSDurabilityPolicy, QoSProfile
 from sensor_msgs.msg import JointState
 from std_msgs.msg import String
-from urdf_parser_py.urdf import URDF
-from urdf_parser_py.urdf import Robot as RobotURDF
-
-# Suppress error messages from urdf_parser_py
-from urdf_parser_py.xml_reflection import core
-
-core.on_error = lambda *args: None
 
 from arm_utilities.listener import Listener
 from victor_python.victor_utils import get_control_mode_params, is_gripper_closed, get_gripper_closed_fraction_msg, \
-    jvq_to_list
+    jvq_to_list, list_to_jvq
 from victor_hardware_interfaces.msg import MotionCommand, MotionStatus, Robotiq3FingerStatus, Robotiq3FingerCommand, \
     ControlMode
 from victor_hardware_interfaces.srv import SetControlMode, GetControlMode
+
+# Suppress error messages from urdf_parser_py
+core.on_error = lambda *args: None
 
 ROBOTIQ_OPEN = 0.0
 ROBOTIQ_CLOSED = 1.0
@@ -41,22 +42,22 @@ class ControlModeError(Exception):
 
 class Side:
 
-    def __init__(self, node: Node, name: str):  # , moveitpy_robot: MoveItPy):
+    def __init__(self, node: Node, name: str):
         """
         Args:
             node: rclpy node
             name: either "left" or "right"
-            moveitpy_robot: an instance of MoveItPy
         """
         self.node = node
         self.name = name
         self.arm_name = f"{self.name}_arm"
         self.cartesian_cmd_tool_frame = f'victor_{self.arm_name}_{CARTESIAN_CMD_FRAME_SUFFIX}'
         self.cartesian_cmd_base_frame = f'victor_{self.arm_name}_cartesian_cmd'
-        # self.moveitpy_robot = moveitpy_robot
-        # # Defined by the .srdf
-        # self.moveit_base_frame = f'victor_{self.arm_name}_link0'
-        # self.moveit_tool_frame = f'victor_{self.name}_tool0'
+
+        # This depends on moveit being installed and importable, but not on moveit_py or on the move_group node
+        self.moveit_config = load_moveit_config("victor").to_dict()
+        self.urdf = URDF.from_xml_string(self.moveit_config['robot_description'])
+        self.lower, self.upper = self.parser_joint_limits()
 
         self.pub_group = MutuallyExclusiveCallbackGroup()
         self.set_srv_group = MutuallyExclusiveCallbackGroup()
@@ -116,6 +117,38 @@ class Side:
         names = [f"victor_{self.arm_name}_joint_{i}" for i in range(1, 8)]
         return names, commanded_positions
 
+    def send_joint_cmd(self, joint_positions):
+        """
+        Send a MotionCommand with joint_positions, ordered joint1 to joint 7.
+        """
+        if len(joint_positions) != 7:
+            raise ValueError(f"joint_positions must be length 7, got {len(joint_positions)}")
+
+        # Check against joint limits
+        if np.any(joint_positions < self.lower) or np.any(joint_positions > self.upper):
+            raise ValueError(f"Joint positions out of bounds: {joint_positions}")
+
+        active_mode: ControlMode = self.get_control_mode.call(GetControlMode.Request()).active_control_mode.control_mode
+        if active_mode.mode not in [ControlMode.JOINT_POSITION, ControlMode.JOINT_IMPEDANCE]:
+            raise ControlModeError(f"Cannot send joint command in {active_mode} mode")
+
+        msg = MotionCommand()
+        msg.control_mode = active_mode
+        msg.header.stamp = self.node.get_clock().now().to_msg()
+        msg.joint_position = list_to_jvq(joint_positions)
+
+        self.motion_command.publish(msg)
+
+    def parser_joint_limits(self):
+        lower = []
+        upper = []
+        for i in range(7):
+            for joint in self.urdf.joints:
+                if joint.name == f"victor_{self.arm_name}_joint_{i + 1}":
+                    lower.append(joint.limit.lower)
+                    upper.append(joint.limit.upper)
+        return np.array(lower), np.array(upper)
+
     def send_cartesian_cmd(self, target_hand_in_root: TransformStamped):
         """
         Fills out, validates, and sends a MotionCommand in cartesian impedance mode.
@@ -154,21 +187,19 @@ class Side:
         self.motion_command.publish(msg)
 
 
-# class Victor(Robot):
 class Victor:
 
     def __init__(self, node: Node, robot_description_cb: Optional[Callable[[RobotURDF], None]] = None):
-        # super().__init__("victor")
         super().__init__()
         self.node = node
         self.robot_description_user_cb = robot_description_cb
 
-        self.left = Side(node, 'left')  # , self.moveitpy_robot)
-        self.right = Side(node, 'right')  # , self.moveitpy_robot)
+        self.left = Side(node, 'left')
+        self.right = Side(node, 'right')
 
         self.joint_states_listener = Listener(node, JointState, 'joint_states', 10)
 
-        # Subscribe to robot description we can get the joints and joint limits
+        # Subscribe to robot description so that we can get the joints and joint limits
         # This callback will only be called once at the beginning.
         # To get the parsed URDF, either pass in a user callback or use `victor.urdf`.
         self.description_callback_group = None  # MutuallyExclusiveCallbackGroup()

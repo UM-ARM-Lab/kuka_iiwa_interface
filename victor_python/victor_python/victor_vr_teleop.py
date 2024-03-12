@@ -8,8 +8,12 @@ Use the trigger to open and close the gripper, it's mapped to the open fraction 
 The motion will be relative in gripper frame to the pose of the gripper when you started recording.
 see the vr_ros2_bridge repo for setup instructions.
 """
+from time import perf_counter
 
 import numpy as np
+import transforms3d
+from moveit.core.robot_model import RobotModel, JointModelGroup
+from moveit.core.robot_state import RobotState
 from tf2_ros import TransformBroadcaster
 from tf2_ros.buffer import Buffer
 from tf2_ros.transform_listener import TransformListener
@@ -21,6 +25,7 @@ from geometry_msgs.msg import Pose
 from geometry_msgs.msg import TransformStamped
 from rclpy.node import Node
 from victor_python.victor import Victor, Side
+from victor_python.victor_moveitpy import VictorMoveItPy
 from victor_python.victor_utils import get_gripper_closed_fraction_msg
 from vr_ros2_bridge_msgs.msg import ControllersInfo, ControllerInfo
 
@@ -42,14 +47,26 @@ def controller_info_to_tf(node: Node, controller_info: ControllerInfo):
 
 class SideTeleop:
 
-    def __init__(self, node: Node, side: Side, tf_broadcaster: TransformBroadcaster, tf_buffer: Buffer):
+    def __init__(self, node: Node, side: Side, victorpy: VictorMoveItPy, tf_broadcaster: TransformBroadcaster,
+                 tf_buffer: Buffer):
         self.node = node
         self.side = side
+        self.victorpy = victorpy
         self.tf_broadcaster = tf_broadcaster
         self.tf_buffer = tf_buffer
 
         self.controller_in_vr0 = np.eye(4)
         self.tool_in_base0 = np.eye(4)
+
+        self.robot_model: RobotModel = self.victorpy.robot_model
+        self.jmg: JointModelGroup = self.robot_model.get_joint_model_group(self.side.arm_name)
+        self.planning_component = self.victorpy.moveitpy.get_planning_component(self.side.arm_name)
+        self.planning_scene_monitor = self.victorpy.moveitpy.get_planning_scene_monitor()
+        # FIXME: Python API not working to get this info?
+        self.tool_frame = 'victor_right_tool0'
+        self.base_frame = 'victor_root'
+        # tool_frame = jmg.eef_name  # not working???
+        # base_frame = robot_model.get_model_info()
 
     def on_start_recording(self, controller_info: ControllerInfo):
         controller_in_vr0_msg = controller_info_to_tf(self.node, controller_info)
@@ -57,16 +74,16 @@ class SideTeleop:
 
         self.tf_broadcaster.sendTransform(controller_in_vr0_msg)
 
-        tool_in_base0_msg = self.tf_buffer.lookup_transform(self.side.cartesian_cmd_base_frame, self.side.cartesian_cmd_tool_frame,
-                                                            rclpy.time.Time())
+        tool_in_base0_msg = self.tf_buffer.lookup_transform(self.base_frame, self.tool_frame, rclpy.time.Time())
         self.tool_in_base0 = transform_to_mat(tool_in_base0_msg.transform)
 
     def on_stop_recording(self):
         pass
 
     def send_cmd(self, controller_info: ControllerInfo, open_fraction: float):
-        target_in_base = self.get_target_in_base(controller_info)
-        self.side.send_cartesian_cmd(target_in_base)
+        joint_positions = self.get_target_in_base(controller_info)
+        if joint_positions is not None:
+            self.side.send_joint_cmd(joint_positions)
         self.side.gripper_command.publish(get_gripper_closed_fraction_msg(open_fraction))
 
     def get_target_in_base(self, controller_info: ControllerInfo) -> TransformStamped:
@@ -74,26 +91,61 @@ class SideTeleop:
         current_controller_in_vr = transform_to_mat(current_controller_in_vr_msg.transform)
         delta_in_controller = np_tf_inv(self.controller_in_vr0) @ current_controller_in_vr
 
-        tool_in_base_msg = self.tf_buffer.lookup_transform(self.side.cartesian_cmd_base_frame, self.side.cartesian_cmd_tool_frame,
-                                                           rclpy.time.Time())
+        # rotate delta_in_controller by 180 about Z to make it so the operator can face the robot
+        rotate_33 = transforms3d.euler.euler2mat(0, 0, np.pi)
+
+        tool_in_base_msg = self.tf_buffer.lookup_transform(self.base_frame, self.tool_frame, rclpy.time.Time())
         tool_in_base = transform_to_mat(tool_in_base_msg.transform)
         tool_to_base_rot_mat = tool_in_base[:3, :3]
         target_in_base_rot_mat = delta_in_controller[:3, :3] @ tool_to_base_rot_mat
         target_in_base = np.eye(4)
         target_in_base[:3, :3] = target_in_base_rot_mat
-        target_in_base[:3, 3] = tool_in_base[:3, 3] + delta_in_controller[:3, 3]
+        target_in_base[:3, 3] = tool_in_base[:3, 3] + rotate_33 @ delta_in_controller[:3, 3]
 
         self.tf_broadcaster.sendTransform(current_controller_in_vr_msg)
         target_tool_in_base_msg = TransformStamped()
         target_tool_in_base_msg.transform = mat_to_transform(target_in_base)
-        target_tool_in_base_msg.header.frame_id = self.side.cartesian_cmd_base_frame
+        target_tool_in_base_msg.header.frame_id = self.base_frame
 
         # Just for debugging!
-        target_tool_in_base_msg.child_frame_id = f"target_{self.side.cartesian_cmd_tool_frame}"
+        target_tool_in_base_msg.child_frame_id = f"target_{self.tool_frame}"
         self.tf_broadcaster.sendTransform(target_tool_in_base_msg)
 
-        target_tool_in_base_msg.child_frame_id = self.side.cartesian_cmd_tool_frame
-        return target_tool_in_base_msg
+        # Solve IK
+        pose_goal = Pose()
+        pose_goal.position.x = target_tool_in_base_msg.transform.translation.x
+        pose_goal.position.y = target_tool_in_base_msg.transform.translation.y
+        pose_goal.position.z = target_tool_in_base_msg.transform.translation.z
+        pose_goal.orientation = target_tool_in_base_msg.transform.rotation
+
+        ik_t0 = perf_counter()
+        success = False
+        # Set the robot state and check collisions
+        with self.planning_scene_monitor.read_only() as scene:
+            while True:
+                robot_state: RobotState = scene.current_state
+                # print('before:', robot_state.get_joint_group_positions(self.side.arm_name))
+                # print('       ', robot_state.get_pose(self.tool_frame))
+
+                # Set the robot state and check collisions
+                ok = robot_state.set_from_ik(self.side.arm_name, pose_goal, self.tool_frame)
+                if ok:
+                    success = True
+                    # print('before:', robot_state.get_joint_group_positions(self.side.arm_name))
+                    # print('       ', robot_state.get_pose(self.tool_frame))
+                    break
+                else:
+                    break
+
+        ik_t1 = perf_counter()
+        print(f"IK took {ik_t1 - ik_t0:.3f} seconds")
+
+        if success:
+            joint_positions = robot_state.get_joint_group_positions(self.side.arm_name)
+            return joint_positions
+        else:
+            print("IK failed!")
+            return None
 
 
 class VictorTeleopNode(Node):
@@ -102,6 +154,7 @@ class VictorTeleopNode(Node):
         super().__init__("victor_vr_teleop")
 
         self.victor = Victor(self)
+        self.victorpy = VictorMoveItPy(self.victor)
 
         self.tf_buffer = Buffer()
         self.tf_listener = TransformListener(self.tf_buffer, self)
@@ -112,8 +165,8 @@ class VictorTeleopNode(Node):
         self.tf_broadcaster = TransformBroadcaster(self)
         self.vr_sub = self.create_subscription(ControllersInfo, "vr_controller_info", self.on_controllers_info, 10)
 
-        self.left = SideTeleop(self, self.victor.left, self.tf_broadcaster, self.tf_buffer)
-        self.right = SideTeleop(self, self.victor.right, self.tf_broadcaster, self.tf_buffer)
+        self.left = SideTeleop(self, self.victor.left, self.victorpy, self.tf_broadcaster, self.tf_buffer)
+        self.right = SideTeleop(self, self.victor.right, self.victorpy, self.tf_broadcaster, self.tf_buffer)
 
         self.has_started = False
         self.is_recording = False
@@ -133,7 +186,12 @@ class VictorTeleopNode(Node):
         vr_to_root.child_frame_id = VR_FRAME_NAME
         vr_to_root.transform.translation.x = 1.5
         vr_to_root.transform.translation.z = 1.5
-        vr_to_root.transform.rotation.w = 1.
+        q_wxyz = transforms3d.euler.euler2quat(0, 0, np.pi)
+        vr_to_root.transform.rotation.w = q_wxyz[0]
+        vr_to_root.transform.rotation.x = q_wxyz[1]
+        vr_to_root.transform.rotation.y = q_wxyz[2]
+        vr_to_root.transform.rotation.z = q_wxyz[3]
+
         self.tf_broadcaster.sendTransform(vr_to_root)
         for controller_info in msg.controllers_info:
             self.tf_broadcaster.sendTransform(controller_info_to_tf(self, controller_info))
