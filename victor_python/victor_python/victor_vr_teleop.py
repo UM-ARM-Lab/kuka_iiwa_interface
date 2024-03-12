@@ -8,6 +8,7 @@ Use the trigger to open and close the gripper, it's mapped to the open fraction 
 The motion will be relative in gripper frame to the pose of the gripper when you started recording.
 see the vr_ros2_bridge repo for setup instructions.
 """
+from copy import deepcopy
 from time import perf_counter
 
 import numpy as np
@@ -17,6 +18,8 @@ from moveit.core.robot_state import RobotState
 from tf2_ros import TransformBroadcaster
 from tf2_ros.buffer import Buffer
 from tf2_ros.transform_listener import TransformListener
+from victor_hardware_interfaces.msg import MotionStatus
+from vr_ros2_bridge_msgs.msg import ControllersInfo, ControllerInfo
 
 import rclpy
 from arm_utilities.numpy_conversions import transform_to_mat, mat_to_transform
@@ -27,8 +30,6 @@ from rclpy.node import Node
 from victor_python.victor import Victor, Side
 from victor_python.victor_moveitpy import VictorMoveItPy
 from victor_python.victor_utils import get_gripper_closed_fraction_msg, jvq_to_list
-from victor_hardware_interfaces.msg import MotionStatus
-from vr_ros2_bridge_msgs.msg import ControllersInfo, ControllerInfo
 
 VR_FRAME_NAME = "vr"
 
@@ -91,13 +92,18 @@ class SideTeleop:
         current_controller_in_vr_msg = controller_info_to_tf(self.node, controller_info)
         current_controller_in_vr = transform_to_mat(current_controller_in_vr_msg.transform)
         delta_in_controller = np_tf_inv(self.controller_in_vr0) @ current_controller_in_vr
-        delta_in_controller = np.eye(4)
 
         # rotate delta_in_controller by 180 about Z to make it so the operator can face the robot
         rotate_33 = transforms3d.euler.euler2mat(0, 0, np.pi)
 
-        tool_in_base_msg = self.tf_buffer.lookup_transform(self.base_frame, self.tool_frame, rclpy.time.Time())
-        tool_in_base = transform_to_mat(tool_in_base_msg.transform)
+        current_state = RobotState(self.robot_model)
+        motion_status: MotionStatus = self.side.motion_status.get()
+        current_cmd_positions = jvq_to_list(motion_status.commanded_joint_position)
+        current_state.set_joint_group_positions(self.side.arm_name, current_cmd_positions)
+        current_state.update()
+
+        tool_in_base = current_state.get_global_link_transform(self.tool_frame)
+
         tool_to_base_rot_mat = tool_in_base[:3, :3]
         target_in_base_rot_mat = delta_in_controller[:3, :3] @ tool_to_base_rot_mat
         target_in_base = np.eye(4)
@@ -122,23 +128,16 @@ class SideTeleop:
 
         ik_t0 = perf_counter()
         success = False
-        # Set the robot state and check collisions
-        with self.planning_scene_monitor.read_only() as scene:
-            while True:
-                robot_state = RobotState(self.robot_model)
-                motion_status: MotionStatus = self.side.motion_status.get()
-                current_cmd_positions = jvq_to_list(motion_status.commanded_joint_position)
-                robot_state.set_joint_group_positions(self.side.arm_name, current_cmd_positions)
-
-                # Set the robot state and check collisions
-                ok = robot_state.set_from_ik(self.side.arm_name, pose_goal, self.tool_frame)
-                if ok:
-                    success = True
-                    # print('before:', robot_state.get_joint_group_positions(self.side.arm_name))
-                    # print('       ', robot_state.get_pose(self.tool_frame))
-                    break
-                else:
-                    break
+        robot_state = deepcopy(current_state)
+        while True:
+            ok = robot_state.set_from_ik(self.side.arm_name, pose_goal, self.tool_frame)
+            if ok:
+                success = True
+                # print('before:', robot_state.get_joint_group_positions(self.side.arm_name))
+                # print('       ', robot_state.get_pose(self.tool_frame))
+                break
+            else:
+                break
 
         ik_t1 = perf_counter()
         print(f"IK took {ik_t1 - ik_t0:.3f} seconds")
@@ -239,7 +238,6 @@ class VictorTeleopNode(Node):
                         # self.latest_action_dict['right_target_in_base'] = right_target_in_base
                         self.right.send_cmd(controller_info, open_fraction)
 
-        
         now = perf_counter()
         rcv_dt = self.last_rcv_t - now
         self.rcv_dts.append(rcv_dt)
@@ -248,7 +246,7 @@ class VictorTeleopNode(Node):
         mean_rcv_dt = np.mean(self.rcv_dts)
         if mean_rcv_dt > 0.038:
             print(f'{mean_rcv_dt=:.3f}')
-        
+
         self.last_rcv_t = now
 
     def on_done(self):
