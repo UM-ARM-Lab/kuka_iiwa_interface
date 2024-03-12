@@ -26,7 +26,8 @@ from geometry_msgs.msg import TransformStamped
 from rclpy.node import Node
 from victor_python.victor import Victor, Side
 from victor_python.victor_moveitpy import VictorMoveItPy
-from victor_python.victor_utils import get_gripper_closed_fraction_msg
+from victor_python.victor_utils import get_gripper_closed_fraction_msg, jvq_to_list
+from victor_hardware_interfaces.msg import MotionStatus
 from vr_ros2_bridge_msgs.msg import ControllersInfo, ControllerInfo
 
 VR_FRAME_NAME = "vr"
@@ -90,6 +91,7 @@ class SideTeleop:
         current_controller_in_vr_msg = controller_info_to_tf(self.node, controller_info)
         current_controller_in_vr = transform_to_mat(current_controller_in_vr_msg.transform)
         delta_in_controller = np_tf_inv(self.controller_in_vr0) @ current_controller_in_vr
+        delta_in_controller = np.eye(4)
 
         # rotate delta_in_controller by 180 about Z to make it so the operator can face the robot
         rotate_33 = transforms3d.euler.euler2mat(0, 0, np.pi)
@@ -123,9 +125,10 @@ class SideTeleop:
         # Set the robot state and check collisions
         with self.planning_scene_monitor.read_only() as scene:
             while True:
-                robot_state: RobotState = scene.current_state
-                # print('before:', robot_state.get_joint_group_positions(self.side.arm_name))
-                # print('       ', robot_state.get_pose(self.tool_frame))
+                robot_state = RobotState(self.robot_model)
+                motion_status: MotionStatus = self.side.motion_status.get()
+                current_cmd_positions = jvq_to_list(motion_status.commanded_joint_position)
+                robot_state.set_joint_group_positions(self.side.arm_name, current_cmd_positions)
 
                 # Set the robot state and check collisions
                 ok = robot_state.set_from_ik(self.side.arm_name, pose_goal, self.tool_frame)
@@ -171,6 +174,9 @@ class VictorTeleopNode(Node):
         self.has_started = False
         self.is_recording = False
         self.is_done = False
+
+        self.rcv_dts = []
+        self.last_rcv_t = perf_counter()
 
     def on_controllers_info(self, msg: ControllersInfo):
         if len(msg.controllers_info) == 0:
@@ -232,6 +238,18 @@ class VictorTeleopNode(Node):
                         self.latest_action_dict['right_open_fraction'] = open_fraction
                         # self.latest_action_dict['right_target_in_base'] = right_target_in_base
                         self.right.send_cmd(controller_info, open_fraction)
+
+        
+        now = perf_counter()
+        rcv_dt = self.last_rcv_t - now
+        self.rcv_dts.append(rcv_dt)
+        if len(self.rcv_dts) > 100:
+            self.rcv_dts.pop(0)
+        mean_rcv_dt = np.mean(self.rcv_dts)
+        if mean_rcv_dt > 0.038:
+            print(f'{mean_rcv_dt=:.3f}')
+        
+        self.last_rcv_t = now
 
     def on_done(self):
         self.victor.left.open_gripper()
