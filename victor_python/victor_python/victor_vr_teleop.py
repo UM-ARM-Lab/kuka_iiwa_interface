@@ -13,8 +13,11 @@ from time import perf_counter
 
 import numpy as np
 import transforms3d
+
+from arm_utilities.filters import BatchOnlineFilter
 from moveit.core.robot_model import RobotModel, JointModelGroup
 from moveit.core.robot_state import RobotState
+from sensor_msgs.msg import JointState
 from tf2_ros import TransformBroadcaster
 from tf2_ros.buffer import Buffer
 from tf2_ros.transform_listener import TransformListener
@@ -47,11 +50,6 @@ def controller_info_to_tf(node: Node, controller_info: ControllerInfo):
     return tf
 
 
-class JointPositionsFilter:
-
-    def __init__(self, h: int, alpha: float):
-        self.h = h
-        self.alpha = alpha
 
 class SideTeleop:
 
@@ -73,7 +71,9 @@ class SideTeleop:
         self.base_frame = self.robot_model.model_frame
         self.tool_frame = self.jmg.eef_name
 
-        self.filter = JointPositionsFilter(h=5, alpha=0.9)
+        self.filter_pub = self.node.create_publisher(JointState, 'filtered_joint_states', 10)
+
+        self.filter = BatchOnlineFilter(numtaps=20, cutoff=0.1)
 
     def on_start_recording(self, controller_info: ControllerInfo):
         controller_in_vr0_msg = controller_info_to_tf(self.node, controller_info)
@@ -81,17 +81,32 @@ class SideTeleop:
 
         self.tf_broadcaster.sendTransform(controller_in_vr0_msg)
 
-        tool_in_base0_msg = self.tf_buffer.lookup_transform(self.base_frame, self.tool_frame, rclpy.time.Time())
-        self.tool_in_base0 = transform_to_mat(tool_in_base0_msg.transform)
+        current_state, self.tool_in_base0 = self.get_current_commanded_tool()
+
+        tool_in_base0_msg = TransformStamped()
+        tool_in_base0_msg.transform = mat_to_transform(self.tool_in_base0)
+        tool_in_base0_msg.header.frame_id = self.base_frame
+        tool_in_base0_msg.child_frame_id = f"tool_{self.side.arm_name}_in_base0"
+        self.tf_broadcaster.sendTransform(tool_in_base0_msg)
+
+        controller_in_vr0_msg.child_frame_id = f"controller_{self.side.arm_name}_in_vr0"
+        self.tf_broadcaster.sendTransform(controller_in_vr0_msg)
 
     def on_stop_recording(self):
         pass
 
     def send_cmd(self, controller_info: ControllerInfo, open_fraction: float):
         joint_positions = self.get_target_in_base(controller_info)
-        # joint_positions = self.filter.update(joint_positions)
+
         if joint_positions is not None:
             self.side.send_joint_cmd(joint_positions)
+
+            joint_positions_filtered = self.filter.update(joint_positions)
+            joint_state_msg = JointState()
+            joint_state_msg.name = [f"victor_{self.side.arm_name}_joint_{i}" for i in range(len(joint_positions_filtered))]
+            joint_state_msg.position = joint_positions_filtered.squeeze().tolist()
+            self.filter_pub.publish(joint_state_msg)
+
         self.side.gripper_command.publish(get_gripper_closed_fraction_msg(open_fraction))
 
     def get_target_in_base(self, controller_info: ControllerInfo) -> TransformStamped:
@@ -99,23 +114,9 @@ class SideTeleop:
         current_controller_in_vr = transform_to_mat(current_controller_in_vr_msg.transform)
         delta_in_controller = np_tf_inv(self.controller_in_vr0) @ current_controller_in_vr
 
-        # rotate delta_in_controller by 180 about Z to make it so the operator can face the robot
-        rotate_33 = transforms3d.euler.euler2mat(0, 0, np.pi)
+        current_state, tool_in_base = self.get_current_commanded_tool()
 
-        current_state = RobotState(self.robot_model)
-        motion_status: MotionStatus = self.side.motion_status.get()
-        current_cmd_positions = jvq_to_list(motion_status.commanded_joint_position)
-        current_state.set_joint_group_positions(self.side.arm_name, current_cmd_positions)
-        current_state.update()
-
-        tool_in_base = current_state.get_global_link_transform(self.tool_frame)
-
-        tool_to_base_rot_mat = tool_in_base[:3, :3]
-        # FIXME: rotation doesn't apply rotate_33
-        target_in_base_rot_mat = delta_in_controller[:3, :3] @ tool_to_base_rot_mat
-        target_in_base = np.eye(4)
-        target_in_base[:3, :3] = target_in_base_rot_mat
-        target_in_base[:3, 3] = tool_in_base[:3, 3] + rotate_33 @ delta_in_controller[:3, 3]
+        target_in_base = self.tool_in_base0 @ delta_in_controller
 
         self.tf_broadcaster.sendTransform(current_controller_in_vr_msg)
         target_tool_in_base_msg = TransformStamped()
@@ -155,6 +156,15 @@ class SideTeleop:
         else:
             print("IK failed!")
             return None
+
+    def get_current_commanded_tool(self):
+        current_state = RobotState(self.robot_model)
+        motion_status: MotionStatus = self.side.motion_status.get()
+        current_cmd_positions = jvq_to_list(motion_status.commanded_joint_position)
+        current_state.set_joint_group_positions(self.side.arm_name, current_cmd_positions)
+        current_state.update()
+        tool_in_base = current_state.get_global_link_transform(self.tool_frame)
+        return current_state, tool_in_base
 
 
 class VictorTeleopNode(Node):
