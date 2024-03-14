@@ -47,6 +47,12 @@ def controller_info_to_tf(node: Node, controller_info: ControllerInfo):
     return tf
 
 
+class JointPositionsFilter:
+
+    def __init__(self, h: int, alpha: float):
+        self.h = h
+        self.alpha = alpha
+
 class SideTeleop:
 
     def __init__(self, node: Node, side: Side, victorpy: VictorMoveItPy, tf_broadcaster: TransformBroadcaster,
@@ -67,6 +73,8 @@ class SideTeleop:
         self.base_frame = self.robot_model.model_frame
         self.tool_frame = self.jmg.eef_name
 
+        self.filter = JointPositionsFilter(h=5, alpha=0.9)
+
     def on_start_recording(self, controller_info: ControllerInfo):
         controller_in_vr0_msg = controller_info_to_tf(self.node, controller_info)
         self.controller_in_vr0 = transform_to_mat(controller_in_vr0_msg.transform)
@@ -81,6 +89,7 @@ class SideTeleop:
 
     def send_cmd(self, controller_info: ControllerInfo, open_fraction: float):
         joint_positions = self.get_target_in_base(controller_info)
+        # joint_positions = self.filter.update(joint_positions)
         if joint_positions is not None:
             self.side.send_joint_cmd(joint_positions)
         self.side.gripper_command.publish(get_gripper_closed_fraction_msg(open_fraction))
@@ -102,6 +111,7 @@ class SideTeleop:
         tool_in_base = current_state.get_global_link_transform(self.tool_frame)
 
         tool_to_base_rot_mat = tool_in_base[:3, :3]
+        # FIXME: rotation doesn't apply rotate_33
         target_in_base_rot_mat = delta_in_controller[:3, :3] @ tool_to_base_rot_mat
         target_in_base = np.eye(4)
         target_in_base[:3, :3] = target_in_base_rot_mat
