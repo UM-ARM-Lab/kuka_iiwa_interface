@@ -9,30 +9,34 @@ The motion will be relative in gripper frame to the pose of the gripper when you
 see the vr_ros2_bridge repo for setup instructions.
 """
 from copy import deepcopy
+from threading import Thread
 from time import perf_counter
 
 import numpy as np
 import transforms3d
 
-from arm_utilities.filters import BatchOnlineFilter
-from moveit.core.robot_model import RobotModel, JointModelGroup
-from moveit.core.robot_state import RobotState
-from sensor_msgs.msg import JointState
-from tf2_ros import TransformBroadcaster
-from tf2_ros.buffer import Buffer
-from tf2_ros.transform_listener import TransformListener
-from victor_hardware_interfaces.msg import MotionStatus
-from vr_ros2_bridge_msgs.msg import ControllersInfo, ControllerInfo
-
 import rclpy
+from ament_index_python import get_package_share_path
+from arm_utilities.filters import BatchOnlineFilter
 from arm_utilities.numpy_conversions import transform_to_mat, mat_to_transform
 from arm_utilities.transformation_helper import np_tf_inv
 from geometry_msgs.msg import Pose
 from geometry_msgs.msg import TransformStamped
+from moveit.core.robot_model import RobotModel, JointModelGroup
+from moveit.core.robot_state import RobotState
+from moveit.planning import MoveItPy
+from moveit2.moveit_configs_utils.moveit_configs_utils import MoveItConfigsBuilder
 from rclpy.node import Node
+from sensor_msgs.msg import JointState
+from tf2_ros import TransformBroadcaster
+from tf2_ros.buffer import Buffer
+from tf2_ros.transform_listener import TransformListener
+from victor_hardware_interfaces.msg import MotionStatus, ControlMode
+from victor_hardware_interfaces.srv import SetControlMode
 from victor_python.victor import Victor, Side
-from victor_python.victor_moveitpy import VictorMoveItPy
+from victor_python.victor_utils import get_control_mode_params
 from victor_python.victor_utils import get_gripper_closed_fraction_msg, jvq_to_list
+from vr_ros2_bridge_msgs.msg import ControllersInfo, ControllerInfo
 
 VR_FRAME_NAME = "vr"
 
@@ -50,25 +54,22 @@ def controller_info_to_tf(node: Node, controller_info: ControllerInfo):
     return tf
 
 
-
 class SideTeleop:
 
-    def __init__(self, node: Node, side: Side, victorpy: VictorMoveItPy, tf_broadcaster: TransformBroadcaster,
+    def __init__(self, node: Node, side: Side, moveitpy: MoveItPy, tf_broadcaster: TransformBroadcaster,
                  tf_buffer: Buffer):
         self.node = node
         self.side = side
-        self.victorpy = victorpy
+        self.moveitpy = moveitpy
+        self.robot_model: RobotModel = self.moveitpy.get_robot_model()
         self.tf_broadcaster = tf_broadcaster
         self.tf_buffer = tf_buffer
 
         self.controller_in_vr0 = np.eye(4)
         self.tool_in_base0 = np.eye(4)
 
-        self.robot_model: RobotModel = self.victorpy.robot_model
-        self.jmg: JointModelGroup = self.robot_model.get_joint_model_group(self.side.arm_name)
-        self.planning_component = self.victorpy.moveitpy.get_planning_component(self.side.arm_name)
-        self.planning_scene_monitor = self.victorpy.moveitpy.get_planning_scene_monitor()
         self.base_frame = self.robot_model.model_frame
+        self.jmg: JointModelGroup = self.robot_model.get_joint_model_group(self.side.arm_name)
         self.tool_frame = self.jmg.eef_name
 
         self.filter_pub = self.node.create_publisher(JointState, 'filtered_joint_states', 10)
@@ -103,7 +104,8 @@ class SideTeleop:
 
             joint_positions_filtered = self.filter.update(joint_positions)
             joint_state_msg = JointState()
-            joint_state_msg.name = [f"victor_{self.side.arm_name}_joint_{i}" for i in range(len(joint_positions_filtered))]
+            joint_state_msg.name = [f"victor_{self.side.arm_name}_joint_{i}" for i in
+                                    range(len(joint_positions_filtered))]
             joint_state_msg.position = joint_positions_filtered.squeeze().tolist()
             self.filter_pub.publish(joint_state_msg)
 
@@ -173,7 +175,16 @@ class VictorTeleopNode(Node):
         super().__init__("victor_vr_teleop")
 
         self.victor = Victor(self)
-        self.victorpy = VictorMoveItPy(self.victor)
+
+        moveit_package_name = f"victor_moveit_config"
+        moveit_cpp_path = get_package_share_path(moveit_package_name) / "config" / "moveit_cpp.yaml"
+        kinematics_path = "config/vr_teleop_kinematics.yaml"
+        builder = MoveItConfigsBuilder(robot_name='victor', package_name=moveit_package_name)
+        builder = builder.moveit_cpp(str(moveit_cpp_path))
+        builder = builder.robot_description_kinematics(str(kinematics_path))
+        config_dict = builder.to_moveit_configs().to_dict()
+
+        self.moveitpy = MoveItPy(node_name="victor_vr_teleop_moveitpy", config_dict=config_dict)
 
         self.tf_buffer = Buffer()
         self.tf_listener = TransformListener(self.tf_buffer, self)
@@ -184,8 +195,8 @@ class VictorTeleopNode(Node):
         self.tf_broadcaster = TransformBroadcaster(self)
         self.vr_sub = self.create_subscription(ControllersInfo, "vr_controller_info", self.on_controllers_info, 10)
 
-        self.left = SideTeleop(self, self.victor.left, self.victorpy, self.tf_broadcaster, self.tf_buffer)
-        self.right = SideTeleop(self, self.victor.right, self.victorpy, self.tf_broadcaster, self.tf_buffer)
+        self.left = SideTeleop(self, self.victor.left, self.moveitpy, self.tf_broadcaster, self.tf_buffer)
+        self.right = SideTeleop(self, self.victor.right, self.moveitpy, self.tf_broadcaster, self.tf_buffer)
 
         self.has_started = False
         self.is_recording = False
@@ -193,6 +204,19 @@ class VictorTeleopNode(Node):
 
         self.rcv_dts = []
         self.last_rcv_t = perf_counter()
+
+        self.set_control_modes_async()
+
+    def set_control_modes_async(self):
+        thread = Thread(target=self.set_control_modes)
+        thread.start()
+
+    def set_control_modes(self):
+        req = SetControlMode.Request()
+        req.new_control_mode = get_control_mode_params(ControlMode.JOINT_IMPEDANCE, vel=1.0, accel=0.1)
+
+        self.victor.left.set_control_mode_client.call(req)
+        self.victor.right.set_control_mode_client.call(req)
 
     def on_controllers_info(self, msg: ControllersInfo):
         if len(msg.controllers_info) == 0:

@@ -11,7 +11,7 @@ setup(
     data_files=[
         ('share/ament_index/resource_index/packages', [join('resource', package_name)]),
         (join('share/', package_name), ['package.xml']),
-        (join('share', package_name, 'launch'), glob(join('launch', '*.launch.xml')))
+        (join('share', package_name, 'launch'), glob(join('launch', '*.launch.xml'))),
     ],
     install_requires=['setuptools'],
     zip_safe=True,

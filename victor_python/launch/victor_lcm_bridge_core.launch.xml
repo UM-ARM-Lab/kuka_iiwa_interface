@@ -18,7 +18,7 @@
         <param name="recv_lcm_url" value="$(var right_arm_recv_url)"/>
     </node>
 
-    <node pkg="joy" exec="joy_node" name="xbox_joystick" namespace="victor"/>
+    <node pkg="joy" exec="joy_node" name="xbox_joystick" namespace="victor" output="screen"/>
     <node pkg="victor_python" exec="robotiq_grippers_joystick_node.py" name="robotiq_grippers_joystick_node" namespace="victor">
         <param name="enable_finger_open_close_control" value="true"/>
         <param name="enable_scissor_open_close_control" value="true"/>

@@ -128,10 +128,11 @@ class ArmWidget(QWidget):
         joint_states_dict = self.victor.get_joint_cmd_dict()
         gripper_status: Robotiq3FingerStatus = self.side.gripper_status.get()
 
-        active_control_mode_res = self.side.get_control_mode.call(GetControlMode.Request())
+        active_control_mode_res = self.side.get_control_mode_client.call(GetControlMode.Request())
 
         # Emit back to the main thread
-        self.initial_robot_data.emit(robot_description, joint_states_dict, active_control_mode_res.active_control_mode, gripper_status)
+        self.initial_robot_data.emit(robot_description, joint_states_dict, active_control_mode_res.active_control_mode,
+                                     gripper_status)
 
     def on_initial_robot_data(self,
                               robot: Robot,
@@ -213,7 +214,7 @@ class ArmWidget(QWidget):
         thread.start()
 
     def publish_arm_cmd(self):
-        active_control_mode = self.side.get_control_mode.call(GetControlMode.Request()).active_control_mode
+        active_control_mode = self.side.get_control_mode_client.call(GetControlMode.Request()).active_control_mode
         self.motion_cmd.control_mode = active_control_mode.control_mode
         self.motion_cmd.joint_position = self.get_jvq_from_sliders()
         self.side.motion_command.publish(self.motion_cmd)
@@ -251,9 +252,11 @@ class ArmWidget(QWidget):
         """ Must not be called from the main thread, or the ROS Executor and the QT Gui will both be blocked. """
         request = SetControlMode.Request()
         request.new_control_mode = get_control_mode_params(control_mode.mode, self.stiffness)
-        self.side.set_control_mode.call(request)
-        active_control_mode = self.side.get_control_mode.call(GetControlMode.Request()).active_control_mode
+        self.side.set_control_mode_client.call(request)
+
+        active_control_mode = self.side.get_control_mode_client.call(GetControlMode.Request()).active_control_mode
         self.motion_cmd.control_mode = active_control_mode.control_mode
+
 
 class SliderWidget(QWidget):
 
@@ -381,7 +384,7 @@ class ControlModeParamsWidget(QWidget):
 
     def reset_params_tree(self):
         """ Not called from the main thread """
-        res = self.side.get_control_mode.call(GetControlMode.Request())
+        res = self.side.get_control_mode_client.call(GetControlMode.Request())
 
         # Emit back to the main thread
         self.reset_params_tree_signal.emit(res.active_control_mode)
@@ -400,7 +403,7 @@ class ControlModeParamsWidget(QWidget):
         req = SetControlMode.Request()
         tree_to_control_mode_params(self.params_tree, req.new_control_mode)
 
-        self.side.set_control_mode.call(req)
+        self.side.set_control_mode_client.call(req)
 
 
 def tree_item_to_control_mode_params(tree: QTreeWidget, item: QTreeWidgetItem, msg):

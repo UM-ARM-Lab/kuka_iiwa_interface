@@ -70,9 +70,9 @@ class Side:
         self.cartesian_cmd_abc_pub = node.create_publisher(MotionStatus, f"victor_{self.arm_name}/cartesian_cmd_abc",
                                                            10)
 
-        self.set_control_mode = node.create_client(SetControlMode, f"victor/{self.arm_name}/set_control_mode_service",
+        self.set_control_mode_client = node.create_client(SetControlMode, f"victor/{self.arm_name}/set_control_mode_service",
                                                    callback_group=self.set_srv_group)
-        self.get_control_mode = node.create_client(GetControlMode, f"victor/{self.arm_name}/get_control_mode_service",
+        self.get_control_mode_client = node.create_client(GetControlMode, f"victor/{self.arm_name}/get_control_mode_service",
                                                    callback_group=self.get_srv_group)
 
         self.motion_status = Listener(node, MotionStatus, f"victor/{self.arm_name}/motion_status", 10)
@@ -97,14 +97,14 @@ class Side:
         return self.motion_status.get()
 
     def get_arm_control_mode(self):
-        control_mode_res: GetControlMode.Response = self.get_control_mode.call(GetControlMode.Request())
+        control_mode_res: GetControlMode.Response = self.get_control_mode_client.call(GetControlMode.Request())
         return control_mode_res.active_control_mode.control_mode
 
-    def set_arm_control_mode(self, control_mode: ControlMode, **kwargs):
+    def set_control_mode(self, control_mode: ControlMode, **kwargs):
         new_control_mode = get_control_mode_params(control_mode, **kwargs)
         req = SetControlMode.Request()
         req.new_control_mode = new_control_mode
-        res: SetControlMode.Response = self.get_control_mode.call(req)
+        res: SetControlMode.Response = self.set_control_mode_client.call(req)
 
         if not res.success:
             print(f"Failed to switch {self.arm_name} to control mode: {control_mode}")
@@ -128,7 +128,7 @@ class Side:
         if np.any(joint_positions < self.lower) or np.any(joint_positions > self.upper):
             raise ValueError(f"Joint positions out of bounds: {joint_positions}")
 
-        active_mode: ControlMode = self.get_control_mode.call(GetControlMode.Request()).active_control_mode.control_mode
+        active_mode: ControlMode = self.get_control_mode_client.call(GetControlMode.Request()).active_control_mode.control_mode
         if active_mode.mode not in [ControlMode.JOINT_POSITION, ControlMode.JOINT_IMPEDANCE]:
             raise ControlModeError(f"Cannot send joint command in {active_mode} mode")
 
@@ -153,7 +153,7 @@ class Side:
         """
         Fills out, validates, and sends a MotionCommand in cartesian impedance mode.
         """
-        active_mode: ControlMode = self.get_control_mode.call(GetControlMode.Request()).active_control_mode.control_mode
+        active_mode: ControlMode = self.get_control_mode_client.call(GetControlMode.Request()).active_control_mode.control_mode
         if active_mode.mode != ControlMode.CARTESIAN_IMPEDANCE:
             raise ControlModeError(f"Cannot send cartesian command in {active_mode} mode")
 
@@ -228,8 +228,8 @@ class Victor:
         return {'left': self.left.get_arm_control_mode(), 'right': self.right.get_arm_control_mode()}
 
     def set_control_modes(self, control_mode: ControlMode, vel: float, **kwargs):
-        left_res = self.left.set_arm_control_mode(control_mode, vel=vel, **kwargs)
-        right_res = self.right.set_arm_control_mode(control_mode, vel=vel, **kwargs)
+        left_res = self.left.set_control_mode(control_mode, vel=vel, **kwargs)
+        right_res = self.right.set_control_mode(control_mode, vel=vel, **kwargs)
         return left_res, right_res
 
     def get_joint_positions(self, joint_names: Optional[Sequence[str]] = None):
