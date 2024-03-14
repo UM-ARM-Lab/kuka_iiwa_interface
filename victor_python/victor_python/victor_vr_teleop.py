@@ -64,11 +64,8 @@ class SideTeleop:
         self.jmg: JointModelGroup = self.robot_model.get_joint_model_group(self.side.arm_name)
         self.planning_component = self.victorpy.moveitpy.get_planning_component(self.side.arm_name)
         self.planning_scene_monitor = self.victorpy.moveitpy.get_planning_scene_monitor()
-        # FIXME: Python API not working to get this info?
-        self.tool_frame = 'victor_right_tool0'
-        self.base_frame = 'victor_root'
-        # tool_frame = jmg.eef_name  # not working???
-        # base_frame = robot_model.get_model_info()
+        self.base_frame = self.robot_model.model_frame
+        self.tool_frame = self.jmg.eef_name
 
     def on_start_recording(self, controller_info: ControllerInfo):
         controller_in_vr0_msg = controller_info_to_tf(self.node, controller_info)
