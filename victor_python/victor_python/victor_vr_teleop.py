@@ -31,7 +31,7 @@ from sensor_msgs.msg import JointState
 from tf2_ros import TransformBroadcaster
 from tf2_ros.buffer import Buffer
 from tf2_ros.transform_listener import TransformListener
-from victor_hardware_interfaces.msg import MotionStatus, ControlMode
+from victor_hardware_interfaces.msg import MotionStatus, ControlMode, Robotiq3FingerStatus
 from victor_hardware_interfaces.srv import SetControlMode
 from victor_python.victor import Victor, Side
 from victor_python.victor_utils import get_control_mode_params
@@ -58,12 +58,15 @@ class SideTeleop:
 
     def __init__(self, node: Node, side: Side, moveitpy: MoveItPy, tf_broadcaster: TransformBroadcaster,
                  tf_buffer: Buffer):
+        self.gripper_in_motion = None
         self.node = node
         self.side = side
         self.moveitpy = moveitpy
         self.robot_model: RobotModel = self.moveitpy.get_robot_model()
         self.tf_broadcaster = tf_broadcaster
         self.tf_buffer = tf_buffer
+        self.gripper_open = True
+        self.last_send_open_fraction = 0.0
 
         self.controller_in_vr0 = np.eye(4)
         self.tool_in_base0 = np.eye(4)
@@ -100,6 +103,7 @@ class SideTeleop:
         joint_positions = self.get_target_in_base(controller_info)
 
         if joint_positions is not None:
+            # TODO: use filtered joint positions!
             self.side.send_joint_cmd(joint_positions)
 
             joint_positions_filtered = self.filter.update(joint_positions)
@@ -109,7 +113,24 @@ class SideTeleop:
             joint_state_msg.position = joint_positions_filtered.squeeze().tolist()
             self.filter_pub.publish(joint_state_msg)
 
-        self.side.gripper_command.publish(get_gripper_closed_fraction_msg(open_fraction))
+        if abs(open_fraction - self.last_send_open_fraction) > 0.05:
+            self.side.gripper_command.publish(get_gripper_closed_fraction_msg(open_fraction))
+            self.last_send_open_fraction = open_fraction
+
+        return {
+            'right_open_fraction': open_fraction,
+            'joint_positions': joint_positions,
+        }
+
+    def toggle_gripper(self):
+        if self.gripper_in_motion:
+            return
+
+        self.gripper_open = not self.gripper_open
+        if self.gripper_open:
+            self.side.open_gripper()
+        else:
+            self.side.close_gripper()
 
     def get_target_in_base(self, controller_info: ControllerInfo) -> TransformStamped:
         current_controller_in_vr_msg = controller_info_to_tf(self.node, controller_info)
@@ -143,20 +164,18 @@ class SideTeleop:
             ok = robot_state.set_from_ik(self.side.arm_name, pose_goal, self.tool_frame)
             if ok:
                 success = True
-                # print('before:', robot_state.get_joint_group_positions(self.side.arm_name))
-                # print('       ', robot_state.get_pose(self.tool_frame))
                 break
             else:
                 break
 
         ik_t1 = perf_counter()
-        print(f"IK took {ik_t1 - ik_t0:.3f} seconds")
+        # print(f"IK took {ik_t1 - ik_t0:.3f} seconds")
 
         if success:
             joint_positions = robot_state.get_joint_group_positions(self.side.arm_name)
             return joint_positions
         else:
-            print("IK failed!")
+            # print("IK failed!")
             return None
 
     def get_current_commanded_tool(self):
@@ -167,6 +186,10 @@ class SideTeleop:
         current_state.update()
         tool_in_base = current_state.get_global_link_transform(self.tool_frame)
         return current_state, tool_in_base
+
+    def update(self):
+        gripper_status: Robotiq3FingerStatus = self.side.gripper_status.get()
+        self.gripper_in_motion = gripper_status.gripper_motion_status == Robotiq3FingerStatus.GRIPPER_IN_MOTION
 
 
 class VictorTeleopNode(Node):
@@ -190,7 +213,6 @@ class VictorTeleopNode(Node):
         self.tf_listener = TransformListener(self.tf_buffer, self)
 
         self.latest_action_dict = None
-        self.linear_velocity_scale = 1.
 
         self.tf_broadcaster = TransformBroadcaster(self)
         self.vr_sub = self.create_subscription(ControllersInfo, "vr_controller_info", self.on_controllers_info, 10)
@@ -221,6 +243,9 @@ class VictorTeleopNode(Node):
     def on_controllers_info(self, msg: ControllersInfo):
         if len(msg.controllers_info) == 0:
             return
+
+        self.left.update()
+        self.right.update()
 
         any_grip_button = any([controller_info.grip_button for controller_info in msg.controllers_info])
         any_menu_button = any([controller_info.menu_button for controller_info in msg.controllers_info])
@@ -268,16 +293,21 @@ class VictorTeleopNode(Node):
             self.latest_action_dict = {}
             controller_info: ControllerInfo
             for controller_info in msg.controllers_info:
-                if controller_info.grip_button:
-                    open_fraction = controller_info.trigger_axis
-                    if 'left' in controller_info.controller_name:
-                        self.latest_action_dict['left_open_fraction'] = open_fraction
-                        # self.latest_action_dict['left_target_in_base'] = left_target_in_base
-                        self.left.send_cmd(controller_info, open_fraction)
-                    elif 'right' in controller_info.controller_name:
-                        self.latest_action_dict['right_open_fraction'] = open_fraction
-                        # self.latest_action_dict['right_target_in_base'] = right_target_in_base
-                        self.right.send_cmd(controller_info, open_fraction)
+                open_fraction = controller_info.trigger_axis
+                if 'left' in controller_info.controller_name:
+                    if controller_info.grip_button:
+                        left_action = self.left.send_cmd(controller_info, open_fraction)
+                        self.latest_action_dict.update(left_action)
+                    if controller_info.trackpad_button:
+                        self.left.toggle_gripper()
+                elif 'right' in controller_info.controller_name:
+                    if controller_info.grip_button:
+                        right_action = self.right.send_cmd(controller_info, open_fraction)
+                        self.latest_action_dict.update(right_action)
+                    if controller_info.trackpad_button:
+                        self.right.toggle_gripper()
+
+
 
         now = perf_counter()
         rcv_dt = self.last_rcv_t - now
@@ -286,7 +316,7 @@ class VictorTeleopNode(Node):
             self.rcv_dts.pop(0)
         mean_rcv_dt = np.mean(self.rcv_dts)
         if mean_rcv_dt > 0.038:
-            print(f'{mean_rcv_dt=:.3f}')
+            print(f'slow!!! {mean_rcv_dt=:.3f}')
 
         self.last_rcv_t = now
 

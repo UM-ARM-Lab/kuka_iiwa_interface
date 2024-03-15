@@ -17,7 +17,6 @@ def generate_launch_description():
                 executable="spawner",
                 arguments=[controller],
                 output="screen",
-                # namespace="victor",
             )
         )
     return ld
