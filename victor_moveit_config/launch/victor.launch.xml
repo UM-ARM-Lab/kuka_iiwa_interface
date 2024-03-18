@@ -1,0 +1,16 @@
+<launch>
+    <include file="$(find victor_python)/launch/victor_lcm_bridge.launch.xml">
+        <arg name="victor_command_gui" value="true"/>
+    </include>
+
+    <include file="$(find victor_moveit_config)/launch/moveit_rviz.launch.py"/>
+
+    <node pkg="controller_manager" exec="ros2_control_node" name="ros2_control_node" output="screen">
+        <param name="robot_description" value="$(arg robot_description)"/>
+        <param name="ros2_controllers_yaml" value="$(find victor_moveit_config)/config/ros2_controllers.yaml"/>
+    </node>
+
+    <include file="$(find victor_moveit_config)/launch/spawn_controllers.launch.py"/>
+
+    <include file="$(find victor_moveit_config)/launch/move_group.launch.py"/>
+</launch>

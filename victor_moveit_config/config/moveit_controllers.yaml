@@ -4,8 +4,8 @@ moveit_controller_manager: moveit_simple_controller_manager/MoveItSimpleControll
 
 moveit_simple_controller_manager:
   controller_names:
-    # - left_arm_position_controller
-    # - right_arm_position_controller
+    # These names are some subset of the names in ros2_controllers.yaml
+    - joint_state_broadcaster
     - joint_trajectory_controller
     - left_force_torque_broadcaster
     - right_force_torque_broadcaster
