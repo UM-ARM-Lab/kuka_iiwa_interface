@@ -26,7 +26,7 @@ setup(
             'victor_command_gui.py = victor_python.victor_command_gui:main',
             'manual_motion.py = victor_python.manual_motion:main',
             'robotiq_grippers_joystick_node.py = victor_python.robotiq_grippers_joystick_node:main',
-            'joint_state_publisher.py = victor_python.joint_state_publisher:main',
+            'victor_joint_state_publisher.py = victor_python.joint_state_publisher:main',
             'arm_wrench_republisher.py = victor_python.arm_wrench_republisher:main',
             'mock_victor_ros.py = victor_python.mock_victor_ros:main',
         ],

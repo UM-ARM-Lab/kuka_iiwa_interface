@@ -1,26 +1,25 @@
 from typing import Sequence, Optional, Callable
 
 import numpy as np
-from transforms3d.euler import quat2euler
-from urdf_parser_py.urdf import Robot as RobotURDF
-from urdf_parser_py.urdf import URDF
-from urdf_parser_py.xml_reflection import core
-
 import rclpy
-from arm_robots.robot import load_moveit_config
 from geometry_msgs.msg import TransformStamped
 from rclpy.callback_groups import MutuallyExclusiveCallbackGroup
 from rclpy.node import Node
 from rclpy.qos import QoSDurabilityPolicy, QoSProfile
 from sensor_msgs.msg import JointState
 from std_msgs.msg import String
+from urdf_parser_py.urdf import Robot as RobotURDF
+from urdf_parser_py.urdf import URDF
+from urdf_parser_py.xml_reflection import core
 
+from arm_robots.robot import load_moveit_config
 from arm_utilities.listener import Listener
-from victor_python.victor_utils import get_control_mode_params, is_gripper_closed, get_gripper_closed_fraction_msg, \
-    jvq_to_list, list_to_jvq
 from victor_hardware_interfaces.msg import MotionCommand, MotionStatus, Robotiq3FingerStatus, Robotiq3FingerCommand, \
     ControlMode
 from victor_hardware_interfaces.srv import SetControlMode, GetControlMode
+from victor_python.robotiq_finger_angles import compute_finger_angles, get_finger_angle_names, compute_scissor_angle, get_scissor_joint_name
+from victor_python.victor_utils import get_control_mode_params, is_gripper_closed, get_gripper_closed_fraction_msg, \
+    jvq_to_list, list_to_jvq
 
 # Suppress error messages from urdf_parser_py
 core.on_error = lambda *args: None
@@ -67,13 +66,11 @@ class Side:
                                                     callback_group=self.pub_group)
         self.gripper_command = node.create_publisher(Robotiq3FingerCommand, f"victor/{self.arm_name}/gripper_command",
                                                      10, callback_group=self.pub_group)
-        self.cartesian_cmd_abc_pub = node.create_publisher(MotionStatus, f"victor_{self.arm_name}/cartesian_cmd_abc",
-                                                           10)
 
         self.set_control_mode_client = node.create_client(SetControlMode, f"victor/{self.arm_name}/set_control_mode_service",
-                                                   callback_group=self.set_srv_group)
+                                                          callback_group=self.set_srv_group)
         self.get_control_mode_client = node.create_client(GetControlMode, f"victor/{self.arm_name}/get_control_mode_service",
-                                                   callback_group=self.get_srv_group)
+                                                          callback_group=self.get_srv_group)
 
         self.motion_status = Listener(node, MotionStatus, f"victor/{self.arm_name}/motion_status", 10)
         self.gripper_status = Listener(node, Robotiq3FingerStatus, f"victor/{self.arm_name}/gripper_status", 10)
@@ -172,19 +169,43 @@ class Side:
         msg.cartesian_pose.position.z = target_hand_in_root.transform.translation.z
         msg.cartesian_pose.orientation = target_hand_in_root.transform.rotation
 
-        # FIXME: remove ths, it's just for debugging
-        #  publish the commanded RPY
-        q_wxyz = [msg.cartesian_pose.orientation.w, msg.cartesian_pose.orientation.x,
-                  msg.cartesian_pose.orientation.y, msg.cartesian_pose.orientation.z]
-        q_abc = quat2euler(q_wxyz)
-        cartesian_cmd_abc_msg = MotionStatus()
-        cartesian_cmd_abc_msg.header.stamp = msg.header.stamp
-        cartesian_cmd_abc_msg.commanded_cartesian_pose_abc.a = q_abc[0]
-        cartesian_cmd_abc_msg.commanded_cartesian_pose_abc.b = q_abc[1]
-        cartesian_cmd_abc_msg.commanded_cartesian_pose_abc.c = q_abc[2]
-        self.cartesian_cmd_abc_pub.publish(cartesian_cmd_abc_msg)
-
         self.motion_command.publish(msg)
+
+    def get_measured_joint_states_from_status(self, include_gripper: bool = True):
+        """
+        Modified the message in-place
+
+        Args:
+            include_gripper: whether to include the gripper in the message
+        """
+        joint_state = JointState()
+        motion_status: MotionStatus = self.get_motion_status()
+        joint_state.position.extend(jvq_to_list(motion_status.measured_joint_position))
+        joint_state.velocity.extend(jvq_to_list(motion_status.measured_joint_velocity))
+        joint_state.effort.extend(jvq_to_list(motion_status.measured_joint_torque))
+        joint_state.name.extend([f"victor_{self.arm_name}_joint_{i}" for i in range(1, 8)])
+
+        if not include_gripper:
+            return joint_state
+
+        gripper_status: Robotiq3FingerStatus = self.get_gripper_status()
+
+        joint_state.position.extend(compute_finger_angles(gripper_status.finger_a_status.position))
+        joint_state.name.extend(get_finger_angle_names(self.name, "finger_a"))
+
+        joint_state.position.append(-compute_scissor_angle(gripper_status.scissor_status.position))
+        joint_state.name.append(get_scissor_joint_name(self.name, "finger_b"))
+
+        joint_state.position.extend(compute_finger_angles(gripper_status.finger_b_status.position))
+        joint_state.name.extend(get_finger_angle_names(self.name, "finger_b"))
+
+        joint_state.position.append(compute_scissor_angle(gripper_status.scissor_status.position))
+        joint_state.name.append(get_scissor_joint_name(self.name, "finger_c"))
+
+        joint_state.position.extend(compute_finger_angles(gripper_status.finger_c_status.position))
+        joint_state.name.extend(get_finger_angle_names(self.name, "finger_c"))
+
+        return joint_state
 
 
 class Victor:
@@ -215,11 +236,37 @@ class Victor:
 
     def robot_description_callback(self, msg: String):
         self.urdf = URDF.from_xml_string(msg.data)
+        self.joint_names_urdf_order = [joint.name for joint in self.urdf.joints]
         if self.robot_description_user_cb:
             self.robot_description_user_cb(self.urdf)
 
     def get_joint_states(self) -> JointState:
         return self.joint_states_listener.get()
+
+    def get_measured_joint_states_from_status(self, include_gripper: bool = True) -> JointState:
+        # Make a JointState message from the motion status messages
+        joint_state = JointState()
+
+        left_joint_state = self.left.get_measured_joint_states_from_status(include_gripper)
+        right_joint_state = self.right.get_measured_joint_states_from_status(include_gripper)
+
+        joint_state.position.extend(left_joint_state.position)
+        joint_state.position.extend(right_joint_state.position)
+        joint_state.velocity.extend(left_joint_state.velocity)
+        joint_state.velocity.extend(right_joint_state.velocity)
+        joint_state.effort.extend(left_joint_state.effort)
+        joint_state.effort.extend(right_joint_state.effort)
+        joint_state.name.extend(left_joint_state.name)
+        joint_state.name.extend(right_joint_state.name)
+
+        # sort based on URDF order
+        indices = [joint_state.name.index(name) for name in self.joint_names_urdf_order]
+        joint_state.name = [joint_state.name[i] for i in indices]
+        joint_state.position = [joint_state.position[i] for i in indices]
+        joint_state.velocity = [joint_state.velocity[i] for i in indices]
+        joint_state.effort = [joint_state.effort[i] for i in indices]
+
+        return joint_state
 
     def get_motion_statuses(self):
         return {'left': self.left.get_motion_status(), 'right': self.right.get_motion_status()}

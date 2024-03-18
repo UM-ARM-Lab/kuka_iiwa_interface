@@ -1,11 +1,11 @@
 <launch>
     <arg name="model" default="$(find-pkg-share victor_description)/urdf/victor.urdf.xacro"/>
 
-    <node name="robot_state_publisher" pkg="robot_state_publisher" exec="robot_state_publisher" namespace="victor">
+    <node name="robot_state_publisher" pkg="robot_state_publisher" exec="robot_state_publisher">
         <param name="robot_description" value="$(command 'xacro $(var model)')"/>
     </node>
 
-    <node name="joint_state_publisher" pkg="joint_state_publisher" exec="joint_state_publisher" namespace="victor"/>
+    <node name="joint_state_publisher_gui" pkg="joint_state_publisher_gui" exec="joint_state_publisher_gui"/>
 
     <node name="rviz" pkg="rviz2" exec="rviz2"/>
 </launch>
