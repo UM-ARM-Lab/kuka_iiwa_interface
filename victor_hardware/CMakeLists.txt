@@ -31,6 +31,7 @@ include_directories(include lcm_types SYSTEM)
 add_library(victor_hardware
         SHARED
         src/victor_hardware_interface.cpp
+        src/async_executor.cpp
         include/victor_hardware/lcm_listener.hpp
 )
 target_include_directories(

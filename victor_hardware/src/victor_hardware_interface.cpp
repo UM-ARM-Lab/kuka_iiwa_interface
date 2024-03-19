@@ -14,6 +14,10 @@ CallbackReturn VictorHardwareInterface::on_init(const hardware_interface::Hardwa
     return CallbackReturn::ERROR;
   }
 
+  node_ = std::make_shared<rclcpp::Node>("victor_hardware_interface_node");
+  executor_ = std::make_shared<AsyncExecutor>();
+  executor_->add_node(node_);
+
   // Some of these arrays will be bigger than they need to be, since not all joints are actuated (e.g. finger joints)
   RCLCPP_INFO_STREAM(logger, "Found " << info_.joints.size() << " joints");
 

@@ -5,12 +5,14 @@
 #include <hardware_interface/types/hardware_interface_type_values.hpp>
 #include <lcm/lcm-cpp.hpp>
 #include <memory>
+#include <rclcpp/node.hpp>
 #include <rclcpp/macros.hpp>
 #include <rclcpp_lifecycle/state.hpp>
 #include <string>
 #include <thread>
 #include <vector>
 #include <victor_hardware/lcm_listener.hpp>
+#include <victor_hardware/async_executor.hpp>
 #include <victor_lcm_interface/control_mode_parameters.hpp>
 #include <victor_lcm_interface/motion_command.hpp>
 #include <victor_lcm_interface/motion_status.hpp>
@@ -51,6 +53,10 @@ class VictorHardwareInterface : public hardware_interface::SystemInterface {
   hardware_interface::return_type write(const rclcpp::Time& time, const rclcpp::Duration& period) override;
 
  private:
+  // Node for custom ROS API that goes outside of what ros2 control allows
+  std::shared_ptr<rclcpp::Node> node_;
+  std::shared_ptr<AsyncExecutor> executor_;
+
   // Communication
   std::shared_ptr<lcm::LCM> left_send_lcm_ptr_;
   std::shared_ptr<lcm::LCM> left_recv_lcm_ptr_;
