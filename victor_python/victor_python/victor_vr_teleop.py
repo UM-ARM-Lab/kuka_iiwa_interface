@@ -10,7 +10,7 @@ see the vr_ros2_bridge repo for setup instructions.
 """
 from copy import deepcopy
 from threading import Thread
-from time import perf_counter
+from time import perf_counter, sleep
 
 import numpy as np
 import transforms3d
@@ -25,12 +25,10 @@ from geometry_msgs.msg import TransformStamped
 from moveit.core.robot_model import RobotModel, JointModelGroup
 from moveit.core.robot_state import RobotState
 from moveit.planning import MoveItPy
-from moveit2.moveit_configs_utils.moveit_configs_utils import MoveItConfigsBuilder
+from moveit_configs_utils import MoveItConfigsBuilder
 from rclpy.node import Node
 from sensor_msgs.msg import JointState
 from tf2_ros import TransformBroadcaster
-from tf2_ros.buffer import Buffer
-from tf2_ros.transform_listener import TransformListener
 from victor_hardware_interfaces.msg import MotionStatus, ControlMode, Robotiq3FingerStatus
 from victor_hardware_interfaces.srv import SetControlMode
 from victor_python.victor import Victor, Side
@@ -57,16 +55,27 @@ def controller_info_to_tf(node: Node, controller_info: ControllerInfo):
 class SideTeleop:
 
     def __init__(self, node: Node, side: Side, moveitpy: MoveItPy, tf_broadcaster: TransformBroadcaster,
-                 tf_buffer: Buffer):
-        self.gripper_in_motion = None
+                 controller_usability_rotation=np.eye(3)):
+        """
+
+        Args:
+            node: ROS node
+            side: Side object, from Victor
+            moveitpy: MoveItPy object, there must only be one of there per python script/process!
+            tf_broadcaster: Publishing TF for visualization
+            controller_usability_rotation: Offset to the VR controller, to make the orientation more unintuitive.
+
+        """
         self.node = node
         self.side = side
         self.moveitpy = moveitpy
         self.robot_model: RobotModel = self.moveitpy.get_robot_model()
         self.tf_broadcaster = tf_broadcaster
-        self.tf_buffer = tf_buffer
+        self.controller_usability_rotation = controller_usability_rotation
         self.gripper_open = True
+        self.scissor_position = 1.0
         self.last_send_open_fraction = 0.0
+        self.gripper_in_motion = None
 
         self.controller_in_vr0 = np.eye(4)
         self.tool_in_base0 = np.eye(4)
@@ -80,9 +89,13 @@ class SideTeleop:
         self.filter = BatchOnlineFilter(numtaps=20, cutoff=0.1)
 
     def on_start_recording(self, controller_info: ControllerInfo):
-        controller_in_vr0_msg = controller_info_to_tf(self.node, controller_info)
-        self.controller_in_vr0 = transform_to_mat(controller_in_vr0_msg.transform)
+        controller_in_vr0 = self.get_controller_in_vr(controller_info)
+        self.controller_in_vr0 = controller_in_vr0
 
+        controller_in_vr0_msg = TransformStamped()
+        controller_in_vr0_msg.transform = mat_to_transform(controller_in_vr0)
+        controller_in_vr0_msg.header.frame_id = VR_FRAME_NAME
+        controller_in_vr0_msg.child_frame_id = f"controller_{self.side.arm_name}_in_vr0"
         self.tf_broadcaster.sendTransform(controller_in_vr0_msg)
 
         current_state, self.tool_in_base0 = self.get_current_commanded_tool()
@@ -114,7 +127,8 @@ class SideTeleop:
             self.filter_pub.publish(joint_state_msg)
 
         if abs(open_fraction - self.last_send_open_fraction) > 0.05:
-            self.side.gripper_command.publish(get_gripper_closed_fraction_msg(open_fraction))
+            # FIXME: make scissor controllable?
+            self.side.gripper_command.publish(get_gripper_closed_fraction_msg(open_fraction, scissor_position=self.scissor_position))
             self.last_send_open_fraction = open_fraction
 
         return {
@@ -128,25 +142,27 @@ class SideTeleop:
 
         self.gripper_open = not self.gripper_open
         if self.gripper_open:
-            self.side.open_gripper()
+            self.side.open_gripper(scissor_position=self.scissor_position)
         else:
-            self.side.close_gripper()
+            self.side.close_gripper(scissor_position=self.scissor_position)
 
     def get_target_in_base(self, controller_info: ControllerInfo) -> TransformStamped:
-        current_controller_in_vr_msg = controller_info_to_tf(self.node, controller_info)
-        current_controller_in_vr = transform_to_mat(current_controller_in_vr_msg.transform)
+        current_controller_in_vr = self.get_controller_in_vr(controller_info)
         delta_in_controller = np_tf_inv(self.controller_in_vr0) @ current_controller_in_vr
 
         current_state, tool_in_base = self.get_current_commanded_tool()
 
         target_in_base = self.tool_in_base0 @ delta_in_controller
 
+        current_controller_in_vr_msg = TransformStamped()
+        current_controller_in_vr_msg.transform = mat_to_transform(current_controller_in_vr)
+        current_controller_in_vr_msg.header.frame_id = VR_FRAME_NAME
+        current_controller_in_vr_msg.child_frame_id = f"controller_{self.side.arm_name}_in_vr"
         self.tf_broadcaster.sendTransform(current_controller_in_vr_msg)
+
         target_tool_in_base_msg = TransformStamped()
         target_tool_in_base_msg.transform = mat_to_transform(target_in_base)
         target_tool_in_base_msg.header.frame_id = self.base_frame
-
-        # Just for debugging!
         target_tool_in_base_msg.child_frame_id = f"target_{self.tool_frame}"
         self.tf_broadcaster.sendTransform(target_tool_in_base_msg)
 
@@ -175,7 +191,7 @@ class SideTeleop:
             joint_positions = robot_state.get_joint_group_positions(self.side.arm_name)
             return joint_positions
         else:
-            # print("IK failed!")
+            print("IK failed!")
             return None
 
     def get_current_commanded_tool(self):
@@ -186,6 +202,16 @@ class SideTeleop:
         current_state.update()
         tool_in_base = current_state.get_global_link_transform(self.tool_frame)
         return current_state, tool_in_base
+
+    def get_controller_in_vr(self, controller_info):
+        controller_in_vr_msg = controller_info_to_tf(self.node, controller_info)
+        controller_in_vr = transform_to_mat(controller_in_vr_msg.transform)
+
+        usability_transform = np.eye(4)
+        usability_transform[:3, :3] = self.controller_usability_rotation
+        controller_in_vr_usable = controller_in_vr @ usability_transform
+
+        return controller_in_vr_usable
 
     def update(self):
         gripper_status: Robotiq3FingerStatus = self.side.gripper_status.get()
@@ -209,16 +235,15 @@ class VictorTeleopNode(Node):
 
         self.moveitpy = MoveItPy(node_name="victor_vr_teleop_moveitpy", config_dict=config_dict)
 
-        self.tf_buffer = Buffer()
-        self.tf_listener = TransformListener(self.tf_buffer, self)
-
         self.latest_action_dict = None
 
         self.tf_broadcaster = TransformBroadcaster(self)
         self.vr_sub = self.create_subscription(ControllersInfo, "vr_controller_info", self.on_controllers_info, 10)
 
-        self.left = SideTeleop(self, self.victor.left, self.moveitpy, self.tf_broadcaster, self.tf_buffer)
-        self.right = SideTeleop(self, self.victor.right, self.moveitpy, self.tf_broadcaster, self.tf_buffer)
+
+        self.left = SideTeleop(self, self.victor.left, self.moveitpy, self.tf_broadcaster,
+                               controller_usability_rotation=transforms3d.euler.euler2mat(np.pi, 0, 0))
+        self.right = SideTeleop(self, self.victor.right, self.moveitpy, self.tf_broadcaster)
 
         self.has_started = False
         self.is_recording = False
@@ -300,14 +325,14 @@ class VictorTeleopNode(Node):
                         self.latest_action_dict.update(left_action)
                     if controller_info.trackpad_button:
                         self.left.toggle_gripper()
+                        sleep(0.25) # HACK to handle multiple rapid press events
                 elif 'right' in controller_info.controller_name:
                     if controller_info.grip_button:
                         right_action = self.right.send_cmd(controller_info, open_fraction)
                         self.latest_action_dict.update(right_action)
                     if controller_info.trackpad_button:
                         self.right.toggle_gripper()
-
-
+                        sleep(0.25)
 
         now = perf_counter()
         rcv_dt = self.last_rcv_t - now

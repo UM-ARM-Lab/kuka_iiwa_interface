@@ -75,13 +75,13 @@ class Side:
         self.motion_status = Listener(node, MotionStatus, f"victor/{self.arm_name}/motion_status", 10)
         self.gripper_status = Listener(node, Robotiq3FingerStatus, f"victor/{self.arm_name}/gripper_status", 10)
 
-    def open_gripper(self):
+    def open_gripper(self, scissor_position=0.5):
         # TODO: implementing blocking grasping
-        self.gripper_command.publish(get_gripper_closed_fraction_msg(ROBOTIQ_OPEN))
+        self.gripper_command.publish(get_gripper_closed_fraction_msg(ROBOTIQ_OPEN, scissor_position))
 
-    def close_gripper(self):
+    def close_gripper(self, scissor_position=0.5):
         # TODO: implementing blocking grasping
-        self.gripper_command.publish(get_gripper_closed_fraction_msg(ROBOTIQ_CLOSED))
+        self.gripper_command.publish(get_gripper_closed_fraction_msg(ROBOTIQ_CLOSED, scissor_position))
 
     def get_gripper_status(self) -> Robotiq3FingerStatus:
         return self.gripper_status.get()

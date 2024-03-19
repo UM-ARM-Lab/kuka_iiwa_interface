@@ -233,6 +233,7 @@ def get_gripper_closed_fraction_msg(position: float, scissor_position: float = 0
     """
     Args:
         position: 0.0 is open, 1.0 is closed
+        scissor_position: 0.0 is wide, 1.0 is narrow
     """
     msg = default_gripper_command()
     msg.finger_a_command.position = position
