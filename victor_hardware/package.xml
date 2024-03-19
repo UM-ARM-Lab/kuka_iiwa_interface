@@ -22,6 +22,7 @@
     <depend>rclcpp_lifecycle</depend>
     <depend>ros2_control</depend>
     <depend>ros2_controllers</depend>
+    <depend>std_srvs</depend>
 
     <depend>arm_utilities</depend>
     <depend>victor_hardware_interfaces</depend>

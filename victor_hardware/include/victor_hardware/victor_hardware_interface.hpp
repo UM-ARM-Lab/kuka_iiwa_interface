@@ -11,6 +11,7 @@
 #include <string>
 #include <thread>
 #include <vector>
+#include <std_srvs/srv/set_bool.hpp>
 #include <victor_hardware/lcm_listener.hpp>
 #include <victor_hardware/async_executor.hpp>
 #include <victor_lcm_interface/control_mode_parameters.hpp>
@@ -56,6 +57,11 @@ class VictorHardwareInterface : public hardware_interface::SystemInterface {
   // Node for custom ROS API that goes outside of what ros2 control allows
   std::shared_ptr<rclcpp::Node> node_;
   std::shared_ptr<AsyncExecutor> executor_;
+  rclcpp::CallbackGroup::SharedPtr setter_callback_group_;
+  rclcpp::Service<std_srvs::srv::SetBool>::SharedPtr set_send_motion_command_srv_;
+
+  // flag to disable sending MotionCommands, so that the user can do this themselves
+  bool send_motion_cmd_ = true;
 
   // Communication
   std::shared_ptr<lcm::LCM> left_send_lcm_ptr_;

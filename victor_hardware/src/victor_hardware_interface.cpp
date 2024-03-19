@@ -14,7 +14,19 @@ CallbackReturn VictorHardwareInterface::on_init(const hardware_interface::Hardwa
     return CallbackReturn::ERROR;
   }
 
-  node_ = std::make_shared<rclcpp::Node>("victor_hardware_interface_node");
+  node_ = std::make_shared<rclcpp::Node>("victor_hardware_interface_node", rclcpp::NodeOptions());
+
+  setter_callback_group_ = node_->create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
+
+  // Add a ROS service server that users can call to disable "writing" (sending LCM MotionCommand messages)
+  set_send_motion_command_srv_ = node_->create_service<std_srvs::srv::SetBool>(
+      "set_send_motion_cmd",
+      [&](const std_srvs::srv::SetBool::Request::SharedPtr req, std_srvs::srv::SetBool::Response::SharedPtr res) {
+        RCLCPP_WARN_STREAM(logger, "Setting send_motion_cmd_=" << req->data);
+        this->send_motion_cmd_  = req->data;
+      },
+      rmw_qos_profile_services_default, setter_callback_group_);
+
   executor_ = std::make_shared<AsyncExecutor>();
   executor_->add_node(node_);
 
@@ -82,13 +94,13 @@ CallbackReturn VictorHardwareInterface::on_init(const hardware_interface::Hardwa
   right_gripper_status_listener_ = std::make_unique<LcmListener<victor_lcm_interface::robotiq_3finger_status>>(
       right_recv_lcm_ptr_, DEFAULT_GRIPPER_STATUS_CHANNEL);
 
-//  sink_ = std::make_shared<DataTamer::MCAPSink>("/home/armlab/victor_hw_if.mcap");
-//
-//  // Create a channel and attach a sink. A channel can have multiple sinks
-//  channel_ = DataTamer::LogChannel::create("hw_pos_cmds");
-//  channel_->addDataSink(sink_);
+  //  sink_ = std::make_shared<DataTamer::MCAPSink>("/home/armlab/victor_hw_if.mcap");
+  //
+  //  // Create a channel and attach a sink. A channel can have multiple sinks
+  //  channel_ = DataTamer::LogChannel::create("hw_pos_cmds");
+  //  channel_->addDataSink(sink_);
 
-//  value_ = channel_->registerValue("values", &hw_pos_cmds_);
+  //  value_ = channel_->registerValue("values", &hw_pos_cmds_);
 
   return CallbackReturn::SUCCESS;
 }
@@ -171,10 +183,8 @@ CallbackReturn VictorHardwareInterface::on_deactivate(const rclcpp_lifecycle::St
 
 void VictorHardwareInterface::LCMThread() {
   while (lcm_thread_running_) {
-    // RCLCPP_WARN(logger, "start handle");
     left_recv_lcm_ptr_->handleTimeout(1000);
     right_recv_lcm_ptr_->handleTimeout(1000);
-    // RCLCPP_WARN(logger, "end handle");
   }
 }
 
@@ -185,10 +195,8 @@ hardware_interface::return_type VictorHardwareInterface::read(const rclcpp::Time
     return hardware_interface::return_type::OK;
   }
 
-  if (!left_motion_status_listener_->hasLatestMessage() ||
-      !right_motion_status_listener_->hasLatestMessage() ||
-      !left_gripper_status_listener_->hasLatestMessage() ||
-      !right_gripper_status_listener_->hasLatestMessage()) {
+  if (!left_motion_status_listener_->hasLatestMessage() || !right_motion_status_listener_->hasLatestMessage() ||
+      !left_gripper_status_listener_->hasLatestMessage() || !right_gripper_status_listener_->hasLatestMessage()) {
     return hardware_interface::return_type::OK;
   }
   auto const& left_motion_status = left_motion_status_listener_->getLatestMessage();
@@ -309,7 +317,6 @@ hardware_interface::return_type VictorHardwareInterface::read(const rclcpp::Time
 
 hardware_interface::return_type VictorHardwareInterface::write(const rclcpp::Time& /*time*/,
                                                                const rclcpp::Duration& /*period*/) {
-
   if (get_state().id() != lifecycle_msgs::msg::State::PRIMARY_STATE_ACTIVE) {
     return hardware_interface::return_type::OK;
   }
@@ -345,7 +352,8 @@ hardware_interface::return_type VictorHardwareInterface::write(const rclcpp::Tim
   rclcpp::Clock clock;
   for (int i = 0; i < 14; i++) {
     if (std::isnan(hw_pos_cmds_[i])) {
-      RCLCPP_WARN_THROTTLE(logger, clock, 500, "Joint %d is NaN, using current commanded position according to the robot", i);
+      RCLCPP_WARN_THROTTLE(logger, clock, 500,
+                           "Joint %d is NaN, using current commanded position according to the robot", i);
       hw_pos_cmds_[i] = current_commanded_positions[i];
     }
   }
@@ -397,10 +405,12 @@ hardware_interface::return_type VictorHardwareInterface::write(const rclcpp::Tim
   right_motion_cmd.joint_velocity.joint_6 = 0.;
   right_motion_cmd.joint_velocity.joint_7 = 0.;
 
-  left_send_lcm_ptr_->publish(DEFAULT_MOTION_COMMAND_CHANNEL, &left_motion_cmd);
-  right_send_lcm_ptr_->publish(DEFAULT_MOTION_COMMAND_CHANNEL, &right_motion_cmd);
+  if (send_motion_cmd_) {
+    left_send_lcm_ptr_->publish(DEFAULT_MOTION_COMMAND_CHANNEL, &left_motion_cmd);
+    right_send_lcm_ptr_->publish(DEFAULT_MOTION_COMMAND_CHANNEL, &right_motion_cmd);
+  }
 
-//  channel_->takeSnapshot();
+  //  channel_->takeSnapshot();
 
   return hardware_interface::return_type::OK;
 }
