@@ -62,6 +62,7 @@ class VictorCommandWindow(QMainWindow):
 
     def robot_description_callback(self, robot: Robot):
         # NOTE: this callback gets called on its own thread, so don't directly call functions on QtWidgets here.
+        print("ON RD")
         self.left_arm_widget.on_robot_description(robot)
         self.right_arm_widget.on_robot_description(robot)
 

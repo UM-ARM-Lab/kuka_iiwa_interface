@@ -1481,7 +1481,6 @@ add_recv_socket(lcm_mpudpm_t *lcm, uint16_t port){
         goto add_recv_socket_fail;
     }
 
-#ifdef USE_REUSEPORT
     /* Mac OS and FreeBSD require the REUSEPORT option in addition
      * to REUSEADDR or it won't let multiple processes bind to the
      * same port, even if they are using multicast. */
@@ -1491,7 +1490,6 @@ add_recv_socket(lcm_mpudpm_t *lcm, uint16_t port){
         perror ("setsockopt (SOL_SOCKET, SO_REUSEPORT)");
         goto add_recv_socket_fail;
     }
-#endif
 
 #ifdef WIN32
     // Windows has small (8k) buffer by default

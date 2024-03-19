@@ -943,6 +943,14 @@ _setup_recv_parts (lcm_udp_t* lcm)
         goto setup_recv_thread_fail;
     }
 
+    /* let multiple processes bind to the same port. */
+    dbg (DBG_LCM, "LCM: setting SO_REUSEPORT\n");
+    if (setsockopt (lcm->recvfd, SOL_SOCKET, SO_REUSEPORT,
+                   (char*)&opt, sizeof (opt)) < 0) {
+      perror ("setsockopt (SOL_SOCKET, SO_REUSEPORT)");
+      goto setup_recv_thread_fail;
+    }
+
     // debugging... how big is the receive buffer?
     unsigned int retsize = sizeof (int);
     getsockopt (lcm->recvfd, SOL_SOCKET, SO_RCVBUF,

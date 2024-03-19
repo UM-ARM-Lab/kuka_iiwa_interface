@@ -24,6 +24,7 @@ CallbackReturn VictorHardwareInterface::on_init(const hardware_interface::Hardwa
       [&](const std_srvs::srv::SetBool::Request::SharedPtr req, std_srvs::srv::SetBool::Response::SharedPtr res) {
         RCLCPP_WARN_STREAM(logger, "Setting send_motion_cmd_=" << req->data);
         this->send_motion_cmd_  = req->data;
+        res->success = true;
       },
       rmw_qos_profile_services_default, setter_callback_group_);
 
@@ -317,10 +318,6 @@ hardware_interface::return_type VictorHardwareInterface::read(const rclcpp::Time
 
 hardware_interface::return_type VictorHardwareInterface::write(const rclcpp::Time& /*time*/,
                                                                const rclcpp::Duration& /*period*/) {
-  if (get_state().id() != lifecycle_msgs::msg::State::PRIMARY_STATE_ACTIVE) {
-    return hardware_interface::return_type::OK;
-  }
-
   auto const& has_left_motion_status = left_motion_status_listener_->hasLatestMessage();
   auto const& has_right_motion_status = right_motion_status_listener_->hasLatestMessage();
   auto const& has_left_control_mode = left_control_mode_listener_->hasLatestMessage();
@@ -350,6 +347,24 @@ hardware_interface::return_type VictorHardwareInterface::write(const rclcpp::Tim
   current_commanded_positions[13] = right_motion_status.commanded_joint_position.joint_7;
 
   rclcpp::Clock clock;
+  if (get_state().id() != lifecycle_msgs::msg::State::PRIMARY_STATE_ACTIVE) {
+    // reset hw_pos_cmds_ to the current state
+    RCLCPP_WARN_THROTTLE(logger, clock, 1000, "State is not ACTIVE, using current commanded position according to the robot");
+    for (int i = 0; i < 14; i++) {
+      hw_pos_cmds_[i] = current_commanded_positions[i];
+    }
+    return hardware_interface::return_type::OK;
+  }
+
+  if (!send_motion_cmd_) {
+    // reset hw_pos_cmds_ to the current state
+    RCLCPP_WARN_THROTTLE(logger, clock, 1000, "sending motion commands is disabled, using current commanded position according to the robot");
+    for (int i = 0; i < 14; i++) {
+      hw_pos_cmds_[i] = current_commanded_positions[i];
+    }
+    return hardware_interface::return_type::OK;
+  }
+
   for (int i = 0; i < 14; i++) {
     if (std::isnan(hw_pos_cmds_[i])) {
       RCLCPP_WARN_THROTTLE(logger, clock, 500,
@@ -405,10 +420,8 @@ hardware_interface::return_type VictorHardwareInterface::write(const rclcpp::Tim
   right_motion_cmd.joint_velocity.joint_6 = 0.;
   right_motion_cmd.joint_velocity.joint_7 = 0.;
 
-  if (send_motion_cmd_) {
-    left_send_lcm_ptr_->publish(DEFAULT_MOTION_COMMAND_CHANNEL, &left_motion_cmd);
-    right_send_lcm_ptr_->publish(DEFAULT_MOTION_COMMAND_CHANNEL, &right_motion_cmd);
-  }
+  left_send_lcm_ptr_->publish(DEFAULT_MOTION_COMMAND_CHANNEL, &left_motion_cmd);
+  right_send_lcm_ptr_->publish(DEFAULT_MOTION_COMMAND_CHANNEL, &right_motion_cmd);
 
   //  channel_->takeSnapshot();
 

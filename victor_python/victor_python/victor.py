@@ -235,6 +235,7 @@ class Victor:
             rclpy.spin_once(self.node)
 
     def robot_description_callback(self, msg: String):
+        print("ON RD in Victor")
         self.urdf = URDF.from_xml_string(msg.data)
         self.joint_names_urdf_order = [joint.name for joint in self.urdf.joints]
         if self.robot_description_user_cb:

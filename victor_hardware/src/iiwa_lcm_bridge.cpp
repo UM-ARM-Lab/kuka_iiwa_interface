@@ -4,6 +4,7 @@
 #include <rclcpp/logging.hpp>
 #include <rclcpp/time.hpp>
 #include <utility>
+#include <iostream>
 
 auto const logger = rclcpp::get_logger("iiwa_lcm_bridge");
 
@@ -302,6 +303,7 @@ void IiwaLcmBridge::InternalMotionStatusLCMCallback(const lcm::ReceiveBuffer* /*
 void IiwaLcmBridge::InternalControlModeStatusLCMCallback(
     const lcm::ReceiveBuffer* /*buffer*/, const std::string& /*channel*/,
     const victor_lcm_interface::control_mode_parameters* status_msg) {
+  std::cerr << "LCM MS CB!!!" << std::endl;
   const msg::ControlModeParameters ros_status = controlModeParamsLcmToRos(*status_msg);
   control_mode_status_callback_fn_(ros_status);
 }

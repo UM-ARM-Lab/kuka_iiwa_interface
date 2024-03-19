@@ -943,7 +943,6 @@ _setup_recv_parts (lcm_udpm_t *lcm)
         goto setup_recv_thread_fail;
     }
 
-#ifdef USE_REUSEPORT
     /* Mac OS and FreeBSD require the REUSEPORT option in addition
      * to REUSEADDR or it won't let multiple processes bind to the
      * same port, even if they are using multicast. */
@@ -953,7 +952,6 @@ _setup_recv_parts (lcm_udpm_t *lcm)
         perror ("setsockopt (SOL_SOCKET, SO_REUSEPORT)");
         goto setup_recv_thread_fail;
     }
-#endif
 
 #if 0
     // set loopback option so that packets sent out on the multicast socket
