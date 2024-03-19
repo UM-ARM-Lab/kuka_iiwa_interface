@@ -1,17 +1,2 @@
 <launch>
-    <arg name="victor_command_gui" default="true"/>
-    <!-- Note that changing these from the default requires matching changes in the Java code -->
-    <arg name="left_arm_recv_url" default="udp://10.10.10.169:30002"/>
-    <arg name="right_arm_recv_url" default="udp://10.10.10.169:30001"/>
-
-    <arg name="model" default="$(find-pkg-share victor_description)/urdf/victor.urdf.xacro"/>
-
-    <node pkg="robot_state_publisher" exec="robot_state_publisher" name="robot_state_publisher">
-        <param name="robot_description" value="$(command 'xacro $(var model)')"/>
-    </node>
-    <include file="$(find-pkg-share victor_python)/launch/victor_lcm_bridge_core.launch.xml">
-        <arg name="victor_command_gui" value="$(var victor_command_gui)"/>
-        <arg name="left_arm_recv_url" value="$(var left_arm_recv_url)"/>
-        <arg name="right_arm_recv_url" value="$(var right_arm_recv_url)"/>
-    </include>
 </launch>

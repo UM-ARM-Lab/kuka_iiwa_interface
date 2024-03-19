@@ -1,16 +1,48 @@
 <launch>
-    <include file="$(find victor_python)/launch/victor_lcm_bridge.launch.xml">
-        <arg name="victor_command_gui" value="true"/>
+    <!-- Unlike the one in victor_description, the one in victor_moveit_config has ros2_control added -->
+    <arg name="ros2_control_urdf" default="$(find-pkg-share victor_moveit_config)/config/victor.urdf.xacro"/>
+    <arg name="urdf" default="$(find-pkg-share victor_description)/urdf/victor.urdf.xacro"/>
+    <arg name="victor_command_gui" default="true"/>
+    <!-- Note that changing these from the default requires matching changes in the Java code -->
+    <arg name="left_arm_recv_url" default="udp://10.10.10.169:30002"/>
+    <arg name="right_arm_recv_url" default="udp://10.10.10.169:30001"/>
+
+    <node pkg="robot_state_publisher" exec="robot_state_publisher" name="robot_state_publisher">
+        <param name="robot_description" value="$(command 'xacro $(var urdf)')"/>
+    </node>
+    <include file="$(find-pkg-share victor_python)/launch/victor_lcm_bridge_core.launch.xml">
+        <arg name="victor_command_gui" value="$(var victor_command_gui)"/>
+        <arg name="left_arm_recv_url" value="$(var left_arm_recv_url)"/>
+        <arg name="right_arm_recv_url" value="$(var right_arm_recv_url)"/>
     </include>
-
-    <include file="$(find victor_moveit_config)/launch/moveit_rviz.launch.py"/>
-
-    <node pkg="controller_manager" exec="ros2_control_node" name="ros2_control_node" output="screen">
-        <param name="robot_description" value="$(arg robot_description)"/>
-        <param name="ros2_controllers_yaml" value="$(find victor_moveit_config)/config/ros2_controllers.yaml"/>
+    <node pkg="victor_python" exec="victor_command_gui.py" name="victor_command_gui" if="$(var victor_command_gui)" output="screen"/>
+    <node pkg="victor_hardware" exec="iiwa_lcm_bridge_node" name="left_arm_lcm_bridge_node" output="screen" namespace="victor/left_arm">
+        <param name="cartesian_pose_frame" value="victor_left_arm_world_frame_kuka"/>
+        <param name="send_lcm_url" value="udp://10.10.10.12:30000"/>
+        <param name="recv_lcm_url" value="$(var left_arm_recv_url)"/>
+    </node>
+    <node pkg="victor_hardware" exec="iiwa_lcm_bridge_node" name="right_arm_lcm_bridge_node" output="screen" namespace="victor/right_arm">
+        <param name="cartesian_pose_frame" value="victor_right_arm_world_frame_kuka"/>
+        <param name="send_lcm_url" value="udp://10.10.10.11:30000"/>
+        <param name="recv_lcm_url" value="$(var right_arm_recv_url)"/>
     </node>
 
-    <include file="$(find victor_moveit_config)/launch/spawn_controllers.launch.py"/>
+    <node pkg="joy" exec="joy_node" name="xbox_joystick" namespace="victor" output="screen"/>
+    <node pkg="victor_python" exec="robotiq_grippers_joystick_node.py" name="robotiq_grippers_joystick_node" namespace="victor">
+        <param name="enable_finger_open_close_control" value="true"/>
+        <param name="enable_scissor_open_close_control" value="true"/>
+    </node>
+    <node pkg="victor_python" exec="arm_wrench_republisher.py" name="arm_wrench_republisher"
+          output="screen" namespace="victor"/>
 
-    <include file="$(find victor_moveit_config)/launch/move_group.launch.py"/>
+    <include file="$(find-pkg-share victor_moveit_config)/launch/moveit_rviz.launch.py"/>
+
+    <node pkg="controller_manager" exec="ros2_control_node" name="ros2_control_node" output="screen">
+        <param name="robot_description" value="$(command 'xacro $(var ros2_control_urdf)')"/>
+        <param name="ros2_controllers_yaml" value="$(find-pkg-share victor_moveit_config)/config/ros2_controllers.yaml"/>
+    </node>
+
+    <include file="$(find-pkg-share victor_moveit_config)/launch/spawn_controllers.launch.py"/>
+
+    <include file="$(find-pkg-share victor_moveit_config)/launch/move_group.launch.py"/>
 </launch>
