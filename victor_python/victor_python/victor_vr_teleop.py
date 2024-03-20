@@ -57,21 +57,26 @@ class ButtonClicker:
 
 class AxisVelocityTracker:
 
-    def __init__(self, default_position, dt, deadzone, min=0., max=1.):
-        self.position = default_position
-        self.last_position = self.position
+    def __init__(self, name, dt, deadzone, min=0., max=1.):
+        self.last_position = None
+        self.name = name
+        self.position = None
         self.dt = dt
         self.deadzone = deadzone
         self.min = min
         self.max = max
 
-    def update(self, velocity):
+    def update(self, current_position, velocity):
         if abs(velocity) < self.deadzone:
             velocity = 0.0
-        self.position += velocity * self.dt
+        self.position = current_position + velocity * self.dt
         self.position = np.clip(self.position, self.min, self.max)
 
-        needs_to_send = abs(self.position - self.last_position) < self.deadzone * self.dt
+        # print(self.name, current_position, velocity, self.position, self.last_position)
+        if self.last_position:
+            needs_to_send = abs(self.position - self.last_position) >= self.deadzone * self.dt
+        else:
+            needs_to_send = False
 
         self.last_position = self.position
 
@@ -103,8 +108,8 @@ class SideTeleop:
         self.tf_buffer = tf_buffer
         self.gripper_open = True
 
-        self.close_axis_velocity_tracker = AxisVelocityTracker(0., 0.01, 0.5)
-        self.scissor_axis_velocity_tracker = AxisVelocityTracker(1., 0.01, 0.5)
+        self.close_axis_velocity_tracker = AxisVelocityTracker(self.side.name + "close", dt=0.01, deadzone=0.5)
+        self.scissor_axis_velocity_tracker = AxisVelocityTracker(self.side.name + "scissor", dt=0.01, deadzone=0.5)
 
         self.controller_in_vr0 = np.eye(4)
         self.tool_in_base0 = np.eye(4)
@@ -155,27 +160,34 @@ class SideTeleop:
             self.filter_pub.publish(joint_state_msg)
 
         # use Y axis as gripper open velocity
-        close_needs_send = self.close_axis_velocity_tracker.update(controller_info.trackpad_axis_touch_y)
-        scissor_needs_send = self.scissor_axis_velocity_tracker.update(-controller_info.trackpad_axis_touch_x)
+        gripper_status: Robotiq3FingerStatus = self.side.gripper_status.get()
+        current_closed_fraction = gripper_status.finger_a_status.position
+        current_scissor_position = gripper_status.scissor_status.position
+
+        close_needs_send = self.close_axis_velocity_tracker.update(current_closed_fraction, controller_info.trackpad_axis_touch_y)
+        scissor_needs_send = self.scissor_axis_velocity_tracker.update(current_scissor_position, -controller_info.trackpad_axis_touch_x)
+
 
         if close_needs_send or scissor_needs_send:
             self.side.gripper_command.publish(get_gripper_closed_fraction_msg(self.close_axis_velocity_tracker.position,
                                                                               self.scissor_axis_velocity_tracker.position))
 
         return {
-            'right_open_fraction': self.commanded_closed_fraction,
-            'scissor_position': self.commanded_scissor_position,
+            'right_open_fraction': self.close_axis_velocity_tracker.position,
+            'scissor_position': self.scissor_axis_velocity_tracker.position,
             'joint_positions': joint_positions,
         }
 
     def toggle_gripper(self):
         self.gripper_open = not self.gripper_open
+
+        gripper_status: Robotiq3FingerStatus = self.side.gripper_status.get()
+        current_scissor_position = gripper_status.scissor_status.position
+
         if self.gripper_open:
-            self.commanded_closed_fraction = 0.0
-            self.side.open_gripper(self.commanded_scissor_position)
+            self.side.open_gripper(current_scissor_position)
         else:
-            self.commanded_closed_fraction = 1.0
-            self.side.close_gripper(self.commanded_scissor_position)
+            self.side.close_gripper(current_scissor_position)
 
     def get_target_in_base(self, controller_info: ControllerInfo) -> TransformStamped:
         current_controller_in_vr_msg = controller_info_to_tf(self.node, controller_info)
