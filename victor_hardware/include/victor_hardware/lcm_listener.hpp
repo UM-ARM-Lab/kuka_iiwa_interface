@@ -6,8 +6,11 @@
 
 template <typename T>
 class LcmListener {
+
+  using UserCallbackType = std::function<void(const T&)>;
+
  public:
-  LcmListener(std::shared_ptr<lcm::LCM> const& lcm, const std::string& channel) : lcm_(lcm), channel_(channel) {
+  LcmListener(std::shared_ptr<lcm::LCM> const& lcm, const std::string& channel, UserCallbackType const &cb) : lcm_(lcm), channel_(channel), callback_(cb) {
     lcm_->subscribe(channel, &LcmListener::callback, this);
   }
 
@@ -15,6 +18,7 @@ class LcmListener {
     std::lock_guard<std::mutex> lock(mutex_);
     latest_message_ = *message;
     has_latest_message_ = true;
+    callback_(latest_message_);
   }
 
   /**
@@ -35,6 +39,7 @@ class LcmListener {
   std::shared_ptr<lcm::LCM> lcm_;
   std::string channel_;
   T latest_message_{};
+  UserCallbackType callback_;
   bool has_latest_message_{false};
   mutable std::mutex mutex_;
 };

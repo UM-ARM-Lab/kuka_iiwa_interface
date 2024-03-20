@@ -39,18 +39,4 @@ class Robotiq3fLcmBridge {
 /////////////////////////////////////////////////////////////////////////////////
 // Ros and LCM convert helper functions
 /////////////////////////////////////////////////////////////////////////////////
-
-victor_lcm_interface::robotiq_3finger_actuator_command fingerCommandRosToLcm(
-    const msgs::Robotiq3FingerActuatorCommand& finger_command);
-
-msgs::Robotiq3FingerActuatorStatus fingerStatusLcmToRos(
-    const victor_lcm_interface::robotiq_3finger_actuator_status& finger_status);
-
-msgs::Robotiq3FingerObjectStatus objectStatusLcmToRos(
-    const victor_lcm_interface::robotiq_3finger_object_status& object_status);
-
-msgs::Robotiq3FingerStatus statusLcmToRos(const victor_lcm_interface::robotiq_3finger_status& status);
-
-victor_lcm_interface::robotiq_3finger_command commandRosToLcm(const msgs::Robotiq3FingerCommand& command);
-
 }  // namespace victor_hardware

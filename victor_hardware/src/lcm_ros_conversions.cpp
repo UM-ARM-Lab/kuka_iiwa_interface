@@ -1,6 +1,7 @@
 #include <utility>
 #include <victor_hardware/lcm_ros_conversions.hpp>
 #include <arm_utilities/ros_helpers.hpp>
+#include <arm_utilities/arm_helpers.hpp>
 
 namespace victor_hardware {
 
@@ -233,6 +234,66 @@ victor_lcm_interface::control_mode_parameters controlModeParamsRosToLcm(const ms
   lcm_cmp.control_mode = controlModeRosToLcm(ros_cmp.control_mode);
   lcm_cmp.timestamp = rclcpp::Time(ros_cmp.header.stamp).seconds();
   return lcm_cmp;
+}
+
+victor_lcm_interface::robotiq_3finger_actuator_command fingerCommandRosToLcm(
+    const msg::Robotiq3FingerActuatorCommand& finger_command) {
+  victor_lcm_interface::robotiq_3finger_actuator_command lcm_command{};
+
+  // "Magic" number 0.0 and 1 are the bounds representing percentage value
+  lcm_command.position = arm_helpers::ClampValueAndWarn(finger_command.position, 0.0, 1.0);
+  lcm_command.speed = arm_helpers::ClampValueAndWarn(finger_command.speed, 0.0, 1.0);
+  lcm_command.force = arm_helpers::ClampValueAndWarn(finger_command.force, 0.0, 1.0);
+  lcm_command.timestamp = rclcpp::Time(finger_command.header.stamp).seconds();
+  return lcm_command;
+}
+
+msg::Robotiq3FingerActuatorStatus fingerStatusLcmToRos(
+    const victor_lcm_interface::robotiq_3finger_actuator_status& finger_status) {
+  msg::Robotiq3FingerActuatorStatus ros_status;
+  ros_status.position = finger_status.position;
+  ros_status.position_request = finger_status.position_request;
+  ros_status.current = finger_status.current;
+  ros_status.header.stamp = ros_helpers::secondsToTimeMsg(finger_status.timestamp);
+  return ros_status;
+}
+
+rclcpp::Time secondsToStamp(const victor_lcm_interface::robotiq_3finger_object_status& object_status);
+msg::Robotiq3FingerObjectStatus objectStatusLcmToRos(
+    const victor_lcm_interface::robotiq_3finger_object_status& object_status) {
+  msg::Robotiq3FingerObjectStatus ros_status;
+  ros_status.status = (uint8_t)object_status.status;
+  ros_status.header.stamp = ros_helpers::secondsToTimeMsg(object_status.timestamp);
+  return ros_status;
+}
+
+msg::Robotiq3FingerStatus gripperStatusLcmToRos(const victor_lcm_interface::robotiq_3finger_status& status) {
+  msg::Robotiq3FingerStatus ros_status;
+  ros_status.finger_a_status = fingerStatusLcmToRos(status.finger_a_status);
+  ros_status.finger_b_status = fingerStatusLcmToRos(status.finger_b_status);
+  ros_status.finger_c_status = fingerStatusLcmToRos(status.finger_c_status);
+  ros_status.scissor_status = fingerStatusLcmToRos(status.scissor_status);
+  ros_status.finger_a_object_status = objectStatusLcmToRos(status.finger_a_object_status);
+  ros_status.finger_b_object_status = objectStatusLcmToRos(status.finger_b_object_status);
+  ros_status.finger_c_object_status = objectStatusLcmToRos(status.finger_c_object_status);
+  ros_status.scissor_object_status = objectStatusLcmToRos(status.scissor_object_status);
+  ros_status.gripper_action_status = (uint8_t)status.gripper_action_status;
+  ros_status.gripper_system_status = (uint8_t)status.gripper_system_status;
+  ros_status.gripper_motion_status = (uint8_t)status.gripper_motion_status;
+  ros_status.gripper_fault_status = (uint8_t)status.gripper_fault_status;
+  ros_status.initialization_status = (uint8_t)status.initialization_status;
+  ros_status.header.stamp = ros_helpers::secondsToTimeMsg(status.timestamp);
+  return ros_status;
+}
+
+victor_lcm_interface::robotiq_3finger_command gripperCommandRosToLcm(const msg::Robotiq3FingerCommand& command) {
+  victor_lcm_interface::robotiq_3finger_command lcm_command{};
+  lcm_command.finger_a_command = fingerCommandRosToLcm(command.finger_a_command);
+  lcm_command.finger_b_command = fingerCommandRosToLcm(command.finger_b_command);
+  lcm_command.finger_c_command = fingerCommandRosToLcm(command.finger_c_command);
+  lcm_command.scissor_command = fingerCommandRosToLcm(command.scissor_command);
+  lcm_command.timestamp = rclcpp::Time(command.header.stamp.sec).seconds();
+  return lcm_command;
 }
 
 }  // namespace victor_hardware

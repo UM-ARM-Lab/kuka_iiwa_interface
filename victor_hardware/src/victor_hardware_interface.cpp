@@ -14,18 +14,11 @@ CallbackReturn VictorHardwareInterface::on_init(const hardware_interface::Hardwa
     return CallbackReturn::ERROR;
   }
 
+  RCLCPP_INFO(logger, "===================================================================================");
+  RCLCPP_INFO(logger, "Please start the LCMRobotInterface application on BOTH pendants!");
+  RCLCPP_INFO(logger, "===================================================================================");
+
   node_ = std::make_shared<rclcpp::Node>("victor_hardware_interface_node", rclcpp::NodeOptions());
-
-  setter_callback_group_ = node_->create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
-
-  // Add a ROS service server that users can call to disable "writing" (sending LCM MotionCommand messages)
-  set_send_motion_command_srv_ = node_->create_service<std_srvs::srv::SetBool>(
-      "set_send_motion_cmd",
-      [&](const std_srvs::srv::SetBool::Request::SharedPtr req, std_srvs::srv::SetBool::Response::SharedPtr res) {
-        RCLCPP_WARN_STREAM(logger, "Setting send_motion_cmd_=" << req->data);
-        this->send_motion_cmd_  = req->data;
-      },
-      rmw_qos_profile_services_default, setter_callback_group_);
 
   executor_ = std::make_shared<AsyncExecutor>();
   executor_->add_node(node_);
@@ -38,62 +31,18 @@ CallbackReturn VictorHardwareInterface::on_init(const hardware_interface::Hardwa
   hw_states_position_.resize(info_.joints.size(), std::numeric_limits<double>::quiet_NaN());
   hw_states_effort_.resize(info_.joints.size(), std::numeric_limits<double>::quiet_NaN());
   hw_states_external_torque_sensor_.resize(info_.joints.size(), 0);
-  left_hw_ft_.fill(0);
-  right_hw_ft_.fill(0);
 
   // NOTE: changing these values here requires corresponding changes in the LCMRobotInterface application
   //  and also the victor_lcm_bridge launch file.
-  std::string const left_recv_provider = "udp://10.10.10.169:30002";
-  std::string const right_recv_provider = "udp://10.10.10.169:30001";
+  std::string const left_recv_provider = "udp://10.10.10.166:30002";
+  std::string const right_recv_provider = "udp://10.10.10.166:30001";
   std::string const left_send_provider = "udp://10.10.10.12:30000";
   std::string const right_send_provider = "udp://10.10.10.11:30000";
 
-  left_send_lcm_ptr_ = std::make_shared<lcm::LCM>(left_send_provider);
-  left_recv_lcm_ptr_ = std::make_shared<lcm::LCM>(left_recv_provider);
-  right_send_lcm_ptr_ = std::make_shared<lcm::LCM>(right_send_provider);
-  right_recv_lcm_ptr_ = std::make_shared<lcm::LCM>(right_recv_provider);
+  left.on_init(node_, left_send_provider, left_recv_provider);
+  right.on_init(node_, right_send_provider, right_recv_provider);
 
-  RCLCPP_INFO(logger, "===================================================================================");
-  RCLCPP_INFO(logger, "Please start the LCMRobotInterface application on BOTH pendants!");
-  RCLCPP_INFO(logger, "===================================================================================");
-
-  if (!left_send_lcm_ptr_->good()) {
-    RCLCPP_ERROR(logger, "Left Send LCM interface is not good");
-    return CallbackReturn::ERROR;
-  }
-  RCLCPP_DEBUG(logger, "Left send LCM interface is good");
-
-  if (!left_recv_lcm_ptr_->good()) {
-    RCLCPP_ERROR(logger, "Left Receive LCM interface is not good");
-    return CallbackReturn::ERROR;
-  }
-  RCLCPP_DEBUG(logger, "Left receive LCM interface is good");
-
-  if (!right_send_lcm_ptr_->good()) {
-    RCLCPP_ERROR(logger, "Right Send LCM interface is not good");
-    return CallbackReturn::ERROR;
-  }
-  RCLCPP_DEBUG(logger, "Right send LCM interface is good");
-
-  if (!right_recv_lcm_ptr_->good()) {
-    RCLCPP_ERROR(logger, "Right Receive LCM interface is not good");
-    return CallbackReturn::ERROR;
-  }
-  RCLCPP_DEBUG(logger, "Right receive LCM interface is good");
-
-  left_motion_status_listener_ = std::make_unique<LcmListener<victor_lcm_interface::motion_status>>(
-      left_recv_lcm_ptr_, DEFAULT_MOTION_STATUS_CHANNEL);
-  right_motion_status_listener_ = std::make_unique<LcmListener<victor_lcm_interface::motion_status>>(
-      right_recv_lcm_ptr_, DEFAULT_MOTION_STATUS_CHANNEL);
-  left_control_mode_listener_ = std::make_unique<LcmListener<victor_lcm_interface::control_mode_parameters>>(
-      left_recv_lcm_ptr_, DEFAULT_CONTROL_MODE_STATUS_CHANNEL);
-  right_control_mode_listener_ = std::make_unique<LcmListener<victor_lcm_interface::control_mode_parameters>>(
-      right_recv_lcm_ptr_, DEFAULT_CONTROL_MODE_STATUS_CHANNEL);
-  left_gripper_status_listener_ = std::make_unique<LcmListener<victor_lcm_interface::robotiq_3finger_status>>(
-      left_recv_lcm_ptr_, DEFAULT_GRIPPER_STATUS_CHANNEL);
-  right_gripper_status_listener_ = std::make_unique<LcmListener<victor_lcm_interface::robotiq_3finger_status>>(
-      right_recv_lcm_ptr_, DEFAULT_GRIPPER_STATUS_CHANNEL);
-
+  //  // Example usage of DataTamer
   //  sink_ = std::make_shared<DataTamer::MCAPSink>("/home/armlab/victor_hw_if.mcap");
   //
   //  // Create a channel and attach a sink. A channel can have multiple sinks
@@ -107,6 +56,8 @@ CallbackReturn VictorHardwareInterface::on_init(const hardware_interface::Hardwa
 
 std::vector<hardware_interface::StateInterface> VictorHardwareInterface::export_state_interfaces() {
   std::vector<hardware_interface::StateInterface> state_interfaces;
+
+  // export state interfaces for joints
   for (uint i = 0; i < info_.joints.size(); i++) {
     auto joint = info_.joints[i];
     auto has_state_interface = [&](std::string const& name) {
@@ -114,30 +65,38 @@ std::vector<hardware_interface::StateInterface> VictorHardwareInterface::export_
                          [&](auto const& state_interface) { return state_interface.name == name; });
     };
 
-    if (has_state_interface("position")) {
+    if (has_state_interface(hardware_interface::HW_IF_POSITION)) {
       state_interfaces.emplace_back(joint.name, hardware_interface::HW_IF_POSITION, &hw_states_position_[i]);
     }
-    if (has_state_interface("effort")) {
+    if (has_state_interface(hardware_interface::HW_IF_EFFORT)) {
       state_interfaces.emplace_back(joint.name, hardware_interface::HW_IF_EFFORT, &hw_states_effort_[i]);
     }
-    if (has_state_interface("external_torque")) {
-      state_interfaces.emplace_back(joint.name, "external_torque", &hw_states_external_torque_sensor_[i]);
+    if (has_state_interface(EXTERNAL_TORQUE)) {
+      state_interfaces.emplace_back(joint.name, EXTERNAL_TORQUE, &hw_states_external_torque_sensor_[i]);
+    }
+    if (has_state_interface(TORQUE)) {
+        state_interfaces.emplace_back(joint.name, TORQUE, &hw_states_effort_[i]);
+    }
+    if (has_state_interface(COMMANDED_POSITION)) {
+      state_interfaces.emplace_back(joint.name, COMMANDED_POSITION, &hw_states_cmd_position_[i]);
     }
   }
 
   // export state interfaces for force torque sensor
-  state_interfaces.emplace_back("left_force_torque_sensor", "force.x", &left_hw_ft_[0]);
-  state_interfaces.emplace_back("left_force_torque_sensor", "force.y", &left_hw_ft_[1]);
-  state_interfaces.emplace_back("left_force_torque_sensor", "force.z", &left_hw_ft_[2]);
-  state_interfaces.emplace_back("left_force_torque_sensor", "torque.x", &left_hw_ft_[3]);
-  state_interfaces.emplace_back("left_force_torque_sensor", "torque.y", &left_hw_ft_[4]);
-  state_interfaces.emplace_back("left_force_torque_sensor", "torque.z", &left_hw_ft_[5]);
-  state_interfaces.emplace_back("right_force_torque_sensor", "force.x", &right_hw_ft_[0]);
-  state_interfaces.emplace_back("right_force_torque_sensor", "force.y", &right_hw_ft_[1]);
-  state_interfaces.emplace_back("right_force_torque_sensor", "force.z", &right_hw_ft_[2]);
-  state_interfaces.emplace_back("right_force_torque_sensor", "torque.x", &right_hw_ft_[3]);
-  state_interfaces.emplace_back("right_force_torque_sensor", "torque.y", &right_hw_ft_[4]);
-  state_interfaces.emplace_back("right_force_torque_sensor", "torque.z", &right_hw_ft_[5]);
+  state_interfaces.emplace_back("left_force_torque_sensor", "force.x", &left.hw_ft_[0]);
+  state_interfaces.emplace_back("left_force_torque_sensor", "force.y", &left.hw_ft_[1]);
+  state_interfaces.emplace_back("left_force_torque_sensor", "force.z", &left.hw_ft_[2]);
+  state_interfaces.emplace_back("left_force_torque_sensor", "torque.x", &left.hw_ft_[3]);
+  state_interfaces.emplace_back("left_force_torque_sensor", "torque.y", &left.hw_ft_[4]);
+  state_interfaces.emplace_back("left_force_torque_sensor", "torque.z", &left.hw_ft_[5]);
+  state_interfaces.emplace_back("right_force_torque_sensor", "force.x", &right.hw_ft_[0]);
+  state_interfaces.emplace_back("right_force_torque_sensor", "force.y", &right.hw_ft_[1]);
+  state_interfaces.emplace_back("right_force_torque_sensor", "force.z", &right.hw_ft_[2]);
+  state_interfaces.emplace_back("right_force_torque_sensor", "torque.x", &right.hw_ft_[3]);
+  state_interfaces.emplace_back("right_force_torque_sensor", "torque.y", &right.hw_ft_[4]);
+  state_interfaces.emplace_back("right_force_torque_sensor", "torque.z", &right.hw_ft_[5]);
+
+  // export state interfaces for motion status,
 
   return state_interfaces;
 }
@@ -183,8 +142,8 @@ CallbackReturn VictorHardwareInterface::on_deactivate(const rclcpp_lifecycle::St
 
 void VictorHardwareInterface::LCMThread() {
   while (lcm_thread_running_) {
-    left_recv_lcm_ptr_->handleTimeout(1000);
-    right_recv_lcm_ptr_->handleTimeout(1000);
+    left.recv_lcm_ptr_->handleTimeout(1000);
+    right.recv_lcm_ptr_->handleTimeout(1000);
   }
 }
 
@@ -195,12 +154,12 @@ hardware_interface::return_type VictorHardwareInterface::read(const rclcpp::Time
     return hardware_interface::return_type::OK;
   }
 
-  if (!left_motion_status_listener_->hasLatestMessage() || !right_motion_status_listener_->hasLatestMessage() ||
-      !left_gripper_status_listener_->hasLatestMessage() || !right_gripper_status_listener_->hasLatestMessage()) {
+  if (!left.motion_status_listener_->hasLatestMessage() || !right.motion_status_listener_->hasLatestMessage() ||
+      !left.gripper_status_listener_->hasLatestMessage() || !right.gripper_status_listener_->hasLatestMessage()) {
     return hardware_interface::return_type::OK;
   }
-  auto const& left_motion_status = left_motion_status_listener_->getLatestMessage();
-  auto const& right_motion_status = right_motion_status_listener_->getLatestMessage();
+  auto const& left_motion_status = left.motion_status_listener_->getLatestMessage();
+  auto const& right_motion_status = right.motion_status_listener_->getLatestMessage();
 
   hw_states_position_[0] = left_motion_status.measured_joint_position.joint_1;
   hw_states_position_[1] = left_motion_status.measured_joint_position.joint_2;
@@ -248,7 +207,7 @@ hardware_interface::return_type VictorHardwareInterface::read(const rclcpp::Time
   hw_states_external_torque_sensor_[13] = right_motion_status.estimated_external_torque.joint_7;
 
   // now also fill out the positions for the finger joints
-  auto const& left_gripper_status = left_gripper_status_listener_->getLatestMessage();
+  auto const& left_gripper_status = left.gripper_status_listener_->getLatestMessage();
   auto const& left_finger_a_pos =
       robotiq_3f_transmission_plugins::double_to_uint8(left_gripper_status.finger_a_status.position);
   auto const& left_finger_b_pos =
@@ -273,7 +232,7 @@ hardware_interface::return_type VictorHardwareInterface::read(const rclcpp::Time
   hw_states_position_[23] = left_finger_c_thetas[1];
   hw_states_position_[24] = left_finger_c_thetas[2];
 
-  auto const& right_gripper_status = right_gripper_status_listener_->getLatestMessage();
+  auto const& right_gripper_status = right.gripper_status_listener_->getLatestMessage();
   auto const& right_finger_a_pos =
       robotiq_3f_transmission_plugins::double_to_uint8(right_gripper_status.finger_a_status.position);
   auto const& right_finger_b_pos =
@@ -299,18 +258,18 @@ hardware_interface::return_type VictorHardwareInterface::read(const rclcpp::Time
   hw_states_position_[35] = right_finger_c_thetas[2];
 
   // Copy the estimated external force torque readings from the motion status into the state interface
-  left_hw_ft_[0] = left_motion_status.estimated_external_wrench.x;
-  left_hw_ft_[1] = left_motion_status.estimated_external_wrench.y;
-  left_hw_ft_[2] = left_motion_status.estimated_external_wrench.z;
-  left_hw_ft_[3] = left_motion_status.estimated_external_wrench.a;
-  left_hw_ft_[4] = left_motion_status.estimated_external_wrench.b;
-  left_hw_ft_[5] = left_motion_status.estimated_external_wrench.c;
-  right_hw_ft_[0] = right_motion_status.estimated_external_wrench.x;
-  right_hw_ft_[1] = right_motion_status.estimated_external_wrench.y;
-  right_hw_ft_[2] = right_motion_status.estimated_external_wrench.z;
-  right_hw_ft_[3] = right_motion_status.estimated_external_wrench.a;
-  right_hw_ft_[4] = right_motion_status.estimated_external_wrench.b;
-  right_hw_ft_[5] = right_motion_status.estimated_external_wrench.c;
+  left.hw_ft_[0] = left_motion_status.estimated_external_wrench.x;
+  left.hw_ft_[1] = left_motion_status.estimated_external_wrench.y;
+  left.hw_ft_[2] = left_motion_status.estimated_external_wrench.z;
+  left.hw_ft_[3] = left_motion_status.estimated_external_wrench.a;
+  left.hw_ft_[4] = left_motion_status.estimated_external_wrench.b;
+  left.hw_ft_[5] = left_motion_status.estimated_external_wrench.c;
+  right.hw_ft_[0] = right_motion_status.estimated_external_wrench.x;
+  right.hw_ft_[1] = right_motion_status.estimated_external_wrench.y;
+  right.hw_ft_[2] = right_motion_status.estimated_external_wrench.z;
+  right.hw_ft_[3] = right_motion_status.estimated_external_wrench.a;
+  right.hw_ft_[4] = right_motion_status.estimated_external_wrench.b;
+  right.hw_ft_[5] = right_motion_status.estimated_external_wrench.c;
 
   return hardware_interface::return_type::OK;
 }
@@ -321,17 +280,17 @@ hardware_interface::return_type VictorHardwareInterface::write(const rclcpp::Tim
     return hardware_interface::return_type::OK;
   }
 
-  auto const& has_left_motion_status = left_motion_status_listener_->hasLatestMessage();
-  auto const& has_right_motion_status = right_motion_status_listener_->hasLatestMessage();
-  auto const& has_left_control_mode = left_control_mode_listener_->hasLatestMessage();
-  auto const& has_right_control_mode = right_control_mode_listener_->hasLatestMessage();
+  auto const& has_left_motion_status = left.motion_status_listener_->hasLatestMessage();
+  auto const& has_right_motion_status = right.motion_status_listener_->hasLatestMessage();
+  auto const& has_left_control_mode = left.control_mode_listener_->hasLatestMessage();
+  auto const& has_right_control_mode = right.control_mode_listener_->hasLatestMessage();
 
   if (!has_left_motion_status || !has_right_motion_status || !has_left_control_mode || !has_right_control_mode) {
     return hardware_interface::return_type::OK;
   }
 
-  auto const& left_motion_status = left_motion_status_listener_->getLatestMessage();
-  auto const& right_motion_status = right_motion_status_listener_->getLatestMessage();
+  auto const& left_motion_status = left.motion_status_listener_->getLatestMessage();
+  auto const& right_motion_status = right.motion_status_listener_->getLatestMessage();
 
   std::array<double, 14> current_commanded_positions;
   current_commanded_positions[0] = left_motion_status.commanded_joint_position.joint_1;
@@ -364,8 +323,8 @@ hardware_interface::return_type VictorHardwareInterface::write(const rclcpp::Tim
   std::chrono::duration<double> const now_dur_seconds = now_tp.time_since_epoch();
   auto const now_seconds = now_dur_seconds.count();
 
-  auto const& left_control_mode = left_control_mode_listener_->getLatestMessage();
-  auto const& right_control_mode = right_control_mode_listener_->getLatestMessage();
+  auto const& left_control_mode = left.control_mode_listener_->getLatestMessage();
+  auto const& right_control_mode = right.control_mode_listener_->getLatestMessage();
 
   victor_lcm_interface::motion_command left_motion_cmd{};
   left_motion_cmd.timestamp = now_seconds;
@@ -405,10 +364,8 @@ hardware_interface::return_type VictorHardwareInterface::write(const rclcpp::Tim
   right_motion_cmd.joint_velocity.joint_6 = 0.;
   right_motion_cmd.joint_velocity.joint_7 = 0.;
 
-  if (send_motion_cmd_) {
-    left_send_lcm_ptr_->publish(DEFAULT_MOTION_COMMAND_CHANNEL, &left_motion_cmd);
-    right_send_lcm_ptr_->publish(DEFAULT_MOTION_COMMAND_CHANNEL, &right_motion_cmd);
-  }
+  left.send_lcm_ptr_->publish(DEFAULT_MOTION_COMMAND_CHANNEL, &left_motion_cmd);
+  right.send_lcm_ptr_->publish(DEFAULT_MOTION_COMMAND_CHANNEL, &right_motion_cmd);
 
   //  channel_->takeSnapshot();
 

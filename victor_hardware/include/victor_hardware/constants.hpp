@@ -13,8 +13,6 @@ const std::string DEFAULT_GRIPPER_COMMAND_TOPIC("gripper_command");
 const std::string DEFAULT_GRIPPER_STATUS_TOPIC("gripper_status");
 
 // Default LCM parameters
-const std::string DEFAULT_SEND_LCM_URL("udp://10.10.10.11:30000");
-const std::string DEFAULT_RECV_LCM_URL("udp://10.10.10.169:30001");
 const std::string DEFAULT_MOTION_COMMAND_CHANNEL("motion_command");
 const std::string DEFAULT_MOTION_STATUS_CHANNEL("motion_status");
 const std::string DEFAULT_CONTROL_MODE_COMMAND_CHANNEL("control_mode_command");
@@ -31,11 +29,16 @@ const std::string GET_CONTROL_MODE_SERVICE_PARAM("get_control_mode_service");
 const std::string SET_CONTROL_MODE_SERVICE_PARAM("set_control_mode_service");
 const std::string GRIPPER_COMMAND_TOPIC_PARAM("gripper_command_topic");
 const std::string GRIPPER_STATUS_TOPIC_PARAM("gripper_status_topic");
-const std::string SEND_LCM_URL_PARAM("send_lcm_url");
-const std::string RECV_LCM_URL_PARAM("recv_lcm_url");
-const std::string MOTION_COMMAND_CHANNEL_PARAM("motion_command_channel");
 const std::string MOTION_STATUS_CHANNEL_PARAM("motion_status_channel");
-const std::string CONTROL_MODE_COMMAND_CHANNEL_PARAM("control_mode_command_channel");
 const std::string CONTROL_MODE_STATUS_CHANNEL_PARAM("control_mode_status_channel");
-const std::string GRIPPER_COMMAND_CHANNEL_PARAM("gripper_command_channel");
 const std::string GRIPPER_STATUS_CHANNEL_PARAM("gripper_status_channel");
+
+// ROS2 control interface
+static const char* const COMMANDED_POSITION = "commanded_position";
+static const char* const TORQUE = "torque";
+static const char* const EXTERNAL_TORQUE = "external_torque";
+static const char* const CARTESIAN_POSE = "cartesian_pose";
+static const char* const COMMANDED_CARTESIAN_POSE = "commanded_cartesian_pose";
+static const char* const ACTIVE_CONTROL_MODE = "active_control_mode";
+
+
