@@ -1,9 +1,11 @@
 from enum import Enum, auto
 
-from typing import List, Sequence
+from typing import List, Sequence, Optional
 
 from victor_hardware_interfaces.msg import ControlMode, ControlModeParameters, Robotiq3FingerStatus, \
     Robotiq3FingerCommand, JointValueQuantity
+
+DEFAULT_SCISSOR = 0.5
 
 
 class Stiffness(Enum):
@@ -208,9 +210,9 @@ def list_to_gripper_status(gripper_status_list: Sequence[float]) -> Robotiq3Fing
 
 def default_gripper_command():
     cmd = Robotiq3FingerCommand()
-    cmd.finger_a_command.speed = 0.5
-    cmd.finger_b_command.speed = 0.5
-    cmd.finger_c_command.speed = 0.5
+    cmd.finger_a_command.speed = 1.0
+    cmd.finger_b_command.speed = 1.0
+    cmd.finger_c_command.speed = 1.0
     cmd.scissor_command.speed = 1.0
 
     cmd.finger_a_command.force = 1.0
@@ -229,7 +231,7 @@ def is_gripper_closed(status: Robotiq3FingerStatus):
     return finger_a_closed and finger_b_closed and finger_c_closed
 
 
-def get_gripper_closed_fraction_msg(position: float, scissor_position: float = 0.2):
+def get_gripper_closed_fraction_msg(position: float, scissor_position: float = DEFAULT_SCISSOR):
     """
     Args:
         position: 0.0 is open, 1.0 is closed
@@ -239,4 +241,17 @@ def get_gripper_closed_fraction_msg(position: float, scissor_position: float = 0
     msg.finger_b_command.position = position
     msg.finger_c_command.position = position
     msg.scissor_command.position = scissor_position
+    return msg
+
+def set_gripper_closed_fraction_msg(msg: Robotiq3FingerCommand, position: float, scissor_position: Optional[float] = None):
+    """
+    Args:
+        msg: command message modified in-place
+        position: 0.0 is open, 1.0 is closed
+    """
+    msg.finger_a_command.position = position
+    msg.finger_b_command.position = position
+    msg.finger_c_command.position = position
+    if scissor_position:
+        msg.scissor_command.position = scissor_position
     return msg

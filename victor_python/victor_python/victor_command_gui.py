@@ -17,7 +17,7 @@ from urdf_parser_py.urdf import Robot
 
 from victor_python.victor import Victor, Side, ROBOTIQ_OPEN, ROBOTIQ_CLOSED
 from victor_python.victor_utils import list_to_jvq, Stiffness, get_control_mode_params, \
-    get_gripper_closed_fraction_msg
+    set_gripper_closed_fraction_msg
 from victor_hardware_interfaces.msg import Robotiq3FingerCommand, MotionCommand, ControlMode, Robotiq3FingerStatus, \
     Robotiq3FingerActuatorStatus, Robotiq3FingerActuatorCommand, ControlModeParameters
 from victor_hardware_interfaces.srv import GetControlMode, SetControlMode
@@ -161,6 +161,7 @@ class ArmWidget(QWidget):
         self.finger_a_widget.set_status(gripper_status.finger_a_status)
         self.finger_b_widget.set_status(gripper_status.finger_b_status)
         self.finger_c_widget.set_status(gripper_status.finger_c_status)
+        self.scissor_widget.set_status(gripper_status.scissor_status)
 
         self.motion_cmd.joint_position = list_to_jvq(joint_positions_list)
 
@@ -223,11 +224,11 @@ class ArmWidget(QWidget):
         self.side.gripper_command.publish(self.gripper_cmd)
 
     def on_open_gripper(self):
-        self.gripper_cmd = get_gripper_closed_fraction_msg(ROBOTIQ_OPEN)
+        set_gripper_closed_fraction_msg(self.gripper_cmd, ROBOTIQ_OPEN)
         self.publish_gripper_cmd()
 
     def on_close_gripper(self):
-        self.gripper_cmd = get_gripper_closed_fraction_msg(ROBOTIQ_CLOSED)
+        set_gripper_closed_fraction_msg(self.gripper_cmd, ROBOTIQ_CLOSED)
         self.publish_gripper_cmd()
 
     def get_jvq_from_sliders(self):
@@ -318,6 +319,8 @@ class FingerWidget(QWidget):
     def __init__(self, label: str):
         QWidget.__init__(self)
 
+        self.finger_cmd = Robotiq3FingerActuatorCommand()
+
         # The finger widget itself is a vertical layout
         self.layout = QHBoxLayout()
         self.setLayout(self.layout)
@@ -328,9 +331,7 @@ class FingerWidget(QWidget):
 
         self.position_slider_widget.slider.setRange(0, 100)
         self.speed_slider_widget.slider.setRange(0, 100)
-        self.speed_slider_widget.set_value(100)
         self.force_slider_widget.slider.setRange(0, 100)
-        self.force_slider_widget.set_value(100)
 
         self.layout.addWidget(self.position_slider_widget)
         self.layout.addWidget(self.speed_slider_widget)
@@ -344,7 +345,10 @@ class FingerWidget(QWidget):
         self.speed_slider_widget.slider.valueChanged.connect(self.on_speed_change)
         self.force_slider_widget.slider.valueChanged.connect(self.on_force_change)
 
-        self.finger_cmd = Robotiq3FingerActuatorCommand()
+        # These should trigger the callbacks and update self.finger_cmd
+        self.speed_slider_widget.set_value(100)
+        self.force_slider_widget.set_value(100)
+
 
     def on_position_change(self, value):
         self.finger_cmd.position = FingerSliderWidget.slider_pos_to_fraction(value)

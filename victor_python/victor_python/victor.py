@@ -17,7 +17,7 @@ from std_msgs.msg import String
 
 from arm_utilities.listener import Listener
 from victor_python.victor_utils import get_control_mode_params, is_gripper_closed, get_gripper_closed_fraction_msg, \
-    jvq_to_list, list_to_jvq
+    jvq_to_list, list_to_jvq, DEFAULT_SCISSOR
 from victor_hardware_interfaces.msg import MotionCommand, MotionStatus, Robotiq3FingerStatus, Robotiq3FingerCommand, \
     ControlMode
 from victor_hardware_interfaces.srv import SetControlMode, GetControlMode
@@ -78,13 +78,13 @@ class Side:
         self.motion_status = Listener(node, MotionStatus, f"victor/{self.arm_name}/motion_status", 10)
         self.gripper_status = Listener(node, Robotiq3FingerStatus, f"victor/{self.arm_name}/gripper_status", 10)
 
-    def open_gripper(self):
+    def open_gripper(self, scissor_position=DEFAULT_SCISSOR):
         # TODO: implementing blocking grasping
-        self.gripper_command.publish(get_gripper_closed_fraction_msg(ROBOTIQ_OPEN))
+        self.gripper_command.publish(get_gripper_closed_fraction_msg(ROBOTIQ_OPEN, scissor_position))
 
-    def close_gripper(self):
+    def close_gripper(self, scissor_position=DEFAULT_SCISSOR):
         # TODO: implementing blocking grasping
-        self.gripper_command.publish(get_gripper_closed_fraction_msg(ROBOTIQ_CLOSED))
+        self.gripper_command.publish(get_gripper_closed_fraction_msg(ROBOTIQ_CLOSED, scissor_position))
 
     def get_gripper_status(self) -> Robotiq3FingerStatus:
         return self.gripper_status.get()
