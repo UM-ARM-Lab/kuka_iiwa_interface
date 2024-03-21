@@ -13,6 +13,8 @@ set(THIS_PACKAGE_INCLUDE_DEPENDS
         #        data_tamer_cpp
         victor_hardware_interfaces
         robotiq_3f_transmission_plugins
+        ament_index_cpp
+        yaml-cpp
         rclcpp
         rclcpp_lifecycle
         rclpy
@@ -46,8 +48,8 @@ target_include_directories(
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:include>
 )
-
 ament_target_dependencies(victor_hardware ${THIS_PACKAGE_INCLUDE_DEPENDS})
+target_link_libraries(victor_hardware yaml-cpp)
 
 
 install(

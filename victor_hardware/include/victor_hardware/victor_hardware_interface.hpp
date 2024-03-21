@@ -48,6 +48,14 @@ class VictorHardwareInterface : public hardware_interface::SystemInterface {
   CallbackReturn on_deactivate(const rclcpp_lifecycle::State& previous_state) override;
 
   VICTOR_HARDWARE_PUBLIC
+  hardware_interface::return_type prepare_command_mode_switch(const std::vector<std::string>& start_interfaces,
+                                                              const std::vector<std::string>& stop_interfaces) override;
+
+  VICTOR_HARDWARE_PUBLIC
+  hardware_interface::return_type perform_command_mode_switch(const std::vector<std::string>& start_interfaces,
+                                                              const std::vector<std::string>& stop_interfaces) override;
+
+  VICTOR_HARDWARE_PUBLIC
   hardware_interface::return_type read(const rclcpp::Time& time, const rclcpp::Duration& period) override;
 
   VICTOR_HARDWARE_PUBLIC
@@ -60,7 +68,6 @@ class VictorHardwareInterface : public hardware_interface::SystemInterface {
 
   rclcpp::CallbackGroup::SharedPtr setter_callback_group_;
   rclcpp::Service<std_srvs::srv::SetBool>::SharedPtr set_send_motion_command_srv_;
-  bool send_motion_command_{true};
 
   // This class does the pub-sub to LCM
   Side left{"left"};

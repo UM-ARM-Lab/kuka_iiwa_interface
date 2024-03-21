@@ -21,5 +21,6 @@ class KukaCartesianController : public controller_interface::ControllerInterface
   controller_interface::CallbackReturn on_activate(const rclcpp_lifecycle::State &previous_state) override;
 
   controller_interface::CallbackReturn on_deactivate(const rclcpp_lifecycle::State &previous_state) override;
+
 };
 }  // namespace victor_hardware

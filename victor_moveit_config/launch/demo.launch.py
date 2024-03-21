@@ -29,35 +29,6 @@ def generate_launch_description():
 
     ld.add_action(
         Node(
-            package="victor_hardware",
-            name="left_arm_lcm_bridge_node",
-            executable="iiwa_lcm_bridge_node",
-            output="screen",
-            namespace="victor/left_arm",
-            parameters=[
-                {"send_lcm_url": "udp://10.10.10.12:30000"},
-                {"recv_lcm_url": LaunchConfiguration("left_arm_recv_url")},
-            ],
-        )
-    )
-
-    ld.add_action(
-        Node(
-            package="victor_hardware",
-            executable="iiwa_lcm_bridge_node",
-            name="right_arm_lcm_bridge_node",
-            output="screen",
-            namespace="victor/right_arm",
-            parameters=[
-                {"send_lcm_url": "udp://10.10.10.11:30000"},
-                {"recv_lcm_url": LaunchConfiguration("right_arm_recv_url")},
-            ],
-        )
-    )
-
-
-    ld.add_action(
-        Node(
             package="joy",
             executable="joy_node",
             name="xbox_joystick",

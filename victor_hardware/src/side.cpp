@@ -1,3 +1,6 @@
+#include <yaml-cpp/yaml.h>
+
+#include <ament_index_cpp/get_package_share_directory.hpp>
 #include <rclcpp/rclcpp.hpp>
 #include <victor_hardware/constants.hpp>
 #include <victor_hardware/lcm_ros_conversions.hpp>
@@ -6,12 +9,14 @@
 
 using std::placeholders::_1;
 using std::placeholders::_2;
+using namespace std::chrono_literals;
 
 namespace victor_hardware {
 
 Side::Side(std::string const& name) : name_(name), logger_(rclcpp::get_logger("VictorHardwareInterface." + name)) {}
 
-CallbackReturn Side::on_init(std::shared_ptr<rclcpp::Node> const& node, std::string const& send_provider,
+CallbackReturn Side::on_init(std::shared_ptr<rclcpp::Executor> const& executor,
+                             std::shared_ptr<rclcpp::Node> const& node, std::string const& send_provider,
                              std::string const& recv_provider) {
   hw_ft_.fill(0);
   send_lcm_ptr_ = std::make_shared<lcm::LCM>(send_provider);
@@ -48,8 +53,6 @@ CallbackReturn Side::on_init(std::shared_ptr<rclcpp::Node> const& node, std::str
   auto const ns = "/victor/" + name_ + "_arm/";
   motion_status_pub_ = node->create_publisher<msg::MotionStatus>(ns + DEFAULT_MOTION_STATUS_TOPIC, 10);
   gripper_status_pub_ = node->create_publisher<msg::Robotiq3FingerStatus>(ns + DEFAULT_GRIPPER_STATUS_TOPIC, 10);
-  motion_command_sub_ = node->create_subscription<msg::MotionCommand>(
-      ns + DEFAULT_MOTION_COMMAND_TOPIC, 1, std::bind(&Side::motionCommandROSCallback, this, _1), getter_options);
   gripper_command_sub_ = node->create_subscription<msg::Robotiq3FingerCommand>(
       ns + DEFAULT_GRIPPER_COMMAND_TOPIC, 1, std::bind(&Side::gripperCommandROSCallback, this, _1), getter_options);
   get_control_mode_server_ = node->create_service<srv::GetControlMode>(
@@ -59,7 +62,43 @@ CallbackReturn Side::on_init(std::shared_ptr<rclcpp::Node> const& node, std::str
       ns + DEFAULT_SET_CONTROL_MODE_SERVICE, std::bind(&Side::setControlMode, this, _1, _2),
       rmw_qos_profile_services_default, setter_callback_group_);
 
+  // Load and parse the ros2_controllers.yaml which is currently in victor_moveit_config
+  auto const& package_share_directory = ament_index_cpp::get_package_share_directory("victor_moveit_config");
+  auto const& controllers_file = package_share_directory + "/config/ros2_controllers.yaml";
+
+  YAML::Node config = YAML::LoadFile(controllers_file);
+
+  if (config["controller_manager"]) {
+    if (!config["controller_manager"]["ros__parameters"]) {
+      RCLCPP_ERROR(logger_, "controller_manager found in ros2_controllers.yaml, but no ros__parameters found");
+      return CallbackReturn::ERROR;
+    }
+    auto const& controller_manager_config = config["controller_manager"]["ros__parameters"];
+    for (auto const& controller : controller_manager_config) {
+      auto const& controller_name = controller.first.as<std::string>();
+      if (controller.second.Type() == YAML::NodeType::Map) {
+        if (controller.second["control_modes"]) {
+          auto const& control_modes = controller.second["control_modes"];
+          std::vector<uint8_t> valid_control_modes;
+          for (auto const& control_mode : control_modes) {
+            valid_control_modes.push_back(control_mode.as<uint8_t>());
+          }
+          valid_modes_for_controllers_map_[controller_name] = valid_control_modes;
+        }
+      }
+    }
+  } else {
+    RCLCPP_ERROR(logger_, "controller_manager not found in ros2_controllers.yaml");
+    return CallbackReturn::ERROR;
+  }
+
   return CallbackReturn::SUCCESS;
+}
+
+void Side::send_motion_command(victor_lcm_interface::motion_command const& command) {
+  if (send_motion_command_) {
+    send_lcm_ptr_->publish(DEFAULT_MOTION_COMMAND_CHANNEL, &command);
+  }
 }
 
 void Side::getControlMode(const std::shared_ptr<srv::GetControlMode::Request>& request,
@@ -70,7 +109,20 @@ void Side::getControlMode(const std::shared_ptr<srv::GetControlMode::Request>& r
 }
 
 void Side::setControlMode(const std::shared_ptr<srv::SetControlMode::Request>& request,
-                          std::shared_ptr<srv::SetControlMode::Response> response) const {
+                          std::shared_ptr<srv::SetControlMode::Response> response) {
+  // Validate the request to make sure that the new controller and the new control mode are compatible
+
+  auto const& [is_valid, error_msg] = validateControlModeRequest(*request);
+  if (!is_valid) {
+    RCLCPP_ERROR_STREAM(logger_, "Control mode request failed validity checks: " << error_msg);
+    response->success = false;
+    response->message = error_msg;
+    return;
+  }
+
+  send_motion_command_ = false;  // prevent sending LCM motion commands
+
+  // Set the KUKA control mode
   // publish the control mode to the LCM, then wait for the control mode to be received
   auto const lcm_command = controlModeParamsRosToLcm(request->new_control_mode);
   send_lcm_ptr_->publish(DEFAULT_CONTROL_MODE_COMMAND_CHANNEL, &lcm_command);
@@ -91,6 +143,10 @@ void Side::setControlMode(const std::shared_ptr<srv::SetControlMode::Request>& r
       return;
     }
   }
+
+  // Switch ROS2 controllers
+
+  send_motion_command_ = true;  // resume sending LCM motion commands
 }
 
 void Side::gripperCommandROSCallback(const msg::Robotiq3FingerCommand& command) {
@@ -98,16 +154,16 @@ void Side::gripperCommandROSCallback(const msg::Robotiq3FingerCommand& command) 
   send_lcm_ptr_->publish(DEFAULT_GRIPPER_COMMAND_CHANNEL, &lcm_command);
 }
 
-void Side::motionCommandROSCallback(const msg::MotionCommand& command) {
-  auto const& active_control_mode = control_mode_listener_->getLatestMessage().control_mode;
-  const auto validity_check_results = validateMotionCommand(active_control_mode.mode, command);
-  if (validity_check_results.first) {
-    auto const lcm_command = motionCommandRosToLcm(command);
-    send_lcm_ptr_->publish(DEFAULT_MOTION_COMMAND_CHANNEL, &lcm_command);
-  } else {
-    RCLCPP_ERROR_STREAM(logger_, "Arm motion command failed validity checks: " << validity_check_results.second);
-  }
-}
+// void Side::motionCommandROSCallback(const msg::MotionCommand& command) {
+//   auto const& active_control_mode = control_mode_listener_->getLatestMessage().control_mode;
+//   const auto validity_check_results = validateMotionCommand(active_control_mode.mode, command);
+//   if (validity_check_results.first) {
+//     auto const lcm_command = motionCommandRosToLcm(command);
+//     send_lcm_ptr_->publish(DEFAULT_MOTION_COMMAND_CHANNEL, &lcm_command);
+//   } else {
+//     RCLCPP_ERROR_STREAM(logger_, "Arm motion command failed validity checks: " << validity_check_results.second);
+//   }
+// }
 
 void Side::publish_motion_status(const victor_lcm_interface::motion_status& lcm_msg) {
   auto ros_msg = motionStatusLcmToRos(lcm_msg);
@@ -117,6 +173,29 @@ void Side::publish_motion_status(const victor_lcm_interface::motion_status& lcm_
 void Side::publish_gripper_status(const victor_lcm_interface::robotiq_3finger_status& lcm_msg) {
   auto ros_msg = gripperStatusLcmToRos(lcm_msg);
   gripper_status_pub_->publish(ros_msg);
+}
+
+std::pair<bool, std::string> Side::validateControlModeRequest(
+    const victor_hardware_interfaces::srv::SetControlMode::Request& request) {
+  auto const& mode = request.new_control_mode.control_mode.mode;
+
+  if (request.new_controller_name.empty()) {
+    return {false, "New controller name is empty"};
+  }
+
+  auto const& it = valid_modes_for_controllers_map_.find(request.new_controller_name);
+  if (it == valid_modes_for_controllers_map_.end()) {
+    auto const error_msg = "Controller " + request.new_controller_name + " not found.";
+    return {false, error_msg};
+  }
+
+  auto const& valid_control_modes_for_new_controller = it->second;
+  if (std::find(valid_control_modes_for_new_controller.begin(), valid_control_modes_for_new_controller.end(), mode) ==
+      valid_control_modes_for_new_controller.end()) {
+    return {false, "Control mode not valid for controller"};
+  }
+
+  return {true, ""};
 }
 
 }  // namespace victor_hardware

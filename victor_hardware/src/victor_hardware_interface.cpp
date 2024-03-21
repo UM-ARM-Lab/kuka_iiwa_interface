@@ -18,15 +18,9 @@ CallbackReturn VictorHardwareInterface::on_init(const hardware_interface::Hardwa
   RCLCPP_INFO(logger, "Please start the LCMRobotInterface application on BOTH pendants!");
   RCLCPP_INFO(logger, "===================================================================================");
 
-  node_ = std::make_shared<rclcpp::Node>("victor_hardware_interface_node", rclcpp::NodeOptions());
+  node_ = std::make_shared<rclcpp::Node>("victor_hardware_interface_node");
 
   setter_callback_group_ = node_->create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
-  set_send_motion_command_srv_ = node_->create_service<std_srvs::srv::SetBool>(
-      "set_send_motion_command", [&](std_srvs::srv::SetBool::Request::SharedPtr const &request,
-                                     std_srvs::srv::SetBool::Response::SharedPtr const &response) {
-        send_motion_command_ = request->data;
-        response->success = true;
-      }, rmw_qos_profile_services_default, setter_callback_group_);
 
   executor_ = std::make_shared<AsyncExecutor>();
   executor_->add_node(node_);
@@ -48,8 +42,8 @@ CallbackReturn VictorHardwareInterface::on_init(const hardware_interface::Hardwa
   std::string const left_send_provider = "udp://10.10.10.12:30000";
   std::string const right_send_provider = "udp://10.10.10.11:30000";
 
-  left.on_init(node_, left_send_provider, left_recv_provider);
-  right.on_init(node_, right_send_provider, right_recv_provider);
+  left.on_init(executor_, node_, left_send_provider, left_recv_provider);
+  right.on_init(executor_, node_, right_send_provider, right_recv_provider);
 
   //  // Example usage of DataTamer
   //  sink_ = std::make_shared<DataTamer::MCAPSink>("/home/armlab/victor_hw_if.mcap");
@@ -120,6 +114,23 @@ std::vector<hardware_interface::CommandInterface> VictorHardwareInterface::expor
       command_interfaces.emplace_back(joint.name, hardware_interface::HW_IF_POSITION, &hw_cmds_position_[i]);
     }
   }
+
+  // Cartesian pose interfaces
+  command_interfaces.emplace_back("left", "cartesian_pose/xt", &left.hw_cmd_cartesian_pose_.position.x);
+  command_interfaces.emplace_back("left", "cartesian_pose/yt", &left.hw_cmd_cartesian_pose_.position.y);
+  command_interfaces.emplace_back("left", "cartesian_pose/zt", &left.hw_cmd_cartesian_pose_.position.z);
+  command_interfaces.emplace_back("left", "cartesian_pose/wr", &left.hw_cmd_cartesian_pose_.orientation.w);
+  command_interfaces.emplace_back("left", "cartesian_pose/xr", &left.hw_cmd_cartesian_pose_.orientation.x);
+  command_interfaces.emplace_back("left", "cartesian_pose/yr", &left.hw_cmd_cartesian_pose_.orientation.y);
+  command_interfaces.emplace_back("left", "cartesian_pose/zr", &left.hw_cmd_cartesian_pose_.orientation.z);
+
+  command_interfaces.emplace_back("right", "cartesian_pose/xt", &right.hw_cmd_cartesian_pose_.position.x);
+  command_interfaces.emplace_back("right", "cartesian_pose/yt", &right.hw_cmd_cartesian_pose_.position.y);
+  command_interfaces.emplace_back("right", "cartesian_pose/zt", &right.hw_cmd_cartesian_pose_.position.z);
+  command_interfaces.emplace_back("right", "cartesian_pose/wr", &right.hw_cmd_cartesian_pose_.orientation.w);
+  command_interfaces.emplace_back("right", "cartesian_pose/xr", &right.hw_cmd_cartesian_pose_.orientation.x);
+  command_interfaces.emplace_back("right", "cartesian_pose/yr", &right.hw_cmd_cartesian_pose_.orientation.y);
+  command_interfaces.emplace_back("right", "cartesian_pose/zr", &right.hw_cmd_cartesian_pose_.orientation.z);
 
   return command_interfaces;
 }
@@ -342,6 +353,7 @@ hardware_interface::return_type VictorHardwareInterface::write(const rclcpp::Tim
   left_motion_cmd.joint_position.joint_5 = hw_cmds_position_[4];
   left_motion_cmd.joint_position.joint_6 = hw_cmds_position_[5];
   left_motion_cmd.joint_position.joint_7 = hw_cmds_position_[6];
+  // left_motion_cmd.cartesian_pose // TODO!!!
 
   victor_lcm_interface::motion_command right_motion_cmd{};
   right_motion_cmd.timestamp = now_seconds;
@@ -370,16 +382,22 @@ hardware_interface::return_type VictorHardwareInterface::write(const rclcpp::Tim
   right_motion_cmd.joint_velocity.joint_6 = 0.;
   right_motion_cmd.joint_velocity.joint_7 = 0.;
 
-  if (send_motion_command_) {
-    left.send_lcm_ptr_->publish(DEFAULT_MOTION_COMMAND_CHANNEL, &left_motion_cmd);
-    right.send_lcm_ptr_->publish(DEFAULT_MOTION_COMMAND_CHANNEL, &right_motion_cmd);
-  }
-  else {
-    RCLCPP_DEBUG_THROTTLE(logger, clock, 500, "Sending motion command via write() disabled!");
-  }
+  left.send_motion_command(left_motion_cmd);
+  right.send_motion_command(right_motion_cmd);
 
   //  channel_->takeSnapshot();
 
+  return hardware_interface::return_type::OK;
+}
+
+hardware_interface::return_type VictorHardwareInterface::prepare_command_mode_switch(
+    const std::vector<std::string>& start_interfaces, const std::vector<std::string>& stop_interfaces) {
+  return hardware_interface::return_type::OK;
+}
+
+hardware_interface::return_type VictorHardwareInterface::perform_command_mode_switch(
+    const std::vector<std::string>& start_interfaces, const std::vector<std::string>& stop_interfaces) {
+  RCLCPP_WARN_STREAM(logger, "performing switch!");
   return hardware_interface::return_type::OK;
 }
 

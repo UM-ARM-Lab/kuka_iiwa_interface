@@ -5,12 +5,36 @@ controller_manager:
 
     joint_trajectory_controller:
       type: joint_trajectory_controller/JointTrajectoryController
+      # These parameters are custom to Victor, and are read by Side.cpp in victor_hardware to determine
+      # which combinations of controllers and control modes are valid.
+      control_modes:
+        # These integers are defined by ControlMode.msg
+        - 0 # JOINT_POSITION
+        - 2 # JOINT_IMPEDANCE
 
     left_arm_position_controller:
       type: position_controllers/JointGroupPositionController
+      control_modes:
+        - 0 # JOINT_POSITION
+        - 2 # JOINT_IMPEDANCE
 
     right_arm_position_controller:
       type: position_controllers/JointGroupPositionController
+      control_modes:
+        - 0 # JOINT_POSITION
+        - 2 # JOINT_IMPEDANCE
+
+    left_arm_cartesian_controller:
+      type: victor_hardware/KukaCartesianController
+      control_modes:
+        - 1 # CARTESIAN_POSE
+        - 3 # CARTESIAN_IMPEDANCE
+
+    right_arm_cartesian_controller:
+      type: victor_hardware/KukaCartesianController
+      control_modes:
+        - 1 # CARTESIAN_POSE
+        - 3 # CARTESIAN_IMPEDANCE
 
     joint_state_broadcaster:
       type: joint_state_broadcaster/JointStateBroadcaster
@@ -21,6 +45,28 @@ controller_manager:
     right_force_torque_broadcaster:
       type: force_torque_sensor_broadcaster/ForceTorqueSensorBroadcaster
 
+joint_trajectory_controller:
+  ros__parameters:
+    allow_partial_joints_goal: true
+    joints:
+      - victor_left_arm_joint_1
+      - victor_left_arm_joint_2
+      - victor_left_arm_joint_3
+      - victor_left_arm_joint_4
+      - victor_left_arm_joint_5
+      - victor_left_arm_joint_6
+      - victor_left_arm_joint_7
+      - victor_right_arm_joint_1
+      - victor_right_arm_joint_2
+      - victor_right_arm_joint_3
+      - victor_right_arm_joint_4
+      - victor_right_arm_joint_5
+      - victor_right_arm_joint_6
+      - victor_right_arm_joint_7
+    command_interfaces:
+      - position
+    state_interfaces:
+      - position
 
 left_arm_position_controller:
   ros__parameters:
@@ -46,28 +92,13 @@ right_arm_position_controller:
       - victor_right_arm_joint_7
     interface_name: position
 
-joint_trajectory_controller:
+left_arm_cartesian_controller:
   ros__parameters:
-    allow_partial_joints_goal: true
-    joints:
-      - victor_left_arm_joint_1
-      - victor_left_arm_joint_2
-      - victor_left_arm_joint_3
-      - victor_left_arm_joint_4
-      - victor_left_arm_joint_5
-      - victor_left_arm_joint_6
-      - victor_left_arm_joint_7
-      - victor_right_arm_joint_1
-      - victor_right_arm_joint_2
-      - victor_right_arm_joint_3
-      - victor_right_arm_joint_4
-      - victor_right_arm_joint_5
-      - victor_right_arm_joint_6
-      - victor_right_arm_joint_7
-    command_interfaces:
-      - position
-    state_interfaces:
-      - position
+    side: left
+
+right_arm_cartesian_controller:
+  ros__parameters:
+    side: right
 
 left_force_torque_broadcaster:
   ros__parameters:

@@ -1,4 +1,6 @@
 victor_hardware_interfaces/ControlModeParameters new_control_mode
+# The ROS2 controller name, as defined by ros2_controllers.yaml
+string new_controller_name
 ---
 bool success
 string message
