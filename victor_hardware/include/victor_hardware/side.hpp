@@ -37,6 +37,7 @@ class Side {
                             std::shared_ptr<srv::GetControlMode::Response> response) const;
   void setControlMode(const std::shared_ptr<srv::SetControlMode::Request> &request,
                             std::shared_ptr<srv::SetControlMode::Response> response) const;
+  void motionCommandROSCallback(const msg::MotionCommand& command);
   void gripperCommandROSCallback(const msg::Robotiq3FingerCommand& command);
   void publish_motion_status(victor_lcm_interface::motion_status const& msg);
   void publish_gripper_status(victor_lcm_interface::robotiq_3finger_status const& msg);
@@ -58,6 +59,7 @@ class Side {
   // ROS API
   rclcpp::Publisher<msg::MotionStatus>::SharedPtr motion_status_pub_;
   rclcpp::Publisher<msg::Robotiq3FingerStatus>::SharedPtr gripper_status_pub_;
+  rclcpp::Subscription<msg::MotionCommand>::SharedPtr motion_command_sub_;
   rclcpp::Subscription<msg::Robotiq3FingerCommand>::SharedPtr gripper_command_sub_;
   rclcpp::Service<srv::SetControlMode>::SharedPtr set_control_mode_server_;
   rclcpp::Service<srv::GetControlMode>::SharedPtr get_control_mode_server_;

@@ -48,6 +48,8 @@ CallbackReturn Side::on_init(std::shared_ptr<rclcpp::Node> const& node, std::str
   auto const ns = "/victor/" + name_ + "_arm/";
   motion_status_pub_ = node->create_publisher<msg::MotionStatus>(ns + DEFAULT_MOTION_STATUS_TOPIC, 10);
   gripper_status_pub_ = node->create_publisher<msg::Robotiq3FingerStatus>(ns + DEFAULT_GRIPPER_STATUS_TOPIC, 10);
+  motion_command_sub_ = node->create_subscription<msg::MotionCommand>(
+      ns + DEFAULT_MOTION_COMMAND_TOPIC, 1, std::bind(&Side::motionCommandROSCallback, this, _1), getter_options);
   gripper_command_sub_ = node->create_subscription<msg::Robotiq3FingerCommand>(
       ns + DEFAULT_GRIPPER_COMMAND_TOPIC, 1, std::bind(&Side::gripperCommandROSCallback, this, _1), getter_options);
   get_control_mode_server_ = node->create_service<srv::GetControlMode>(
@@ -94,6 +96,17 @@ void Side::setControlMode(const std::shared_ptr<srv::SetControlMode::Request>& r
 void Side::gripperCommandROSCallback(const msg::Robotiq3FingerCommand& command) {
   auto const lcm_command = gripperCommandRosToLcm(command);
   send_lcm_ptr_->publish(DEFAULT_GRIPPER_COMMAND_CHANNEL, &lcm_command);
+}
+
+void Side::motionCommandROSCallback(const msg::MotionCommand& command) {
+  auto const& active_control_mode = control_mode_listener_->getLatestMessage().control_mode;
+  const auto validity_check_results = validateMotionCommand(active_control_mode.mode, command);
+  if (validity_check_results.first) {
+    auto const lcm_command = motionCommandRosToLcm(command);
+    send_lcm_ptr_->publish(DEFAULT_MOTION_COMMAND_CHANNEL, &lcm_command);
+  } else {
+    RCLCPP_ERROR_STREAM(logger_, "Arm motion command failed validity checks: " << validity_check_results.second);
+  }
 }
 
 void Side::publish_motion_status(const victor_lcm_interface::motion_status& lcm_msg) {

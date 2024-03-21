@@ -20,6 +20,14 @@ CallbackReturn VictorHardwareInterface::on_init(const hardware_interface::Hardwa
 
   node_ = std::make_shared<rclcpp::Node>("victor_hardware_interface_node", rclcpp::NodeOptions());
 
+  setter_callback_group_ = node_->create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
+  set_send_motion_command_srv_ = node_->create_service<std_srvs::srv::SetBool>(
+      "set_send_motion_command", [&](std_srvs::srv::SetBool::Request::SharedPtr const &request,
+                                     std_srvs::srv::SetBool::Response::SharedPtr const &response) {
+        send_motion_command_ = request->data;
+        response->success = true;
+      }, rmw_qos_profile_services_default, setter_callback_group_);
+
   executor_ = std::make_shared<AsyncExecutor>();
   executor_->add_node(node_);
 
@@ -362,8 +370,13 @@ hardware_interface::return_type VictorHardwareInterface::write(const rclcpp::Tim
   right_motion_cmd.joint_velocity.joint_6 = 0.;
   right_motion_cmd.joint_velocity.joint_7 = 0.;
 
-  left.send_lcm_ptr_->publish(DEFAULT_MOTION_COMMAND_CHANNEL, &left_motion_cmd);
-  right.send_lcm_ptr_->publish(DEFAULT_MOTION_COMMAND_CHANNEL, &right_motion_cmd);
+  if (send_motion_command_) {
+    left.send_lcm_ptr_->publish(DEFAULT_MOTION_COMMAND_CHANNEL, &left_motion_cmd);
+    right.send_lcm_ptr_->publish(DEFAULT_MOTION_COMMAND_CHANNEL, &right_motion_cmd);
+  }
+  else {
+    RCLCPP_DEBUG_THROTTLE(logger, clock, 500, "Sending motion command via write() disabled!");
+  }
 
   //  channel_->takeSnapshot();
 

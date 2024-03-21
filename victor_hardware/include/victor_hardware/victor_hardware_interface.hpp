@@ -58,6 +58,10 @@ class VictorHardwareInterface : public hardware_interface::SystemInterface {
   std::shared_ptr<rclcpp::Node> node_;
   std::shared_ptr<AsyncExecutor> executor_;
 
+  rclcpp::CallbackGroup::SharedPtr setter_callback_group_;
+  rclcpp::Service<std_srvs::srv::SetBool>::SharedPtr set_send_motion_command_srv_;
+  bool send_motion_command_{true};
+
   // This class does the pub-sub to LCM
   Side left{"left"};
   Side right{"right"};
