@@ -161,6 +161,7 @@ class ArmWidget(QWidget):
         self.finger_a_widget.set_status(gripper_status.finger_a_status)
         self.finger_b_widget.set_status(gripper_status.finger_b_status)
         self.finger_c_widget.set_status(gripper_status.finger_c_status)
+        self.scissor_widget.set_status(gripper_status.scissor_status)
 
         self.motion_cmd.joint_position = list_to_jvq(joint_positions_list)
 
