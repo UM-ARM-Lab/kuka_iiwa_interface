@@ -68,10 +68,9 @@ class VictorHardwareInterface : public hardware_interface::SystemInterface {
 
   void LCMThread();
 
-  std::vector<double> hw_pos_cmds_;
+  std::vector<double> hw_cmds_position_;
   std::vector<double> hw_states_position_;
   std::vector<double> hw_states_cmd_position_;
-  std::vector<double> hw_states_effort_;
   std::vector<double> hw_states_external_effort_;
   std::vector<double> hw_states_external_torque_sensor_;
 

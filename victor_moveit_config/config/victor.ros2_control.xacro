@@ -21,7 +21,6 @@
                 </state_interface>
                 <state_interface name="commanded_position"/>
                 <state_interface name="effort"/>
-                <state_interface name="torque"/>
                 <state_interface name="external_torque"/>
             </joint>
             <joint name="victor_left_arm_joint_2">
@@ -31,7 +30,6 @@
                 </state_interface>
                 <state_interface name="commanded_position"/>
                 <state_interface name="effort"/>
-                <state_interface name="torque"/>
                 <state_interface name="external_torque"/>
             </joint>
             <joint name="victor_left_arm_joint_3">
@@ -41,7 +39,6 @@
                 </state_interface>
                 <state_interface name="commanded_position"/>
                 <state_interface name="effort"/>
-                <state_interface name="torque"/>
                 <state_interface name="external_torque"/>
             </joint>
             <joint name="victor_left_arm_joint_4">
@@ -52,7 +49,6 @@
                 <state_interface name="commanded_position"/>
                 <state_interface name="effort"/>
                 <state_interface name="external_torque"/>
-                <state_interface name="torque"/>
             </joint>
             <joint name="victor_left_arm_joint_5">
                 <command_interface name="position"/>
@@ -62,7 +58,6 @@
                 <state_interface name="commanded_position"/>
                 <state_interface name="effort"/>
                 <state_interface name="external_torque"/>
-                <state_interface name="torque"/>
             </joint>
             <joint name="victor_left_arm_joint_6">
                 <command_interface name="position"/>
@@ -72,7 +67,6 @@
                 <state_interface name="commanded_position"/>
                 <state_interface name="effort"/>
                 <state_interface name="external_torque"/>
-                <state_interface name="torque"/>
             </joint>
             <joint name="victor_left_arm_joint_7">
                 <command_interface name="position"/>
@@ -82,7 +76,6 @@
                 <state_interface name="commanded_position"/>
                 <state_interface name="effort"/>
                 <state_interface name="external_torque"/>
-                <state_interface name="torque"/>
             </joint>
             <joint name="victor_right_arm_joint_1">
                 <command_interface name="position"/>
@@ -92,7 +85,6 @@
                 <state_interface name="commanded_position"/>
                 <state_interface name="effort"/>
                 <state_interface name="external_torque"/>
-                <state_interface name="torque"/>
             </joint>
             <joint name="victor_right_arm_joint_2">
                 <command_interface name="position"/>
@@ -102,7 +94,6 @@
                 <state_interface name="commanded_position"/>
                 <state_interface name="effort"/>
                 <state_interface name="external_torque"/>
-                <state_interface name="torque"/>
             </joint>
             <joint name="victor_right_arm_joint_3">
                 <command_interface name="position"/>
@@ -112,7 +103,6 @@
                 <state_interface name="commanded_position"/>
                 <state_interface name="effort"/>
                 <state_interface name="external_torque"/>
-                <state_interface name="torque"/>
             </joint>
             <joint name="victor_right_arm_joint_4">
                 <command_interface name="position"/>
@@ -122,7 +112,6 @@
                 <state_interface name="commanded_position"/>
                 <state_interface name="effort"/>
                 <state_interface name="external_torque"/>
-                <state_interface name="torque"/>
             </joint>
             <joint name="victor_right_arm_joint_5">
                 <command_interface name="position"/>
@@ -132,7 +121,6 @@
                 <state_interface name="commanded_position"/>
                 <state_interface name="effort"/>
                 <state_interface name="external_torque"/>
-                <state_interface name="torque"/>
             </joint>
             <joint name="victor_right_arm_joint_6">
                 <command_interface name="position"/>
@@ -142,7 +130,6 @@
                 <state_interface name="commanded_position"/>
                 <state_interface name="effort"/>
                 <state_interface name="external_torque"/>
-                <state_interface name="torque"/>
             </joint>
             <joint name="victor_right_arm_joint_7">
                 <command_interface name="position"/>
@@ -152,7 +139,6 @@
                 <state_interface name="commanded_position"/>
                 <state_interface name="effort"/>
                 <state_interface name="external_torque"/>
-                <state_interface name="torque"/>
             </joint>
 
             <joint name="victor_left_finger_a_joint_1">
@@ -291,7 +277,7 @@
                 <state_interface name="torque.y" />
                 <state_interface name="torque.z" />
             </sensor>
-            
+
             <sensor name="right_force_torque_sensor">
                 <state_interface name="force.x" />
                 <state_interface name="force.y" />

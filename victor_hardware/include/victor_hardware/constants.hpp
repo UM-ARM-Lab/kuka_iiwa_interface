@@ -35,7 +35,6 @@ const std::string GRIPPER_STATUS_CHANNEL_PARAM("gripper_status_channel");
 
 // ROS2 control interface
 static const char* const COMMANDED_POSITION = "commanded_position";
-static const char* const TORQUE = "torque";
 static const char* const EXTERNAL_TORQUE = "external_torque";
 static const char* const CARTESIAN_POSE = "cartesian_pose";
 static const char* const COMMANDED_CARTESIAN_POSE = "commanded_cartesian_pose";

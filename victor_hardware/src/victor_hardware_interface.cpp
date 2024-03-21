@@ -6,7 +6,7 @@
 
 #include "rclcpp/rclcpp.hpp"
 
-auto logger = rclcpp::get_logger("VictorHardwareInterface");
+static auto logger = rclcpp::get_logger("VictorHardwareInterface");
 
 namespace victor_hardware {
 CallbackReturn VictorHardwareInterface::on_init(const hardware_interface::HardwareInfo& info) {
@@ -26,16 +26,17 @@ CallbackReturn VictorHardwareInterface::on_init(const hardware_interface::Hardwa
   // Some of these arrays will be bigger than they need to be, since not all joints are actuated (e.g. finger joints)
   RCLCPP_INFO_STREAM(logger, "Found " << info_.joints.size() << " joints");
 
-  hw_pos_cmds_.resize(info_.joints.size(), std::numeric_limits<double>::quiet_NaN());
+  hw_cmds_position_.resize(info_.joints.size(), std::numeric_limits<double>::quiet_NaN());
 
   hw_states_position_.resize(info_.joints.size(), std::numeric_limits<double>::quiet_NaN());
-  hw_states_effort_.resize(info_.joints.size(), std::numeric_limits<double>::quiet_NaN());
+  hw_states_external_effort_.resize(info_.joints.size(), std::numeric_limits<double>::quiet_NaN());
+  hw_states_cmd_position_.resize(info_.joints.size(), std::numeric_limits<double>::quiet_NaN());
   hw_states_external_torque_sensor_.resize(info_.joints.size(), 0);
 
   // NOTE: changing these values here requires corresponding changes in the LCMRobotInterface application
   //  and also the victor_lcm_bridge launch file.
-  std::string const left_recv_provider = "udp://10.10.10.166:30002";
-  std::string const right_recv_provider = "udp://10.10.10.166:30001";
+  std::string const left_recv_provider = "udp://10.10.10.169:30002";
+  std::string const right_recv_provider = "udp://10.10.10.169:30001";
   std::string const left_send_provider = "udp://10.10.10.12:30000";
   std::string const right_send_provider = "udp://10.10.10.11:30000";
 
@@ -49,7 +50,7 @@ CallbackReturn VictorHardwareInterface::on_init(const hardware_interface::Hardwa
   //  channel_ = DataTamer::LogChannel::create("hw_pos_cmds");
   //  channel_->addDataSink(sink_);
 
-  //  value_ = channel_->registerValue("values", &hw_pos_cmds_);
+  //  value_ = channel_->registerValue("values", &hw_cmds_position_);
 
   return CallbackReturn::SUCCESS;
 }
@@ -69,13 +70,10 @@ std::vector<hardware_interface::StateInterface> VictorHardwareInterface::export_
       state_interfaces.emplace_back(joint.name, hardware_interface::HW_IF_POSITION, &hw_states_position_[i]);
     }
     if (has_state_interface(hardware_interface::HW_IF_EFFORT)) {
-      state_interfaces.emplace_back(joint.name, hardware_interface::HW_IF_EFFORT, &hw_states_effort_[i]);
+      state_interfaces.emplace_back(joint.name, hardware_interface::HW_IF_EFFORT, &hw_states_external_effort_[i]);
     }
     if (has_state_interface(EXTERNAL_TORQUE)) {
       state_interfaces.emplace_back(joint.name, EXTERNAL_TORQUE, &hw_states_external_torque_sensor_[i]);
-    }
-    if (has_state_interface(TORQUE)) {
-        state_interfaces.emplace_back(joint.name, TORQUE, &hw_states_effort_[i]);
     }
     if (has_state_interface(COMMANDED_POSITION)) {
       state_interfaces.emplace_back(joint.name, COMMANDED_POSITION, &hw_states_cmd_position_[i]);
@@ -111,7 +109,7 @@ std::vector<hardware_interface::CommandInterface> VictorHardwareInterface::expor
     };
 
     if (has_cmd_interface("position")) {
-      command_interfaces.emplace_back(joint.name, hardware_interface::HW_IF_POSITION, &hw_pos_cmds_[i]);
+      command_interfaces.emplace_back(joint.name, hardware_interface::HW_IF_POSITION, &hw_cmds_position_[i]);
     }
   }
 
@@ -176,20 +174,20 @@ hardware_interface::return_type VictorHardwareInterface::read(const rclcpp::Time
   hw_states_position_[12] = right_motion_status.measured_joint_position.joint_6;
   hw_states_position_[13] = right_motion_status.measured_joint_position.joint_7;
 
-  hw_states_effort_[0] = left_motion_status.measured_joint_torque.joint_1;
-  hw_states_effort_[1] = left_motion_status.measured_joint_torque.joint_2;
-  hw_states_effort_[2] = left_motion_status.measured_joint_torque.joint_3;
-  hw_states_effort_[3] = left_motion_status.measured_joint_torque.joint_4;
-  hw_states_effort_[4] = left_motion_status.measured_joint_torque.joint_5;
-  hw_states_effort_[5] = left_motion_status.measured_joint_torque.joint_6;
-  hw_states_effort_[6] = left_motion_status.measured_joint_torque.joint_7;
-  hw_states_effort_[7] = right_motion_status.measured_joint_torque.joint_1;
-  hw_states_effort_[8] = right_motion_status.measured_joint_torque.joint_2;
-  hw_states_effort_[9] = right_motion_status.measured_joint_torque.joint_3;
-  hw_states_effort_[10] = right_motion_status.measured_joint_torque.joint_4;
-  hw_states_effort_[11] = right_motion_status.measured_joint_torque.joint_5;
-  hw_states_effort_[12] = right_motion_status.measured_joint_torque.joint_6;
-  hw_states_effort_[13] = right_motion_status.measured_joint_torque.joint_7;
+  hw_states_external_effort_[0] = left_motion_status.measured_joint_torque.joint_1;
+  hw_states_external_effort_[1] = left_motion_status.measured_joint_torque.joint_2;
+  hw_states_external_effort_[2] = left_motion_status.measured_joint_torque.joint_3;
+  hw_states_external_effort_[3] = left_motion_status.measured_joint_torque.joint_4;
+  hw_states_external_effort_[4] = left_motion_status.measured_joint_torque.joint_5;
+  hw_states_external_effort_[5] = left_motion_status.measured_joint_torque.joint_6;
+  hw_states_external_effort_[6] = left_motion_status.measured_joint_torque.joint_7;
+  hw_states_external_effort_[7] = right_motion_status.measured_joint_torque.joint_1;
+  hw_states_external_effort_[8] = right_motion_status.measured_joint_torque.joint_2;
+  hw_states_external_effort_[9] = right_motion_status.measured_joint_torque.joint_3;
+  hw_states_external_effort_[10] = right_motion_status.measured_joint_torque.joint_4;
+  hw_states_external_effort_[11] = right_motion_status.measured_joint_torque.joint_5;
+  hw_states_external_effort_[12] = right_motion_status.measured_joint_torque.joint_6;
+  hw_states_external_effort_[13] = right_motion_status.measured_joint_torque.joint_7;
 
   hw_states_external_torque_sensor_[0] = left_motion_status.estimated_external_torque.joint_1;
   hw_states_external_torque_sensor_[1] = left_motion_status.estimated_external_torque.joint_2;
@@ -310,14 +308,14 @@ hardware_interface::return_type VictorHardwareInterface::write(const rclcpp::Tim
 
   rclcpp::Clock clock;
   for (int i = 0; i < 14; i++) {
-    if (std::isnan(hw_pos_cmds_[i])) {
+    if (std::isnan(hw_cmds_position_[i])) {
       RCLCPP_WARN_THROTTLE(logger, clock, 500,
                            "Joint %d is NaN, using current commanded position according to the robot", i);
-      hw_pos_cmds_[i] = current_commanded_positions[i];
+      hw_cmds_position_[i] = current_commanded_positions[i];
     }
   }
 
-  // convert hw_pos_cmds_ to LCM messages and publish
+  // convert hw_cmds_position_ to LCM messages and publish
   auto const now = std::chrono::system_clock::now();
   auto const now_tp = std::chrono::time_point_cast<std::chrono::seconds>(now);
   std::chrono::duration<double> const now_dur_seconds = now_tp.time_since_epoch();
@@ -329,24 +327,24 @@ hardware_interface::return_type VictorHardwareInterface::write(const rclcpp::Tim
   victor_lcm_interface::motion_command left_motion_cmd{};
   left_motion_cmd.timestamp = now_seconds;
   left_motion_cmd.control_mode = left_control_mode.control_mode;
-  left_motion_cmd.joint_position.joint_1 = hw_pos_cmds_[0];
-  left_motion_cmd.joint_position.joint_2 = hw_pos_cmds_[1];
-  left_motion_cmd.joint_position.joint_3 = hw_pos_cmds_[2];
-  left_motion_cmd.joint_position.joint_4 = hw_pos_cmds_[3];
-  left_motion_cmd.joint_position.joint_5 = hw_pos_cmds_[4];
-  left_motion_cmd.joint_position.joint_6 = hw_pos_cmds_[5];
-  left_motion_cmd.joint_position.joint_7 = hw_pos_cmds_[6];
+  left_motion_cmd.joint_position.joint_1 = hw_cmds_position_[0];
+  left_motion_cmd.joint_position.joint_2 = hw_cmds_position_[1];
+  left_motion_cmd.joint_position.joint_3 = hw_cmds_position_[2];
+  left_motion_cmd.joint_position.joint_4 = hw_cmds_position_[3];
+  left_motion_cmd.joint_position.joint_5 = hw_cmds_position_[4];
+  left_motion_cmd.joint_position.joint_6 = hw_cmds_position_[5];
+  left_motion_cmd.joint_position.joint_7 = hw_cmds_position_[6];
 
   victor_lcm_interface::motion_command right_motion_cmd{};
   right_motion_cmd.timestamp = now_seconds;
   right_motion_cmd.control_mode = right_control_mode.control_mode;
-  right_motion_cmd.joint_position.joint_1 = hw_pos_cmds_[7];
-  right_motion_cmd.joint_position.joint_2 = hw_pos_cmds_[8];
-  right_motion_cmd.joint_position.joint_3 = hw_pos_cmds_[9];
-  right_motion_cmd.joint_position.joint_4 = hw_pos_cmds_[10];
-  right_motion_cmd.joint_position.joint_5 = hw_pos_cmds_[11];
-  right_motion_cmd.joint_position.joint_6 = hw_pos_cmds_[12];
-  right_motion_cmd.joint_position.joint_7 = hw_pos_cmds_[13];
+  right_motion_cmd.joint_position.joint_1 = hw_cmds_position_[7];
+  right_motion_cmd.joint_position.joint_2 = hw_cmds_position_[8];
+  right_motion_cmd.joint_position.joint_3 = hw_cmds_position_[9];
+  right_motion_cmd.joint_position.joint_4 = hw_cmds_position_[10];
+  right_motion_cmd.joint_position.joint_5 = hw_cmds_position_[11];
+  right_motion_cmd.joint_position.joint_6 = hw_cmds_position_[12];
+  right_motion_cmd.joint_position.joint_7 = hw_cmds_position_[13];
 
   // Sending anything other than zero causes an error. Velocity should only be controlled by the control_mode params
   left_motion_cmd.joint_velocity.joint_1 = 0.;

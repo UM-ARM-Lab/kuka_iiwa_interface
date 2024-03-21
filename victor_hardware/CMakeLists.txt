@@ -35,6 +35,7 @@ add_library(victor_hardware
         src/side.cpp
         src/async_executor.cpp
         src/lcm_ros_conversions.cpp
+        src/validators.cpp
         include/victor_hardware/lcm_listener.hpp
 )
 target_include_directories(
@@ -46,28 +47,12 @@ target_include_directories(
 ament_target_dependencies(victor_hardware ${THIS_PACKAGE_INCLUDE_DEPENDS})
 
 
-# Node for ROS <--> LCM bridge
-#add_executable(iiwa_lcm_bridge_node
-#        src/iiwa_lcm_bridge_node.cpp
-#        src/iiwa_lcm_bridge_utils.cpp
-#        src/iiwa_lcm_bridge.cpp
-#        src/robotiq_3f_lcm_bridge.cpp
-#        include/victor_hardware/victor_utils.hpp
-#)
-#target_include_directories(
-#        iiwa_lcm_bridge_node
-#        PUBLIC
-#        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-#        $<INSTALL_INTERFACE:include>
-#)
-#ament_target_dependencies(iiwa_lcm_bridge_node ${THIS_PACKAGE_INCLUDE_DEPENDS})
-
 # Testing
 ament_add_gtest(test_victor_utils tests/test_victor_utils.cpp)
 ament_target_dependencies(test_victor_utils ${THIS_PACKAGE_INCLUDE_DEPENDS})
 
 install(
-        TARGETS victor_hardware # iiwa_lcm_bridge_node
+        TARGETS victor_hardware
         EXPORT ${PROJECT_NAME}_targets
         LIBRARY DESTINATION lib
         ARCHIVE DESTINATION lib

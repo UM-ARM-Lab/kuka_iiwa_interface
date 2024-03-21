@@ -318,6 +318,8 @@ class FingerWidget(QWidget):
     def __init__(self, label: str):
         QWidget.__init__(self)
 
+        self.finger_cmd = Robotiq3FingerActuatorCommand()
+
         # The finger widget itself is a vertical layout
         self.layout = QHBoxLayout()
         self.setLayout(self.layout)
@@ -328,9 +330,7 @@ class FingerWidget(QWidget):
 
         self.position_slider_widget.slider.setRange(0, 100)
         self.speed_slider_widget.slider.setRange(0, 100)
-        self.speed_slider_widget.set_value(100)
         self.force_slider_widget.slider.setRange(0, 100)
-        self.force_slider_widget.set_value(100)
 
         self.layout.addWidget(self.position_slider_widget)
         self.layout.addWidget(self.speed_slider_widget)
@@ -344,7 +344,8 @@ class FingerWidget(QWidget):
         self.speed_slider_widget.slider.valueChanged.connect(self.on_speed_change)
         self.force_slider_widget.slider.valueChanged.connect(self.on_force_change)
 
-        self.finger_cmd = Robotiq3FingerActuatorCommand()
+        self.speed_slider_widget.set_value(100)
+        self.force_slider_widget.set_value(100)
 
     def on_position_change(self, value):
         self.finger_cmd.position = FingerSliderWidget.slider_pos_to_fraction(value)

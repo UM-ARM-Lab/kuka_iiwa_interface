@@ -62,6 +62,8 @@ class IiwaLcmBridgeNode : public rclcpp::Node {
     auto const motion_command_topic = this->get_parameter(MOTION_COMMAND_TOPIC_PARAM).as_string();
     auto const motion_status_topic = this->get_parameter(MOTION_STATUS_TOPIC_PARAM).as_string();
     auto const control_mode_status_topic = this->get_parameter(CONTROL_MODE_STATUS_TOPIC_PARAM).as_string();
+    auto const control_mode_status_topic = this->get_parameter(CONTROL_MODE_STATUS_TOPIC_PARAM).as_string();
+    auto const get_control_mode_service = this->get_parameter(GET_CONTROL_MODE_SERVICE_PARAM).as_string();
     auto const get_control_mode_service = this->get_parameter(GET_CONTROL_MODE_SERVICE_PARAM).as_string();
     auto const set_control_mode_service = this->get_parameter(SET_CONTROL_MODE_SERVICE_PARAM).as_string();
     auto const gripper_command_topic = this->get_parameter(GRIPPER_COMMAND_TOPIC_PARAM).as_string();
