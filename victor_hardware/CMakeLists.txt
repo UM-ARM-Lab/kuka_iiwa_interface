@@ -5,12 +5,12 @@ set(CMAKE_CXX_STANDARD 20)
 
 set(THIS_PACKAGE_INCLUDE_DEPENDS
         ament_cmake
-        ament_cmake_gtest
+        controller_interface
         pluginlib
         hardware_interface
         arm_utilities
         lcm
-#        data_tamer_cpp
+        #        data_tamer_cpp
         victor_hardware_interfaces
         robotiq_3f_transmission_plugins
         rclcpp
@@ -37,6 +37,8 @@ add_library(victor_hardware
         src/lcm_ros_conversions.cpp
         src/validators.cpp
         include/victor_hardware/lcm_listener.hpp
+        # Controllers and broadcasters also get added to this library
+        src/kuka_cartesian_controller.cpp
 )
 target_include_directories(
         victor_hardware
@@ -44,12 +46,9 @@ target_include_directories(
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:include>
 )
+
 ament_target_dependencies(victor_hardware ${THIS_PACKAGE_INCLUDE_DEPENDS})
 
-
-# Testing
-ament_add_gtest(test_victor_utils tests/test_victor_utils.cpp)
-ament_target_dependencies(test_victor_utils ${THIS_PACKAGE_INCLUDE_DEPENDS})
 
 install(
         TARGETS victor_hardware
@@ -61,6 +60,8 @@ install(
 install(DIRECTORY include DESTINATION .)
 
 pluginlib_export_plugin_description_file(hardware_interface victor_hardware.xml)
+pluginlib_export_plugin_description_file(controller_interface kuka_cartesian_controller.xml)
+
 
 # Export
 ament_export_dependencies(${THIS_PACKAGE_INCLUDE_DEPENDS})

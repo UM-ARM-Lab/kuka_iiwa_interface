@@ -17,6 +17,7 @@
 
 <!--    <depend>data_tamer_cpp</depend>-->
     <depend>hardware_interface</depend>
+    <depend>controller_interface</depend>
     <depend>pluginlib</depend>
     <depend>rclcpp</depend>
     <depend>rclcpp_lifecycle</depend>

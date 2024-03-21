@@ -1,0 +1,9 @@
+<library path="victor_hardware">
+  <class name="victor_hardware/KukaCartesianController"
+         type="victor_hardware::KukaCartesianController"
+         base_class_type="controller_interface::ControllerInterface">
+    <description>
+      ROS2 controller for the Kuka LBR iiwa 7 R800 Cartesian controller
+    </description>
+  </class>
+</library>
