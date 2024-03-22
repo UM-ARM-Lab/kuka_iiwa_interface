@@ -3,38 +3,21 @@ controller_manager:
   ros__parameters:
     update_rate: 100  # Hz
 
-    joint_trajectory_controller:
-      type: joint_trajectory_controller/JointTrajectoryController
-      # These parameters are custom to Victor, and are read by Side.cpp in victor_hardware to determine
-      # which combinations of controllers and control modes are valid.
-      control_modes:
-        # These integers are defined by ControlMode.msg
-        - 0 # JOINT_POSITION
-        - 2 # JOINT_IMPEDANCE
+    # These are derived from the standard ros2 controllers, but with added control mode parameters
+    joint_position_trajectory_controller:
+      type: victor_hardware/KukaJointPositionTrajectoryController
 
     left_arm_position_controller:
       type: position_controllers/JointGroupPositionController
-      control_modes:
-        - 0 # JOINT_POSITION
-        - 2 # JOINT_IMPEDANCE
 
     right_arm_position_controller:
       type: position_controllers/JointGroupPositionController
-      control_modes:
-        - 0 # JOINT_POSITION
-        - 2 # JOINT_IMPEDANCE
 
     left_arm_cartesian_controller:
       type: victor_hardware/KukaCartesianController
-      control_modes:
-        - 1 # CARTESIAN_POSE
-        - 3 # CARTESIAN_IMPEDANCE
 
     right_arm_cartesian_controller:
       type: victor_hardware/KukaCartesianController
-      control_modes:
-        - 1 # CARTESIAN_POSE
-        - 3 # CARTESIAN_IMPEDANCE
 
     joint_state_broadcaster:
       type: joint_state_broadcaster/JointStateBroadcaster
@@ -45,7 +28,7 @@ controller_manager:
     right_force_torque_broadcaster:
       type: force_torque_sensor_broadcaster/ForceTorqueSensorBroadcaster
 
-joint_trajectory_controller:
+joint_position_trajectory_controller:
   ros__parameters:
     allow_partial_joints_goal: true
     joints:

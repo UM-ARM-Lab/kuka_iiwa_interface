@@ -10,6 +10,7 @@ set(THIS_PACKAGE_INCLUDE_DEPENDS
         pluginlib
         hardware_interface
         arm_utilities
+        joint_trajectory_controller
         lcm
         #        data_tamer_cpp
         victor_hardware_interfaces
@@ -42,6 +43,7 @@ add_library(victor_hardware
         include/victor_hardware/lcm_listener.hpp
         # Controllers and broadcasters also get added to this library
         src/kuka_cartesian_controller.cpp
+        src/kuka_joint_trajectory_controller.cpp
 )
 target_include_directories(
         victor_hardware
@@ -63,7 +65,7 @@ install(
 install(DIRECTORY include DESTINATION .)
 
 pluginlib_export_plugin_description_file(hardware_interface victor_hardware.xml)
-pluginlib_export_plugin_description_file(controller_interface kuka_cartesian_controller.xml)
+pluginlib_export_plugin_description_file(controller_interface controllers.xml)
 
 
 # Export

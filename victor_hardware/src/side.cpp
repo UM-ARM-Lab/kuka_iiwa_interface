@@ -245,26 +245,14 @@ std::pair<bool, std::string> Side::validate_mode_switch(const std::vector<std::s
 
   auto const is_all_cartesian = std::all_of(start_interfaces.begin(), start_interfaces.end(), is_cartesian);
   auto const is_all_joint = std::all_of(start_interfaces.begin(), start_interfaces.end(), is_joint);
-  auto const current_mode_is_cartesian =
-      current_control_mode_ == victor_lcm_interface::control_mode::CARTESIAN_POSE ||
-      current_control_mode_ == victor_lcm_interface::control_mode::CARTESIAN_IMPEDANCE;
-  auto const current_mode_is_joint = current_control_mode_ == victor_lcm_interface::control_mode::JOINT_POSITION ||
-                                     current_control_mode_ == victor_lcm_interface::control_mode::JOINT_IMPEDANCE;
 
-  auto const& current_mode_str = std::to_string(current_control_mode_);
-  if (is_all_cartesian && current_mode_is_cartesian) {
-    return {true, ""};
-  } else if (is_all_cartesian) {
-    return {false, "Cannot switch to cartesian controller with current mode " + current_mode_str};
+  if (!is_all_cartesian && !is_all_joint) {
+    return {false, "The requested mode switch mixes both cartesian and position/pose interfaces!"};
   }
 
-  if (is_all_joint && current_mode_is_joint) {
-    return {true, ""};
-  } else if (is_all_joint) {
-    return {false, "Cannot switch to joint controller with current mode " + current_mode_str};
-  }
+  // Switch the kuka controller to match mode determined by the interfaces
 
-  return {false, "Cannot switch to controller which uses both cartesian and joint interfaces"};
+  return {true, ""};
 }
 
 }  // namespace victor_hardware
