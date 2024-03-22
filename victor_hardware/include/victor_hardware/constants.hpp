@@ -6,8 +6,8 @@ using namespace std::chrono_literals;
 
 // NOTE: changing these values here requires corresponding changes in the LCMRobotInterface application
 //  and also the victor_lcm_bridge launch file.
-std::string const LEFT_RECV_PROVIDER = "udp://10.10.10.166:30002";
-std::string const RIGHT_RECV_PROVIDER = "udp://10.10.10.166:30001";
+std::string const LEFT_RECV_PROVIDER = "udp://10.10.10.169:30002";
+std::string const RIGHT_RECV_PROVIDER = "udp://10.10.10.169:30001";
 std::string const LEFT_SEND_PROVIDER = "udp://10.10.10.12:30000";
 std::string const RIGHT_SEND_PROVIDER = "udp://10.10.10.11:30000";
 
