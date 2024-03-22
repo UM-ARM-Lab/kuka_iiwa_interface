@@ -71,6 +71,7 @@ class Side {
   rclcpp::Service<srv::SetControlMode>::SharedPtr set_control_mode_server_;
   rclcpp::Service<srv::GetControlMode>::SharedPtr get_control_mode_server_;
   rclcpp::Client<controller_manager_msgs::srv::SwitchController>::SharedPtr switch_controller_client_;
+  rclcpp::Client<controller_manager_msgs::srv::ListControllers>::SharedPtr list_controllers_client_;
 
   // ROS API
   rclcpp::Publisher<msg::MotionStatus>::SharedPtr motion_status_pub_;

@@ -6,7 +6,7 @@
 #include <victor_hardware/lcm_ros_conversions.hpp>
 #include <victor_hardware/side.hpp>
 #include <victor_hardware/validators.hpp>
-
+#include <vector>
 using std::placeholders::_1;
 using std::placeholders::_2;
 using namespace std::chrono_literals;
@@ -63,6 +63,9 @@ CallbackReturn Side::on_init(std::shared_ptr<rclcpp::Executor> const& executor,
       rmw_qos_profile_services_default, setter_callback_group_);
   switch_controller_client_ = node->create_client<controller_manager_msgs::srv::SwitchController>(
       "/controller_manager/switch_controllers", rmw_qos_profile_services_default, setter_callback_group_);
+
+  list_controllers_client_ = node->create_client<controller_manager_msgs::srv::ListControllers>(
+      "/controller_manager/list_controllers", rmw_qos_profile_services_default, setter_callback_group_);
 
   // Load and parse the ros2_controllers.yaml which is currently in victor_moveit_config
   auto const& package_share_directory = ament_index_cpp::get_package_share_directory("victor_moveit_config");
@@ -170,7 +173,65 @@ void Side::setControlMode(const std::shared_ptr<srv::SetControlMode::Request>& r
     RCLCPP_WARN(logger_, "Switch controller service not available, waiting again...");
   }
 
+  //
+  while(!list_controllers_client_->wait_for_service(1s)){
+    if (!rclcpp::ok()) {
+      RCLCPP_ERROR(logger_, "List controller service not available");
+      response->success = false;
+      response->message = "List controller service not available";
+      return;
+    }
+    RCLCPP_WARN(logger_, "List controller service not available, waiting again...");
+  }
+
+  // Make a request to the list controllers service
+  auto req_list = std::make_shared<controller_manager_msgs::srv::ListControllers::Request>();
+  auto result_list = list_controllers_client_->async_send_request(req_list);
+  if (result_list.wait_for(1s) != std::future_status::ready) {
+    auto const srv_error_msg = "No response from list controllers service";
+    RCLCPP_ERROR(logger_, srv_error_msg);
+    response->success = false;
+    response->message = srv_error_msg;
+    return;
+  }
+
+  auto const& list_controllers_response = result_list.get();
+  // check if new_controller_name is in the list of controllers
+  bool is_controller_found = false;
+  for (auto const& controller : list_controllers_response->controller) {
+    if (controller.name == request->new_controller_name) {
+      const size_t n = sizeof(controller.required_command_interface) / sizeof(controller.required_command_interface[0]);
+      std::string cmd_interface[n];
+      for (size_t i = 0; i < n; ++i) {
+          cmd_interface[i] = required_command_interface[i];
+      }
+      is_controller_found = true;
+      }
+    }
+  if (!is_controller_found) {
+    auto const srv_error_msg = "Controller " + request->new_controller_name + " not found";
+    RCLCPP_ERROR(logger_, srv_error_msg);
+    response->success = false;
+    response->message = srv_error_msg;
+    return;
+  }
+
   auto req = std::make_shared<controller_manager_msgs::srv::SwitchController::Request>();
+
+  // Deactivate the controllers conflicts with the new controller
+  for (auto const& controller : list_controllers_response->controller) {
+      if  (controller.state == "activate"){
+        std::vector<int> intersection;
+        std::set_intersection(controller.required_command_interfaces.begin(), controller.required_command_interfaces.end(), cmd_interface.begin(), cmd_interface.end(), std::back_inserter(intersection));
+        if (!intersection.empty()){
+          req->deactivate_controllers.push_back(controller.name); 
+          // DO I need to check if push back is successful? it seems it always return true?
+        }
+      }
+    }
+  
+
+  // Activate the new controller
   req->activate_controllers.push_back(request->new_controller_name);
 
   // figure out what to put in the deactivate_controllers field by:
