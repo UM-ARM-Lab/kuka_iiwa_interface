@@ -82,6 +82,7 @@ class Side {
   // callback groups for each ROS thing
   rclcpp::CallbackGroup::SharedPtr getter_callback_group_;
   rclcpp::CallbackGroup::SharedPtr setter_callback_group_;
+  rclcpp::CallbackGroup::SharedPtr controller_manager_callback_group_;
 
  private:
   rclcpp::Logger logger_;

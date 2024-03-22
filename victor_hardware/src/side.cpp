@@ -48,6 +48,7 @@ CallbackReturn Side::on_init(std::shared_ptr<rclcpp::Executor> const& executor,
   // ROS API
   getter_callback_group_ = node->create_callback_group(rclcpp::CallbackGroupType::Reentrant);
   setter_callback_group_ = node->create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
+  controller_manager_callback_group_  =  node->create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
   rclcpp::SubscriptionOptions getter_options;
   getter_options.callback_group = getter_callback_group_;
 
@@ -63,10 +64,10 @@ CallbackReturn Side::on_init(std::shared_ptr<rclcpp::Executor> const& executor,
       ns + DEFAULT_SET_CONTROL_MODE_SERVICE, std::bind(&Side::setControlMode, this, _1, _2),
       rmw_qos_profile_services_default, setter_callback_group_);
   switch_controller_client_ = node->create_client<controller_manager_msgs::srv::SwitchController>(
-      "/controller_manager/switch_controllers", rmw_qos_profile_services_default, setter_callback_group_);
+      "/controller_manager/switch_controllers", rmw_qos_profile_services_default, controller_manager_callback_group_);
 
   list_controllers_client_ = node->create_client<controller_manager_msgs::srv::ListControllers>(
-      "/controller_manager/list_controllers", rmw_qos_profile_services_default, setter_callback_group_);
+      "/controller_manager/list_controllers", rmw_qos_profile_services_default, controller_manager_callback_group_);
 
   // Load and parse the ros2_controllers.yaml which is currently in victor_moveit_config
   auto const& package_share_directory = ament_index_cpp::get_package_share_directory("victor_moveit_config");
