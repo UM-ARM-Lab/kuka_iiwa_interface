@@ -15,9 +15,6 @@ def generate_launch_description():
     ld = LaunchDescription()
     ld.add_action(DeclareBooleanLaunchArg("use_rviz", default_value=True))
     ld.add_action(DeclareBooleanLaunchArg("victor_command_gui", default_value=True))
-    # Note that changing these from the default requires matching changes in the Java code
-    ld.add_action(DeclareLaunchArgument("left_arm_recv_url", default_value="udp://10.10.10.169:30002"))
-    ld.add_action(DeclareLaunchArgument("right_arm_recv_url", default_value="udp://10.10.10.169:30001"))
 
     ld.add_action(
         Node(

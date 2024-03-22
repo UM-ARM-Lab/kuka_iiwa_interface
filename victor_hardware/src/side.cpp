@@ -135,30 +135,6 @@ void Side::setControlMode(const std::shared_ptr<srv::SetControlMode::Request>& r
 
   send_motion_command_ = false;  // prevent sending LCM motion commands
 
-  // Set the KUKA control mode
-  // publish the control mode to the LCM, then wait for the control mode to be received
-  auto const lcm_command = controlModeParamsRosToLcm(request->new_control_mode);
-  send_lcm_ptr_->publish(DEFAULT_CONTROL_MODE_COMMAND_CHANNEL, &lcm_command);
-
-  // Check to see if the control mode has changed, and if it hasn't after a certain amount of time,
-  // set response->success = false, set the error message, and log an error message
-  auto const start_time = std::chrono::steady_clock::now();
-  while (true) {
-    auto const& control_mode_params = control_mode_listener_->getLatestMessage();
-    auto const& current_control_mode = control_mode_params.control_mode.mode;
-    if (current_control_mode == request->new_control_mode.control_mode.mode) {
-      response->success = true;
-      current_control_mode_ = current_control_mode;
-      break;
-    }
-    if (std::chrono::steady_clock::now() - start_time > std::chrono::seconds(1)) {
-      response->success = false;
-      response->message = "Control mode change timed out";
-      RCLCPP_WARN(logger_, "Control mode change timed out");
-      return;
-    }
-  }
-
   // Switch ROS2 controllers
   while (!switch_controller_client_->wait_for_service(1s)) {
     if (!rclcpp::ok()) {
@@ -250,7 +226,7 @@ std::pair<bool, std::string> Side::validate_mode_switch(const std::vector<std::s
     return {false, "The requested mode switch mixes both cartesian and position/pose interfaces!"};
   }
 
-  // Switch the kuka controller to match mode determined by the interfaces
+  // Switch the kuka controller to match mode determined by the interfaces???
 
   return {true, ""};
 }

@@ -62,6 +62,10 @@ left_arm_position_controller:
       - victor_left_arm_joint_6
       - victor_left_arm_joint_7
     interface_name: position
+    # This tells us which LCM url to talk to
+    side: left
+    # These integers are defined by ControlMode.msg
+    control_mode: 0 # JOINT_POSITION
 
 right_arm_position_controller:
   ros__parameters:

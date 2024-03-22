@@ -13,7 +13,6 @@
 #include <thread>
 #include <vector>
 #include <victor_hardware/async_executor.hpp>
-#include <victor_hardware/lcm_listener.hpp>
 #include <victor_hardware/side.hpp>
 #include <victor_lcm_interface/control_mode_parameters.hpp>
 #include <victor_lcm_interface/motion_command.hpp>

@@ -20,6 +20,7 @@ controller_interface::CallbackReturn KukaCartesianController::on_init() {
 controller_interface::InterfaceConfiguration KukaCartesianController::command_interface_configuration() const {
   controller_interface::InterfaceConfiguration config;
 
+  // get this from the YAML? or from ROS parameters?
     std::string side_name = "left";
 //  std::string side_name = get_node()->get_parameter("side").as_string();
 //  RCLCPP_WARN_STREAM(logger, "KukaCartesianController::command_interface_configuration: " << side_name);

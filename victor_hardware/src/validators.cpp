@@ -1,14 +1,14 @@
 #include <cmath>
 #include <optional>
 #include <rclcpp/logger.hpp>
-#include <victor_hardware/validators.hpp>
 #include <victor_hardware/constants.hpp>
+#include <victor_hardware/validators.hpp>
 
 static auto logger = rclcpp::get_logger("validators");
 
 namespace victor_hardware {
 
-std::pair<bool, std::string> validateJointPathExecutionParams(const msg::JointPathExecutionParameters& params) {
+std::pair<bool, std::string> validateJointPathExecutionParams(const msg::JointPathExecutionParameters &params) {
   bool valid = true;
   std::string message;
   if (params.joint_relative_velocity <= 0.0 || params.joint_relative_velocity > 1.0) {
@@ -26,7 +26,7 @@ std::pair<bool, std::string> validateJointPathExecutionParams(const msg::JointPa
   return {valid, message};
 }
 
-std::pair<bool, std::string> validateCartesianPathExecutionParams(const msg::CartesianPathExecutionParameters& params) {
+std::pair<bool, std::string> validateCartesianPathExecutionParams(const msg::CartesianPathExecutionParameters &params) {
   bool valid = true;
   std::string message;
 
@@ -93,7 +93,7 @@ std::pair<bool, std::string> validateCartesianPathExecutionParams(const msg::Car
   return {valid, message};
 }
 
-std::pair<bool, std::string> validateJointImpedanceParams(const msg::JointImpedanceParameters& params) {
+std::pair<bool, std::string> validateJointImpedanceParams(const msg::JointImpedanceParameters &params) {
   bool valid = true;
   std::string message;
 
@@ -160,7 +160,7 @@ std::pair<bool, std::string> validateJointImpedanceParams(const msg::JointImpeda
   return {valid, message};
 }
 
-std::pair<bool, std::string> validateCartesianImpedanceParams(const msg::CartesianImpedanceParameters& params) {
+std::pair<bool, std::string> validateCartesianImpedanceParams(const msg::CartesianImpedanceParameters &params) {
   bool valid = true;
   std::string message;
 
@@ -229,7 +229,7 @@ std::pair<bool, std::string> validateCartesianImpedanceParams(const msg::Cartesi
   return {valid, message};
 }
 
-std::pair<bool, std::string> validateCartesianControlModeLimits(const msg::CartesianControlModeLimits& params) {
+std::pair<bool, std::string> validateCartesianControlModeLimits(const msg::CartesianControlModeLimits &params) {
   bool valid = true;
   std::string message;
 
@@ -314,7 +314,7 @@ std::pair<bool, std::string> validateCartesianControlModeLimits(const msg::Carte
   return {valid, message};
 }
 
-std::pair<bool, std::string> validateControlMode(const msg::ControlModeParameters& params) {
+std::pair<bool, std::string> validateControlMode(const msg::ControlModeParameters &params) {
   bool valid = true;
   std::string message;
 
@@ -348,14 +348,15 @@ std::pair<bool, std::string> validateControlMode(const msg::ControlModeParameter
   return {valid, message};
 }
 
-std::pair<bool, std::string> validateCartesianPose(const geometry_msgs::msg::Pose& pose, const std::string& frame) {
+std::pair<bool, std::string> validateCartesianPose(const geometry_msgs::msg::Pose &pose, const std::string &frame) {
   bool valid = true;
   std::string message;
 
   // Check to make sure the frame is correct
   if (frame != DEFAULT_CARTESIAN_CONTROL_FRAME) {
     valid = false;
-    message += "Commanded cartesian pose has the wrong frame, " + frame + " given, " + DEFAULT_CARTESIAN_CONTROL_FRAME + " expected";
+    message += "Commanded cartesian pose has the wrong frame, " + frame + " given, " + DEFAULT_CARTESIAN_CONTROL_FRAME +
+               " expected";
   }
 
   // Check to make sure the quaternion is well-formed
@@ -374,7 +375,7 @@ std::pair<bool, std::string> validateCartesianPose(const geometry_msgs::msg::Pos
 }
 
 std::pair<bool, std::string> validateMotionCommand(uint8_t const active_control_mode,
-                                                   const victor_lcm_interface::motion_command& command) {
+                                                   const victor_lcm_interface::motion_command &command) {
   const uint8_t command_motion_mode = command.control_mode.mode;
   if (active_control_mode != command_motion_mode) {
     return std::make_pair(false, std::string("Active control mode does not match commanded control mode"));
@@ -383,7 +384,7 @@ std::pair<bool, std::string> validateMotionCommand(uint8_t const active_control_
   return {true, ""};
 }
 
-std::pair<bool, std::string> validateFingerCommand(const msg::Robotiq3FingerActuatorCommand& command) {
+std::pair<bool, std::string> validateFingerCommand(const msg::Robotiq3FingerActuatorCommand &command) {
   bool valid = true;
   std::string message;
   if (command.position > 1.0 || command.position < 0.0) {
@@ -404,7 +405,7 @@ std::pair<bool, std::string> validateFingerCommand(const msg::Robotiq3FingerActu
   return {valid, message};
 }
 
-std::pair<bool, std::string> validateGripperCommand(const msg::Robotiq3FingerCommand& command) {
+std::pair<bool, std::string> validateGripperCommand(const msg::Robotiq3FingerCommand &command) {
   const auto ac = validateFingerCommand(command.finger_a_command);
   const auto bc = validateFingerCommand(command.finger_b_command);
   const auto cc = validateFingerCommand(command.finger_c_command);
@@ -415,12 +416,12 @@ std::pair<bool, std::string> validateGripperCommand(const msg::Robotiq3FingerCom
   return {valid, message};
 }
 
-bool jointPathExecutionParamsIsDefault(const msg::JointPathExecutionParameters& params) {
+bool jointPathExecutionParamsIsDefault(const msg::JointPathExecutionParameters &params) {
   return (params.joint_relative_velocity == 0 && params.joint_relative_acceleration == 0 &&
           params.override_joint_acceleration == 0);
 }
 
-bool cartesianPathExecutionParamsIsDefault(const msg::CartesianPathExecutionParameters& params) {
+bool cartesianPathExecutionParamsIsDefault(const msg::CartesianPathExecutionParameters &params) {
   return (params.max_velocity.x == 0 && params.max_velocity.y == 0 && params.max_velocity.z == 0 &&
           params.max_velocity.a == 0 && params.max_velocity.b == 0 && params.max_velocity.c == 0 &&
           params.max_acceleration.x == 0 && params.max_acceleration.y == 0 && params.max_acceleration.z == 0 &&
@@ -428,7 +429,7 @@ bool cartesianPathExecutionParamsIsDefault(const msg::CartesianPathExecutionPara
           params.max_nullspace_velocity == 0 && params.max_nullspace_acceleration == 0);
 }
 
-bool jointImpedanceParamsIsDefault(const msg::JointImpedanceParameters& params) {
+bool jointImpedanceParamsIsDefault(const msg::JointImpedanceParameters &params) {
   return (params.joint_stiffness.joint_1 == 0 && params.joint_stiffness.joint_2 == 0 &&
           params.joint_stiffness.joint_3 == 0 && params.joint_stiffness.joint_4 == 0 &&
           params.joint_stiffness.joint_5 == 0 && params.joint_stiffness.joint_6 == 0 &&
@@ -437,7 +438,7 @@ bool jointImpedanceParamsIsDefault(const msg::JointImpedanceParameters& params) 
           params.joint_damping.joint_5 == 0 && params.joint_damping.joint_6 == 0 && params.joint_damping.joint_7 == 0);
 }
 
-bool cartesianImpedanceParamsIsDefault(const msg::CartesianImpedanceParameters& params) {
+bool cartesianImpedanceParamsIsDefault(const msg::CartesianImpedanceParameters &params) {
   return (params.cartesian_stiffness.x == 0 && params.cartesian_stiffness.y == 0 && params.cartesian_stiffness.z == 0 &&
           params.cartesian_stiffness.a == 0 && params.cartesian_stiffness.b == 0 && params.cartesian_stiffness.c == 0 &&
           params.cartesian_damping.x == 0 && params.cartesian_damping.y == 0 && params.cartesian_damping.z == 0 &&
@@ -445,7 +446,7 @@ bool cartesianImpedanceParamsIsDefault(const msg::CartesianImpedanceParameters& 
           params.nullspace_stiffness == 0 && params.nullspace_damping == 0);
 }
 
-bool cartesianControlModeLimitsIsDefault(const msg::CartesianControlModeLimits& params) {
+bool cartesianControlModeLimitsIsDefault(const msg::CartesianControlModeLimits &params) {
   return (params.max_path_deviation.x == 0 && params.max_path_deviation.y == 0 && params.max_path_deviation.z == 0 &&
           params.max_path_deviation.a == 0 && params.max_path_deviation.b == 0 && params.max_path_deviation.c == 0 &&
           params.max_cartesian_velocity.x == 0 && params.max_cartesian_velocity.y == 0 &&
@@ -456,8 +457,8 @@ bool cartesianControlModeLimitsIsDefault(const msg::CartesianControlModeLimits& 
           !params.stop_on_max_control_force);
 }
 
-msg::ControlModeParameters mergeControlModeParameters(const msg::ControlModeParameters& active_control_mode,
-                                                      const msg::ControlModeParameters& new_control_mode) {
+msg::ControlModeParameters mergeControlModeParameters(const msg::ControlModeParameters &active_control_mode,
+                                                      const msg::ControlModeParameters &new_control_mode) {
   /***************************************************************************************************************
   This function is a helper function for the callback function of setting a new control mode(setControlModeCallBack).
   It copies the parameters of the old control mode to the new one, and updates relevant parameters with theparameters
@@ -558,6 +559,66 @@ msg::ControlModeParameters mergeControlModeParameters(const msg::ControlModePara
   }
 
   return merged_control_mode;
+}
+
+bool operator==(victor_lcm_interface::control_mode_parameters const &p1,
+                victor_lcm_interface::control_mode_parameters const &p2) {
+  return p1.control_mode == p2.control_mode && p1.joint_impedance_params == p2.joint_impedance_params &&
+         p1.joint_path_execution_params == p2.joint_path_execution_params &&
+         p1.cartesian_impedance_params == p2.cartesian_impedance_params &&
+         p1.cartesian_control_mode_limits == p2.cartesian_control_mode_limits &&
+         p1.cartesian_path_execution_params == p2.cartesian_path_execution_params;
+}
+
+bool operator==(victor_lcm_interface::control_mode const &p1, victor_lcm_interface::control_mode const &p2) {
+  return p1.mode == p2.mode;
+}
+
+bool operator==(victor_lcm_interface::joint_impedance_parameters const &p1,
+                victor_lcm_interface::joint_impedance_parameters const &p2) {
+  return p1.joint_damping == p2.joint_damping && p1.joint_stiffness == p2.joint_stiffness;
+}
+
+bool operator==(victor_lcm_interface::cartesian_impedance_parameters const &p1,
+                victor_lcm_interface::cartesian_impedance_parameters const &p2) {
+  return p1.cartesian_damping == p2.cartesian_damping && p1.cartesian_stiffness == p2.cartesian_stiffness &&
+         p1.nullspace_damping == p2.nullspace_damping && p1.nullspace_stiffness == p2.nullspace_stiffness;
+}
+
+bool operator==(victor_lcm_interface::cartesian_control_mode_limits const &p1,
+                victor_lcm_interface::cartesian_control_mode_limits const &p2) {
+  return p1.max_path_deviation == p2.max_path_deviation && p1.max_cartesian_velocity == p2.max_cartesian_velocity &&
+         p1.max_control_force == p2.max_control_force && p1.stop_on_max_control_force == p2.stop_on_max_control_force;
+}
+
+bool operator==(victor_lcm_interface::cartesian_path_execution_parameters const &p1,
+                victor_lcm_interface::cartesian_path_execution_parameters const &p2) {
+  return p1.max_velocity == p2.max_velocity && p1.max_acceleration == p2.max_acceleration &&
+         p1.max_nullspace_velocity == p2.max_nullspace_velocity &&
+         p1.max_nullspace_acceleration == p2.max_nullspace_acceleration;
+}
+
+bool operator==(victor_lcm_interface::joint_path_execution_parameters const &p1,
+                victor_lcm_interface::joint_path_execution_parameters const &p2) {
+  return p1.joint_relative_velocity == p2.joint_relative_velocity &&
+         p1.joint_relative_acceleration == p2.joint_relative_acceleration &&
+         p1.override_joint_acceleration == p2.override_joint_acceleration;
+}
+
+bool operator==(victor_lcm_interface::joint_value_quantity const &p1,
+                victor_lcm_interface::joint_value_quantity const &p2) {
+  return p1.joint_1 == p2.joint_1 && p1.joint_2 == p2.joint_2 && p1.joint_3 == p2.joint_3 && p1.joint_4 == p2.joint_4 &&
+         p1.joint_5 == p2.joint_5 && p1.joint_6 == p2.joint_6 && p1.joint_7 == p2.joint_7;
+}
+
+bool operator==(victor_lcm_interface::cartesian_pose const &p1, victor_lcm_interface::cartesian_pose const &p2) {
+  return p1.xt == p2.xt && p1.yt == p2.yt && p1.zt == p2.zt && p1.wr == p2.wr && p1.xr == p2.xr && p1.yr == p2.yr &&
+         p1.zr == p2.zr;
+}
+
+bool operator==(victor_lcm_interface::cartesian_value_quantity const &p1,
+                victor_lcm_interface::cartesian_value_quantity const &p2) {
+  return p1.x == p2.x && p1.y == p2.y && p1.z == p2.z && p1.a == p2.a && p1.b == p2.b && p1.c == p2.c;
 }
 
 };  // namespace victor_hardware

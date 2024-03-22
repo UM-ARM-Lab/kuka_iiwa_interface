@@ -35,15 +35,8 @@ CallbackReturn VictorHardwareInterface::on_init(const hardware_interface::Hardwa
   hw_states_cmd_position_.resize(info_.joints.size(), std::numeric_limits<double>::quiet_NaN());
   hw_states_external_torque_sensor_.resize(info_.joints.size(), 0);
 
-  // NOTE: changing these values here requires corresponding changes in the LCMRobotInterface application
-  //  and also the victor_lcm_bridge launch file.
-  std::string const left_recv_provider = "udp://10.10.10.169:30002";
-  std::string const right_recv_provider = "udp://10.10.10.169:30001";
-  std::string const left_send_provider = "udp://10.10.10.12:30000";
-  std::string const right_send_provider = "udp://10.10.10.11:30000";
-
-  left.on_init(executor_, node_, left_send_provider, left_recv_provider);
-  right.on_init(executor_, node_, right_send_provider, right_recv_provider);
+  left.on_init(executor_, node_, LEFT_SEND_PROVIDER, LEFT_RECV_PROVIDER);
+  right.on_init(executor_, node_, RIGHT_SEND_PROVIDER, RIGHT_RECV_PROVIDER);
 
   //  // Example usage of DataTamer
   //  sink_ = std::make_shared<DataTamer::MCAPSink>("/home/armlab/victor_hw_if.mcap");
@@ -309,7 +302,7 @@ hardware_interface::return_type VictorHardwareInterface::write(const rclcpp::Tim
   auto const& left_motion_status = left.motion_status_listener_->getLatestMessage();
   auto const& right_motion_status = right.motion_status_listener_->getLatestMessage();
 
-  std::array<double, 14> current_commanded_positions;
+  std::array<double, 14> current_commanded_positions{};
   current_commanded_positions[0] = left_motion_status.commanded_joint_position.joint_1;
   current_commanded_positions[1] = left_motion_status.commanded_joint_position.joint_2;
   current_commanded_positions[2] = left_motion_status.commanded_joint_position.joint_3;

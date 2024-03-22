@@ -40,10 +40,11 @@ add_library(victor_hardware
         src/async_executor.cpp
         src/lcm_ros_conversions.cpp
         src/validators.cpp
+        src/kuka_control_mode_client.cpp
         include/victor_hardware/lcm_listener.hpp
         # Controllers and broadcasters also get added to this library
         src/kuka_cartesian_controller.cpp
-        src/kuka_joint_trajectory_controller.cpp
+        src/kuka_joint_position_trajectory_controller.cpp
 )
 target_include_directories(
         victor_hardware
