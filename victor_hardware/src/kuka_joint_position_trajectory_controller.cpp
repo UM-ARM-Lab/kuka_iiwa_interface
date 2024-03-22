@@ -1,3 +1,4 @@
+#include <algorithm>
 #include <memory>
 #include <string>
 #include <victor_hardware/constants.hpp>
@@ -30,12 +31,24 @@ controller_interface::CallbackReturn KukaJointPositionTrajectoryController::on_i
   node->declare_parameter<double>("kuka.joint_relative_velocity", DEFAULT_RELATIVE_VELOCITY,
                                   relative_joint_velocity_desc);
 
-  set_parameters_handle_ = node->add_on_set_parameters_callback([&](std::vector<rclcpp::Parameter> const &parameters) {
+  set_parameters_handle_ = node->add_on_set_parameters_callback([&](std::vector<rclcpp::Parameter> const &params) {
     rcl_interfaces::msg::SetParametersResult result{};
     result.successful = true;
     result.reason = "Success";
 
-    // Ensure that we do not change the control MODE here, only update the parameters.
+    // This callback gets call when any parameter is updated, but we only care about params starting with "kuka",
+    // So first filter out the params we don't care about.
+    std::vector<rclcpp::Parameter> kuka_params;
+    std::copy_if(params.cbegin(), params.cend(), std::back_inserter(kuka_params),
+                 [](const rclcpp::Parameter &parameter) { return parameter.get_name().find("kuka") == 0; });
+
+    if (kuka_params.empty()) {
+      return result;
+    }
+
+    RCLCPP_INFO(get_node()->get_logger(), "Updating KukaJointPositionTrajectoryController parameters");
+
+    // Ensure that we do not change the control MODE here, only update the params.
     auto const &current_left_mode = left_control_mode_client_->getControlMode();
     auto const &current_right_mode = right_control_mode_client_->getControlMode();
     if (current_left_mode != victor_lcm_interface::control_mode::JOINT_POSITION) {
@@ -48,19 +61,17 @@ controller_interface::CallbackReturn KukaJointPositionTrajectoryController::on_i
       result.reason = "Right arm is in " + std::to_string(current_right_mode) + " mode, not JOINT_POSITION";
       return result;
     }
-    //
-    //    for (const auto &parameter : parameters) {
-    //      if (parameter.get_name() == "kuka.joint_relative_velocity") {
-    //        kuka_mode_params_.joint_path_execution_params.joint_relative_velocity = parameter.as_double();
-    //      }
-    //    }
 
-    RCLCPP_WARN_STREAM(node->get_logger(), "updating params: ");
-    for (const auto &parameter : parameters) {
-      RCLCPP_WARN_STREAM(node->get_logger(), parameter.get_name());
+    RCLCPP_INFO_STREAM(get_node()->get_logger(), "modes are correct");
+
+    for (const auto &param : kuka_params) {
+      if (param.get_name() == "kuka.joint_relative_velocity") {
+        kuka_mode_params_.joint_path_execution_params.joint_relative_velocity = param.as_double();
+      }
     }
-    //    updateControlModes();
 
+    RCLCPP_INFO_STREAM(get_node()->get_logger(), "Updating control modes");
+    updateControlModes();
     return result;
   });
 
@@ -78,6 +89,8 @@ void KukaJointPositionTrajectoryController::updateControlModes() {
   if (!right_success) {
     RCLCPP_ERROR(get_node()->get_logger(), "Failed to update control mode for right arm");
   }
+
+  RCLCPP_INFO_STREAM(get_node()->get_logger(), "Updated control modes successfully");
 }
 
 }  // namespace victor_hardware
