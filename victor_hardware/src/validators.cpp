@@ -374,26 +374,13 @@ std::pair<bool, std::string> validateCartesianPose(const geometry_msgs::msg::Pos
 }
 
 std::pair<bool, std::string> validateMotionCommand(uint8_t const active_control_mode,
-                                                   const msg::MotionCommand& command) {
+                                                   const victor_lcm_interface::motion_command& command) {
   const uint8_t command_motion_mode = command.control_mode.mode;
-
-  // Note that this assumes the two messages use the same enums for each item, this is asserted in the constructor
   if (active_control_mode != command_motion_mode) {
     return std::make_pair(false, std::string("Active control mode does not match commanded control mode"));
   }
 
-  switch (command_motion_mode) {
-    case msg::ControlMode::JOINT_POSITION:
-    case msg::ControlMode::JOINT_IMPEDANCE:
-      return {true, ""};
-
-    case msg::ControlMode::CARTESIAN_POSE:
-    case msg::ControlMode::CARTESIAN_IMPEDANCE:
-      return validateCartesianPose(command.cartesian_pose, command.header.frame_id);
-
-    default:
-      return {false, "Invalid commanded control mode. This should not be possible"};
-  }
+  return {true, ""};
 }
 
 std::pair<bool, std::string> validateFingerCommand(const msg::Robotiq3FingerActuatorCommand& command) {

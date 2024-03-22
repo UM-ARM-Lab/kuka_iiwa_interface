@@ -6,6 +6,7 @@ set(CMAKE_CXX_STANDARD 20)
 set(THIS_PACKAGE_INCLUDE_DEPENDS
         ament_cmake
         controller_interface
+        controller_manager_msgs
         pluginlib
         hardware_interface
         arm_utilities

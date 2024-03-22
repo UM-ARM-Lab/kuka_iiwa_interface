@@ -253,6 +253,7 @@ class ArmWidget(QWidget):
         """ Must not be called from the main thread, or the ROS Executor and the QT Gui will both be blocked. """
         request = SetControlMode.Request()
         request.new_control_mode = get_control_mode_params(control_mode.mode, self.stiffness)
+        request.new_controller_name = "joint_trajectory_controller"
         self.side.set_control_mode_client.call(request)
 
         active_control_mode = self.side.get_control_mode_client.call(GetControlMode.Request()).active_control_mode

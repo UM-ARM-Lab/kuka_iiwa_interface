@@ -340,12 +340,10 @@ hardware_interface::return_type VictorHardwareInterface::write(const rclcpp::Tim
   std::chrono::duration<double> const now_dur_seconds = now_tp.time_since_epoch();
   auto const now_seconds = now_dur_seconds.count();
 
-  auto const& left_control_mode = left.control_mode_listener_->getLatestMessage();
-  auto const& right_control_mode = right.control_mode_listener_->getLatestMessage();
-
   victor_lcm_interface::motion_command left_motion_cmd{};
   left_motion_cmd.timestamp = now_seconds;
-  left_motion_cmd.control_mode = left_control_mode.control_mode;
+  left_motion_cmd.control_mode.mode =
+      left.current_control_mode_;  // Set this based on which controller is currently running
   left_motion_cmd.joint_position.joint_1 = hw_cmds_position_[0];
   left_motion_cmd.joint_position.joint_2 = hw_cmds_position_[1];
   left_motion_cmd.joint_position.joint_3 = hw_cmds_position_[2];
@@ -357,7 +355,7 @@ hardware_interface::return_type VictorHardwareInterface::write(const rclcpp::Tim
 
   victor_lcm_interface::motion_command right_motion_cmd{};
   right_motion_cmd.timestamp = now_seconds;
-  right_motion_cmd.control_mode = right_control_mode.control_mode;
+  right_motion_cmd.control_mode.mode = right.current_control_mode_;
   right_motion_cmd.joint_position.joint_1 = hw_cmds_position_[7];
   right_motion_cmd.joint_position.joint_2 = hw_cmds_position_[8];
   right_motion_cmd.joint_position.joint_3 = hw_cmds_position_[9];
@@ -392,6 +390,19 @@ hardware_interface::return_type VictorHardwareInterface::write(const rclcpp::Tim
 
 hardware_interface::return_type VictorHardwareInterface::prepare_command_mode_switch(
     const std::vector<std::string>& start_interfaces, const std::vector<std::string>& stop_interfaces) {
+  // Check whether the current_control_mode_ on each side is compatible with the start_interfaces
+  auto left_is_valid = left.validate_mode_switch(start_interfaces);
+  auto right_is_valid = right.validate_mode_switch(start_interfaces);
+
+  if (!left_is_valid.first) {
+    RCLCPP_ERROR_STREAM(logger, "Control mode switch is invalid: " << left_is_valid.second);
+    return hardware_interface::return_type::ERROR;
+  }
+  if (!right_is_valid.first) {
+    RCLCPP_ERROR_STREAM(logger, "Control mode switch is invalid: " << right_is_valid.second);
+    return hardware_interface::return_type::ERROR;
+  }
+
   return hardware_interface::return_type::OK;
 }
 

@@ -9,6 +9,7 @@
 #include <string>
 #include <unordered_map>
 #include <victor_hardware/lcm_listener.hpp>
+#include <controller_manager_msgs/srv/switch_controller.hpp>
 #include <victor_hardware_interfaces/msg/control_mode_parameters.hpp>
 #include <victor_hardware_interfaces/msg/motion_command.hpp>
 #include <victor_hardware_interfaces/msg/motion_status.hpp>
@@ -43,9 +44,11 @@ class Side {
   void publish_motion_status(victor_lcm_interface::motion_status const& msg);
   void publish_gripper_status(victor_lcm_interface::robotiq_3finger_status const& msg);
   void send_motion_command(victor_lcm_interface::motion_command const& msg);
+  std::pair<bool, std::string> validate_mode_switch(const std::vector<std::string>& start_interfaces);
 
   std::string name_;
   bool send_motion_command_{true};
+  int8_t current_control_mode_ = victor_lcm_interface::control_mode::JOINT_POSITION;
 
   // These get bound to command interfaces
   geometry_msgs::msg::Pose hw_cmd_cartesian_pose_;
@@ -67,6 +70,7 @@ class Side {
   std::unique_ptr<LcmListener<victor_lcm_interface::robotiq_3finger_status>> gripper_status_listener_;
   rclcpp::Service<srv::SetControlMode>::SharedPtr set_control_mode_server_;
   rclcpp::Service<srv::GetControlMode>::SharedPtr get_control_mode_server_;
+  rclcpp::Client<controller_manager_msgs::srv::SwitchController>::SharedPtr switch_controller_client_;
 
   // ROS API
   rclcpp::Publisher<msg::MotionStatus>::SharedPtr motion_status_pub_;

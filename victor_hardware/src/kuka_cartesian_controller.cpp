@@ -27,13 +27,13 @@ controller_interface::InterfaceConfiguration KukaCartesianController::command_in
   // Claim the cartesian command interface only
   config.type = controller_interface::interface_configuration_type::INDIVIDUAL;
 
-  config.names.push_back(side_name + "/cartesian_pos/xt");
-  config.names.push_back(side_name + "/cartesian_pos/yt");
-  config.names.push_back(side_name + "/cartesian_pos/zt");
-  config.names.push_back(side_name + "/cartesian_pos/wr");
-  config.names.push_back(side_name + "/cartesian_pos/xr");
-  config.names.push_back(side_name + "/cartesian_pos/yr");
-  config.names.push_back(side_name + "/cartesian_pos/zr");
+  config.names.push_back(side_name + "/cartesian_pose/xt");
+  config.names.push_back(side_name + "/cartesian_pose/yt");
+  config.names.push_back(side_name + "/cartesian_pose/zt");
+  config.names.push_back(side_name + "/cartesian_pose/wr");
+  config.names.push_back(side_name + "/cartesian_pose/xr");
+  config.names.push_back(side_name + "/cartesian_pose/yr");
+  config.names.push_back(side_name + "/cartesian_pose/zr");
 
   return config;
 }
