@@ -7,6 +7,7 @@
 #include <victor_hardware/side.hpp>
 #include <victor_hardware/validators.hpp>
 #include <vector>
+#include <string>
 using std::placeholders::_1;
 using std::placeholders::_2;
 using namespace std::chrono_literals;
@@ -198,19 +199,19 @@ void Side::setControlMode(const std::shared_ptr<srv::SetControlMode::Request>& r
   auto const& list_controllers_response = result_list.get();
   // check if new_controller_name is in the list of controllers
   bool is_controller_found = false;
+  std::vector<std::string> cmd_interface;
   for (auto const& controller : list_controllers_response->controller) {
     if (controller.name == request->new_controller_name) {
-      const size_t n = sizeof(controller.required_command_interface) / sizeof(controller.required_command_interface[0]);
-      std::string cmd_interface[n];
+      const size_t n = sizeof(controller.required_command_interfaces) / sizeof(controller.required_command_interfaces[0]);
       for (size_t i = 0; i < n; ++i) {
-          cmd_interface[i] = required_command_interface[i];
+          cmd_interface[i] = controller.required_command_interfaces[i];
       }
       is_controller_found = true;
       }
     }
   if (!is_controller_found) {
-    auto const srv_error_msg = "Controller " + request->new_controller_name + " not found";
-    RCLCPP_ERROR(logger_, srv_error_msg);
+    auto const srv_error_msg = "Controller not found";
+    RCLCPP_ERROR(logger_, "Controller not found");
     response->success = false;
     response->message = srv_error_msg;
     return;
@@ -221,15 +222,21 @@ void Side::setControlMode(const std::shared_ptr<srv::SetControlMode::Request>& r
   // Deactivate the controllers conflicts with the new controller
   for (auto const& controller : list_controllers_response->controller) {
       if  (controller.state == "activate"){
-        std::vector<int> intersection;
-        std::set_intersection(controller.required_command_interfaces.begin(), controller.required_command_interfaces.end(), cmd_interface.begin(), cmd_interface.end(), std::back_inserter(intersection));
+        std::vector<std::string> intersection;  // Use std::string instead of int
+        std::set_intersection(
+            controller.required_command_interfaces.begin(),
+            controller.required_command_interfaces.end(),
+            cmd_interface.begin(),
+            cmd_interface.end(),
+            std::back_inserter(intersection)
+        );
         if (!intersection.empty()){
-          req->deactivate_controllers.push_back(controller.name); 
+          req->deactivate_controllers.push_back(controller.name);
           // DO I need to check if push back is successful? it seems it always return true?
         }
       }
     }
-  
+
 
   // Activate the new controller
   req->activate_controllers.push_back(request->new_controller_name);

@@ -10,6 +10,7 @@
 #include <unordered_map>
 #include <victor_hardware/lcm_listener.hpp>
 #include <controller_manager_msgs/srv/switch_controller.hpp>
+#include <controller_manager_msgs/srv/list_controllers.hpp>
 #include <victor_hardware_interfaces/msg/control_mode_parameters.hpp>
 #include <victor_hardware_interfaces/msg/motion_command.hpp>
 #include <victor_hardware_interfaces/msg/motion_status.hpp>
