@@ -22,8 +22,6 @@
 // #include "data_tamer/data_tamer.hpp"
 // #include "data_tamer/sinks/mcap_sink.hpp"
 
-#define VICTOR_HARDWARE_PUBLIC __attribute__((visibility("default")))
-
 using CallbackReturn = rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn;
 
 namespace victor_hardware {
@@ -31,33 +29,21 @@ class VictorHardwareInterface : public hardware_interface::SystemInterface {
  public:
   RCLCPP_SHARED_PTR_DEFINITIONS(VictorHardwareInterface);
 
-  VICTOR_HARDWARE_PUBLIC
   CallbackReturn on_init(const hardware_interface::HardwareInfo& info) override;
 
-  VICTOR_HARDWARE_PUBLIC
   std::vector<hardware_interface::StateInterface> export_state_interfaces() override;
 
-  VICTOR_HARDWARE_PUBLIC
   std::vector<hardware_interface::CommandInterface> export_command_interfaces() override;
 
-  VICTOR_HARDWARE_PUBLIC
   CallbackReturn on_activate(const rclcpp_lifecycle::State& previous_state) override;
 
-  VICTOR_HARDWARE_PUBLIC
   CallbackReturn on_deactivate(const rclcpp_lifecycle::State& previous_state) override;
 
-  VICTOR_HARDWARE_PUBLIC
   hardware_interface::return_type prepare_command_mode_switch(const std::vector<std::string>& start_interfaces,
                                                               const std::vector<std::string>& stop_interfaces) override;
 
-  VICTOR_HARDWARE_PUBLIC
-  hardware_interface::return_type perform_command_mode_switch(const std::vector<std::string>& start_interfaces,
-                                                              const std::vector<std::string>& stop_interfaces) override;
-
-  VICTOR_HARDWARE_PUBLIC
   hardware_interface::return_type read(const rclcpp::Time& time, const rclcpp::Duration& period) override;
 
-  VICTOR_HARDWARE_PUBLIC
   hardware_interface::return_type write(const rclcpp::Time& time, const rclcpp::Duration& period) override;
 
  private:

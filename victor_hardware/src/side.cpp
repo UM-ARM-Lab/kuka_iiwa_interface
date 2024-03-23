@@ -103,26 +103,6 @@ std::pair<bool, std::string> Side::validate_and_switch_to_mode_for_interfaces(
     return {false, "The requested mode switch mixes both cartesian and position/pose interfaces!"};
   }
 
-  // Get the latest mode status because we want to copy the parameters, changing only the actual mode
-  auto mode_parameters = control_mode_client_->getControlMode();
-  // Infer the control mode from the names of the interfaces. We've already checked that they're all the same type,
-  // so now we just have to rely on conventions to determine which type it is.
-  if (is_all_cartesian) {
-    // could be "cartesian_pose" or "cartesian_impedance"
-    // if 
-    mode_parameters.control_mode.mode = victor_lcm_interface::control_mode::CARTESIAN_POSE;
-    mode_parameters.control_mode.mode = victor_lcm_interface::control_mode::CARTESIAN_IMPEDANCE;
-  } else {
-    // could be "joint_position" or "joint_impedance"
-    mode_parameters.control_mode.mode = victor_lcm_interface::control_mode::JOINT_POSITION;
-    mode_parameters.control_mode.mode = victor_lcm_interface::control_mode::JOINT_IMPEDANCE;
-  }
-
-  auto const& update_success = control_mode_client_->updateControlMode(mode_parameters);
-  if (!update_success) {
-    return {false, "Failed to update control mode"};
-  }
-
   return {true, ""};
 }
 

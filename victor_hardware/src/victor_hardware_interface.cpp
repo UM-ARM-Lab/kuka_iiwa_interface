@@ -412,12 +412,6 @@ hardware_interface::return_type VictorHardwareInterface::prepare_command_mode_sw
   return hardware_interface::return_type::OK;
 }
 
-hardware_interface::return_type VictorHardwareInterface::perform_command_mode_switch(
-    const std::vector<std::string>& start_interfaces, const std::vector<std::string>& stop_interfaces) {
-  RCLCPP_WARN_STREAM(logger, "performing switch!");
-  return hardware_interface::return_type::OK;
-}
-
 }  // namespace victor_hardware
 
 #include "pluginlib/class_list_macros.hpp"
