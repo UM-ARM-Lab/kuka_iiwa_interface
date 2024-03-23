@@ -8,7 +8,8 @@ static auto logger = rclcpp::get_logger("validators");
 
 namespace victor_hardware {
 
-std::pair<bool, std::string> validateJointPathExecutionParams(const msg::JointPathExecutionParameters &params) {
+std::pair<bool, std::string> validateJointPathExecutionParams(
+    const victor_lcm_interface::joint_path_execution_parameters &params) {
   bool valid = true;
   std::string message;
   if (params.joint_relative_velocity <= 0.0 || params.joint_relative_velocity > 1.0) {
@@ -26,7 +27,8 @@ std::pair<bool, std::string> validateJointPathExecutionParams(const msg::JointPa
   return {valid, message};
 }
 
-std::pair<bool, std::string> validateCartesianPathExecutionParams(const msg::CartesianPathExecutionParameters &params) {
+std::pair<bool, std::string> validateCartesianPathExecutionParams(
+    const victor_lcm_interface::cartesian_path_execution_parameters &params) {
   bool valid = true;
   std::string message;
 
@@ -93,7 +95,8 @@ std::pair<bool, std::string> validateCartesianPathExecutionParams(const msg::Car
   return {valid, message};
 }
 
-std::pair<bool, std::string> validateJointImpedanceParams(const msg::JointImpedanceParameters &params) {
+std::pair<bool, std::string> validateJointImpedanceParams(
+    const victor_lcm_interface::joint_impedance_parameters &params) {
   bool valid = true;
   std::string message;
 
@@ -160,7 +163,8 @@ std::pair<bool, std::string> validateJointImpedanceParams(const msg::JointImpeda
   return {valid, message};
 }
 
-std::pair<bool, std::string> validateCartesianImpedanceParams(const msg::CartesianImpedanceParameters &params) {
+std::pair<bool, std::string> validateCartesianImpedanceParams(
+    const victor_lcm_interface::cartesian_impedance_parameters &params) {
   bool valid = true;
   std::string message;
 
@@ -229,7 +233,8 @@ std::pair<bool, std::string> validateCartesianImpedanceParams(const msg::Cartesi
   return {valid, message};
 }
 
-std::pair<bool, std::string> validateCartesianControlModeLimits(const msg::CartesianControlModeLimits &params) {
+std::pair<bool, std::string> validateCartesianControlModeLimits(
+    const victor_lcm_interface::cartesian_control_mode_limits &params) {
   bool valid = true;
   std::string message;
 
@@ -314,15 +319,15 @@ std::pair<bool, std::string> validateCartesianControlModeLimits(const msg::Carte
   return {valid, message};
 }
 
-std::pair<bool, std::string> validateControlMode(const msg::ControlModeParameters &params) {
+std::pair<bool, std::string> validateControlMode(const victor_lcm_interface::control_mode_parameters &params) {
   bool valid = true;
   std::string message;
 
   // Check the control mode itself
-  if (params.control_mode.mode != msg::ControlMode::JOINT_POSITION &&
-      params.control_mode.mode != msg::ControlMode::JOINT_IMPEDANCE &&
-      params.control_mode.mode != msg::ControlMode::CARTESIAN_POSE &&
-      params.control_mode.mode != msg::ControlMode::CARTESIAN_IMPEDANCE) {
+  if (params.control_mode.mode != victor_lcm_interface::control_mode::JOINT_POSITION &&
+      params.control_mode.mode != victor_lcm_interface::control_mode::JOINT_IMPEDANCE &&
+      params.control_mode.mode != victor_lcm_interface::control_mode::CARTESIAN_POSE &&
+      params.control_mode.mode != victor_lcm_interface::control_mode::CARTESIAN_IMPEDANCE) {
     valid = false;
     message += "+Invalid control mode";
   }
@@ -403,162 +408,6 @@ std::pair<bool, std::string> validateFingerCommand(const msg::Robotiq3FingerActu
   }
 
   return {valid, message};
-}
-
-std::pair<bool, std::string> validateGripperCommand(const msg::Robotiq3FingerCommand &command) {
-  const auto ac = validateFingerCommand(command.finger_a_command);
-  const auto bc = validateFingerCommand(command.finger_b_command);
-  const auto cc = validateFingerCommand(command.finger_c_command);
-  const auto sc = validateFingerCommand(command.scissor_command);
-
-  const bool valid = ac.first && bc.first && cc.first && sc.first;
-  const std::string message = ac.second + bc.second + cc.second + sc.second;
-  return {valid, message};
-}
-
-bool jointPathExecutionParamsIsDefault(const msg::JointPathExecutionParameters &params) {
-  return (params.joint_relative_velocity == 0 && params.joint_relative_acceleration == 0 &&
-          params.override_joint_acceleration == 0);
-}
-
-bool cartesianPathExecutionParamsIsDefault(const msg::CartesianPathExecutionParameters &params) {
-  return (params.max_velocity.x == 0 && params.max_velocity.y == 0 && params.max_velocity.z == 0 &&
-          params.max_velocity.a == 0 && params.max_velocity.b == 0 && params.max_velocity.c == 0 &&
-          params.max_acceleration.x == 0 && params.max_acceleration.y == 0 && params.max_acceleration.z == 0 &&
-          params.max_acceleration.a == 0 && params.max_acceleration.b == 0 && params.max_acceleration.c == 0 &&
-          params.max_nullspace_velocity == 0 && params.max_nullspace_acceleration == 0);
-}
-
-bool jointImpedanceParamsIsDefault(const msg::JointImpedanceParameters &params) {
-  return (params.joint_stiffness.joint_1 == 0 && params.joint_stiffness.joint_2 == 0 &&
-          params.joint_stiffness.joint_3 == 0 && params.joint_stiffness.joint_4 == 0 &&
-          params.joint_stiffness.joint_5 == 0 && params.joint_stiffness.joint_6 == 0 &&
-          params.joint_stiffness.joint_7 == 0 && params.joint_damping.joint_1 == 0 &&
-          params.joint_damping.joint_2 == 0 && params.joint_damping.joint_3 == 0 && params.joint_damping.joint_4 == 0 &&
-          params.joint_damping.joint_5 == 0 && params.joint_damping.joint_6 == 0 && params.joint_damping.joint_7 == 0);
-}
-
-bool cartesianImpedanceParamsIsDefault(const msg::CartesianImpedanceParameters &params) {
-  return (params.cartesian_stiffness.x == 0 && params.cartesian_stiffness.y == 0 && params.cartesian_stiffness.z == 0 &&
-          params.cartesian_stiffness.a == 0 && params.cartesian_stiffness.b == 0 && params.cartesian_stiffness.c == 0 &&
-          params.cartesian_damping.x == 0 && params.cartesian_damping.y == 0 && params.cartesian_damping.z == 0 &&
-          params.cartesian_damping.a == 0 && params.cartesian_damping.b == 0 && params.cartesian_damping.c == 0 &&
-          params.nullspace_stiffness == 0 && params.nullspace_damping == 0);
-}
-
-bool cartesianControlModeLimitsIsDefault(const msg::CartesianControlModeLimits &params) {
-  return (params.max_path_deviation.x == 0 && params.max_path_deviation.y == 0 && params.max_path_deviation.z == 0 &&
-          params.max_path_deviation.a == 0 && params.max_path_deviation.b == 0 && params.max_path_deviation.c == 0 &&
-          params.max_cartesian_velocity.x == 0 && params.max_cartesian_velocity.y == 0 &&
-          params.max_cartesian_velocity.z == 0 && params.max_cartesian_velocity.a == 0 &&
-          params.max_cartesian_velocity.b == 0 && params.max_cartesian_velocity.c == 0 &&
-          params.max_control_force.x == 0 && params.max_control_force.y == 0 && params.max_control_force.z == 0 &&
-          params.max_control_force.a == 0 && params.max_control_force.b == 0 && params.max_control_force.c == 0 &&
-          !params.stop_on_max_control_force);
-}
-
-msg::ControlModeParameters mergeControlModeParameters(const msg::ControlModeParameters &active_control_mode,
-                                                      const msg::ControlModeParameters &new_control_mode) {
-  /***************************************************************************************************************
-  This function is a helper function for the callback function of setting a new control mode(setControlModeCallBack).
-  It copies the parameters of the old control mode to the new one, and updates relevant parameters with theparameters
-  of the new control mode.
-
-  Parameters updated in each control mode:
-  JOINT_POSITION: joint_path_execution_params
-  CARTESIAN_POSE: cartesian_path_execution_params
-  JOINT_IMPEDANCE: joint_impedance_params, joint_path_execution_params
-  CARTESIAN_IMPEDANCE: cartesian_impedance_params, cartesian_control_mode_limits, cartesian_path_execution_params
-  ***************************************************************************************************************/
-
-  msg::ControlModeParameters merged_control_mode;
-  // Copy the old over
-  merged_control_mode.joint_path_execution_params = active_control_mode.joint_path_execution_params;
-  merged_control_mode.joint_impedance_params = active_control_mode.joint_impedance_params;
-  merged_control_mode.cartesian_impedance_params = active_control_mode.cartesian_impedance_params;
-  merged_control_mode.cartesian_control_mode_limits = active_control_mode.cartesian_control_mode_limits;
-  merged_control_mode.cartesian_path_execution_params = active_control_mode.cartesian_path_execution_params;
-  // Copy manadatory members
-  merged_control_mode.control_mode = new_control_mode.control_mode;
-  // Copy mode-dependant members
-  switch (new_control_mode.control_mode.mode) {
-    case msg::ControlMode::JOINT_IMPEDANCE:
-      merged_control_mode.joint_path_execution_params = new_control_mode.joint_path_execution_params;
-      merged_control_mode.joint_impedance_params = new_control_mode.joint_impedance_params;
-
-      if (!cartesianImpedanceParamsIsDefault(new_control_mode.cartesian_impedance_params)) {
-        RCLCPP_WARN(logger, "The cartesian impedance parameters are specified but ignored in JOINT_IMPEDANCE mode.");
-      }
-      if (!cartesianControlModeLimitsIsDefault(new_control_mode.cartesian_control_mode_limits)) {
-        RCLCPP_WARN(logger, "The cartesian control mode limits are specified but ignored in JOINT_IMPEDANCE mode.");
-      }
-      if (!cartesianPathExecutionParamsIsDefault(new_control_mode.cartesian_path_execution_params)) {
-        RCLCPP_WARN(logger,
-                    "The cartesian path execution parameters are specified but ignored in JOINT_IMPEDANCE mode.");
-      }
-
-      break;
-
-    case msg::ControlMode::CARTESIAN_IMPEDANCE:
-      merged_control_mode.cartesian_impedance_params = new_control_mode.cartesian_impedance_params;
-      merged_control_mode.cartesian_control_mode_limits = new_control_mode.cartesian_control_mode_limits;
-      merged_control_mode.cartesian_path_execution_params = new_control_mode.cartesian_path_execution_params;
-
-      if (!jointPathExecutionParamsIsDefault(new_control_mode.joint_path_execution_params)) {
-        RCLCPP_WARN(logger,
-                    "The joint path execution parameters are specified but ignored in CASRTESIAN_IMPEDANCE mode.");
-      }
-      if (!jointImpedanceParamsIsDefault(new_control_mode.joint_impedance_params)) {
-        RCLCPP_WARN(logger, "The joint impedance parameters are specified but ignored in CASRTESIAN_IMPEDANCE mode.");
-      }
-
-      break;
-
-    case msg::ControlMode::JOINT_POSITION:
-      // From the new
-      merged_control_mode.joint_path_execution_params = new_control_mode.joint_path_execution_params;
-
-      if (!jointImpedanceParamsIsDefault(new_control_mode.joint_impedance_params)) {
-        RCLCPP_WARN(logger, "The joint impedance parameters are specified but ignored in JOINT_POSITION mode.");
-      }
-      if (!cartesianImpedanceParamsIsDefault(new_control_mode.cartesian_impedance_params)) {
-        RCLCPP_WARN(logger, "The cartesian impedance parameters are specified but ignored in JOINT_POSITION mode.");
-      }
-      if (!cartesianControlModeLimitsIsDefault(new_control_mode.cartesian_control_mode_limits)) {
-        RCLCPP_WARN(logger, "The cartesian control mode limits are specified but ignored in JOINT_POSITION mode.");
-      }
-      if (!cartesianPathExecutionParamsIsDefault(new_control_mode.cartesian_path_execution_params)) {
-        RCLCPP_WARN(logger,
-                    "The cartesian path execution parameters are specified but ignored in JOINT_POSITION mode.");
-      }
-
-      break;
-
-    case msg::ControlMode::CARTESIAN_POSE:
-      // From the new
-      merged_control_mode.cartesian_path_execution_params = new_control_mode.cartesian_path_execution_params;
-
-      if (!jointPathExecutionParamsIsDefault(new_control_mode.joint_path_execution_params)) {
-        RCLCPP_WARN(logger, "The joint path execution parameters are specified but ignored in CARTESIAN_POSE mode.");
-      }
-      if (!jointImpedanceParamsIsDefault(new_control_mode.joint_impedance_params)) {
-        RCLCPP_WARN(logger, "The joint impedance parameters are specified but ignored in CARTESIAN_POSE mode.");
-      }
-      if (!cartesianImpedanceParamsIsDefault(new_control_mode.cartesian_impedance_params)) {
-        RCLCPP_WARN(logger, "The cartesian impedance parameters are specified but ignored in CARTESIAN_POSE mode.");
-      }
-      if (!cartesianControlModeLimitsIsDefault(new_control_mode.cartesian_control_mode_limits)) {
-        RCLCPP_WARN(logger, "The cartesian control mode limits are specified but ignored in CARTESIAN_POSE mode.");
-      }
-
-      break;
-
-    default:
-      RCLCPP_INFO_STREAM(logger, "Invalid control mode: " << new_control_mode.control_mode.mode << ".");
-      assert(false);
-  }
-
-  return merged_control_mode;
 }
 
 bool operator==(victor_lcm_interface::control_mode_parameters const &p1,

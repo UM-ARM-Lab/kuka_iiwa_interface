@@ -19,37 +19,21 @@ namespace srv = victor_hardware_interfaces::srv;
 
 namespace victor_hardware {
 
-std::pair<bool, std::string> validateJointPathExecutionParams(const msg::JointPathExecutionParameters& params);
+using ErrorType = std::pair<bool, std::string>;
 
-std::pair<bool, std::string> validateCartesianPathExecutionParams(const msg::CartesianPathExecutionParameters& params);
+ErrorType validateJointPathExecutionParams(const victor_lcm_interface::joint_path_execution_parameters& params);
 
-std::pair<bool, std::string> validateJointImpedanceParams(const msg::JointImpedanceParameters& params);
+ErrorType validateCartesianPathExecutionParams(const victor_lcm_interface::cartesian_path_execution_parameters& params);
 
-std::pair<bool, std::string> validateCartesianImpedanceParams(const msg::CartesianImpedanceParameters& params);
+ErrorType validateJointImpedanceParams(const victor_lcm_interface::joint_impedance_parameters& params);
 
-std::pair<bool, std::string> validateCartesianControlModeLimits(const msg::CartesianControlModeLimits& params);
+ErrorType validateCartesianImpedanceParams(const victor_lcm_interface::cartesian_impedance_parameters& params);
 
-std::pair<bool, std::string> validateControlMode(const msg::ControlModeParameters& params);
+ErrorType validateCartesianControlModeLimits(const victor_lcm_interface::cartesian_control_mode_limits& params);
 
-std::pair<bool, std::string> validateCartesianPose(const geometry_msgs::msg::Pose& pose, const std::string& frame);
+ErrorType validateControlMode(const victor_lcm_interface::control_mode_parameters& params);
 
-std::pair<bool, std::string> validateMotionCommand(uint8_t active_control_mode,
-                                                   const victor_lcm_interface::motion_command& command);
-
-std::pair<bool, std::string> validateGripperCommand(const msg::Robotiq3FingerCommand& command);
-
-bool jointPathExecutionParamsIsDefault(const msg::JointPathExecutionParameters& params);
-
-bool cartesianPathExecutionParamsIsDefault(const msg::CartesianPathExecutionParameters& params);
-
-bool jointImpedanceParamsIsDefault(const msg::JointImpedanceParameters& params);
-
-bool cartesianImpedanceParamsIsDefault(const msg::CartesianImpedanceParameters& params);
-
-bool cartesianControlModeLimitsIsDefault(const msg::CartesianControlModeLimits& params);
-
-msg::ControlModeParameters mergeControlModeParameters(const msg::ControlModeParameters& active_control_mode,
-                                                      const msg::ControlModeParameters& new_control_mode);
+ErrorType validateMotionCommand(int8_t active_control_mode, const victor_lcm_interface::motion_command& command);
 
 bool operator==(victor_lcm_interface::control_mode_parameters const& p1,
                 victor_lcm_interface::control_mode_parameters const& p2);

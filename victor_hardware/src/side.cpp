@@ -37,9 +37,6 @@ CallbackReturn Side::on_init(std::shared_ptr<rclcpp::Executor> const& executor,
   motion_status_listener_ = std::make_unique<LcmListener<victor_lcm_interface::motion_status>>(
       recv_lcm_ptr_, DEFAULT_MOTION_STATUS_CHANNEL,
       [&](victor_lcm_interface::motion_status const& msg) { publish_motion_status(msg); });
-  control_mode_listener_ = std::make_unique<LcmListener<victor_lcm_interface::control_mode_parameters>>(
-      recv_lcm_ptr_, DEFAULT_CONTROL_MODE_STATUS_CHANNEL,
-      [&](victor_lcm_interface::control_mode_parameters const& msg) {});  // nothing to do here
   gripper_status_listener_ = std::make_unique<LcmListener<victor_lcm_interface::robotiq_3finger_status>>(
       recv_lcm_ptr_, DEFAULT_GRIPPER_STATUS_CHANNEL,
       [&](victor_lcm_interface::robotiq_3finger_status const& msg) { publish_gripper_status(msg); });
@@ -55,125 +52,11 @@ CallbackReturn Side::on_init(std::shared_ptr<rclcpp::Executor> const& executor,
   gripper_status_pub_ = node->create_publisher<msg::Robotiq3FingerStatus>(ns + DEFAULT_GRIPPER_STATUS_TOPIC, 10);
   gripper_command_sub_ = node->create_subscription<msg::Robotiq3FingerCommand>(
       ns + DEFAULT_GRIPPER_COMMAND_TOPIC, 1, std::bind(&Side::gripperCommandROSCallback, this, _1), getter_options);
-  get_control_mode_server_ = node->create_service<srv::GetControlMode>(
-      ns + DEFAULT_GET_CONTROL_MODE_SERVICE, std::bind(&Side::getControlMode, this, _1, _2),
-      rmw_qos_profile_services_default, getter_callback_group_);
-  set_control_mode_server_ = node->create_service<srv::SetControlMode>(
-      ns + DEFAULT_SET_CONTROL_MODE_SERVICE, std::bind(&Side::setControlMode, this, _1, _2),
-      rmw_qos_profile_services_default, setter_callback_group_);
-  switch_controller_client_ = node->create_client<controller_manager_msgs::srv::SwitchController>(
-      "/controller_manager/switch_controllers", rmw_qos_profile_services_default, setter_callback_group_);
 
-  // Load and parse the ros2_controllers.yaml which is currently in victor_moveit_config
-  auto const& package_share_directory = ament_index_cpp::get_package_share_directory("victor_moveit_config");
-  auto const& controllers_file = package_share_directory + "/config/ros2_controllers.yaml";
-
-  YAML::Node config = YAML::LoadFile(controllers_file);
-
-  if (config["controller_manager"]) {
-    if (!config["controller_manager"]["ros__parameters"]) {
-      RCLCPP_ERROR(logger_, "controller_manager found in ros2_controllers.yaml, but no ros__parameters found");
-      return CallbackReturn::ERROR;
-    }
-    auto const& controller_manager_config = config["controller_manager"]["ros__parameters"];
-    for (auto const& controller : controller_manager_config) {
-      auto const& controller_name = controller.first.as<std::string>();
-      if (controller.second.Type() == YAML::NodeType::Map) {
-        if (controller.second["control_modes"]) {
-          auto const& control_modes = controller.second["control_modes"];
-          std::vector<uint8_t> valid_control_modes;
-          for (auto const& control_mode : control_modes) {
-            valid_control_modes.push_back(control_mode.as<uint8_t>());
-          }
-          valid_modes_for_controllers_map_[controller_name] = valid_control_modes;
-        }
-      }
-    }
-  } else {
-    RCLCPP_ERROR(logger_, "controller_manager not found in ros2_controllers.yaml");
-    return CallbackReturn::ERROR;
-  }
-
-  current_control_mode_ = control_mode_listener_->getLatestMessage().control_mode.mode;
+  control_mode_client_ = std::make_shared<KukaControlModeClientNode>(node, LEFT_RECV_PROVIDER, LEFT_SEND_PROVIDER);
+  current_control_mode_ = control_mode_client_->getControlMode();
 
   return CallbackReturn::SUCCESS;
-}
-
-void Side::send_motion_command(victor_lcm_interface::motion_command const& command) {
-  auto const& active_control_mode = control_mode_listener_->getLatestMessage().control_mode;
-
-  if (!send_motion_command_) {
-    return;
-  }
-
-  const auto validity_check_results = validateMotionCommand(active_control_mode.mode, command);
-  if (validity_check_results.first) {
-    send_lcm_ptr_->publish(DEFAULT_MOTION_COMMAND_CHANNEL, &command);
-  } else {
-    RCLCPP_ERROR_STREAM(logger_, "Arm motion command failed validity checks: " << validity_check_results.second);
-  }
-}
-
-void Side::getControlMode(const std::shared_ptr<srv::GetControlMode::Request>& request,
-                          std::shared_ptr<srv::GetControlMode::Response> response) const {
-  // Get the latest control mode from the LCM listener
-  auto const& control_mode_params = control_mode_listener_->getLatestMessage();
-  response->active_control_mode = controlModeParamsLcmToRos(control_mode_params);
-}
-
-void Side::setControlMode(const std::shared_ptr<srv::SetControlMode::Request>& request,
-                          std::shared_ptr<srv::SetControlMode::Response> response) {
-  // Validate the request to make sure that the new controller and the new control mode are compatible
-
-  auto const& [is_valid, error_msg] = validateControlModeRequest(*request);
-  if (!is_valid) {
-    RCLCPP_ERROR_STREAM(logger_, "Control mode request failed validity checks: " << error_msg);
-    response->success = false;
-    response->message = error_msg;
-    return;
-  }
-
-  send_motion_command_ = false;  // prevent sending LCM motion commands
-
-  // Switch ROS2 controllers
-  while (!switch_controller_client_->wait_for_service(1s)) {
-    if (!rclcpp::ok()) {
-      RCLCPP_ERROR(logger_, "Switch controller service not available");
-      response->success = false;
-      response->message = "Switch controller service not available";
-      return;
-    }
-    RCLCPP_WARN(logger_, "Switch controller service not available, waiting again...");
-  }
-
-  auto req = std::make_shared<controller_manager_msgs::srv::SwitchController::Request>();
-  req->activate_controllers.push_back(request->new_controller_name);
-
-  // figure out what to put in the deactivate_controllers field by:
-  // Getting a reference to the resource manager, the list of active controllers, and their command interfaces
-  // iterating over each currently active controller and comparing their command interfaces to the new controller's
-  // command interfaces, and if they don't match, add them to the deactivate_controllers field
-  // req->deactivate_controllers
-
-  auto result = switch_controller_client_->async_send_request(req);
-  if (result.wait_for(1s) != std::future_status::ready) {
-    auto const srv_error_msg = "No response from switch controller service";
-    RCLCPP_ERROR(logger_, srv_error_msg);
-    response->success = false;
-    response->message = srv_error_msg;
-    return;
-  }
-
-  auto const& switch_controller_response = result.get();
-  if (!switch_controller_response->ok) {
-    auto const srv_error_msg = "Switch controller service call did not succeed";
-    RCLCPP_ERROR(logger_, srv_error_msg);
-    response->success = false;
-    response->message = srv_error_msg;
-    return;
-  }
-
-  send_motion_command_ = true;  // resume sending LCM motion commands
 }
 
 void Side::gripperCommandROSCallback(const msg::Robotiq3FingerCommand& command) {
@@ -191,29 +74,23 @@ void Side::publish_gripper_status(const victor_lcm_interface::robotiq_3finger_st
   gripper_status_pub_->publish(ros_msg);
 }
 
-std::pair<bool, std::string> Side::validateControlModeRequest(
-    const victor_hardware_interfaces::srv::SetControlMode::Request& request) {
-  auto const& mode = request.new_control_mode.control_mode.mode;
+void Side::send_motion_command(victor_lcm_interface::motion_command const& command) {
+  auto const& active_control_mode = control_mode_client_->getControlMode();
 
-  if (request.new_controller_name.empty()) {
-    return {false, "New controller name is empty"};
+  if (!send_motion_command_) {
+    return;
   }
 
-  auto const& it = valid_modes_for_controllers_map_.find(request.new_controller_name);
-  if (it == valid_modes_for_controllers_map_.end()) {
-    auto const error_msg = "Controller " + request.new_controller_name + " not found.";
-    return {false, error_msg};
+  const auto validity_check_results = validateMotionCommand(active_control_mode.control_mode.mode, command);
+  if (validity_check_results.first) {
+    send_lcm_ptr_->publish(DEFAULT_MOTION_COMMAND_CHANNEL, &command);
+  } else {
+    RCLCPP_ERROR_STREAM(logger_, "Arm motion command failed validity checks: " << validity_check_results.second);
   }
-
-  auto const& valid_control_modes_for_new_controller = it->second;
-  if (std::find(valid_control_modes_for_new_controller.begin(), valid_control_modes_for_new_controller.end(), mode) ==
-      valid_control_modes_for_new_controller.end()) {
-    return {false, "Control mode not valid for controller"};
-  }
-
-  return {true, ""};
 }
-std::pair<bool, std::string> Side::validate_mode_switch(const std::vector<std::string>& start_interfaces) {
+
+std::pair<bool, std::string> Side::validate_and_switch_to_mode_for_interfaces(
+    const std::vector<std::string>& start_interfaces) {
   auto is_cartesian = [](std::string const& interface_name) {
     return interface_name.find("cartesian") != std::string::npos;
   };
@@ -226,7 +103,25 @@ std::pair<bool, std::string> Side::validate_mode_switch(const std::vector<std::s
     return {false, "The requested mode switch mixes both cartesian and position/pose interfaces!"};
   }
 
-  // Switch the kuka controller to match mode determined by the interfaces???
+  // Get the latest mode status because we want to copy the parameters, changing only the actual mode
+  auto mode_parameters = control_mode_client_->getControlMode();
+  // Infer the control mode from the names of the interfaces. We've already checked that they're all the same type,
+  // so now we just have to rely on conventions to determine which type it is.
+  if (is_all_cartesian) {
+    // could be "cartesian_pose" or "cartesian_impedance"
+    // if 
+    mode_parameters.control_mode.mode = victor_lcm_interface::control_mode::CARTESIAN_POSE;
+    mode_parameters.control_mode.mode = victor_lcm_interface::control_mode::CARTESIAN_IMPEDANCE;
+  } else {
+    // could be "joint_position" or "joint_impedance"
+    mode_parameters.control_mode.mode = victor_lcm_interface::control_mode::JOINT_POSITION;
+    mode_parameters.control_mode.mode = victor_lcm_interface::control_mode::JOINT_IMPEDANCE;
+  }
+
+  auto const& update_success = control_mode_client_->updateControlMode(mode_parameters);
+  if (!update_success) {
+    return {false, "Failed to update control mode"};
+  }
 
   return {true, ""};
 }

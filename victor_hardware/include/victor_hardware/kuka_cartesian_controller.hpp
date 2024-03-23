@@ -1,6 +1,12 @@
 #pragma once
 
+#include <optional>
+#include <rclcpp/rclcpp.hpp>
 #include <controller_interface/controller_interface.hpp>
+#include <victor_lcm_interface/control_mode_parameters.hpp>
+#include <victor_hardware/kuka_control_mode_client.hpp>
+#include <victor_hardware/constants.hpp>
+#include <geometry_msgs/msg/pose_stamped.hpp>
 
 namespace victor_hardware {
 
@@ -8,7 +14,7 @@ class KukaCartesianController : public controller_interface::ControllerInterface
  public:
   KukaCartesianController() = default;
 
-  controller_interface::InterfaceConfiguration command_interface_configuration() const override;
+  [[nodiscard]] controller_interface::InterfaceConfiguration command_interface_configuration() const override;
 
   controller_interface::InterfaceConfiguration state_interface_configuration() const override;
 
@@ -22,5 +28,18 @@ class KukaCartesianController : public controller_interface::ControllerInterface
 
   controller_interface::CallbackReturn on_deactivate(const rclcpp_lifecycle::State &previous_state) override;
 
+ private:
+  std::string side_name_;
+  std::string arm_name_;
+
+  std::optional<geometry_msgs::msg::PoseStamped> latest_cmd_msg_;
+
+  rclcpp::Subscription<geometry_msgs::msg::PoseStamped>::SharedPtr cmd_sub_;
+
+  rclcpp::node_interfaces::OnSetParametersCallbackHandle::SharedPtr set_parameters_handle_;
+
+  victor_lcm_interface::control_mode_parameters kuka_mode_params_ = default_control_mode_parameters();
+
+  std::shared_ptr<KukaControlModeClientLifecycleNode> control_mode_client_;
 };
 }  // namespace victor_hardware

@@ -335,8 +335,8 @@ hardware_interface::return_type VictorHardwareInterface::write(const rclcpp::Tim
 
   victor_lcm_interface::motion_command left_motion_cmd{};
   left_motion_cmd.timestamp = now_seconds;
-  left_motion_cmd.control_mode.mode =
-      left.current_control_mode_;  // Set this based on which controller is currently running
+  // Set this based on which controller is currently running, changed only in the prepare_command_mode_switch function
+  left_motion_cmd.control_mode.mode = left.current_control_mode_;
   left_motion_cmd.joint_position.joint_1 = hw_cmds_position_[0];
   left_motion_cmd.joint_position.joint_2 = hw_cmds_position_[1];
   left_motion_cmd.joint_position.joint_3 = hw_cmds_position_[2];
@@ -344,7 +344,13 @@ hardware_interface::return_type VictorHardwareInterface::write(const rclcpp::Tim
   left_motion_cmd.joint_position.joint_5 = hw_cmds_position_[4];
   left_motion_cmd.joint_position.joint_6 = hw_cmds_position_[5];
   left_motion_cmd.joint_position.joint_7 = hw_cmds_position_[6];
-  // left_motion_cmd.cartesian_pose // TODO!!!
+  left_motion_cmd.cartesian_pose.xt = left.hw_cmd_cartesian_pose_.position.x;
+  left_motion_cmd.cartesian_pose.yt = left.hw_cmd_cartesian_pose_.position.y;
+  left_motion_cmd.cartesian_pose.zt = left.hw_cmd_cartesian_pose_.position.z;
+  left_motion_cmd.cartesian_pose.wr = left.hw_cmd_cartesian_pose_.orientation.w;
+  left_motion_cmd.cartesian_pose.xr = left.hw_cmd_cartesian_pose_.orientation.x;
+  left_motion_cmd.cartesian_pose.yr = left.hw_cmd_cartesian_pose_.orientation.y;
+  left_motion_cmd.cartesian_pose.zr = left.hw_cmd_cartesian_pose_.orientation.z;
 
   victor_lcm_interface::motion_command right_motion_cmd{};
   right_motion_cmd.timestamp = now_seconds;
@@ -356,6 +362,13 @@ hardware_interface::return_type VictorHardwareInterface::write(const rclcpp::Tim
   right_motion_cmd.joint_position.joint_5 = hw_cmds_position_[11];
   right_motion_cmd.joint_position.joint_6 = hw_cmds_position_[12];
   right_motion_cmd.joint_position.joint_7 = hw_cmds_position_[13];
+  right_motion_cmd.cartesian_pose.xt = right.hw_cmd_cartesian_pose_.position.x;
+  right_motion_cmd.cartesian_pose.yt = right.hw_cmd_cartesian_pose_.position.y;
+  right_motion_cmd.cartesian_pose.zt = right.hw_cmd_cartesian_pose_.position.z;
+  right_motion_cmd.cartesian_pose.wr = right.hw_cmd_cartesian_pose_.orientation.w;
+  right_motion_cmd.cartesian_pose.xr = right.hw_cmd_cartesian_pose_.orientation.x;
+  right_motion_cmd.cartesian_pose.yr = right.hw_cmd_cartesian_pose_.orientation.y;
+  right_motion_cmd.cartesian_pose.zr = right.hw_cmd_cartesian_pose_.orientation.z;
 
   // Sending anything other than zero causes an error. Velocity should only be controlled by the control_mode params
   left_motion_cmd.joint_velocity.joint_1 = 0.;
@@ -384,8 +397,8 @@ hardware_interface::return_type VictorHardwareInterface::write(const rclcpp::Tim
 hardware_interface::return_type VictorHardwareInterface::prepare_command_mode_switch(
     const std::vector<std::string>& start_interfaces, const std::vector<std::string>& stop_interfaces) {
   // Check whether the current_control_mode_ on each side is compatible with the start_interfaces
-  auto left_is_valid = left.validate_mode_switch(start_interfaces);
-  auto right_is_valid = right.validate_mode_switch(start_interfaces);
+  auto left_is_valid = left.validate_and_switch_to_mode_for_interfaces(start_interfaces);
+  auto right_is_valid = right.validate_and_switch_to_mode_for_interfaces(start_interfaces);
 
   if (!left_is_valid.first) {
     RCLCPP_ERROR_STREAM(logger, "Control mode switch is invalid: " << left_is_valid.second);
