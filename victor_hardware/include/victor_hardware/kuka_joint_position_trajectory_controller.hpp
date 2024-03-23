@@ -13,7 +13,13 @@ class KukaJointPositionTrajectoryController : public joint_trajectory_controller
  public:
   KukaJointPositionTrajectoryController() = default;
 
+  [[nodiscard]] controller_interface::InterfaceConfiguration command_interface_configuration() const override;
+
   controller_interface::CallbackReturn on_init() override;
+
+  controller_interface::CallbackReturn on_activate(const rclcpp_lifecycle::State &previous_state) override;
+
+  controller_interface::return_type update(const rclcpp::Time &time, const rclcpp::Duration &period) override;
 
  private:
   rclcpp::node_interfaces::OnSetParametersCallbackHandle::SharedPtr set_parameters_handle_;

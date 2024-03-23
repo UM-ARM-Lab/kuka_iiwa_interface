@@ -21,19 +21,19 @@ namespace victor_hardware {
 
 using ErrorType = std::pair<bool, std::string>;
 
-ErrorType validateJointPathExecutionParams(const victor_lcm_interface::joint_path_execution_parameters& params);
+[[nodiscard]] ErrorType validateJointPathExecutionParams(const victor_lcm_interface::joint_path_execution_parameters& params);
 
-ErrorType validateCartesianPathExecutionParams(const victor_lcm_interface::cartesian_path_execution_parameters& params);
+[[nodiscard]] ErrorType validateCartesianPathExecutionParams(const victor_lcm_interface::cartesian_path_execution_parameters& params);
 
-ErrorType validateJointImpedanceParams(const victor_lcm_interface::joint_impedance_parameters& params);
+[[nodiscard]] ErrorType validateJointImpedanceParams(const victor_lcm_interface::joint_impedance_parameters& params);
 
-ErrorType validateCartesianImpedanceParams(const victor_lcm_interface::cartesian_impedance_parameters& params);
+[[nodiscard]] ErrorType validateCartesianImpedanceParams(const victor_lcm_interface::cartesian_impedance_parameters& params);
 
-ErrorType validateCartesianControlModeLimits(const victor_lcm_interface::cartesian_control_mode_limits& params);
+[[nodiscard]] ErrorType validateCartesianControlModeLimits(const victor_lcm_interface::cartesian_control_mode_limits& params);
 
-ErrorType validateControlMode(const victor_lcm_interface::control_mode_parameters& params);
+[[nodiscard]] ErrorType validateControlMode(const victor_lcm_interface::control_mode_parameters& params);
 
-ErrorType validateMotionCommand(int8_t active_control_mode, const victor_lcm_interface::motion_command& command);
+[[nodiscard]] ErrorType validateMotionCommand(int8_t active_control_mode, const victor_lcm_interface::motion_command& command);
 
 bool operator==(victor_lcm_interface::control_mode_parameters const& p1,
                 victor_lcm_interface::control_mode_parameters const& p2);

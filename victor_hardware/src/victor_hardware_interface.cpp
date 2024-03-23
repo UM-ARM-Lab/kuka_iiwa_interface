@@ -25,27 +25,8 @@ CallbackReturn VictorHardwareInterface::on_init(const hardware_interface::Hardwa
   executor_ = std::make_shared<AsyncExecutor>();
   executor_->add_node(node_);
 
-  // Some of these arrays will be bigger than they need to be, since not all joints are actuated (e.g. finger joints)
-  RCLCPP_INFO_STREAM(logger, "Found " << info_.joints.size() << " joints");
-
-  hw_cmds_position_.resize(info_.joints.size(), std::numeric_limits<double>::quiet_NaN());
-
-  hw_states_position_.resize(info_.joints.size(), std::numeric_limits<double>::quiet_NaN());
-  hw_states_external_effort_.resize(info_.joints.size(), std::numeric_limits<double>::quiet_NaN());
-  hw_states_cmd_position_.resize(info_.joints.size(), std::numeric_limits<double>::quiet_NaN());
-  hw_states_external_torque_sensor_.resize(info_.joints.size(), 0);
-
   left.on_init(executor_, node_, LEFT_SEND_PROVIDER, LEFT_RECV_PROVIDER);
   right.on_init(executor_, node_, RIGHT_SEND_PROVIDER, RIGHT_RECV_PROVIDER);
-
-  //  // Example usage of DataTamer
-  //  sink_ = std::make_shared<DataTamer::MCAPSink>("/home/armlab/victor_hw_if.mcap");
-  //
-  //  // Create a channel and attach a sink. A channel can have multiple sinks
-  //  channel_ = DataTamer::LogChannel::create("hw_pos_cmds");
-  //  channel_->addDataSink(sink_);
-
-  //  value_ = channel_->registerValue("values", &hw_cmds_position_);
 
   return CallbackReturn::SUCCESS;
 }
@@ -75,56 +56,16 @@ std::vector<hardware_interface::StateInterface> VictorHardwareInterface::export_
     }
   }
 
-  // export state interfaces for force torque sensor
-  state_interfaces.emplace_back("left_force_torque_sensor", "force.x", &left.hw_ft_[0]);
-  state_interfaces.emplace_back("left_force_torque_sensor", "force.y", &left.hw_ft_[1]);
-  state_interfaces.emplace_back("left_force_torque_sensor", "force.z", &left.hw_ft_[2]);
-  state_interfaces.emplace_back("left_force_torque_sensor", "torque.x", &left.hw_ft_[3]);
-  state_interfaces.emplace_back("left_force_torque_sensor", "torque.y", &left.hw_ft_[4]);
-  state_interfaces.emplace_back("left_force_torque_sensor", "torque.z", &left.hw_ft_[5]);
-  state_interfaces.emplace_back("right_force_torque_sensor", "force.x", &right.hw_ft_[0]);
-  state_interfaces.emplace_back("right_force_torque_sensor", "force.y", &right.hw_ft_[1]);
-  state_interfaces.emplace_back("right_force_torque_sensor", "force.z", &right.hw_ft_[2]);
-  state_interfaces.emplace_back("right_force_torque_sensor", "torque.x", &right.hw_ft_[3]);
-  state_interfaces.emplace_back("right_force_torque_sensor", "torque.y", &right.hw_ft_[4]);
-  state_interfaces.emplace_back("right_force_torque_sensor", "torque.z", &right.hw_ft_[5]);
-
-  // export state interfaces for motion status,
+  left.add_state_interfaces(state_interfaces);
+  right.add_state_interfaces(state_interfaces);
 
   return state_interfaces;
 }
 
 std::vector<hardware_interface::CommandInterface> VictorHardwareInterface::export_command_interfaces() {
   std::vector<hardware_interface::CommandInterface> command_interfaces;
-  for (uint i = 0; i < info_.joints.size(); i++) {
-    auto joint = info_.joints[i];
-    auto has_cmd_interface = [&](std::string const& name) {
-      return std::any_of(joint.command_interfaces.begin(), joint.command_interfaces.end(),
-                         [&](auto const& cmd_interface) { return cmd_interface.name == name; });
-    };
-
-    if (has_cmd_interface("position")) {
-      command_interfaces.emplace_back(joint.name, hardware_interface::HW_IF_POSITION, &hw_cmds_position_[i]);
-    }
-  }
-
-  // Cartesian pose interfaces
-  command_interfaces.emplace_back("left", "cartesian_pose/xt", &left.hw_cmd_cartesian_pose_.position.x);
-  command_interfaces.emplace_back("left", "cartesian_pose/yt", &left.hw_cmd_cartesian_pose_.position.y);
-  command_interfaces.emplace_back("left", "cartesian_pose/zt", &left.hw_cmd_cartesian_pose_.position.z);
-  command_interfaces.emplace_back("left", "cartesian_pose/wr", &left.hw_cmd_cartesian_pose_.orientation.w);
-  command_interfaces.emplace_back("left", "cartesian_pose/xr", &left.hw_cmd_cartesian_pose_.orientation.x);
-  command_interfaces.emplace_back("left", "cartesian_pose/yr", &left.hw_cmd_cartesian_pose_.orientation.y);
-  command_interfaces.emplace_back("left", "cartesian_pose/zr", &left.hw_cmd_cartesian_pose_.orientation.z);
-
-  command_interfaces.emplace_back("right", "cartesian_pose/xt", &right.hw_cmd_cartesian_pose_.position.x);
-  command_interfaces.emplace_back("right", "cartesian_pose/yt", &right.hw_cmd_cartesian_pose_.position.y);
-  command_interfaces.emplace_back("right", "cartesian_pose/zt", &right.hw_cmd_cartesian_pose_.position.z);
-  command_interfaces.emplace_back("right", "cartesian_pose/wr", &right.hw_cmd_cartesian_pose_.orientation.w);
-  command_interfaces.emplace_back("right", "cartesian_pose/xr", &right.hw_cmd_cartesian_pose_.orientation.x);
-  command_interfaces.emplace_back("right", "cartesian_pose/yr", &right.hw_cmd_cartesian_pose_.orientation.y);
-  command_interfaces.emplace_back("right", "cartesian_pose/zr", &right.hw_cmd_cartesian_pose_.orientation.z);
-
+  left.add_command_interfaces(command_interfaces);
+  right.add_command_interfaces(command_interfaces);
   return command_interfaces;
 }
 
@@ -290,106 +231,12 @@ hardware_interface::return_type VictorHardwareInterface::write(const rclcpp::Tim
     return hardware_interface::return_type::OK;
   }
 
-  auto const& has_left_motion_status = left.motion_status_listener_->hasLatestMessage();
-  auto const& has_right_motion_status = right.motion_status_listener_->hasLatestMessage();
-  auto const& has_left_control_mode = left.control_mode_listener_->hasLatestMessage();
-  auto const& has_right_control_mode = right.control_mode_listener_->hasLatestMessage();
+  auto const& left_return = left.send_motion_command();
+  auto const& right_return = right.send_motion_command();
 
-  if (!has_left_motion_status || !has_right_motion_status || !has_left_control_mode || !has_right_control_mode) {
-    return hardware_interface::return_type::OK;
+  if (left_return != hardware_interface::return_type::OK || right_return != hardware_interface::return_type::OK) {
+    return hardware_interface::return_type::ERROR;
   }
-
-  auto const& left_motion_status = left.motion_status_listener_->getLatestMessage();
-  auto const& right_motion_status = right.motion_status_listener_->getLatestMessage();
-
-  std::array<double, 14> current_commanded_positions{};
-  current_commanded_positions[0] = left_motion_status.commanded_joint_position.joint_1;
-  current_commanded_positions[1] = left_motion_status.commanded_joint_position.joint_2;
-  current_commanded_positions[2] = left_motion_status.commanded_joint_position.joint_3;
-  current_commanded_positions[3] = left_motion_status.commanded_joint_position.joint_4;
-  current_commanded_positions[4] = left_motion_status.commanded_joint_position.joint_5;
-  current_commanded_positions[5] = left_motion_status.commanded_joint_position.joint_6;
-  current_commanded_positions[6] = left_motion_status.commanded_joint_position.joint_7;
-  current_commanded_positions[7] = right_motion_status.commanded_joint_position.joint_1;
-  current_commanded_positions[8] = right_motion_status.commanded_joint_position.joint_2;
-  current_commanded_positions[9] = right_motion_status.commanded_joint_position.joint_3;
-  current_commanded_positions[10] = right_motion_status.commanded_joint_position.joint_4;
-  current_commanded_positions[11] = right_motion_status.commanded_joint_position.joint_5;
-  current_commanded_positions[12] = right_motion_status.commanded_joint_position.joint_6;
-  current_commanded_positions[13] = right_motion_status.commanded_joint_position.joint_7;
-
-  rclcpp::Clock clock;
-  for (int i = 0; i < 14; i++) {
-    if (std::isnan(hw_cmds_position_[i])) {
-      RCLCPP_WARN_THROTTLE(logger, clock, 500,
-                           "Joint %d is NaN, using current commanded position according to the robot", i);
-      hw_cmds_position_[i] = current_commanded_positions[i];
-    }
-  }
-
-  // convert hw_cmds_position_ to LCM messages and publish
-  auto const now = std::chrono::system_clock::now();
-  auto const now_tp = std::chrono::time_point_cast<std::chrono::seconds>(now);
-  std::chrono::duration<double> const now_dur_seconds = now_tp.time_since_epoch();
-  auto const now_seconds = now_dur_seconds.count();
-
-  victor_lcm_interface::motion_command left_motion_cmd{};
-  left_motion_cmd.timestamp = now_seconds;
-  // Set this based on which controller is currently running, changed only in the prepare_command_mode_switch function
-  left_motion_cmd.control_mode.mode = left.current_control_mode_;
-  left_motion_cmd.joint_position.joint_1 = hw_cmds_position_[0];
-  left_motion_cmd.joint_position.joint_2 = hw_cmds_position_[1];
-  left_motion_cmd.joint_position.joint_3 = hw_cmds_position_[2];
-  left_motion_cmd.joint_position.joint_4 = hw_cmds_position_[3];
-  left_motion_cmd.joint_position.joint_5 = hw_cmds_position_[4];
-  left_motion_cmd.joint_position.joint_6 = hw_cmds_position_[5];
-  left_motion_cmd.joint_position.joint_7 = hw_cmds_position_[6];
-  left_motion_cmd.cartesian_pose.xt = left.hw_cmd_cartesian_pose_.position.x;
-  left_motion_cmd.cartesian_pose.yt = left.hw_cmd_cartesian_pose_.position.y;
-  left_motion_cmd.cartesian_pose.zt = left.hw_cmd_cartesian_pose_.position.z;
-  left_motion_cmd.cartesian_pose.wr = left.hw_cmd_cartesian_pose_.orientation.w;
-  left_motion_cmd.cartesian_pose.xr = left.hw_cmd_cartesian_pose_.orientation.x;
-  left_motion_cmd.cartesian_pose.yr = left.hw_cmd_cartesian_pose_.orientation.y;
-  left_motion_cmd.cartesian_pose.zr = left.hw_cmd_cartesian_pose_.orientation.z;
-
-  victor_lcm_interface::motion_command right_motion_cmd{};
-  right_motion_cmd.timestamp = now_seconds;
-  right_motion_cmd.control_mode.mode = right.current_control_mode_;
-  right_motion_cmd.joint_position.joint_1 = hw_cmds_position_[7];
-  right_motion_cmd.joint_position.joint_2 = hw_cmds_position_[8];
-  right_motion_cmd.joint_position.joint_3 = hw_cmds_position_[9];
-  right_motion_cmd.joint_position.joint_4 = hw_cmds_position_[10];
-  right_motion_cmd.joint_position.joint_5 = hw_cmds_position_[11];
-  right_motion_cmd.joint_position.joint_6 = hw_cmds_position_[12];
-  right_motion_cmd.joint_position.joint_7 = hw_cmds_position_[13];
-  right_motion_cmd.cartesian_pose.xt = right.hw_cmd_cartesian_pose_.position.x;
-  right_motion_cmd.cartesian_pose.yt = right.hw_cmd_cartesian_pose_.position.y;
-  right_motion_cmd.cartesian_pose.zt = right.hw_cmd_cartesian_pose_.position.z;
-  right_motion_cmd.cartesian_pose.wr = right.hw_cmd_cartesian_pose_.orientation.w;
-  right_motion_cmd.cartesian_pose.xr = right.hw_cmd_cartesian_pose_.orientation.x;
-  right_motion_cmd.cartesian_pose.yr = right.hw_cmd_cartesian_pose_.orientation.y;
-  right_motion_cmd.cartesian_pose.zr = right.hw_cmd_cartesian_pose_.orientation.z;
-
-  // Sending anything other than zero causes an error. Velocity should only be controlled by the control_mode params
-  left_motion_cmd.joint_velocity.joint_1 = 0.;
-  left_motion_cmd.joint_velocity.joint_2 = 0.;
-  left_motion_cmd.joint_velocity.joint_3 = 0.;
-  left_motion_cmd.joint_velocity.joint_4 = 0.;
-  left_motion_cmd.joint_velocity.joint_5 = 0.;
-  left_motion_cmd.joint_velocity.joint_6 = 0.;
-  left_motion_cmd.joint_velocity.joint_7 = 0.;
-  right_motion_cmd.joint_velocity.joint_1 = 0.;
-  right_motion_cmd.joint_velocity.joint_2 = 0.;
-  right_motion_cmd.joint_velocity.joint_3 = 0.;
-  right_motion_cmd.joint_velocity.joint_4 = 0.;
-  right_motion_cmd.joint_velocity.joint_5 = 0.;
-  right_motion_cmd.joint_velocity.joint_6 = 0.;
-  right_motion_cmd.joint_velocity.joint_7 = 0.;
-
-  left.send_motion_command(left_motion_cmd);
-  right.send_motion_command(right_motion_cmd);
-
-  //  channel_->takeSnapshot();
 
   return hardware_interface::return_type::OK;
 }

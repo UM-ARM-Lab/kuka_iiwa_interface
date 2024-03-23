@@ -2,6 +2,7 @@
 #pragma once
 
 #include <controller_manager_msgs/srv/switch_controller.hpp>
+#include <hardware_interface/system_interface.hpp>
 #include <lcm/lcm-cpp.hpp>
 #include <memory>
 #include <rclcpp/logger.hpp>
@@ -40,18 +41,16 @@ class Side {
   void gripperCommandROSCallback(const msg::Robotiq3FingerCommand& command);
   void publish_motion_status(victor_lcm_interface::motion_status const& msg);
   void publish_gripper_status(victor_lcm_interface::robotiq_3finger_status const& msg);
-  void send_motion_command(victor_lcm_interface::motion_command const& msg);
+  [[nodiscard]] hardware_interface::return_type send_motion_command();
+  void add_state_interfaces(std::vector<hardware_interface::StateInterface>& state_interfaces);
   std::pair<bool, std::string> validate_and_switch_to_mode_for_interfaces(
       const std::vector<std::string>& start_interfaces);
 
-  std::string name_;
-  bool send_motion_command_{true};
-  victor_lcm_interface::control_mode_parameters current_control_mode_{};
+  std::string side_name_;
 
-  // These get bound to command interfaces
+  double hw_cmd_control_mode_;  // Gets cast when converted to/from the int8_t that victor_lcm_interface uses
   geometry_msgs::msg::Pose hw_cmd_cartesian_pose_;
-  // TODO: should joint positions go here too? Should everything that's bound to state or command get moved
-  //  from the hw if to here?
+  std::array<double, 7> hw_cmd_position_;
 
   // These get bound to state interfaces
   std::array<double, 6> hw_ft_;
@@ -79,6 +78,8 @@ class Side {
   // callback groups for each ROS thing
   rclcpp::CallbackGroup::SharedPtr getter_callback_group_;
   rclcpp::CallbackGroup::SharedPtr setter_callback_group_;
+
+  void add_command_interfaces(std::vector<hardware_interface::CommandInterface>& command_interfaces);
 
  private:
   rclcpp::Logger logger_;

@@ -19,9 +19,6 @@
 #include <victor_lcm_interface/motion_status.hpp>
 #include <victor_lcm_interface/robotiq_3finger_status.hpp>
 
-// #include "data_tamer/data_tamer.hpp"
-// #include "data_tamer/sinks/mcap_sink.hpp"
-
 using CallbackReturn = rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn;
 
 namespace victor_hardware {
@@ -64,15 +61,10 @@ class VictorHardwareInterface : public hardware_interface::SystemInterface {
 
   void LCMThread();
 
-  std::vector<double> hw_cmds_position_;
   std::vector<double> hw_states_position_;
   std::vector<double> hw_states_cmd_position_;
   std::vector<double> hw_states_external_effort_;
   std::vector<double> hw_states_external_torque_sensor_;
-
-  //  std::shared_ptr<DataTamer::MCAPSink> sink_;
-  //  std::shared_ptr<DataTamer::LogChannel> channel_;
-  //  DataTamer::RegistrationID value_;
 };
 
 }  // namespace victor_hardware

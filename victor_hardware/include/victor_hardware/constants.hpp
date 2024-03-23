@@ -1,3 +1,5 @@
+#pragma once
+
 #include <chrono>
 #include <string>
 #include <victor_lcm_interface/control_mode_parameters.hpp>

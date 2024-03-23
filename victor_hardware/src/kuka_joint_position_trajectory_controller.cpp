@@ -7,6 +7,17 @@
 
 namespace victor_hardware {
 
+controller_interface::InterfaceConfiguration KukaJointPositionTrajectoryController::command_interface_configuration()
+    const {
+  auto command_interface_configuration =
+      joint_trajectory_controller::JointTrajectoryController::command_interface_configuration();
+
+  command_interface_configuration.names.emplace_back("left/control_mode");
+  command_interface_configuration.names.emplace_back("right/control_mode");
+
+  return command_interface_configuration;
+}
+
 controller_interface::CallbackReturn KukaJointPositionTrajectoryController::on_init() {
   // Add custom control mode parameters. Each parameter will have a callback that updates the kuka_mode_params_ struct,
   // then sends that info to the robot using the LCM client, via the KukaControlModeClient class.
@@ -16,8 +27,10 @@ controller_interface::CallbackReturn KukaJointPositionTrajectoryController::on_i
 
   auto node = get_node();
 
-  left_control_mode_client_ = std::make_shared<KukaControlModeClientLifecycleNode >(node, LEFT_RECV_PROVIDER, LEFT_SEND_PROVIDER);
-  right_control_mode_client_ = std::make_shared<KukaControlModeClientLifecycleNode >(node, RIGHT_RECV_PROVIDER, RIGHT_SEND_PROVIDER);
+  left_control_mode_client_ =
+      std::make_shared<KukaControlModeClientLifecycleNode>(node, LEFT_RECV_PROVIDER, LEFT_SEND_PROVIDER);
+  right_control_mode_client_ =
+      std::make_shared<KukaControlModeClientLifecycleNode>(node, RIGHT_RECV_PROVIDER, RIGHT_SEND_PROVIDER);
 
   rcl_interfaces::msg::ParameterDescriptor relative_joint_velocity_desc;
   relative_joint_velocity_desc.description = "Relative velocity of the joints. 0 is slowest, 1 is fastest.";
@@ -87,6 +100,41 @@ controller_interface::CallbackReturn KukaJointPositionTrajectoryController::on_i
 
   // Call the parent class's on_init() method
   return joint_trajectory_controller::JointTrajectoryController::on_init();
+}
+
+controller_interface::CallbackReturn KukaJointPositionTrajectoryController::on_activate(
+    const rclcpp_lifecycle::State &previous_state) {
+  auto left_mode_params = left_control_mode_client_->getControlMode();
+  left_mode_params.control_mode.mode = victor_lcm_interface::control_mode::JOINT_POSITION;
+  auto const &left_success = left_control_mode_client_->updateControlMode(left_mode_params);
+
+  if (!left_success) {
+    RCLCPP_ERROR(get_node()->get_logger(), "Failed to switch to JOINT_POSITION mode");
+    return controller_interface::CallbackReturn::ERROR;
+  }
+
+  auto right_mode_params = right_control_mode_client_->getControlMode();
+  right_mode_params.control_mode.mode = victor_lcm_interface::control_mode::JOINT_POSITION;
+  auto const &right_success = right_control_mode_client_->updateControlMode(right_mode_params);
+
+  if (!right_success) {
+    RCLCPP_ERROR(get_node()->get_logger(), "Failed to switch to JOINT_POSITION mode");
+    return controller_interface::CallbackReturn::ERROR;
+  }
+
+  return JointTrajectoryController::on_activate(previous_state);
+}
+controller_interface::return_type KukaJointPositionTrajectoryController::update(const rclcpp::Time &time,
+                                                                                const rclcpp::Duration &period) {
+  // set the control mode to JOINT_POSITION in the command interface
+  for (auto &command_interface : command_interfaces_) {
+    if (command_interface.get_interface_name() == "left/control_mode" ||
+        command_interface.get_interface_name() == "right/control_mode") {
+      command_interface.set_value(victor_lcm_interface::control_mode::JOINT_POSITION);
+    }
+  }
+
+  return JointTrajectoryController::update(time, period);
 }
 
 }  // namespace victor_hardware

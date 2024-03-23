@@ -4,6 +4,7 @@
 #include <memory>
 #include <rclcpp_lifecycle/lifecycle_node.hpp>
 #include <rclcpp/rclcpp.hpp>
+#include <victor_hardware/constants.hpp>
 #include <victor_hardware/lcm_listener.hpp>
 #include <victor_lcm_interface/control_mode_parameters.hpp>
 

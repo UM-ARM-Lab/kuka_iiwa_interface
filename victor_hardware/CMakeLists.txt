@@ -12,7 +12,6 @@ set(THIS_PACKAGE_INCLUDE_DEPENDS
         arm_utilities
         joint_trajectory_controller
         lcm
-        #        data_tamer_cpp
         victor_hardware_interfaces
         robotiq_3f_transmission_plugins
         ament_index_cpp
