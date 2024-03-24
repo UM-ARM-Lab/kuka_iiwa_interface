@@ -1,20 +1,27 @@
 # This config file is used by ros2_control
+# the mode numbers used are defined by the LCM control_mode message
 controller_manager:
   ros__parameters:
     update_rate: 100  # Hz
 
     # These are derived from the standard ros2 controllers, but with added control mode parameters
     joint_position_trajectory_controller:
-      type: victor_hardware/KukaJointPositionTrajectoryController
+      type: victor_hardware/KukaJointTrajectoryController
 
     joint_impedance_trajectory_controller:
-      type: victor_hardware/KukaJointImpedanceTrajectoryController
+      type: victor_hardware/KukaJointTrajectoryController
 
     left_arm_position_controller:
-      type: position_controllers/JointGroupPositionController
+      type: victor_hardware/KukaJointGroupPositionController
+
+    left_arm_impedance_controller:
+      type: victor_hardware/KukaJointGroupPositionController
 
     right_arm_position_controller:
-      type: position_controllers/JointGroupPositionController
+      type: victor_hardware/KukaJointGroupPositionController
+
+    right_arm_impedance_controller:
+      type: victor_hardware/KukaJointGroupPositionController
 
     left_arm_cartesian_controller:
       type: victor_hardware/KukaCartesianController
@@ -53,6 +60,31 @@ joint_position_trajectory_controller:
       - position
     state_interfaces:
       - position
+    mode: 0  # JOINT_POSITION
+
+joint_impedance_trajectory_controller:
+  ros__parameters:
+    allow_partial_joints_goal: true
+    joints:
+      - victor_left_arm_joint_1
+      - victor_left_arm_joint_2
+      - victor_left_arm_joint_3
+      - victor_left_arm_joint_4
+      - victor_left_arm_joint_5
+      - victor_left_arm_joint_6
+      - victor_left_arm_joint_7
+      - victor_right_arm_joint_1
+      - victor_right_arm_joint_2
+      - victor_right_arm_joint_3
+      - victor_right_arm_joint_4
+      - victor_right_arm_joint_5
+      - victor_right_arm_joint_6
+      - victor_right_arm_joint_7
+    command_interfaces:
+      - position
+    state_interfaces:
+      - position
+    mode: 2  # JOINT_IMPEDANCE
 
 left_arm_position_controller:
   ros__parameters:
@@ -67,8 +99,21 @@ left_arm_position_controller:
     interface_name: position
     # This tells us which LCM url to talk to
     side: left
-    # These integers are defined by ControlMode.msg
-    control_mode: 0 # JOINT_POSITION
+    mode: 0
+
+left_arm_impedance_controller:
+  ros__parameters:
+    joints:
+      - victor_left_arm_joint_1
+      - victor_left_arm_joint_2
+      - victor_left_arm_joint_3
+      - victor_left_arm_joint_4
+      - victor_left_arm_joint_5
+      - victor_left_arm_joint_6
+      - victor_left_arm_joint_7
+    interface_name: position
+    side: left
+    mode: 2
 
 right_arm_position_controller:
   ros__parameters:
@@ -81,6 +126,22 @@ right_arm_position_controller:
       - victor_right_arm_joint_6
       - victor_right_arm_joint_7
     interface_name: position
+    side: right
+    mode: 0
+
+right_arm_impedance_controller:
+  ros__parameters:
+    joints:
+      - victor_right_arm_joint_1
+      - victor_right_arm_joint_2
+      - victor_right_arm_joint_3
+      - victor_right_arm_joint_4
+      - victor_right_arm_joint_5
+      - victor_right_arm_joint_6
+      - victor_right_arm_joint_7
+    interface_name: position
+    side: right
+    mode: 2
 
 left_arm_cartesian_controller:
   ros__parameters:

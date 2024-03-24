@@ -9,9 +9,9 @@
 
 namespace victor_hardware {
 
-class KukaJointPositionTrajectoryController : public joint_trajectory_controller::JointTrajectoryController {
+class KukaJointTrajectoryController : public joint_trajectory_controller::JointTrajectoryController {
  public:
-  KukaJointPositionTrajectoryController() = default;
+  KukaJointTrajectoryController() = default;
 
   [[nodiscard]] controller_interface::InterfaceConfiguration command_interface_configuration() const override;
 
@@ -22,6 +22,8 @@ class KukaJointPositionTrajectoryController : public joint_trajectory_controller
   controller_interface::return_type update(const rclcpp::Time &time, const rclcpp::Duration &period) override;
 
  private:
+  int8_t control_mode_ = victor_lcm_interface::control_mode::JOINT_POSITION;
+
   rclcpp::node_interfaces::OnSetParametersCallbackHandle::SharedPtr set_parameters_handle_;
 
   victor_lcm_interface::control_mode_parameters kuka_mode_params_ = default_control_mode_parameters();

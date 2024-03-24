@@ -1,6 +1,11 @@
 cmake_minimum_required(VERSION 3.10.0)
 project(victor_hardware)
 
+if(NOT CMAKE_BUILD_TYPE)
+    message(STATUS "Setting build type to Release for maximum performance.")
+    set(CMAKE_BUILD_TYPE Release)
+endif()
+
 set(CMAKE_CXX_STANDARD 20)
 
 set(THIS_PACKAGE_INCLUDE_DEPENDS
@@ -44,7 +49,7 @@ add_library(victor_hardware
         include/victor_hardware/lcm_listener.hpp
         # Controllers and broadcasters also get added to this library
         src/kuka_cartesian_controller.cpp
-        src/kuka_joint_position_trajectory_controller.cpp
+        src/kuka_joint_trajectory_controller.cpp
 )
 target_include_directories(
         victor_hardware

@@ -6,8 +6,8 @@
       ROS2 controller for the Kuka LBR iiwa 7 R800 Cartesian controller
     </description>
   </class>
-  <class name="victor_hardware/KukaJointPositionTrajectoryController"
-         type="victor_hardware::KukaJointPositionTrajectoryController"
+  <class name="victor_hardware/KukaJointTrajectoryController"
+         type="victor_hardware::KukaJointTrajectoryController"
          base_class_type="controller_interface::ControllerInterface">
     <description>
       ROS2 controller for the Kuka LBR iiwa 7 R800 Cartesian controller

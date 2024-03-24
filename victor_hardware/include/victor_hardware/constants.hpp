@@ -48,9 +48,13 @@ const std::string GRIPPER_STATUS_CHANNEL_PARAM("gripper_status_channel");
 // ROS2 control interface
 static const char* const COMMANDED_POSITION = "commanded_position";
 static const char* const EXTERNAL_TORQUE = "external_torque";
-static const char* const CARTESIAN_POSE = "cartesian_pose";
-static const char* const COMMANDED_CARTESIAN_POSE = "commanded_cartesian_pose";
-static const char* const ACTIVE_CONTROL_MODE = "active_control_mode";
+const std::string CARTESIAN_XT_INTERFACE = "cartesian_pose/xt";
+const std::string CARTESIAN_YT_INTERFACE = "cartesian_pose/yt";
+const std::string CARTESIAN_ZT_INTERFACE = "cartesian_pose/zt";
+const std::string CARTESIAN_WR_INTERFACE = "cartesian_pose/wr";
+const std::string CARTESIAN_XR_INTERFACE = "cartesian_pose/xr";
+const std::string CARTESIAN_YR_INTERFACE = "cartesian_pose/yr";
+const std::string CARTESIAN_ZR_INTERFACE = "cartesian_pose/zr";
 
 constexpr victor_lcm_interface::control_mode_parameters default_control_mode_parameters() {
   victor_lcm_interface::control_mode_parameters params{};

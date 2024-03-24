@@ -33,7 +33,7 @@ using ErrorType = std::pair<bool, std::string>;
 
 [[nodiscard]] ErrorType validateControlMode(const victor_lcm_interface::control_mode_parameters& params);
 
-[[nodiscard]] ErrorType validateMotionCommand(int8_t active_control_mode, const victor_lcm_interface::motion_command& command);
+[[nodiscard]] ErrorType validateMotionCommand(const victor_lcm_interface::motion_command& command);
 
 bool operator==(victor_lcm_interface::control_mode_parameters const& p1,
                 victor_lcm_interface::control_mode_parameters const& p2);

@@ -8,15 +8,42 @@
 #include <victor_hardware/side.hpp>
 #include <victor_hardware/validators.hpp>
 
-using std::placeholders::_1;
-using std::placeholders::_2;
-using namespace std::chrono_literals;
+using namespace std::placeholders;
 
 namespace victor_hardware {
 
-Side::Side(std::string const& name)
-    : side_name_(name), logger_(rclcpp::get_logger("VictorHardwareInterface." + name)) {}
+Side::Side(std::string const& name) : side_name_(name), logger_(rclcpp::get_logger("VictorHardwareInterface." + name)) {
+  hw_cmd_position_.fill(std::numeric_limits<double>::quiet_NaN());
+  hw_ft_.fill(0.0);
+}
 
+void Side::add_state_interfaces(std::vector<hardware_interface::StateInterface>& state_interfaces) {
+  state_interfaces.emplace_back(side_name_ + "_force_torque_sensor", "force.x", &hw_ft_[0]);
+  state_interfaces.emplace_back(side_name_ + "_force_torque_sensor", "force.y", &hw_ft_[1]);
+  state_interfaces.emplace_back(side_name_ + "_force_torque_sensor", "force.z", &hw_ft_[2]);
+  state_interfaces.emplace_back(side_name_ + "_force_torque_sensor", "torque.x", &hw_ft_[3]);
+  state_interfaces.emplace_back(side_name_ + "_force_torque_sensor", "torque.y", &hw_ft_[4]);
+  state_interfaces.emplace_back(side_name_ + "_force_torque_sensor", "torque.z", &hw_ft_[5]);
+}
+
+void Side::add_command_interfaces(hardware_interface::HardwareInfo const& info,
+                                  std::vector<hardware_interface::CommandInterface>& command_interfaces) {
+  // Cartesian pose interfaces
+  command_interfaces.emplace_back(side_name_, CARTESIAN_XT_INTERFACE, &hw_cmd_cartesian_pose_.position.x);
+  command_interfaces.emplace_back(side_name_, CARTESIAN_YT_INTERFACE, &hw_cmd_cartesian_pose_.position.y);
+  command_interfaces.emplace_back(side_name_, CARTESIAN_ZT_INTERFACE, &hw_cmd_cartesian_pose_.position.z);
+  command_interfaces.emplace_back(side_name_, CARTESIAN_WR_INTERFACE, &hw_cmd_cartesian_pose_.orientation.w);
+  command_interfaces.emplace_back(side_name_, CARTESIAN_XR_INTERFACE, &hw_cmd_cartesian_pose_.orientation.x);
+  command_interfaces.emplace_back(side_name_, CARTESIAN_YR_INTERFACE, &hw_cmd_cartesian_pose_.orientation.y);
+  command_interfaces.emplace_back(side_name_, CARTESIAN_ZR_INTERFACE, &hw_cmd_cartesian_pose_.orientation.z);
+
+  // Joint interfaces
+  for (uint i = 0; i < 7; i++) {
+    // The interface names should be consistent with ros2_controllers.yaml and URDF
+    auto const& name = "victor_" + side_name_ + "_arm_joint_" + std::to_string(i + 1);
+    command_interfaces.emplace_back(name, hardware_interface::HW_IF_POSITION, &hw_cmd_position_[i]);
+  }
+}
 CallbackReturn Side::on_init(std::shared_ptr<rclcpp::Executor> const& executor,
                              std::shared_ptr<rclcpp::Node> const& node, std::string const& send_provider,
                              std::string const& recv_provider) {
@@ -55,7 +82,7 @@ CallbackReturn Side::on_init(std::shared_ptr<rclcpp::Executor> const& executor,
   gripper_command_sub_ = node->create_subscription<msg::Robotiq3FingerCommand>(
       ns + DEFAULT_GRIPPER_COMMAND_TOPIC, 1, std::bind(&Side::gripperCommandROSCallback, this, _1), getter_options);
 
-  control_mode_client_ = std::make_shared<KukaControlModeClientNode>(node, LEFT_RECV_PROVIDER, LEFT_SEND_PROVIDER);
+  control_mode_client_ = std::make_shared<KukaControlModeClientNode>(node, recv_lcm_ptr_, send_lcm_ptr_);
 
   return CallbackReturn::SUCCESS;
 }
@@ -76,14 +103,6 @@ void Side::publish_gripper_status(const victor_lcm_interface::robotiq_3finger_st
 }
 
 hardware_interface::return_type Side::send_motion_command() {
-  auto const& any_nan =
-      std::any_of(hw_cmd_position_.begin(), hw_cmd_position_.end(), [](auto const& val) { return std::isnan(val); });
-
-  if (any_nan) {
-    // Just do nothing, not an error. Usually just means no controllers have started yet.
-    return hardware_interface::return_type::OK;
-  }
-
   auto const now = std::chrono::system_clock::now();
   auto const now_tp = std::chrono::time_point_cast<std::chrono::seconds>(now);
   std::chrono::duration<double> const now_dur_seconds = now_tp.time_since_epoch();
@@ -91,8 +110,8 @@ hardware_interface::return_type Side::send_motion_command() {
 
   victor_lcm_interface::motion_command motion_cmd{};
   motion_cmd.timestamp = now_seconds;
-  // Set this based on which controller is currently running, changed only in the prepare_command_mode_switch function
-  motion_cmd.control_mode.mode = static_cast<int8_t>(hw_cmd_control_mode_);
+  // Assuming the current control mode is the correct one to use based on the controllers
+  motion_cmd.control_mode.mode = control_mode_client_->getControlMode().control_mode.mode;
   motion_cmd.joint_position.joint_1 = hw_cmd_position_[0];
   motion_cmd.joint_position.joint_2 = hw_cmd_position_[1];
   motion_cmd.joint_position.joint_3 = hw_cmd_position_[2];
@@ -115,62 +134,14 @@ hardware_interface::return_type Side::send_motion_command() {
   motion_cmd.joint_velocity.joint_6 = 0.;
   motion_cmd.joint_velocity.joint_7 = 0.;
 
-  auto const& active_control_mode = control_mode_client_->getControlMode();
-
-  const auto validity_check_results = validateMotionCommand(active_control_mode.control_mode.mode, motion_cmd);
+  const auto validity_check_results = validateMotionCommand(motion_cmd);
   if (validity_check_results.first) {
     send_lcm_ptr_->publish(DEFAULT_MOTION_COMMAND_CHANNEL, &motion_cmd);
   } else {
-    RCLCPP_ERROR_STREAM(logger_, "Arm motion command failed validity checks: " << validity_check_results.second);
+//    RCLCPP_ERROR_STREAM(logger_, "Arm motion command failed validity checks: " << validity_check_results.second);
   }
 
   return hardware_interface::return_type::OK;
-}
-
-std::pair<bool, std::string> Side::validate_and_switch_to_mode_for_interfaces(
-    const std::vector<std::string>& start_interfaces) {
-  auto is_cartesian = [](std::string const& interface_name) {
-    return interface_name.find("cartesian") != std::string::npos;
-  };
-  auto is_joint = [](std::string const& interface_name) { return interface_name.find("joint") != std::string::npos; };
-
-  auto const is_all_cartesian = std::all_of(start_interfaces.begin(), start_interfaces.end(), is_cartesian);
-  auto const is_all_joint = std::all_of(start_interfaces.begin(), start_interfaces.end(), is_joint);
-
-  if (!is_all_cartesian && !is_all_joint) {
-    return {false, "The requested mode switch mixes both cartesian and position/pose interfaces!"};
-  }
-
-  return {true, ""};
-}
-void Side::add_state_interfaces(std::vector<hardware_interface::StateInterface>& state_interfaces) {
-  state_interfaces.emplace_back(side_name_ + "_force_torque_sensor", "force.x", &hw_ft_[0]);
-  state_interfaces.emplace_back(side_name_ + "_force_torque_sensor", "force.y", &hw_ft_[1]);
-  state_interfaces.emplace_back(side_name_ + "_force_torque_sensor", "force.z", &hw_ft_[2]);
-  state_interfaces.emplace_back(side_name_ + "_force_torque_sensor", "torque.x", &hw_ft_[3]);
-  state_interfaces.emplace_back(side_name_ + "_force_torque_sensor", "torque.y", &hw_ft_[4]);
-  state_interfaces.emplace_back(side_name_ + "_force_torque_sensor", "torque.z", &hw_ft_[5]);
-}
-
-void Side::add_command_interfaces(std::vector<hardware_interface::CommandInterface>& command_interfaces) {
-  // Control mode interface
-  command_interfaces.emplace_back(side_name_, "control_mode", &hw_cmd_control_mode_);
-
-  // Cartesian pose interfaces
-  command_interfaces.emplace_back(side_name_, "cartesian_pose/xt", &hw_cmd_cartesian_pose_.position.x);
-  command_interfaces.emplace_back(side_name_, "cartesian_pose/yt", &hw_cmd_cartesian_pose_.position.y);
-  command_interfaces.emplace_back(side_name_, "cartesian_pose/zt", &hw_cmd_cartesian_pose_.position.z);
-  command_interfaces.emplace_back(side_name_, "cartesian_pose/wr", &hw_cmd_cartesian_pose_.orientation.w);
-  command_interfaces.emplace_back(side_name_, "cartesian_pose/xr", &hw_cmd_cartesian_pose_.orientation.x);
-  command_interfaces.emplace_back(side_name_, "cartesian_pose/yr", &hw_cmd_cartesian_pose_.orientation.y);
-  command_interfaces.emplace_back(side_name_, "cartesian_pose/zr", &hw_cmd_cartesian_pose_.orientation.z);
-
-  // Joint interfaces
-  for (uint i = 0; i < 7; i++) {
-    // The interface names should be consistent with ros2_controllers.yaml and URDF
-    command_interfaces.emplace_back("victor_" + side_name_ + "arm_joint_" + std::to_string(i),
-                                    hardware_interface::HW_IF_POSITION, &hw_cmd_position_[i]);
-  }
 }
 
 }  // namespace victor_hardware

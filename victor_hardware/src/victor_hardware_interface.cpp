@@ -14,6 +14,12 @@ CallbackReturn VictorHardwareInterface::on_init(const hardware_interface::Hardwa
     return CallbackReturn::ERROR;
   }
 
+  hw_states_position_.resize(info_.joints.size(), std::numeric_limits<double>::quiet_NaN());
+  hw_states_external_effort_.resize(info_.joints.size(), std::numeric_limits<double>::quiet_NaN());
+  hw_states_cmd_position_.resize(info_.joints.size(), std::numeric_limits<double>::quiet_NaN());
+  hw_states_external_torque_sensor_.resize(info_.joints.size(), 0);
+
+
   RCLCPP_INFO(logger, "===================================================================================");
   RCLCPP_INFO(logger, "Please start the LCMRobotInterface application on BOTH pendants!");
   RCLCPP_INFO(logger, "===================================================================================");
@@ -64,8 +70,8 @@ std::vector<hardware_interface::StateInterface> VictorHardwareInterface::export_
 
 std::vector<hardware_interface::CommandInterface> VictorHardwareInterface::export_command_interfaces() {
   std::vector<hardware_interface::CommandInterface> command_interfaces;
-  left.add_command_interfaces(command_interfaces);
-  right.add_command_interfaces(command_interfaces);
+  left.add_command_interfaces(info_, command_interfaces);
+  right.add_command_interfaces(info_, command_interfaces);
   return command_interfaces;
 }
 
@@ -235,24 +241,6 @@ hardware_interface::return_type VictorHardwareInterface::write(const rclcpp::Tim
   auto const& right_return = right.send_motion_command();
 
   if (left_return != hardware_interface::return_type::OK || right_return != hardware_interface::return_type::OK) {
-    return hardware_interface::return_type::ERROR;
-  }
-
-  return hardware_interface::return_type::OK;
-}
-
-hardware_interface::return_type VictorHardwareInterface::prepare_command_mode_switch(
-    const std::vector<std::string>& start_interfaces, const std::vector<std::string>& stop_interfaces) {
-  // Check whether the current_control_mode_ on each side is compatible with the start_interfaces
-  auto left_is_valid = left.validate_and_switch_to_mode_for_interfaces(start_interfaces);
-  auto right_is_valid = right.validate_and_switch_to_mode_for_interfaces(start_interfaces);
-
-  if (!left_is_valid.first) {
-    RCLCPP_ERROR_STREAM(logger, "Control mode switch is invalid: " << left_is_valid.second);
-    return hardware_interface::return_type::ERROR;
-  }
-  if (!right_is_valid.first) {
-    RCLCPP_ERROR_STREAM(logger, "Control mode switch is invalid: " << right_is_valid.second);
     return hardware_interface::return_type::ERROR;
   }
 

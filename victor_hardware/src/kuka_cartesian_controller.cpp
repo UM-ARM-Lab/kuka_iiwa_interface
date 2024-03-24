@@ -1,17 +1,21 @@
 #include <string>
 #include <vector>
+#include <victor_hardware/constants.hpp>
 #include <victor_hardware/kuka_cartesian_controller.hpp>
 #include <victor_hardware/validators.hpp>
 
 namespace victor_hardware {
 
 controller_interface::CallbackReturn KukaCartesianController::on_init() {
-  kuka_mode_params_.control_mode.mode = victor_lcm_interface::control_mode::CARTESIAN_IMPEDANCE;
-
   auto node = get_node();
 
+  side_name_ = node->get_parameter("side").as_string();
+  arm_name_ = side_name_ + "_arm";
+  auto const &recv_provider = side_name_ == "left" ? LEFT_RECV_PROVIDER : RIGHT_RECV_PROVIDER;
+  auto const &send_provider = side_name_ == "left" ? LEFT_SEND_PROVIDER : RIGHT_SEND_PROVIDER;
+
   control_mode_client_ =
-      std::make_shared<KukaControlModeClientLifecycleNode>(node, LEFT_RECV_PROVIDER, LEFT_SEND_PROVIDER);
+      std::make_shared<KukaControlModeClientLifecycleNode>(node, recv_provider, send_provider);
 
   // Parameters for the cartesian impedance controller
   rcl_interfaces::msg::ParameterDescriptor max_x_velocity_desc;
@@ -43,15 +47,10 @@ controller_interface::CallbackReturn KukaCartesianController::on_init() {
       return result;
     }
 
-    // Ensure that we do not change the control MODE here, only update the params.
-    auto const &current_mode = control_mode_client_->getControlMode().control_mode.mode;
-    if (current_mode != victor_lcm_interface::control_mode::CARTESIAN_IMPEDANCE) {
-      result.successful = false;
-      result.reason = "Arm is in " + std::to_string(current_mode) + " mode, not CARTESIAN_IMPEDANCE";
-      return result;
-    }
-
     for (const auto &param : kuka_params) {
+      RCLCPP_INFO_STREAM(get_node()->get_logger(),
+                         "Updating param: " << param.get_name() << " to " << param.value_to_string());
+
       if (param.get_name() == "kuka.max_velocity.x") {
         kuka_mode_params_.cartesian_path_execution_params.max_velocity.x = param.as_double();
       }
@@ -70,7 +69,7 @@ controller_interface::CallbackReturn KukaCartesianController::on_init() {
       return result;
     }
 
-    auto const &update_success = control_mode_client_->updateControlMode(kuka_mode_params_);
+    auto const &update_success = control_mode_client_->updateControlModeParameters(kuka_mode_params_);
     if (!update_success) {
       result.successful = false;
       result.reason = "Failed to update control mode";
@@ -78,9 +77,6 @@ controller_interface::CallbackReturn KukaCartesianController::on_init() {
 
     return result;
   });
-
-  side_name_ = node->get_parameter("side").as_string();
-  arm_name_ = side_name_ + "_arm";
 
   // ROS subscriber for receiving commands
   cmd_sub_ = node->create_subscription<geometry_msgs::msg::PoseStamped>(
@@ -94,13 +90,13 @@ controller_interface::InterfaceConfiguration KukaCartesianController::command_in
   // Claim the cartesian command interfaces for the specified side
   controller_interface::InterfaceConfiguration config;
   config.type = controller_interface::interface_configuration_type::INDIVIDUAL;
-  config.names.push_back(side_name_ + "/cartesian_pose/xt");
-  config.names.push_back(side_name_ + "/cartesian_pose/yt");
-  config.names.push_back(side_name_ + "/cartesian_pose/zt");
-  config.names.push_back(side_name_ + "/cartesian_pose/wr");
-  config.names.push_back(side_name_ + "/cartesian_pose/xr");
-  config.names.push_back(side_name_ + "/cartesian_pose/yr");
-  config.names.push_back(side_name_ + "/cartesian_pose/zr");
+  config.names.push_back(side_name_ + "/" + CARTESIAN_XT_INTERFACE);
+  config.names.push_back(side_name_ + "/" + CARTESIAN_YT_INTERFACE);
+  config.names.push_back(side_name_ + "/" + CARTESIAN_ZT_INTERFACE);
+  config.names.push_back(side_name_ + "/" + CARTESIAN_WR_INTERFACE);
+  config.names.push_back(side_name_ + "/" + CARTESIAN_XR_INTERFACE);
+  config.names.push_back(side_name_ + "/" + CARTESIAN_YR_INTERFACE);
+  config.names.push_back(side_name_ + "/" + CARTESIAN_ZR_INTERFACE);
   return config;
 }
 
@@ -108,15 +104,18 @@ controller_interface::InterfaceConfiguration KukaCartesianController::state_inte
   return controller_interface::InterfaceConfiguration(controller_interface::interface_configuration_type::NONE);
 }
 
+controller_interface::CallbackReturn KukaCartesianController::on_configure(
+    const rclcpp_lifecycle::State &previous_state) {
+  return controller_interface::CallbackReturn::SUCCESS;
+}
+
 controller_interface::CallbackReturn KukaCartesianController::on_activate(
     const rclcpp_lifecycle::State &previous_state) {
-  // Get the current mode parameters, change the control mode, then send the update
-  auto mode_params = control_mode_client_->getControlMode();
-  mode_params.control_mode.mode = victor_lcm_interface::control_mode::JOINT_POSITION;
-  auto const &success = control_mode_client_->updateControlMode(mode_params);
-
+  RCLCPP_INFO(get_node()->get_logger(), "Activating KukaCartesianController");
+  auto const &success =
+      control_mode_client_->updateControlMode(victor_lcm_interface::control_mode::CARTESIAN_IMPEDANCE);
   if (!success) {
-    RCLCPP_ERROR(get_node()->get_logger(), "Failed to switch to JOINT_POSITION mode");
+    RCLCPP_ERROR(get_node()->get_logger(), "Failed to set control mode to CARTESIAN_IMPEDANCE");
     return controller_interface::CallbackReturn::ERROR;
   }
 
@@ -124,11 +123,6 @@ controller_interface::CallbackReturn KukaCartesianController::on_activate(
 }
 
 controller_interface::CallbackReturn KukaCartesianController::on_deactivate(
-    const rclcpp_lifecycle::State &previous_state) {
-  return controller_interface::CallbackReturn::SUCCESS;
-}
-
-controller_interface::CallbackReturn KukaCartesianController::on_configure(
     const rclcpp_lifecycle::State &previous_state) {
   return controller_interface::CallbackReturn::SUCCESS;
 }
@@ -150,8 +144,6 @@ controller_interface::return_type KukaCartesianController::update(const rclcpp::
   command_interfaces_[4].set_value(latest_cmd_msg_->pose.orientation.x);
   command_interfaces_[5].set_value(latest_cmd_msg_->pose.orientation.y);
   command_interfaces_[6].set_value(latest_cmd_msg_->pose.orientation.z);
-  // Set the control mode to CARTESIAN_IMPEDANCE
-  command_interfaces_[7].set_value(static_cast<double>(victor_lcm_interface::control_mode::CARTESIAN_IMPEDANCE));
 
   return controller_interface::return_type::OK;
 }

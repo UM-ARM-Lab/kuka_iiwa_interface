@@ -1,15 +1,11 @@
 #include <cmath>
 #include <optional>
-#include <rclcpp/logger.hpp>
 #include <victor_hardware/constants.hpp>
 #include <victor_hardware/validators.hpp>
 
-static auto logger = rclcpp::get_logger("validators");
-
 namespace victor_hardware {
 
-std::pair<bool, std::string> validateJointPathExecutionParams(
-    const victor_lcm_interface::joint_path_execution_parameters &params) {
+ErrorType validateJointPathExecutionParams(const victor_lcm_interface::joint_path_execution_parameters &params) {
   bool valid = true;
   std::string message;
   if (params.joint_relative_velocity <= 0.0 || params.joint_relative_velocity > 1.0) {
@@ -27,7 +23,7 @@ std::pair<bool, std::string> validateJointPathExecutionParams(
   return {valid, message};
 }
 
-std::pair<bool, std::string> validateCartesianPathExecutionParams(
+ErrorType validateCartesianPathExecutionParams(
     const victor_lcm_interface::cartesian_path_execution_parameters &params) {
   bool valid = true;
   std::string message;
@@ -95,8 +91,7 @@ std::pair<bool, std::string> validateCartesianPathExecutionParams(
   return {valid, message};
 }
 
-std::pair<bool, std::string> validateJointImpedanceParams(
-    const victor_lcm_interface::joint_impedance_parameters &params) {
+ErrorType validateJointImpedanceParams(const victor_lcm_interface::joint_impedance_parameters &params) {
   bool valid = true;
   std::string message;
 
@@ -163,8 +158,7 @@ std::pair<bool, std::string> validateJointImpedanceParams(
   return {valid, message};
 }
 
-std::pair<bool, std::string> validateCartesianImpedanceParams(
-    const victor_lcm_interface::cartesian_impedance_parameters &params) {
+ErrorType validateCartesianImpedanceParams(const victor_lcm_interface::cartesian_impedance_parameters &params) {
   bool valid = true;
   std::string message;
 
@@ -233,8 +227,7 @@ std::pair<bool, std::string> validateCartesianImpedanceParams(
   return {valid, message};
 }
 
-std::pair<bool, std::string> validateCartesianControlModeLimits(
-    const victor_lcm_interface::cartesian_control_mode_limits &params) {
+ErrorType validateCartesianControlModeLimits(const victor_lcm_interface::cartesian_control_mode_limits &params) {
   bool valid = true;
   std::string message;
 
@@ -319,7 +312,7 @@ std::pair<bool, std::string> validateCartesianControlModeLimits(
   return {valid, message};
 }
 
-std::pair<bool, std::string> validateControlMode(const victor_lcm_interface::control_mode_parameters &params) {
+ErrorType validateControlMode(const victor_lcm_interface::control_mode_parameters &params) {
   bool valid = true;
   std::string message;
 
@@ -353,7 +346,7 @@ std::pair<bool, std::string> validateControlMode(const victor_lcm_interface::con
   return {valid, message};
 }
 
-std::pair<bool, std::string> validateCartesianPose(const geometry_msgs::msg::Pose &pose, const std::string &frame) {
+ErrorType validateCartesianPose(const geometry_msgs::msg::Pose &pose, const std::string &frame) {
   bool valid = true;
   std::string message;
 
@@ -379,17 +372,38 @@ std::pair<bool, std::string> validateCartesianPose(const geometry_msgs::msg::Pos
   return {valid, message};
 }
 
-std::pair<bool, std::string> validateMotionCommand(uint8_t const active_control_mode,
-                                                   const victor_lcm_interface::motion_command &command) {
-  const uint8_t command_motion_mode = command.control_mode.mode;
-  if (active_control_mode != command_motion_mode) {
-    return std::make_pair(false, std::string("Active control mode does not match commanded control mode"));
+ErrorType validateMotionCommand(const victor_lcm_interface::motion_command &command) {
+  // Check for very likely to be invalid commands
+  auto const &invalid_pose = command.cartesian_pose.xt == 0.0 && command.cartesian_pose.yt == 0.0 &&
+                             command.cartesian_pose.zt == 0.0 && command.cartesian_pose.xr == 0.0 &&
+                             command.cartesian_pose.yr == 0.0 && command.cartesian_pose.zr == 0.0 &&
+                             command.cartesian_pose.wr == 0.0;
+  if (invalid_pose && command.control_mode.mode == victor_lcm_interface::control_mode::CARTESIAN_POSE) {
+    return {false,
+            "Commanded cartesian pose is all zeros! That would cause the end-effector to crash into the base"
+            " Perhaps the pose is uninitialized?"};
+  }
+  if (invalid_pose && command.control_mode.mode == victor_lcm_interface::control_mode::CARTESIAN_IMPEDANCE) {
+    return {false,
+            "Commanded cartesian pose is all zeros! That would cause the end-effector to crash into the base"
+            " Perhaps the pose is uninitialized?"};
+  }
+
+  auto const &any_nan = std::isnan(command.joint_position.joint_1) || std::isnan(command.joint_position.joint_2) ||
+                        std::isnan(command.joint_position.joint_3) || std::isnan(command.joint_position.joint_4) ||
+                        std::isnan(command.joint_position.joint_5) || std::isnan(command.joint_position.joint_6) ||
+                        std::isnan(command.joint_position.joint_7);
+  if (any_nan && command.control_mode.mode == victor_lcm_interface::control_mode::JOINT_POSITION) {
+    return {false, "position command contains NaN in JOIN_POSITION mode"};
+  }
+  if (any_nan && command.control_mode.mode == victor_lcm_interface::control_mode::JOINT_IMPEDANCE) {
+    return {false, "position command contains NaN in JOIN_IMPEDANCE mode"};
   }
 
   return {true, ""};
 }
 
-std::pair<bool, std::string> validateFingerCommand(const msg::Robotiq3FingerActuatorCommand &command) {
+ErrorType validateFingerCommand(const msg::Robotiq3FingerActuatorCommand &command) {
   bool valid = true;
   std::string message;
   if (command.position > 1.0 || command.position < 0.0) {
