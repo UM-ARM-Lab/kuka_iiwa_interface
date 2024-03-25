@@ -32,7 +32,18 @@ controller_interface::CallbackReturn KukaJointTrajectoryController::on_init() {
   relative_joint_velocity_range.from_value = 0.0;
   relative_joint_velocity_range.to_value = 1.0;
   relative_joint_velocity_desc.floating_point_range.push_back(relative_joint_velocity_range);
+  // NOTE: the defaults here may not match the defaults used to initialize kuka_mode_params_ in the constructor,
+  //  so these defaults may not be used. Or maybe they would be "read" by get params but then be wrong?
   node->declare_parameter<double>("kuka.joint_relative_velocity", 0.1, relative_joint_velocity_desc);
+
+  if (control_mode_ == victor_lcm_interface::control_mode::JOINT_IMPEDANCE) {
+    rcl_interfaces::msg::ParameterDescriptor stiffness_desc;
+    stiffness_desc.type = rcl_interfaces::msg::ParameterType::PARAMETER_DOUBLE;
+    node->declare_parameter<double>("kuka.stiffness.joint_1", 600.0, stiffness_desc);
+    node->declare_parameter<double>("kuka.stiffness.joint_2", 600.0, stiffness_desc);
+    node->declare_parameter<double>("kuka.stiffness.joint_3", 300.0, stiffness_desc);
+    node->declare_parameter<double>("kuka.stiffness.joint_4", 300.0, stiffness_desc);
+  }
 
   set_parameters_handle_ = node->add_on_set_parameters_callback([&](std::vector<rclcpp::Parameter> const &params) {
     rcl_interfaces::msg::SetParametersResult result{};
@@ -50,6 +61,8 @@ controller_interface::CallbackReturn KukaJointTrajectoryController::on_init() {
     }
 
     for (const auto &param : kuka_params) {
+      RCLCPP_INFO_STREAM(get_node()->get_logger(),
+                         "Setting parameter: " << param.get_name() << " " << param.value_to_string());
       if (param.get_name() == "kuka.joint_relative_velocity") {
         kuka_mode_params_.joint_path_execution_params.joint_relative_velocity = param.as_double();
       }

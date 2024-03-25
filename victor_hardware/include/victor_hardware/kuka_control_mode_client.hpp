@@ -6,30 +6,31 @@
 #include <rclcpp_lifecycle/lifecycle_node.hpp>
 #include <victor_hardware/constants.hpp>
 #include <victor_hardware/lcm_listener.hpp>
+#include <victor_hardware/lcm_ros_conversions.hpp>
 #include <victor_lcm_interface/control_mode_parameters.hpp>
+
+namespace victor_hardware {
 
 template <typename NodeType>
 class KukaControlModeClient {
  public:
   /** If this is the only object that's going to be using LCM to set/get control mode, then use this constructor **/
-  KukaControlModeClient(std::shared_ptr<NodeType> node, std::string const& recv_provider,
-                        std::string const& send_provider)
+  KukaControlModeClient(
+      std::shared_ptr<NodeType> node, std::string const& recv_provider, std::string const& send_provider)
       : node_(node) {
     recv_lcm_ptr_ = std::make_shared<lcm::LCM>(recv_provider);
     send_lcm_ptr_ = std::make_shared<lcm::LCM>(send_provider);
 
     control_mode_listener_ = std::make_unique<LcmListener<victor_lcm_interface::control_mode_parameters>>(
-        recv_lcm_ptr_, DEFAULT_CONTROL_MODE_STATUS_CHANNEL,
-        [&](victor_lcm_interface::control_mode_parameters const& msg) {});  // nothing to do here
+        recv_lcm_ptr_, DEFAULT_CONTROL_MODE_STATUS_CHANNEL);
   };
 
   /** Only one process/thread can subscribe to a LCM channel, so use this constructor if you're already doing LCM **/
-  KukaControlModeClient(std::shared_ptr<NodeType> node, std::shared_ptr<lcm::LCM> const &recv_provider,
-                        std::shared_ptr<lcm::LCM> const &send_provider)
+  KukaControlModeClient(std::shared_ptr<NodeType> node, std::shared_ptr<lcm::LCM> const& recv_provider,
+                        std::shared_ptr<lcm::LCM> const& send_provider, std::function<void(victor_lcm_interface::control_mode_parameters const&)> const& control_mode_callback)
       : node_(node), recv_lcm_ptr_(recv_provider), send_lcm_ptr_(send_provider) {
     control_mode_listener_ = std::make_unique<LcmListener<victor_lcm_interface::control_mode_parameters>>(
-        recv_lcm_ptr_, DEFAULT_CONTROL_MODE_STATUS_CHANNEL,
-        [&](victor_lcm_interface::control_mode_parameters const& msg) {});  // nothing to do here
+        recv_lcm_ptr_, DEFAULT_CONTROL_MODE_STATUS_CHANNEL, control_mode_callback);
   };
 
   /** ONLY updates the control mode, not the control mode parameters */
@@ -56,7 +57,7 @@ class KukaControlModeClient {
 
   [[nodiscard]] victor_lcm_interface::control_mode_parameters getControlMode() const {
     while (true) {
-//      RCLCPP_INFO_STREAM(node_->get_logger(), "Waiting to get control mode...");
+      //      RCLCPP_INFO_STREAM(node_->get_logger(), "Waiting to get control mode...");
       recv_lcm_ptr_->handleTimeout(1000);
       if (!control_mode_listener_->hasLatestMessage()) {
         continue;
@@ -81,7 +82,8 @@ class KukaControlModeClient {
       auto const& control_mode_params = control_mode_listener_->getLatestMessage();
       auto const& current_control_mode = control_mode_params.control_mode.mode;
       if (current_control_mode == active_control_mode_params.control_mode.mode) {
-        RCLCPP_INFO_STREAM(node_->get_logger(), "Successfully changed control mode to " << std::to_string((int)current_control_mode));
+        RCLCPP_INFO_STREAM(node_->get_logger(),
+                           "Successfully changed control mode to " << std::to_string((int)current_control_mode));
         return true;
       }
       if (std::chrono::steady_clock::now() - start_time > DEFAULT_SET_CONTROL_MODE_TIMEOUT) {
@@ -101,3 +103,5 @@ class KukaControlModeClient {
 
 using KukaControlModeClientLifecycleNode = KukaControlModeClient<rclcpp_lifecycle::LifecycleNode>;
 using KukaControlModeClientNode = KukaControlModeClient<rclcpp::Node>;
+
+}  // namespace victor_hardware

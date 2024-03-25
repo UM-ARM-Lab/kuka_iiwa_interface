@@ -73,6 +73,7 @@ class Side {
 
   // ROS API
   rclcpp::Publisher<msg::MotionStatus>::SharedPtr motion_status_pub_;
+  rclcpp::Publisher<msg::ControlModeParameters>::SharedPtr control_mode_params_pub_;
   rclcpp::Publisher<msg::Robotiq3FingerStatus>::SharedPtr gripper_status_pub_;
   rclcpp::Subscription<msg::Robotiq3FingerCommand>::SharedPtr gripper_command_sub_;
 

@@ -19,8 +19,7 @@ const auto DEFAULT_SET_CONTROL_MODE_TIMEOUT = 2.5s;
 // Default ROS topic / service names
 const std::string DEFAULT_MOTION_COMMAND_TOPIC("motion_command");
 const std::string DEFAULT_MOTION_STATUS_TOPIC("motion_status");
-const std::string DEFAULT_SET_CONTROL_MODE_SERVICE("set_control_mode_service");
-const std::string DEFAULT_GET_CONTROL_MODE_SERVICE("get_control_mode_service");
+const std::string DEFAULT_CONTROL_MODE_PARAMETERS_TOPIC("control_mode_parameters");
 const std::string DEFAULT_GRIPPER_COMMAND_TOPIC("gripper_command");
 const std::string DEFAULT_GRIPPER_STATUS_TOPIC("gripper_status");
 

@@ -78,11 +78,17 @@ CallbackReturn Side::on_init(std::shared_ptr<rclcpp::Executor> const& executor,
 
   auto const ns = "/victor/" + side_name_ + "_arm/";
   motion_status_pub_ = node->create_publisher<msg::MotionStatus>(ns + DEFAULT_MOTION_STATUS_TOPIC, 10);
+  control_mode_params_pub_ =
+      node->create_publisher<msg::ControlModeParameters>(ns + DEFAULT_CONTROL_MODE_PARAMETERS_TOPIC, 10);
   gripper_status_pub_ = node->create_publisher<msg::Robotiq3FingerStatus>(ns + DEFAULT_GRIPPER_STATUS_TOPIC, 10);
   gripper_command_sub_ = node->create_subscription<msg::Robotiq3FingerCommand>(
       ns + DEFAULT_GRIPPER_COMMAND_TOPIC, 1, std::bind(&Side::gripperCommandROSCallback, this, _1), getter_options);
 
-  control_mode_client_ = std::make_shared<KukaControlModeClientNode>(node, recv_lcm_ptr_, send_lcm_ptr_);
+  control_mode_client_ = std::make_shared<KukaControlModeClientNode>(
+      node, recv_lcm_ptr_, send_lcm_ptr_, [&](victor_lcm_interface::control_mode_parameters const& lcm_msg) {
+        auto const& ros_msg = controlModeParamsLcmToRos(lcm_msg);
+        control_mode_params_pub_->publish(ros_msg);
+      });
 
   return CallbackReturn::SUCCESS;
 }
@@ -138,7 +144,7 @@ hardware_interface::return_type Side::send_motion_command() {
   if (validity_check_results.first) {
     send_lcm_ptr_->publish(DEFAULT_MOTION_COMMAND_CHANNEL, &motion_cmd);
   } else {
-//    RCLCPP_ERROR_STREAM(logger_, "Arm motion command failed validity checks: " << validity_check_results.second);
+    //    RCLCPP_ERROR_STREAM(logger_, "Arm motion command failed validity checks: " << validity_check_results.second);
   }
 
   return hardware_interface::return_type::OK;
