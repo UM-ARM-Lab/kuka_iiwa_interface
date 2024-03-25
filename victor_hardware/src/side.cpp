@@ -165,26 +165,29 @@ void Side::setControlMode(const std::shared_ptr<srv::SetControlMode::Request>& r
   }
 
   // Switch ROS2 controllers
-  while (!switch_controller_client_->wait_for_service(1s)) {
-    if (!rclcpp::ok()) {
-      RCLCPP_ERROR(logger_, "Switch controller service not available");
-      response->success = false;
-      response->message = "Switch controller service not available";
-      return;
-    }
-    RCLCPP_WARN(logger_, "Switch controller service not available, waiting again...");
-  }
 
-  //
-  while(!list_controllers_client_->wait_for_service(1s)){
-    if (!rclcpp::ok()) {
-      RCLCPP_ERROR(logger_, "List controller service not available");
-      response->success = false;
-      response->message = "List controller service not available";
-      return;
-    }
-    RCLCPP_WARN(logger_, "List controller service not available, waiting again...");
-  }
+  // TODO: figure out how to "wait" for the service without spinning the node,
+  //       since the async executor is already doing that.
+  // while (!switch_controller_client_->wait_for_service(1s)) {
+  //   if (!rclcpp::ok()) {
+  //     RCLCPP_ERROR(logger_, "Switch controller service not available");
+  //     response->success = false;
+  //     response->message = "Switch controller service not available";
+  //     return;
+  //   }
+  //   RCLCPP_WARN(logger_, "Switch controller service not available, waiting again...");
+  // }
+
+  // //
+  // while(!list_controllers_client_->wait_for_service(1s)){
+  //   if (!rclcpp::ok()) {
+  //     RCLCPP_ERROR(logger_, "List controller service not available");
+  //     response->success = false;
+  //     response->message = "List controller service not available";
+  //     return;
+  //   }
+  //   RCLCPP_WARN(logger_, "List controller service not available, waiting again...");
+  // }
 
   // Make a request to the list controllers service
   auto req_list = std::make_shared<controller_manager_msgs::srv::ListControllers::Request>();
@@ -201,22 +204,32 @@ void Side::setControlMode(const std::shared_ptr<srv::SetControlMode::Request>& r
   // check if new_controller_name is in the list of controllers
   bool is_controller_found = false;
   std::vector<std::string> cmd_interface;
+
   for (auto const& controller : list_controllers_response->controller) {
-    if (controller.name == request->new_controller_name) {
-      const size_t n = sizeof(controller.required_command_interfaces) / sizeof(controller.required_command_interfaces[0]);
-      for (size_t i = 0; i < n; ++i) {
-          cmd_interface[i] = controller.required_command_interfaces[i];
-      }
-      is_controller_found = true;
-      }
+    RCLCPP_INFO_STREAM(logger_, "name: " << controller.name);
+    RCLCPP_INFO_STREAM(logger_, "state: " << controller.state);
+    RCLCPP_INFO_STREAM(logger_, "type: " << controller.type);
+    for (auto const& iface : controller.claimed_interfaces) {
+      RCLCPP_INFO_STREAM(logger_, "claimed: " << iface);
     }
-  if (!is_controller_found) {
-    auto const srv_error_msg = "Controller not found";
-    RCLCPP_ERROR(logger_, "Controller not found");
-    response->success = false;
-    response->message = srv_error_msg;
-    return;
+    for (auto const& iface : controller.required_command_interfaces) {
+      RCLCPP_INFO_STREAM(logger_, "cmd: " << iface);
+    }
+   for (auto const& iface : controller.required_state_interfaces) {
+      RCLCPP_INFO_STREAM(logger_, "state: " << iface);
+    }
+   for (auto const& iface : controller.reference_interfaces) {
+      RCLCPP_INFO_STREAM(logger_, "ref: " << iface);
+    }
   }
+
+  // if (!is_controller_found) {
+  //   auto const srv_error_msg = "Controller not found";
+  //   RCLCPP_ERROR(logger_, "Controller not found");
+  //   response->success = false;
+  //   response->message = srv_error_msg;
+  //   return;
+  // }
 
   auto req = std::make_shared<controller_manager_msgs::srv::SwitchController::Request>();
 

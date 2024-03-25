@@ -13,7 +13,7 @@ def generate_launch_description():
             Node(
                 package="controller_manager",
                 executable="spawner",
-                arguments=[controller],
+                arguments=[controller, "--inactive"],
                 output="screen",
             )
         )
