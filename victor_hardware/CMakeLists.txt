@@ -8,6 +8,9 @@ endif()
 
 set(CMAKE_CXX_STANDARD 20)
 
+find_package(Python3 REQUIRED COMPONENTS Interpreter Development)
+
+
 set(THIS_PACKAGE_INCLUDE_DEPENDS
         ament_cmake
         controller_interface
@@ -17,6 +20,8 @@ set(THIS_PACKAGE_INCLUDE_DEPENDS
         arm_utilities
         joint_trajectory_controller
         lcm
+        pybind11
+        pybind11_vendor
         victor_hardware_interfaces
         robotiq_3f_transmission_plugins
         ament_index_cpp
@@ -35,6 +40,14 @@ endforeach ()
 add_compile_options(-Werror)
 
 include_directories(include lcm_types SYSTEM)
+
+pybind11_add_module(lcm_python_bindings src/lcm_python_bindings.cpp)
+ament_target_dependencies(lcm_python_bindings PUBLIC ${THIS_PACKAGE_INCLUDE_DEPENDS})
+install(
+        TARGETS lcm_python_bindings
+        DESTINATION "${PYTHON_INSTALL_DIR}/${PROJECT_NAME}"
+)
+ament_python_install_package(${PROJECT_NAME})
 
 # C++ Library (Plugin) for use with ros2_control
 add_library(victor_hardware
