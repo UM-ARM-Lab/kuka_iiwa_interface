@@ -83,6 +83,7 @@ constexpr victor_lcm_interface::control_mode_parameters default_control_mode_par
   params.cartesian_path_execution_params.max_acceleration.a = 0.1;
   params.cartesian_path_execution_params.max_acceleration.b = 0.1;
   params.cartesian_path_execution_params.max_acceleration.c = 0.1;
+  params.cartesian_path_execution_params.max_nullspace_acceleration = 1.0;
 
   params.cartesian_impedance_params.cartesian_damping.x = 0.25;
   params.cartesian_impedance_params.cartesian_damping.y = 0.25;

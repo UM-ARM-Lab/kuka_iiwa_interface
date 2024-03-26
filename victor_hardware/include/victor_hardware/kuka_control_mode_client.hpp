@@ -34,9 +34,9 @@ class KukaControlModeClient {
         recv_lcm_ptr_, DEFAULT_CONTROL_MODE_STATUS_CHANNEL, control_mode_callback);
   };
 
-  /** ONLY updates the control mode, not the control mode parameters */
+  /** ONLY updates the control mode, uses safe default control mode   parameters */
   [[nodiscard]] bool updateControlMode(int8_t const& new_control_mode) {
-    auto active_control_mode_params = getControlMode();
+    auto active_control_mode_params = default_control_mode_parameters();
     active_control_mode_params.control_mode.mode = new_control_mode;
     return updateAndWaitForConfirmation(active_control_mode_params);
   }
@@ -44,7 +44,7 @@ class KukaControlModeClient {
   /** does NOT update the control mode itself **/
   [[nodiscard]] bool updateControlModeParameters(
       victor_lcm_interface::control_mode_parameters const& new_control_mode) {
-    auto active_control_mode_params = getControlMode();
+    auto active_control_mode_params = default_control_mode_parameters();
 
     active_control_mode_params.cartesian_control_mode_limits = new_control_mode.cartesian_control_mode_limits;
     active_control_mode_params.cartesian_impedance_params = new_control_mode.cartesian_impedance_params;
