@@ -21,12 +21,13 @@ controller_interface::CallbackReturn KukaJointTrajectoryController::on_init() {
   auto node = get_node();
 
   control_mode_interface_ = node->get_parameter("control_mode_interface").as_string();
+  int8_t const mode = control_mode_interface_ == JOINT_IMPEDANCE_INTERFACE ? victor_lcm_interface::control_mode::JOINT_IMPEDANCE : victor_lcm_interface::control_mode::JOINT_POSITION;
 
   RCLCPP_INFO_STREAM(node->get_logger(), node->get_name() << ": " << control_mode_interface_);
 
   left_send_lcm_ptr_ = std::make_shared<lcm::LCM>(LEFT_SEND_PROVIDER);
   right_send_lcm_ptr_ = std::make_shared<lcm::LCM>(RIGHT_SEND_PROVIDER);
-  params_helper_ = std::make_shared<ControlModeParamsHelper>(node, LCMPtrs{left_send_lcm_ptr_, right_send_lcm_ptr_});
+  params_helper_ = std::make_shared<ControlModeParamsHelper>(node, LCMPtrs{left_send_lcm_ptr_, right_send_lcm_ptr_}, mode);
 
   rcl_interfaces::msg::ParameterDescriptor relative_joint_velocity_desc;
   relative_joint_velocity_desc.description = "Relative velocity of the joints. 0 is slowest, 1 is fastest.";

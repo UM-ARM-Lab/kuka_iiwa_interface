@@ -17,8 +17,10 @@ class ControlModeParamsHelper {
  public:
   using SharedPtr = std::shared_ptr<ControlModeParamsHelper>;
 
-  explicit ControlModeParamsHelper(rclcpp_lifecycle::LifecycleNode::SharedPtr node, std::vector<LCMPtr> send_lcm_ptrs)
-      : node_(node), send_lcm_ptrs_(send_lcm_ptrs) {}
+  explicit ControlModeParamsHelper(rclcpp_lifecycle::LifecycleNode::SharedPtr node, std::vector<LCMPtr> send_lcm_ptrs, int8_t const mode)
+      : node_(node), send_lcm_ptrs_(send_lcm_ptrs) {
+      kuka_mode_params_.control_mode.mode = mode;
+      }
 
   ErrorType updateControlModeParams() {
     // only do this if the controller is active!

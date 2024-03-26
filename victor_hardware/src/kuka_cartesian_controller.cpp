@@ -15,9 +15,10 @@ controller_interface::CallbackReturn KukaCartesianController::on_init() {
   control_mode_interface_ = node->get_parameter("control_mode").as_string();
   arm_name_ = side_name_ + "_arm";
   auto const &send_provider = side_name_ == "left" ? LEFT_SEND_PROVIDER : RIGHT_SEND_PROVIDER;
+  int8_t const mode = control_mode_interface_ == CARTESIAN_IMPEDANCE_INTERFACE ? victor_lcm_interface::control_mode::CARTESIAN_IMPEDANCE : victor_lcm_interface::control_mode::CARTESIAN_POSE;
 
   send_lcm_ptr_ = std::make_shared<lcm::LCM>(send_provider);
-  params_helper_ = std::make_shared<ControlModeParamsHelper>(node, LCMPtrs{send_lcm_ptr_});
+  params_helper_ = std::make_shared<ControlModeParamsHelper>(node, LCMPtrs{send_lcm_ptr_}, mode);
 
   // Parameters for the cartesian impedance controller
   rcl_interfaces::msg::ParameterDescriptor max_x_velocity_desc;

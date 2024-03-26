@@ -2,12 +2,12 @@
 
 std::ostream& operator<<(std::ostream& os, const victor_lcm_interface::control_mode_parameters& params) {
   os << "control_mode_parameters: {";
-  os << "joint_impedance_params: " << params.joint_impedance_params << "\n";
-  os << "cartesian_impedance_params: " << params.cartesian_impedance_params << "\n";
-  os << "cartesian_control_mode_limits: " << params.cartesian_control_mode_limits << "\n";
-  os << "joint_path_execution_params: " << params.joint_path_execution_params << "\n";
-  os << "cartesian_path_execution_params: " << params.cartesian_path_execution_params << "\n";
-  os << "control_mode: " << params.control_mode << "\n";
+  os << params.joint_impedance_params << "\n";
+  os << params.cartesian_impedance_params << "\n";
+  os << params.cartesian_control_mode_limits << "\n";
+  os << params.joint_path_execution_params << "\n";
+  os << params.cartesian_path_execution_params << "\n";
+  os << params.control_mode << "\n";
   os << "}";
   return os;
 }
@@ -20,8 +20,8 @@ std::ostream& operator<<(std::ostream& os, const victor_lcm_interface::control_m
 
 std::ostream& operator<<(std::ostream& os, const victor_lcm_interface::joint_impedance_parameters& params) {
   os << "joint_impedance_params: {";
-  os << "stiffness: " << params.joint_stiffness << "\n";
-  os << "damping: " << params.joint_damping << "\n";
+  os << params.joint_stiffness << "\n";
+  os  << params.joint_damping << "\n";
   os << "}";
   return os;
 }
@@ -54,8 +54,8 @@ std::ostream& operator<<(std::ostream& os, const victor_lcm_interface::cartesian
 
 std::ostream& operator<<(std::ostream& os, const victor_lcm_interface::cartesian_impedance_parameters& params) {
   os << "cartesian_impedance_params: {";
-  os << "stiffness: " << params.cartesian_stiffness << "\n";
-  os << "damping: " << params.cartesian_damping << "\n";
+  os << params.cartesian_stiffness << "\n";
+  os << params.cartesian_damping << "\n";
   os << "nullspace_stiffness: " << params.nullspace_stiffness << "\n";
   os << "nullspace_damping: " << params.nullspace_damping << "\n";
   os << "}";
@@ -76,9 +76,9 @@ std::ostream& operator<<(std::ostream& os, const victor_lcm_interface::cartesian
 
 std::ostream& operator<<(std::ostream& os, const victor_lcm_interface::cartesian_control_mode_limits& limits) {
   os << "cartesian_control_mode_limits: {";
-  os << "max_velocity: " << limits.max_cartesian_velocity << "\n";
-  os << "max_path_deviation: " << limits.max_path_deviation << "\n";
-  os << "max_control_force: " << limits.max_control_force << "\n";
+  os << limits.max_cartesian_velocity << "\n";
+  os << limits.max_path_deviation << "\n";
+  os << limits.max_control_force << "\n";
   os << "stop_on_max_control_force: " << limits.stop_on_max_control_force << "\n";
   os << "}";
   return os;
@@ -86,17 +86,17 @@ std::ostream& operator<<(std::ostream& os, const victor_lcm_interface::cartesian
 
 std::ostream& operator<<(std::ostream& os, const victor_lcm_interface::joint_path_execution_parameters& params) {
   os << "joint_path_execution_params: {";
-  os << "joint_relative_velocity: " << params.joint_relative_velocity << "\n";
-  os << "joint_relative_acceleration: " << params.joint_relative_acceleration << "\n";
-  os << "override_joint_acceleration: " << params.override_joint_acceleration << "\n";
+  os << params.joint_relative_velocity << "\n";
+  os << params.joint_relative_acceleration << "\n";
+  os << params.override_joint_acceleration << "\n";
   os << "}";
   return os;
 }
 
 std::ostream& operator<<(std::ostream& os, const victor_lcm_interface::cartesian_path_execution_parameters& params) {
   os << "cartesian_path_execution_params: {";
-  os << "max_velocity: " << params.max_velocity << "\n";
-  os << "max_acceleration: " << params.max_acceleration << "\n";
+  os << params.max_velocity << "\n";
+  os << params.max_acceleration << "\n";
   os << "max_nullspace_velocity: " << params.max_nullspace_velocity << "\n";
   os << "max_nullspace_acceleration: " << params.max_nullspace_acceleration << "\n";
   os << "}";
@@ -105,10 +105,10 @@ std::ostream& operator<<(std::ostream& os, const victor_lcm_interface::cartesian
 
 std::ostream& operator<<(std::ostream& os, const victor_lcm_interface::motion_command& cmd) {
   os << "motion_command: {";
-  os << "joint_position: " << cmd.joint_position << "\n";
-  os << "joint_velocity: " << cmd.joint_velocity << "\n";
-  os << "cartesian_pose: " << cmd.cartesian_pose << "\n";
-  os << "control_mode: " << cmd.control_mode << "\n";
+  os << cmd.joint_position << "\n";
+  os << cmd.joint_velocity << "\n";
+  os << cmd.cartesian_pose << "\n";
+  os << cmd.control_mode << "\n";
   os << "}";
   return os;
 }
