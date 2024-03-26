@@ -1,25 +1,27 @@
 from typing import Sequence, Optional, Callable
 
 import numpy as np
+
 import rclpy
+from arm_robots.robot import load_moveit_config
+from arm_utilities.listener import Listener
+from controller_manager_msgs.srv import ListControllers, SwitchController
+from geometry_msgs.msg import Pose
 from geometry_msgs.msg import TransformStamped
 from rclpy.callback_groups import MutuallyExclusiveCallbackGroup
 from rclpy.node import Node
 from rclpy.qos import QoSDurabilityPolicy, QoSProfile
 from sensor_msgs.msg import JointState
+from std_msgs.msg import Float64MultiArray
 from std_msgs.msg import String
 from urdf_parser_py.urdf import Robot as RobotURDF
 from urdf_parser_py.urdf import URDF
 from urdf_parser_py.xml_reflection import core
-
-from arm_robots.robot import load_moveit_config
-from arm_utilities.listener import Listener
-from victor_hardware_interfaces.msg import MotionCommand, MotionStatus, Robotiq3FingerStatus, Robotiq3FingerCommand, \
-    ControlMode
-from victor_hardware_interfaces.srv import SetControlMode, GetControlMode
-from victor_python.robotiq_finger_angles import compute_finger_angles, get_finger_angle_names, compute_scissor_angle, get_scissor_joint_name
-from victor_python.victor_utils import get_control_mode_params, is_gripper_closed, get_gripper_closed_fraction_msg, \
-    jvq_to_list, list_to_jvq
+from victor_hardware_interfaces.msg import MotionStatus, Robotiq3FingerStatus, Robotiq3FingerCommand, \
+    ControlModeParameters, ControlMode
+from victor_python.robotiq_finger_angles import compute_finger_angles, get_finger_angle_names, compute_scissor_angle, \
+    get_scissor_joint_name
+from victor_python.victor_utils import is_gripper_closed, get_gripper_closed_fraction_msg, jvq_to_list
 
 # Suppress error messages from urdf_parser_py
 core.on_error = lambda *args: None
@@ -59,21 +61,24 @@ class Side:
         self.lower, self.upper = self.parser_joint_limits()
 
         self.pub_group = MutuallyExclusiveCallbackGroup()
-        self.set_srv_group = MutuallyExclusiveCallbackGroup()
-        self.get_srv_group = MutuallyExclusiveCallbackGroup()
+        self.cm_srv_group = MutuallyExclusiveCallbackGroup()
 
-        self.motion_command = node.create_publisher(MotionCommand, f"victor/{self.arm_name}/motion_command", 10,
-                                                    callback_group=self.pub_group)
+        self.joint_cmd_pub = node.create_publisher(Float64MultiArray, f"{self.arm_name}_position_controller", 10,
+                                                   callback_group=self.pub_group)
+        self.cartesian_cmd_pub = node.create_publisher(Pose, f"{self.arm_name}_cartesian_controller", 10,
+                                                       callback_group=self.pub_group)
         self.gripper_command = node.create_publisher(Robotiq3FingerCommand, f"victor/{self.arm_name}/gripper_command",
                                                      10, callback_group=self.pub_group)
 
-        self.set_control_mode_client = node.create_client(SetControlMode, f"victor/{self.arm_name}/set_control_mode_service",
-                                                          callback_group=self.set_srv_group)
-        self.get_control_mode_client = node.create_client(GetControlMode, f"victor/{self.arm_name}/get_control_mode_service",
-                                                          callback_group=self.get_srv_group)
+        self.switch_controllers_client = node.create_client(SwitchController, f"controller_manager/switch_controllers",
+                                                            callback_group=self.cm_srv_group)
+        self.list_controllers_client = node.create_client(ListControllers, f"controller_manager/list_controllers",
+                                                          callback_group=self.cm_srv_group)
 
         self.motion_status = Listener(node, MotionStatus, f"victor/{self.arm_name}/motion_status", 10)
         self.gripper_status = Listener(node, Robotiq3FingerStatus, f"victor/{self.arm_name}/gripper_status", 10)
+        self.control_mode_listener = Listener(node, ControlModeParameters,
+                                              f"victor/{self.arm_name}/control_mode_parameters", 10)
 
     def open_gripper(self, scissor_position=0.5):
         # TODO: implementing blocking grasping
@@ -94,19 +99,8 @@ class Side:
         return self.motion_status.get()
 
     def get_arm_control_mode(self):
-        control_mode_res: GetControlMode.Response = self.get_control_mode_client.call(GetControlMode.Request())
-        return control_mode_res.active_control_mode.control_mode
-
-    def set_control_mode(self, control_mode: ControlMode, **kwargs):
-        new_control_mode = get_control_mode_params(control_mode, **kwargs)
-        req = SetControlMode.Request()
-        req.new_control_mode = new_control_mode
-        res: SetControlMode.Response = self.set_control_mode_client.call(req)
-
-        if not res.success:
-            print(f"Failed to switch {self.arm_name} to control mode: {control_mode}")
-            print(res.message)
-        return res
+        control_mode_res: ControlModeParameters = self.control_mode_listener.get()
+        return control_mode_res.control_mode
 
     def get_names_and_cmd(self):
         status: MotionStatus = self.motion_status.get()
@@ -125,16 +119,14 @@ class Side:
         if np.any(joint_positions < self.lower) or np.any(joint_positions > self.upper):
             raise ValueError(f"Joint positions out of bounds: {joint_positions}")
 
-        active_mode: ControlMode = self.get_control_mode_client.call(GetControlMode.Request()).active_control_mode.control_mode
-        if active_mode.mode not in [ControlMode.JOINT_POSITION, ControlMode.JOINT_IMPEDANCE]:
+        active_mode: ControlModeParameters = self.control_mode_listener.get()
+        if active_mode.control_mode.mode not in [ControlMode.JOINT_POSITION, ControlMode.JOINT_IMPEDANCE]:
             raise ControlModeError(f"Cannot send joint command in {active_mode} mode")
 
-        msg = MotionCommand()
-        msg.control_mode = active_mode
-        msg.header.stamp = self.node.get_clock().now().to_msg()
-        msg.joint_position = list_to_jvq(joint_positions)
+        msg = Float64MultiArray()
+        msg.data = joint_positions
 
-        self.motion_command.publish(msg)
+        self.joint_cmd_pub.publish(msg)
 
     def parser_joint_limits(self):
         lower = []
@@ -150,7 +142,7 @@ class Side:
         """
         Fills out, validates, and sends a MotionCommand in cartesian impedance mode.
         """
-        active_mode: ControlMode = self.get_control_mode_client.call(GetControlMode.Request()).active_control_mode.control_mode
+        active_mode: ControlMode = self.control_mode_listener.get().control_mode
         if active_mode.mode != ControlMode.CARTESIAN_IMPEDANCE:
             raise ControlModeError(f"Cannot send cartesian command in {active_mode} mode")
 
@@ -159,17 +151,16 @@ class Side:
         if target_hand_in_root.child_frame_id != self.cartesian_cmd_tool_frame:
             raise ValueError(f"child_frame_id must be {self.cartesian_cmd_tool_frame}")
 
-        msg = MotionCommand()
-        msg.control_mode.mode = ControlMode.CARTESIAN_IMPEDANCE
-        msg.header.stamp = self.node.get_clock().now().to_msg()
-        # Override the frame_id to match the base frame, since the IIWA_LCM_BRIDGE checks for this.
-        msg.header.frame_id = CARTESIAN_CMD_BASE_FRAME
-        msg.cartesian_pose.position.x = target_hand_in_root.transform.translation.x
-        msg.cartesian_pose.position.y = target_hand_in_root.transform.translation.y
-        msg.cartesian_pose.position.z = target_hand_in_root.transform.translation.z
-        msg.cartesian_pose.orientation = target_hand_in_root.transform.rotation
+        msg = Pose()
+        msg.position.x = target_hand_in_root.transform.translation.x
+        msg.position.y = target_hand_in_root.transform.translation.y
+        msg.position.z = target_hand_in_root.transform.translation.z
+        msg.orientation.w = target_hand_in_root.transform.rotation.w
+        msg.orientation.x = target_hand_in_root.transform.rotation.x
+        msg.orientation.y = target_hand_in_root.transform.rotation.y
+        msg.orientation.z = target_hand_in_root.transform.rotation.z
 
-        self.motion_command.publish(msg)
+        self.cartesian_cmd_pub.publish(msg)
 
     def get_measured_joint_states_from_status(self, include_gripper: bool = True):
         """
@@ -273,11 +264,6 @@ class Victor:
 
     def get_control_modes(self):
         return {'left': self.left.get_arm_control_mode(), 'right': self.right.get_arm_control_mode()}
-
-    def set_control_modes(self, control_mode: ControlMode, vel: float, **kwargs):
-        left_res = self.left.set_control_mode(control_mode, vel=vel, **kwargs)
-        right_res = self.right.set_control_mode(control_mode, vel=vel, **kwargs)
-        return left_res, right_res
 
     def get_joint_positions(self, joint_names: Optional[Sequence[str]] = None):
         position_of_joint = self.get_joint_positions_dict()

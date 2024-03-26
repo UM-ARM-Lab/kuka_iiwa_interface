@@ -1,7 +1,7 @@
 #pragma once
 
 #include <controller_interface/controller_interface.hpp>
-#include <geometry_msgs/msg/pose_stamped.hpp>
+#include <geometry_msgs/msg/pose.hpp>
 #include <optional>
 #include <rclcpp/rclcpp.hpp>
 #include <victor_hardware/constants.hpp>
@@ -36,9 +36,9 @@ class KukaCartesianController : public controller_interface::ControllerInterface
   std::string arm_name_;
   std::string control_mode_interface_;
 
-  std::optional<geometry_msgs::msg::PoseStamped> latest_cmd_msg_;
+  std::optional<geometry_msgs::msg::Pose> latest_cmd_msg_;
 
-  rclcpp::Subscription<geometry_msgs::msg::PoseStamped>::SharedPtr cmd_sub_;
+  rclcpp::Subscription<geometry_msgs::msg::Pose>::SharedPtr cmd_sub_;
 
   rclcpp::node_interfaces::OnSetParametersCallbackHandle::SharedPtr set_parameters_handle_;
 

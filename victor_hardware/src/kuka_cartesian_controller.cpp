@@ -247,9 +247,9 @@ controller_interface::CallbackReturn KukaCartesianController::on_init() {
   });
 
   // ROS subscriber for receiving commands
-  cmd_sub_ = node->create_subscription<geometry_msgs::msg::PoseStamped>(
+  cmd_sub_ = node->create_subscription<geometry_msgs::msg::Pose>(
       arm_name_ + "/cartesian_pose", 10,
-      [this](geometry_msgs::msg::PoseStamped::SharedPtr msg) { latest_cmd_msg_.emplace(*msg); });
+      [this](geometry_msgs::msg::Pose::SharedPtr msg) { latest_cmd_msg_.emplace(*msg); });
 
   return controller_interface::CallbackReturn::SUCCESS;
 }
@@ -303,13 +303,13 @@ controller_interface::return_type KukaCartesianController::update(const rclcpp::
   // Copy the values from the latest command message to the command interfaces.
   // This will cause the values bound to the command interfaces to be updated.
   // Specifically, the values will be updated in the hardware interface.
-  command_interfaces_[0].set_value(latest_cmd_msg_->pose.position.x);
-  command_interfaces_[1].set_value(latest_cmd_msg_->pose.position.y);
-  command_interfaces_[2].set_value(latest_cmd_msg_->pose.position.z);
-  command_interfaces_[3].set_value(latest_cmd_msg_->pose.orientation.w);
-  command_interfaces_[4].set_value(latest_cmd_msg_->pose.orientation.x);
-  command_interfaces_[5].set_value(latest_cmd_msg_->pose.orientation.y);
-  command_interfaces_[6].set_value(latest_cmd_msg_->pose.orientation.z);
+  command_interfaces_[0].set_value(latest_cmd_msg_->position.x);
+  command_interfaces_[1].set_value(latest_cmd_msg_->position.y);
+  command_interfaces_[2].set_value(latest_cmd_msg_->position.z);
+  command_interfaces_[3].set_value(latest_cmd_msg_->orientation.w);
+  command_interfaces_[4].set_value(latest_cmd_msg_->orientation.x);
+  command_interfaces_[5].set_value(latest_cmd_msg_->orientation.y);
+  command_interfaces_[6].set_value(latest_cmd_msg_->orientation.z);
 
   return controller_interface::return_type::OK;
 }
