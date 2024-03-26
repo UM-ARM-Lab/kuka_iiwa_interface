@@ -13,7 +13,6 @@ using namespace std::placeholders;
 namespace victor_hardware {
 
 Side::Side(std::string const& name) : side_name_(name), logger_(rclcpp::get_logger("VictorHardwareInterface." + name)) {
-  hw_cmd_position_.fill(std::numeric_limits<double>::quiet_NaN());
   hw_state_ft_.fill(0.0);
 }
 
@@ -45,20 +44,30 @@ void Side::add_state_interfaces(std::vector<hardware_interface::StateInterface>&
 void Side::add_command_interfaces(hardware_interface::HardwareInfo const& info,
                                   std::vector<hardware_interface::CommandInterface>& command_interfaces) {
   // Cartesian pose interfaces
-  command_interfaces.emplace_back(side_name_, CARTESIAN_XT_INTERFACE, &hw_cmd_cartesian_pose_.position.x);
-  command_interfaces.emplace_back(side_name_, CARTESIAN_YT_INTERFACE, &hw_cmd_cartesian_pose_.position.y);
-  command_interfaces.emplace_back(side_name_, CARTESIAN_ZT_INTERFACE, &hw_cmd_cartesian_pose_.position.z);
-  command_interfaces.emplace_back(side_name_, CARTESIAN_WR_INTERFACE, &hw_cmd_cartesian_pose_.orientation.w);
-  command_interfaces.emplace_back(side_name_, CARTESIAN_XR_INTERFACE, &hw_cmd_cartesian_pose_.orientation.x);
-  command_interfaces.emplace_back(side_name_, CARTESIAN_YR_INTERFACE, &hw_cmd_cartesian_pose_.orientation.y);
-  command_interfaces.emplace_back(side_name_, CARTESIAN_ZR_INTERFACE, &hw_cmd_cartesian_pose_.orientation.z);
+  command_interfaces.emplace_back(side_name_, CARTESIAN_XT_INTERFACE, &motion_cmd_.cartesian_pose.xt);
+  command_interfaces.emplace_back(side_name_, CARTESIAN_YT_INTERFACE, &motion_cmd_.cartesian_pose.yt);
+  command_interfaces.emplace_back(side_name_, CARTESIAN_ZT_INTERFACE, &motion_cmd_.cartesian_pose.zt);
+  command_interfaces.emplace_back(side_name_, CARTESIAN_WR_INTERFACE, &motion_cmd_.cartesian_pose.wr);
+  command_interfaces.emplace_back(side_name_, CARTESIAN_XR_INTERFACE, &motion_cmd_.cartesian_pose.xr);
+  command_interfaces.emplace_back(side_name_, CARTESIAN_YR_INTERFACE, &motion_cmd_.cartesian_pose.yr);
+  command_interfaces.emplace_back(side_name_, CARTESIAN_ZR_INTERFACE, &motion_cmd_.cartesian_pose.zr);
 
-  // Joint interfaces
-  for (uint i = 0; i < 7; i++) {
-    // The interface names should be consistent with ros2_controllers.yaml and URDF
-    auto const& name = "victor_" + side_name_ + "_arm_joint_" + std::to_string(i + 1);
-    command_interfaces.emplace_back(name, hardware_interface::HW_IF_POSITION, &hw_cmd_position_[i]);
-  }
+  // The interface names should be consistent with ros2_controllers.yaml and URDF
+  auto const& prefix = "victor_" + side_name_ + "_arm_";
+  command_interfaces.emplace_back(prefix + "joint_1", hardware_interface::HW_IF_POSITION,
+                                  &motion_cmd_.joint_position.joint_1);
+  command_interfaces.emplace_back(prefix + "joint_2", hardware_interface::HW_IF_POSITION,
+                                  &motion_cmd_.joint_position.joint_2);
+  command_interfaces.emplace_back(prefix + "joint_3", hardware_interface::HW_IF_POSITION,
+                                  &motion_cmd_.joint_position.joint_3);
+  command_interfaces.emplace_back(prefix + "joint_4", hardware_interface::HW_IF_POSITION,
+                                  &motion_cmd_.joint_position.joint_4);
+  command_interfaces.emplace_back(prefix + "joint_5", hardware_interface::HW_IF_POSITION,
+                                  &motion_cmd_.joint_position.joint_5);
+  command_interfaces.emplace_back(prefix + "joint_6", hardware_interface::HW_IF_POSITION,
+                                  &motion_cmd_.joint_position.joint_6);
+  command_interfaces.emplace_back(prefix + "joint_7", hardware_interface::HW_IF_POSITION,
+                                  &motion_cmd_.joint_position.joint_7);
 
   // Command interfaces to represent the control modes
   command_interfaces.emplace_back(side_name_, JOINT_POSITION_INTERFACE, &hw_cmd_joint_position_control_mode_);
@@ -70,6 +79,28 @@ void Side::add_command_interfaces(hardware_interface::HardwareInfo const& info,
 CallbackReturn Side::on_init(std::shared_ptr<rclcpp::Node> const& node, std::string const& send_provider,
                              std::string const& recv_provider) {
   hw_state_ft_.fill(0);
+  motion_cmd_.joint_velocity.joint_1 = 0.;
+  motion_cmd_.joint_velocity.joint_2 = 0.;
+  motion_cmd_.joint_velocity.joint_3 = 0.;
+  motion_cmd_.joint_velocity.joint_4 = 0.;
+  motion_cmd_.joint_velocity.joint_5 = 0.;
+  motion_cmd_.joint_velocity.joint_6 = 0.;
+  motion_cmd_.joint_velocity.joint_7 = 0.;
+  motion_cmd_.joint_position.joint_1 = std::numeric_limits<double>::quiet_NaN();
+  motion_cmd_.joint_position.joint_2 = std::numeric_limits<double>::quiet_NaN();
+  motion_cmd_.joint_position.joint_3 = std::numeric_limits<double>::quiet_NaN();
+  motion_cmd_.joint_position.joint_4 = std::numeric_limits<double>::quiet_NaN();
+  motion_cmd_.joint_position.joint_5 = std::numeric_limits<double>::quiet_NaN();
+  motion_cmd_.joint_position.joint_6 = std::numeric_limits<double>::quiet_NaN();
+  motion_cmd_.joint_position.joint_7 = std::numeric_limits<double>::quiet_NaN();
+  motion_cmd_.cartesian_pose.xt = std::numeric_limits<double>::quiet_NaN();
+  motion_cmd_.cartesian_pose.yt = std::numeric_limits<double>::quiet_NaN();
+  motion_cmd_.cartesian_pose.zt = std::numeric_limits<double>::quiet_NaN();
+  motion_cmd_.cartesian_pose.wr = std::numeric_limits<double>::quiet_NaN();
+  motion_cmd_.cartesian_pose.xr = std::numeric_limits<double>::quiet_NaN();
+  motion_cmd_.cartesian_pose.yr = std::numeric_limits<double>::quiet_NaN();
+  motion_cmd_.cartesian_pose.zr = std::numeric_limits<double>::quiet_NaN();
+  has_active_controller_ = false;
   send_lcm_ptr_ = std::make_shared<lcm::LCM>(send_provider);
   recv_lcm_ptr_ = std::make_shared<lcm::LCM>(recv_provider);
 
@@ -162,41 +193,24 @@ hardware_interface::return_type Side::send_motion_command() {
     return hardware_interface::return_type::OK;
   }
 
+  // Make sure the current active control mode matches what the latest mode_switch says it should be
+  auto const& current_control_mode = control_mode_client_->getControlMode().control_mode.mode;
+  if (latest_control_mode_ != current_control_mode) {
+    RCLCPP_ERROR(logger_, "Current control mode does not match active control mode, not sending motion command");
+    return hardware_interface::return_type::ERROR;
+  }
+
   auto const now = std::chrono::system_clock::now();
   auto const now_tp = std::chrono::time_point_cast<std::chrono::seconds>(now);
   std::chrono::duration<double> const now_dur_seconds = now_tp.time_since_epoch();
   auto const now_seconds = now_dur_seconds.count();
 
-  victor_lcm_interface::motion_command motion_cmd{};
-  motion_cmd.timestamp = now_seconds;
-  // Assuming the current control mode is the correct one to use based on the controllers
-  motion_cmd.control_mode.mode = control_mode_client_->getControlMode().control_mode.mode;
-  // the fields in hw_cmd_* are bound to the controllers, which update their values
-  motion_cmd.joint_position.joint_1 = hw_cmd_position_[0];
-  motion_cmd.joint_position.joint_2 = hw_cmd_position_[1];
-  motion_cmd.joint_position.joint_3 = hw_cmd_position_[2];
-  motion_cmd.joint_position.joint_4 = hw_cmd_position_[3];
-  motion_cmd.joint_position.joint_5 = hw_cmd_position_[4];
-  motion_cmd.joint_position.joint_6 = hw_cmd_position_[5];
-  motion_cmd.joint_position.joint_7 = hw_cmd_position_[6];
-  motion_cmd.cartesian_pose.xt = hw_cmd_cartesian_pose_.position.x;
-  motion_cmd.cartesian_pose.yt = hw_cmd_cartesian_pose_.position.y;
-  motion_cmd.cartesian_pose.zt = hw_cmd_cartesian_pose_.position.z;
-  motion_cmd.cartesian_pose.wr = hw_cmd_cartesian_pose_.orientation.w;
-  motion_cmd.cartesian_pose.xr = hw_cmd_cartesian_pose_.orientation.x;
-  motion_cmd.cartesian_pose.yr = hw_cmd_cartesian_pose_.orientation.y;
-  motion_cmd.cartesian_pose.zr = hw_cmd_cartesian_pose_.orientation.z;
-  motion_cmd.joint_velocity.joint_1 = 0.;
-  motion_cmd.joint_velocity.joint_2 = 0.;
-  motion_cmd.joint_velocity.joint_3 = 0.;
-  motion_cmd.joint_velocity.joint_4 = 0.;
-  motion_cmd.joint_velocity.joint_5 = 0.;
-  motion_cmd.joint_velocity.joint_6 = 0.;
-  motion_cmd.joint_velocity.joint_7 = 0.;
+  motion_cmd_.timestamp = now_seconds;
+  motion_cmd_.control_mode.mode = latest_control_mode_;
 
-  const auto validity_check_results = validateMotionCommand(motion_cmd);
+  const auto validity_check_results = validateMotionCommand(motion_cmd_);
   if (validity_check_results.first) {
-    send_lcm_ptr_->publish(DEFAULT_MOTION_COMMAND_CHANNEL, &motion_cmd);
+    send_lcm_ptr_->publish(DEFAULT_MOTION_COMMAND_CHANNEL, &motion_cmd_);
   } else {
     rclcpp::Clock clock;
     RCLCPP_WARN_STREAM_THROTTLE(logger_, clock, 5000,
@@ -214,13 +228,17 @@ hardware_interface::return_type Side::perform_command_mode_switch(const std::vec
   bool success = true;
   for (auto const& interface : start_interfaces) {
     if (interface == side_name_ + "/" + JOINT_POSITION_INTERFACE) {
-      success = control_mode_client_->updateControlMode(victor_lcm_interface::control_mode::JOINT_POSITION);
+      latest_control_mode_ = victor_lcm_interface::control_mode::JOINT_POSITION;
+      success = control_mode_client_->updateControlMode(latest_control_mode_);
     } else if (interface == side_name_ + "/" + JOINT_IMPEDANCE_INTERFACE) {
-      success = control_mode_client_->updateControlMode(victor_lcm_interface::control_mode::JOINT_IMPEDANCE);
+      latest_control_mode_ = victor_lcm_interface::control_mode::JOINT_IMPEDANCE;
+      success = control_mode_client_->updateControlMode(latest_control_mode_);
     } else if (interface == side_name_ + "/" + CARTESIAN_POSE_INTERFACE) {
-      success = control_mode_client_->updateControlMode(victor_lcm_interface::control_mode::CARTESIAN_POSE);
+      latest_control_mode_ = victor_lcm_interface::control_mode::CARTESIAN_POSE;
+      success = control_mode_client_->updateControlMode(latest_control_mode_);
     } else if (interface == side_name_ + "/" + CARTESIAN_IMPEDANCE_INTERFACE) {
-      success = control_mode_client_->updateControlMode(victor_lcm_interface::control_mode::CARTESIAN_IMPEDANCE);
+      latest_control_mode_ = victor_lcm_interface::control_mode::CARTESIAN_IMPEDANCE;
+      success = control_mode_client_->updateControlMode(latest_control_mode_);
     }
   }
 
@@ -228,9 +246,31 @@ hardware_interface::return_type Side::perform_command_mode_switch(const std::vec
     return hardware_interface::return_type::ERROR;
   }
 
+  reset_motion_cmd_to_current_measured();
+
   has_active_controller_ = true;
 
   return hardware_interface::return_type::OK;
+}
+
+void Side::reset_motion_cmd_to_current_measured() {
+  auto const& status = motion_status_listener_->getLatestMessage();
+
+  motion_cmd_.joint_position.joint_1 = status.measured_joint_position.joint_1;
+  motion_cmd_.joint_position.joint_2 = status.measured_joint_position.joint_2;
+  motion_cmd_.joint_position.joint_3 = status.measured_joint_position.joint_3;
+  motion_cmd_.joint_position.joint_4 = status.measured_joint_position.joint_4;
+  motion_cmd_.joint_position.joint_5 = status.measured_joint_position.joint_5;
+  motion_cmd_.joint_position.joint_6 = status.measured_joint_position.joint_6;
+  motion_cmd_.joint_position.joint_7 = status.measured_joint_position.joint_7;
+
+  motion_cmd_.cartesian_pose.xt = status.measured_cartesian_pose.xt;
+  motion_cmd_.cartesian_pose.yt = status.measured_cartesian_pose.yt;
+  motion_cmd_.cartesian_pose.zt = status.measured_cartesian_pose.zt;
+  motion_cmd_.cartesian_pose.wr = status.measured_cartesian_pose.wr;
+  motion_cmd_.cartesian_pose.xr = status.measured_cartesian_pose.xr;
+  motion_cmd_.cartesian_pose.yr = status.measured_cartesian_pose.yr;
+  motion_cmd_.cartesian_pose.zr = status.measured_cartesian_pose.zr;
 }
 
 }  // namespace victor_hardware

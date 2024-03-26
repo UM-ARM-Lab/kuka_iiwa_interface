@@ -374,30 +374,35 @@ ErrorType validateCartesianPose(const geometry_msgs::msg::Pose &pose, const std:
 
 ErrorType validateMotionCommand(const victor_lcm_interface::motion_command &command) {
   // Check for very likely to be invalid commands
-  auto const &invalid_pose = command.cartesian_pose.xt == 0.0 && command.cartesian_pose.yt == 0.0 &&
-                             command.cartesian_pose.zt == 0.0 && command.cartesian_pose.xr == 0.0 &&
-                             command.cartesian_pose.yr == 0.0 && command.cartesian_pose.zr == 0.0 &&
-                             command.cartesian_pose.wr == 0.0;
-  if (invalid_pose && command.control_mode.mode == victor_lcm_interface::control_mode::CARTESIAN_POSE) {
-    return {false,
-            "Commanded cartesian pose is all zeros! That would cause the end-effector to crash into the base"
-            " Perhaps the pose is uninitialized?"};
-  }
-  if (invalid_pose && command.control_mode.mode == victor_lcm_interface::control_mode::CARTESIAN_IMPEDANCE) {
-    return {false,
-            "Commanded cartesian pose is all zeros! That would cause the end-effector to crash into the base"
-            " Perhaps the pose is uninitialized?"};
-  }
-
-  auto const &any_nan = std::isnan(command.joint_position.joint_1) || std::isnan(command.joint_position.joint_2) ||
-                        std::isnan(command.joint_position.joint_3) || std::isnan(command.joint_position.joint_4) ||
-                        std::isnan(command.joint_position.joint_5) || std::isnan(command.joint_position.joint_6) ||
-                        std::isnan(command.joint_position.joint_7);
-  if (any_nan && command.control_mode.mode == victor_lcm_interface::control_mode::JOINT_POSITION) {
-    return {false, "position command contains NaN in JOIN_POSITION mode"};
-  }
-  if (any_nan && command.control_mode.mode == victor_lcm_interface::control_mode::JOINT_IMPEDANCE) {
-    return {false, "position command contains NaN in JOIN_IMPEDANCE mode"};
+  if (command.control_mode.mode == victor_lcm_interface::control_mode::CARTESIAN_POSE ||
+      command.control_mode.mode == victor_lcm_interface::control_mode::CARTESIAN_IMPEDANCE) {
+    auto const &zero_pose = command.cartesian_pose.xt == 0.0 && command.cartesian_pose.yt == 0.0 &&
+                            command.cartesian_pose.zt == 0.0 && command.cartesian_pose.xr == 0.0 &&
+                            command.cartesian_pose.yr == 0.0 && command.cartesian_pose.zr == 0.0 &&
+                            command.cartesian_pose.wr == 0.0;
+    auto const &nan_pose = std::isnan(command.cartesian_pose.xt) || std::isnan(command.cartesian_pose.yt) ||
+                           std::isnan(command.cartesian_pose.zt) || std::isnan(command.cartesian_pose.xr) ||
+                           std::isnan(command.cartesian_pose.yr) || std::isnan(command.cartesian_pose.zr) ||
+                           std::isnan(command.cartesian_pose.wr);
+    if (zero_pose) {
+      return {false,
+              "Commanded cartesian pose is all zeros! That would cause the end-effector to crash into the base"
+              " Perhaps the pose is uninitialized?"};
+    }
+    if (nan_pose) {
+      return {false, "Commanded cartesian pose contains NaN"};
+    }
+  } else if (command.control_mode.mode == victor_lcm_interface::control_mode::JOINT_POSITION ||
+             command.control_mode.mode == victor_lcm_interface::control_mode::JOINT_IMPEDANCE) {
+    auto const &nan_joint = std::isnan(command.joint_position.joint_1) || std::isnan(command.joint_position.joint_2) ||
+                            std::isnan(command.joint_position.joint_3) || std::isnan(command.joint_position.joint_4) ||
+                            std::isnan(command.joint_position.joint_5) || std::isnan(command.joint_position.joint_6) ||
+                            std::isnan(command.joint_position.joint_7);
+    if (nan_joint) {
+      return {false, "Commanded joint position contains NaN"};
+    }
+  } else {
+    return {false, "Invalid control mode"};
   }
 
   return {true, ""};

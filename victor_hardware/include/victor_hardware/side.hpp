@@ -53,8 +53,7 @@ class Side {
 
   std::string side_name_;
 
-  geometry_msgs::msg::Pose hw_cmd_cartesian_pose_;
-  std::array<double, 7> hw_cmd_position_{};
+  victor_lcm_interface::motion_command motion_cmd_{};
   // The value of these variables does not matter, they allow the HW IF to determine, in the switch mode functions,
   // which control mode is being switched to.
   double hw_cmd_joint_position_control_mode_;
@@ -66,6 +65,7 @@ class Side {
   std::array<double, 6> hw_state_ft_{};
   geometry_msgs::msg::Pose hw_state_cartesian_pose_;
   geometry_msgs::msg::Pose hw_state_cmd_cartesian_pose_;
+  victor_lcm_interface::motion_status hw_state_motion_status_;
 
   LCMPtr send_lcm_ptr_;
   LCMPtr recv_lcm_ptr_;
@@ -94,6 +94,8 @@ class Side {
  private:
   rclcpp::Logger logger_;
   bool has_active_controller_{false};
+  int8_t latest_control_mode_ = victor_lcm_interface::control_mode::JOINT_POSITION;
+  void reset_motion_cmd_to_current_measured();
 };
 
 }  // namespace victor_hardware
