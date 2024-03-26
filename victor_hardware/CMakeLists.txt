@@ -48,6 +48,7 @@ add_library(victor_hardware
         include/victor_hardware/lcm_ostream_operators.hpp
         # template implementations
         include/victor_hardware/kuka_control_mode_client.hpp
+        include/victor_hardware/control_mode_params_helper.hpp
         include/victor_hardware/lcm_listener.hpp
         # Controllers and broadcasters also get added to this library
         src/kuka_cartesian_controller.cpp

@@ -1,3 +1,4 @@
+#include <lifecycle_msgs/msg/state.hpp>
 #include <string>
 #include <vector>
 #include <victor_hardware/constants.hpp>
@@ -16,6 +17,7 @@ controller_interface::CallbackReturn KukaCartesianController::on_init() {
   auto const &send_provider = side_name_ == "left" ? LEFT_SEND_PROVIDER : RIGHT_SEND_PROVIDER;
 
   send_lcm_ptr_ = std::make_shared<lcm::LCM>(send_provider);
+  params_helper_ = std::make_shared<ControlModeParamsHelper>(node, LCMPtrs{send_lcm_ptr_});
 
   // Parameters for the cartesian impedance controller
   rcl_interfaces::msg::ParameterDescriptor max_x_velocity_desc;
@@ -39,37 +41,36 @@ controller_interface::CallbackReturn KukaCartesianController::on_init() {
 
     // This callback gets call when any parameter is updated, but we only care about params starting with "kuka",
     // So first filter out the params we don't care about.
-    std::vector<rclcpp::Parameter> kuka_params;
-    std::copy_if(params.cbegin(), params.cend(), std::back_inserter(kuka_params),
+    std::vector<rclcpp::Parameter> kuka_ros_params;
+    std::copy_if(params.cbegin(), params.cend(), std::back_inserter(kuka_ros_params),
                  [](const rclcpp::Parameter &parameter) { return parameter.get_name().find("kuka") == 0; });
 
-    if (kuka_params.empty()) {
+    if (kuka_ros_params.empty()) {
       return result;
     }
 
-    for (const auto &param : kuka_params) {
+    auto &params_msg = params_helper_->params();
+    for (const auto &param : kuka_ros_params) {
       RCLCPP_INFO_STREAM(get_node()->get_logger(),
                          "Updating param: " << param.get_name() << " to " << param.value_to_string());
 
       if (param.get_name() == "kuka.max_velocity.x") {
-        kuka_mode_params_.cartesian_path_execution_params.max_velocity.x = param.as_double();
+        params_msg.cartesian_path_execution_params.max_velocity.x = param.as_double();
       }
       if (param.get_name() == "kuka.max_velocity.y") {
-        kuka_mode_params_.cartesian_path_execution_params.max_velocity.y = param.as_double();
+        params_msg.cartesian_path_execution_params.max_velocity.y = param.as_double();
       }
       if (param.get_name() == "kuka.max_velocity.z") {
-        kuka_mode_params_.cartesian_path_execution_params.max_velocity.z = param.as_double();
+        params_msg.cartesian_path_execution_params.max_velocity.z = param.as_double();
       }
     }
 
-    auto const &validate_mode_result = validateControlMode(kuka_mode_params_);
-    if (!validate_mode_result.first) {
+    auto const &update_result = params_helper_->updateControlModeParams();
+    if (!update_result.first) {
       result.successful = false;
-      result.reason = validate_mode_result.second;
+      result.reason = update_result.second;
       return result;
     }
-
-    send_lcm_ptr_->publish(DEFAULT_CONTROL_MODE_COMMAND_CHANNEL, &kuka_mode_params_);
 
     return result;
   });
@@ -108,7 +109,7 @@ controller_interface::CallbackReturn KukaCartesianController::on_configure(
 
 controller_interface::CallbackReturn KukaCartesianController::on_activate(
     const rclcpp_lifecycle::State &previous_state) {
-  auto const &update_result = updateControlModeParams();
+  auto const &update_result = params_helper_->updateControlModeParams();
   if (!update_result.first) {
     RCLCPP_ERROR_STREAM(get_node()->get_logger(), update_result.second);
     return controller_interface::CallbackReturn::ERROR;
@@ -140,26 +141,6 @@ controller_interface::return_type KukaCartesianController::update(const rclcpp::
   command_interfaces_[6].set_value(latest_cmd_msg_->pose.orientation.z);
 
   return controller_interface::return_type::OK;
-}
-ErrorType KukaCartesianController::updateControlModeParams() {
-  // TODO: wrap up the common usage pattern into a separate class so it's easier to implement/wrap new controllers!
-  auto const &validate_mode_result = validateControlMode(kuka_mode_params_);
-  if (!validate_mode_result.first) {
-    return validate_mode_result;
-  }
-
-  RCLCPP_INFO(get_node()->get_logger(), "Updating control mode params: ");
-  RCLCPP_INFO_STREAM(get_node()->get_logger(), kuka_mode_params_);
-
-  // Send it a bunch of times to make sure it gets there, and to stall to let the change take place...
-  // Since the HW IF will be reading and sending the new params
-  for (auto i{0}; i < 10; ++i) {
-    send_lcm_ptr_->publish(DEFAULT_CONTROL_MODE_COMMAND_CHANNEL, &kuka_mode_params_);
-
-    usleep(1000);
-  }
-
-  return {true, ""};
 }
 
 }  // namespace victor_hardware

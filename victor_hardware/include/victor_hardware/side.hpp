@@ -12,6 +12,7 @@
 #include <victor_hardware/kuka_control_mode_client.hpp>
 #include <victor_hardware/lcm_listener.hpp>
 #include <victor_hardware/validators.hpp>
+#include <victor_hardware/types.hpp>
 #include <victor_hardware_interfaces/msg/control_mode_parameters.hpp>
 #include <victor_hardware_interfaces/msg/motion_command.hpp>
 #include <victor_hardware_interfaces/msg/motion_status.hpp>
@@ -65,8 +66,8 @@ class Side {
   geometry_msgs::msg::Pose hw_state_cartesian_pose_;
   geometry_msgs::msg::Pose hw_state_cmd_cartesian_pose_;
 
-  std::shared_ptr<lcm::LCM> send_lcm_ptr_;
-  std::shared_ptr<lcm::LCM> recv_lcm_ptr_;
+  LCMPtr send_lcm_ptr_;
+  LCMPtr recv_lcm_ptr_;
 
   std::string cartesian_control_frame_;
 

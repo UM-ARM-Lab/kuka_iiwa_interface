@@ -2,20 +2,23 @@
 
 #include <iostream>
 #include <lcm/lcm-cpp.hpp>
-#include <optional>
 #include <mutex>
+#include <optional>
+#include <victor_hardware/types.hpp>
+
+namespace victor_hardware {
 
 template <typename T>
 class LcmListener {
   using UserCallbackType = std::function<void(const T&)>;
 
  public:
-  LcmListener(std::shared_ptr<lcm::LCM> const& lcm, const std::string& channel, UserCallbackType const& cb)
+  LcmListener(LCMPtr const& lcm, const std::string& channel, UserCallbackType const& cb)
       : lcm_(lcm), channel_(channel), callback_(cb) {
     lcm_->subscribe(channel, &LcmListener::callback, this);
   }
 
-  LcmListener(std::shared_ptr<lcm::LCM> const& lcm, const std::string& channel) : lcm_(lcm), channel_(channel) {
+  LcmListener(LCMPtr const& lcm, const std::string& channel) : lcm_(lcm), channel_(channel) {
     lcm_->subscribe(channel, &LcmListener::callback, this);
   }
 
@@ -43,10 +46,12 @@ class LcmListener {
   }
 
  private:
-  std::shared_ptr<lcm::LCM> lcm_;
+  LCMPtr lcm_;
   std::string channel_;
   T latest_message_{};
   std::optional<UserCallbackType> callback_;
   bool has_latest_message_{false};
   mutable std::mutex mutex_;
 };
+
+}  // namespace victor_hardware

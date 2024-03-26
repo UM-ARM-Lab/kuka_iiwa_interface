@@ -5,6 +5,7 @@
 #include <rclcpp/rclcpp.hpp>
 #include <rclcpp_lifecycle/lifecycle_node.hpp>
 #include <victor_hardware/constants.hpp>
+#include <victor_hardware/types.hpp>
 #include <victor_hardware/lcm_listener.hpp>
 #include <victor_hardware/lcm_ros_conversions.hpp>
 #include <victor_lcm_interface/control_mode_parameters.hpp>
@@ -26,8 +27,8 @@ class KukaControlModeClient {
   };
 
   /** Only one process/thread can subscribe to a LCM channel, so use this constructor if you're already doing LCM **/
-  KukaControlModeClient(std::shared_ptr<NodeType> node, std::shared_ptr<lcm::LCM> const& recv_provider,
-                        std::shared_ptr<lcm::LCM> const& send_provider, std::function<void(victor_lcm_interface::control_mode_parameters const&)> const& control_mode_callback)
+  KukaControlModeClient(std::shared_ptr<NodeType> node, LCMPtr const& recv_provider,
+                        LCMPtr const& send_provider, std::function<void(victor_lcm_interface::control_mode_parameters const&)> const& control_mode_callback)
       : node_(node), recv_lcm_ptr_(recv_provider), send_lcm_ptr_(send_provider) {
     control_mode_listener_ = std::make_unique<LcmListener<victor_lcm_interface::control_mode_parameters>>(
         recv_lcm_ptr_, DEFAULT_CONTROL_MODE_STATUS_CHANNEL, control_mode_callback);
@@ -94,8 +95,8 @@ class KukaControlModeClient {
   };
 
   std::shared_ptr<NodeType> node_;
-  std::shared_ptr<lcm::LCM> recv_lcm_ptr_;
-  std::shared_ptr<lcm::LCM> send_lcm_ptr_;
+  LCMPtr recv_lcm_ptr_;
+  LCMPtr send_lcm_ptr_;
 
   // listener
   std::unique_ptr<LcmListener<victor_lcm_interface::control_mode_parameters>> control_mode_listener_;

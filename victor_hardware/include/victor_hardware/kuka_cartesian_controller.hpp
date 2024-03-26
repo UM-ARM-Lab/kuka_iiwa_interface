@@ -5,9 +5,11 @@
 #include <optional>
 #include <rclcpp/rclcpp.hpp>
 #include <victor_hardware/constants.hpp>
+#include <victor_hardware/control_mode_params_helper.hpp>
 #include <victor_hardware/kuka_control_mode_client.hpp>
-#include <victor_lcm_interface/control_mode_parameters.hpp>
+#include <victor_hardware/types.hpp>
 #include <victor_hardware/validators.hpp>
+#include <victor_lcm_interface/control_mode_parameters.hpp>
 
 namespace victor_hardware {
 
@@ -30,8 +32,6 @@ class KukaCartesianController : public controller_interface::ControllerInterface
   controller_interface::return_type update(const rclcpp::Time &time, const rclcpp::Duration &period) override;
 
  private:
-  ErrorType updateControlModeParams();
-
   std::string side_name_;
   std::string arm_name_;
   std::string control_mode_interface_;
@@ -42,8 +42,8 @@ class KukaCartesianController : public controller_interface::ControllerInterface
 
   rclcpp::node_interfaces::OnSetParametersCallbackHandle::SharedPtr set_parameters_handle_;
 
-  victor_lcm_interface::control_mode_parameters kuka_mode_params_ = default_control_mode_parameters();
+  LCMPtr send_lcm_ptr_;
 
-  std::shared_ptr<lcm::LCM> send_lcm_ptr_;
+  ControlModeParamsHelper::SharedPtr params_helper_;
 };
 }  // namespace victor_hardware
