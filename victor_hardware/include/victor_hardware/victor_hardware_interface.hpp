@@ -40,6 +40,12 @@ class VictorHardwareInterface : public hardware_interface::SystemInterface {
 
   hardware_interface::return_type write(const rclcpp::Time& time, const rclcpp::Duration& period) override;
 
+  hardware_interface::return_type prepare_command_mode_switch(const std::vector<std::string>& start_interfaces,
+                                                              const std::vector<std::string>& stop_interfaces) override;
+
+  hardware_interface::return_type perform_command_mode_switch(const std::vector<std::string>& start_interfaces,
+                                                              const std::vector<std::string>& stop_interfaces) override;
+
  private:
   // Node for custom ROS API that goes beyond what ros2 control allows
   std::shared_ptr<rclcpp::Node> node_;

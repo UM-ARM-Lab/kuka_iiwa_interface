@@ -10,12 +10,11 @@ controller_interface::CallbackReturn KukaCartesianController::on_init() {
   auto node = get_node();
 
   side_name_ = node->get_parameter("side").as_string();
+  control_mode_interface_ = node->get_parameter("control_mode").as_string();
   arm_name_ = side_name_ + "_arm";
-  auto const &recv_provider = side_name_ == "left" ? LEFT_RECV_PROVIDER : RIGHT_RECV_PROVIDER;
   auto const &send_provider = side_name_ == "left" ? LEFT_SEND_PROVIDER : RIGHT_SEND_PROVIDER;
 
-  control_mode_client_ =
-      std::make_shared<KukaControlModeClientLifecycleNode>(node, recv_provider, send_provider);
+  send_lcm_ptr_ = std::make_shared<lcm::LCM>(send_provider);
 
   // Parameters for the cartesian impedance controller
   rcl_interfaces::msg::ParameterDescriptor max_x_velocity_desc;
@@ -69,11 +68,7 @@ controller_interface::CallbackReturn KukaCartesianController::on_init() {
       return result;
     }
 
-    auto const &update_success = control_mode_client_->updateControlModeParameters(kuka_mode_params_);
-    if (!update_success) {
-      result.successful = false;
-      result.reason = "Failed to update control mode";
-    }
+    send_lcm_ptr_->publish(DEFAULT_CONTROL_MODE_COMMAND_CHANNEL, &kuka_mode_params_);
 
     return result;
   });
@@ -97,6 +92,7 @@ controller_interface::InterfaceConfiguration KukaCartesianController::command_in
   config.names.push_back(side_name_ + "/" + CARTESIAN_XR_INTERFACE);
   config.names.push_back(side_name_ + "/" + CARTESIAN_YR_INTERFACE);
   config.names.push_back(side_name_ + "/" + CARTESIAN_ZR_INTERFACE);
+  config.names.push_back(side_name_ + "/" + control_mode_interface_);
   return config;
 }
 
@@ -111,14 +107,6 @@ controller_interface::CallbackReturn KukaCartesianController::on_configure(
 
 controller_interface::CallbackReturn KukaCartesianController::on_activate(
     const rclcpp_lifecycle::State &previous_state) {
-  RCLCPP_INFO(get_node()->get_logger(), "Activating KukaCartesianController");
-  auto const &success =
-      control_mode_client_->updateControlMode(victor_lcm_interface::control_mode::CARTESIAN_IMPEDANCE);
-  if (!success) {
-    RCLCPP_ERROR(get_node()->get_logger(), "Failed to set control mode to CARTESIAN_IMPEDANCE");
-    return controller_interface::CallbackReturn::ERROR;
-  }
-
   return controller_interface::CallbackReturn::SUCCESS;
 }
 

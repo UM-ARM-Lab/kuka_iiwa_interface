@@ -1,0 +1,1 @@
+#include <victor_hardware/lcm_ostream_operators.hpp>

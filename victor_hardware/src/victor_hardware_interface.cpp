@@ -19,7 +19,6 @@ CallbackReturn VictorHardwareInterface::on_init(const hardware_interface::Hardwa
   hw_states_cmd_position_.resize(info_.joints.size(), std::numeric_limits<double>::quiet_NaN());
   hw_states_external_torque_sensor_.resize(info_.joints.size(), 0);
 
-
   RCLCPP_INFO(logger, "===================================================================================");
   RCLCPP_INFO(logger, "Please start the LCMRobotInterface application on BOTH pendants!");
   RCLCPP_INFO(logger, "===================================================================================");
@@ -31,8 +30,8 @@ CallbackReturn VictorHardwareInterface::on_init(const hardware_interface::Hardwa
   executor_ = std::make_shared<AsyncExecutor>();
   executor_->add_node(node_);
 
-  left.on_init(executor_, node_, LEFT_SEND_PROVIDER, LEFT_RECV_PROVIDER);
-  right.on_init(executor_, node_, RIGHT_SEND_PROVIDER, RIGHT_RECV_PROVIDER);
+  left.on_init(node_, LEFT_SEND_PROVIDER, LEFT_RECV_PROVIDER);
+  right.on_init(node_, RIGHT_SEND_PROVIDER, RIGHT_RECV_PROVIDER);
 
   return CallbackReturn::SUCCESS;
 }
@@ -245,6 +244,19 @@ hardware_interface::return_type VictorHardwareInterface::write(const rclcpp::Tim
   }
 
   return hardware_interface::return_type::OK;
+}
+hardware_interface::return_type VictorHardwareInterface::prepare_command_mode_switch(
+    const std::vector<std::string>& start_interfaces, const std::vector<std::string>& stop_interfaces) {
+  // Check for errors:
+  //  - no control mode interfaces are claimed, that's likely an error
+
+  return SystemInterface::prepare_command_mode_switch(start_interfaces, stop_interfaces);
+}
+hardware_interface::return_type VictorHardwareInterface::perform_command_mode_switch(
+    const std::vector<std::string>& start_interfaces, const std::vector<std::string>& stop_interfaces) {
+  left.perform_command_mode_switch(start_interfaces);
+  right.perform_command_mode_switch(start_interfaces);
+  return SystemInterface::perform_command_mode_switch(start_interfaces, stop_interfaces);
 }
 
 }  // namespace victor_hardware

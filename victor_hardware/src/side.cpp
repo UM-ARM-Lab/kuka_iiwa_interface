@@ -43,9 +43,15 @@ void Side::add_command_interfaces(hardware_interface::HardwareInfo const& info,
     auto const& name = "victor_" + side_name_ + "_arm_joint_" + std::to_string(i + 1);
     command_interfaces.emplace_back(name, hardware_interface::HW_IF_POSITION, &hw_cmd_position_[i]);
   }
+
+  // Command interfaces to represent the control modes
+  command_interfaces.emplace_back(side_name_, JOINT_POSITION_INTERFACE, &hw_cmd_joint_position_control_mode_);
+  command_interfaces.emplace_back(side_name_, JOINT_IMPEDANCE_INTERFACE, &hw_cmd_joint_impedance_control_mode_);
+  command_interfaces.emplace_back(side_name_, CARTESIAN_POSE_INTERFACE, &hw_cmd_cartesian_pose_control_mode_);
+  command_interfaces.emplace_back(side_name_, CARTESIAN_IMPEDANCE_INTERFACE, &hw_cmd_cartesian_impedance_control_mode_);
 }
-CallbackReturn Side::on_init(std::shared_ptr<rclcpp::Executor> const& executor,
-                             std::shared_ptr<rclcpp::Node> const& node, std::string const& send_provider,
+
+CallbackReturn Side::on_init(std::shared_ptr<rclcpp::Node> const& node, std::string const& send_provider,
                              std::string const& recv_provider) {
   hw_ft_.fill(0);
   send_lcm_ptr_ = std::make_shared<lcm::LCM>(send_provider);
@@ -142,9 +148,34 @@ hardware_interface::return_type Side::send_motion_command() {
 
   const auto validity_check_results = validateMotionCommand(motion_cmd);
   if (validity_check_results.first) {
-    send_lcm_ptr_->publish(DEFAULT_MOTION_COMMAND_CHANNEL, &motion_cmd);
+//    send_lcm_ptr_->publish(DEFAULT_MOTION_COMMAND_CHANNEL, &motion_cmd);
   } else {
-    //    RCLCPP_ERROR_STREAM(logger_, "Arm motion command failed validity checks: " << validity_check_results.second);
+    rclcpp::Clock clock;
+    RCLCPP_WARN_STREAM_THROTTLE(logger_, clock, 5000,
+                                "Invalid motion command, " << validity_check_results.second << ", not sending");
+  }
+
+  return hardware_interface::return_type::OK;
+}
+
+hardware_interface::return_type Side::perform_command_mode_switch(const std::vector<std::string>& start_interfaces) {
+  // Iterate over the start interfaces, and if any of them are of the form "side_name/control_mode_interface",
+  // then switch that side to that control mode
+  bool success = true;
+  for (auto const& interface : start_interfaces) {
+    if (interface == side_name_ + "/" + JOINT_POSITION_INTERFACE) {
+      success = control_mode_client_->updateControlMode(victor_lcm_interface::control_mode::JOINT_POSITION);
+    } else if (interface == side_name_ + "/" + JOINT_IMPEDANCE_INTERFACE) {
+      success = control_mode_client_->updateControlMode(victor_lcm_interface::control_mode::JOINT_IMPEDANCE);
+    } else if (interface == side_name_ + "/" + CARTESIAN_POSE_INTERFACE) {
+      success = control_mode_client_->updateControlMode(victor_lcm_interface::control_mode::CARTESIAN_POSE);
+    } else if (interface == side_name_ + "/" + CARTESIAN_IMPEDANCE_INTERFACE) {
+      success = control_mode_client_->updateControlMode(victor_lcm_interface::control_mode::CARTESIAN_IMPEDANCE);
+    }
+  }
+
+  if (!success) {
+    return hardware_interface::return_type::ERROR;
   }
 
   return hardware_interface::return_type::OK;

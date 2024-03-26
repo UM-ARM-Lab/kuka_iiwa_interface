@@ -3,13 +3,15 @@
 #include <string>
 #include <victor_hardware/constants.hpp>
 #include <victor_hardware/kuka_joint_trajectory_controller.hpp>
-#include <victor_hardware/validators.hpp>
 
 namespace victor_hardware {
 
 controller_interface::InterfaceConfiguration KukaJointTrajectoryController::command_interface_configuration() const {
   auto command_interface_configuration =
       joint_trajectory_controller::JointTrajectoryController::command_interface_configuration();
+
+  command_interface_configuration.names.emplace_back("left/" + control_mode_interface_);
+  command_interface_configuration.names.emplace_back("right/" + control_mode_interface_);
 
   return command_interface_configuration;
 }
@@ -18,12 +20,10 @@ controller_interface::CallbackReturn KukaJointTrajectoryController::on_init() {
   auto node = get_node();
 
   // Read this once at the beginning, use it in on_activate()
-  control_mode_ = static_cast<int8_t>(node->get_parameter("mode").as_int());
+  control_mode_interface_ = node->get_parameter("control_mode_interface").as_string();
 
-  left_control_mode_client_ =
-      std::make_shared<KukaControlModeClientLifecycleNode>(node, LEFT_RECV_PROVIDER, LEFT_SEND_PROVIDER);
-  right_control_mode_client_ =
-      std::make_shared<KukaControlModeClientLifecycleNode>(node, RIGHT_RECV_PROVIDER, RIGHT_SEND_PROVIDER);
+  left_send_lcm_ptr_ = std::make_shared<lcm::LCM>(LEFT_SEND_PROVIDER);
+  right_send_lcm_ptr_ = std::make_shared<lcm::LCM>(RIGHT_SEND_PROVIDER);
 
   rcl_interfaces::msg::ParameterDescriptor relative_joint_velocity_desc;
   relative_joint_velocity_desc.description = "Relative velocity of the joints. 0 is slowest, 1 is fastest.";
@@ -36,13 +36,25 @@ controller_interface::CallbackReturn KukaJointTrajectoryController::on_init() {
   //  so these defaults may not be used. Or maybe they would be "read" by get params but then be wrong?
   node->declare_parameter<double>("kuka.joint_relative_velocity", 0.1, relative_joint_velocity_desc);
 
-  if (control_mode_ == victor_lcm_interface::control_mode::JOINT_IMPEDANCE) {
+  if (control_mode_interface_ == JOINT_IMPEDANCE_INTERFACE) {
     rcl_interfaces::msg::ParameterDescriptor stiffness_desc;
     stiffness_desc.type = rcl_interfaces::msg::ParameterType::PARAMETER_DOUBLE;
     node->declare_parameter<double>("kuka.stiffness.joint_1", 600.0, stiffness_desc);
     node->declare_parameter<double>("kuka.stiffness.joint_2", 600.0, stiffness_desc);
     node->declare_parameter<double>("kuka.stiffness.joint_3", 300.0, stiffness_desc);
     node->declare_parameter<double>("kuka.stiffness.joint_4", 300.0, stiffness_desc);
+    node->declare_parameter<double>("kuka.stiffness.joint_5", 100.0, stiffness_desc);
+    node->declare_parameter<double>("kuka.stiffness.joint_6", 100.0, stiffness_desc);
+    node->declare_parameter<double>("kuka.stiffness.joint_7", 50.0, stiffness_desc);
+    rcl_interfaces::msg::ParameterDescriptor damping_desc;
+    damping_desc.type = rcl_interfaces::msg::ParameterType::PARAMETER_DOUBLE;
+    node->declare_parameter<double>("kuka.damping.joint_1", 0.7, damping_desc);
+    node->declare_parameter<double>("kuka.damping.joint_2", 0.7, damping_desc);
+    node->declare_parameter<double>("kuka.damping.joint_3", 0.7, damping_desc);
+    node->declare_parameter<double>("kuka.damping.joint_4", 0.7, damping_desc);
+    node->declare_parameter<double>("kuka.damping.joint_5", 0.7, damping_desc);
+    node->declare_parameter<double>("kuka.damping.joint_6", 0.7, damping_desc);
+    node->declare_parameter<double>("kuka.damping.joint_7", 0.7, damping_desc);
   }
 
   set_parameters_handle_ = node->add_on_set_parameters_callback([&](std::vector<rclcpp::Parameter> const &params) {
@@ -61,30 +73,59 @@ controller_interface::CallbackReturn KukaJointTrajectoryController::on_init() {
     }
 
     for (const auto &param : kuka_params) {
-      RCLCPP_INFO_STREAM(get_node()->get_logger(),
-                         "Setting parameter: " << param.get_name() << " " << param.value_to_string());
+      RCLCPP_INFO_STREAM(get_node()->get_logger(), "Setting " << param.get_name() << " " << param.value_to_string());
       if (param.get_name() == "kuka.joint_relative_velocity") {
         kuka_mode_params_.joint_path_execution_params.joint_relative_velocity = param.as_double();
       }
+      if (param.get_name() == "kuka.stiffness.joint_1") {
+        kuka_mode_params_.joint_impedance_params.joint_stiffness.joint_1 = param.as_double();
+      }
+      if (param.get_name() == "kuka.stiffness.joint_2") {
+        kuka_mode_params_.joint_impedance_params.joint_stiffness.joint_2 = param.as_double();
+      }
+      if (param.get_name() == "kuka.stiffness.joint_3") {
+        kuka_mode_params_.joint_impedance_params.joint_stiffness.joint_3 = param.as_double();
+      }
+      if (param.get_name() == "kuka.stiffness.joint_4") {
+        kuka_mode_params_.joint_impedance_params.joint_stiffness.joint_4 = param.as_double();
+      }
+      if (param.get_name() == "kuka.stiffness.joint_5") {
+        kuka_mode_params_.joint_impedance_params.joint_stiffness.joint_5 = param.as_double();
+      }
+      if (param.get_name() == "kuka.stiffness.joint_6") {
+        kuka_mode_params_.joint_impedance_params.joint_stiffness.joint_6 = param.as_double();
+      }
+      if (param.get_name() == "kuka.stiffness.joint_7") {
+        kuka_mode_params_.joint_impedance_params.joint_stiffness.joint_7 = param.as_double();
+      }
+      if (param.get_name() == "kuka.damping.joint_1") {
+        kuka_mode_params_.joint_impedance_params.joint_damping.joint_1 = param.as_double();
+      }
+      if (param.get_name() == "kuka.damping.joint_2") {
+        kuka_mode_params_.joint_impedance_params.joint_damping.joint_2 = param.as_double();
+      }
+      if (param.get_name() == "kuka.damping.joint_3") {
+        kuka_mode_params_.joint_impedance_params.joint_damping.joint_3 = param.as_double();
+      }
+      if (param.get_name() == "kuka.damping.joint_4") {
+        kuka_mode_params_.joint_impedance_params.joint_damping.joint_4 = param.as_double();
+      }
+      if (param.get_name() == "kuka.damping.joint_5") {
+        kuka_mode_params_.joint_impedance_params.joint_damping.joint_5 = param.as_double();
+      }
+      if (param.get_name() == "kuka.damping.joint_6") {
+        kuka_mode_params_.joint_impedance_params.joint_damping.joint_6 = param.as_double();
+      }
+      if (param.get_name() == "kuka.damping.joint_7") {
+        kuka_mode_params_.joint_impedance_params.joint_damping.joint_7 = param.as_double();
+      }
     }
 
-    auto const &validate_mode_result = validateControlMode(kuka_mode_params_);
-    if (!validate_mode_result.first) {
+    auto const &update_result = updateControlModeParams();
+    if (!update_result.first) {
       result.successful = false;
-      result.reason = validate_mode_result.second;
+      result.reason = update_result.second;
       return result;
-    }
-
-    auto const &left_success = left_control_mode_client_->updateControlModeParameters(kuka_mode_params_);
-    auto const &right_success = right_control_mode_client_->updateControlModeParameters(kuka_mode_params_);
-
-    if (!left_success) {
-      result.successful = false;
-      result.reason = "Failed to update control mode for left arm";
-    }
-    if (!right_success) {
-      result.successful = false;
-      result.reason = "Failed to update control mode for right arm";
     }
 
     return result;
@@ -94,25 +135,16 @@ controller_interface::CallbackReturn KukaJointTrajectoryController::on_init() {
   return joint_trajectory_controller::JointTrajectoryController::on_init();
 }
 
-controller_interface::CallbackReturn KukaJointTrajectoryController::on_activate(
-    const rclcpp_lifecycle::State &previous_state) {
-  auto const &left_success = left_control_mode_client_->updateControlMode(control_mode_);
-  if (!left_success) {
-    RCLCPP_ERROR_STREAM(get_node()->get_logger(), "Failed to set left control mode to " << control_mode_);
-    return controller_interface::CallbackReturn::ERROR;
+ErrorType KukaJointTrajectoryController::updateControlModeParams() {
+  auto const &validate_mode_result = validateControlMode(kuka_mode_params_);
+  if (!validate_mode_result.first) {
+    return validate_mode_result;
   }
 
-  auto const &right_success = right_control_mode_client_->updateControlMode(control_mode_);
-  if (!right_success) {
-    RCLCPP_ERROR_STREAM(get_node()->get_logger(), "Failed to set right control mode to " << control_mode_);
-    return controller_interface::CallbackReturn::ERROR;
-  }
+  left_send_lcm_ptr_->publish(DEFAULT_CONTROL_MODE_COMMAND_CHANNEL, &kuka_mode_params_);
+  right_send_lcm_ptr_->publish(DEFAULT_CONTROL_MODE_COMMAND_CHANNEL, &kuka_mode_params_);
 
-  return JointTrajectoryController::on_activate(previous_state);
-}
-controller_interface::return_type KukaJointTrajectoryController::update(const rclcpp::Time &time,
-                                                                        const rclcpp::Duration &period) {
-  return JointTrajectoryController::update(time, period);
+  return {true, ""};
 }
 
 }  // namespace victor_hardware

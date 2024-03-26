@@ -31,19 +31,6 @@ const std::string DEFAULT_CONTROL_MODE_STATUS_CHANNEL("control_mode_status");
 const std::string DEFAULT_GRIPPER_COMMAND_CHANNEL("gripper_command");
 const std::string DEFAULT_GRIPPER_STATUS_CHANNEL("gripper_status");
 
-const std::string CARTESIAN_CONTROL_FRAME_PARAM("cartesian_control_frame");
-const std::string SET_CONTROL_MODE_TIMEOUT_PARAM("set_control_mode_timeout");
-const std::string MOTION_COMMAND_TOPIC_PARAM("motion_command_topic");
-const std::string MOTION_STATUS_TOPIC_PARAM("motion_status_topic");
-const std::string CONTROL_MODE_STATUS_TOPIC_PARAM("control_mode_status_topic");
-const std::string GET_CONTROL_MODE_SERVICE_PARAM("get_control_mode_service");
-const std::string SET_CONTROL_MODE_SERVICE_PARAM("set_control_mode_service");
-const std::string GRIPPER_COMMAND_TOPIC_PARAM("gripper_command_topic");
-const std::string GRIPPER_STATUS_TOPIC_PARAM("gripper_status_topic");
-const std::string MOTION_STATUS_CHANNEL_PARAM("motion_status_channel");
-const std::string CONTROL_MODE_STATUS_CHANNEL_PARAM("control_mode_status_channel");
-const std::string GRIPPER_STATUS_CHANNEL_PARAM("gripper_status_channel");
-
 // ROS2 control interface
 static const char* const COMMANDED_POSITION = "commanded_position";
 static const char* const EXTERNAL_TORQUE = "external_torque";
@@ -54,6 +41,10 @@ const std::string CARTESIAN_WR_INTERFACE = "cartesian_pose/wr";
 const std::string CARTESIAN_XR_INTERFACE = "cartesian_pose/xr";
 const std::string CARTESIAN_YR_INTERFACE = "cartesian_pose/yr";
 const std::string CARTESIAN_ZR_INTERFACE = "cartesian_pose/zr";
+const std::string JOINT_POSITION_INTERFACE = "joint_position";
+const std::string JOINT_IMPEDANCE_INTERFACE = "joint_impedance";
+const std::string CARTESIAN_POSE_INTERFACE = "cartesian_pose";
+const std::string CARTESIAN_IMPEDANCE_INTERFACE = "cartesian_impedance";
 
 constexpr victor_lcm_interface::control_mode_parameters default_control_mode_parameters() {
   victor_lcm_interface::control_mode_parameters params{};

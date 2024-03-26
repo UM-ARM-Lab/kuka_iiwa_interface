@@ -41,6 +41,6 @@ class KukaCartesianController : public controller_interface::ControllerInterface
 
   victor_lcm_interface::control_mode_parameters kuka_mode_params_ = default_control_mode_parameters();
 
-  std::shared_ptr<KukaControlModeClientLifecycleNode> control_mode_client_;
+  std::shared_ptr<lcm::LCM> send_lcm_ptr_;
 };
 }  // namespace victor_hardware

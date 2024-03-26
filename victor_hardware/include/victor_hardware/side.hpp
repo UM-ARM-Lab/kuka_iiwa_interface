@@ -38,9 +38,8 @@ class Side {
   void add_command_interfaces(hardware_interface::HardwareInfo const& info,
                               std::vector<hardware_interface::CommandInterface>& command_interfaces);
   void add_state_interfaces(std::vector<hardware_interface::StateInterface>& state_interfaces);
-  ErrorType validate_and_switch_to_mode_for_interfaces(const std::vector<std::string>& start_interfaces);
 
-  CallbackReturn on_init(std::shared_ptr<rclcpp::Executor> const& executor, std::shared_ptr<rclcpp::Node> const& node,
+  CallbackReturn on_init(std::shared_ptr<rclcpp::Node> const& node,
                          std::string const& send_provider, std::string const& recv_provider);
 
   void gripperCommandROSCallback(const msg::Robotiq3FingerCommand& command);
@@ -48,10 +47,18 @@ class Side {
   void publish_gripper_status(victor_lcm_interface::robotiq_3finger_status const& msg);
   [[nodiscard]] hardware_interface::return_type send_motion_command();
 
+  hardware_interface::return_type perform_command_mode_switch(const std::vector<std::string>& start_interfaces);
+
   std::string side_name_;
 
   geometry_msgs::msg::Pose hw_cmd_cartesian_pose_;
   std::array<double, 7> hw_cmd_position_{};
+  // The value of these variables does not matter, they allow the HW IF to determine, in the switch mode functions,
+  // which control mode is being switched to.
+  double hw_cmd_joint_position_control_mode_;
+  double hw_cmd_joint_impedance_control_mode_;
+  double hw_cmd_cartesian_pose_control_mode_;
+  double hw_cmd_cartesian_impedance_control_mode_;
 
   // These get bound to state interfaces
   std::array<double, 6> hw_ft_{};

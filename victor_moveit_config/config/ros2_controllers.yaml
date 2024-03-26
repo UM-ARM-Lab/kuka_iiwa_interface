@@ -60,7 +60,7 @@ joint_position_trajectory_controller:
       - position
     state_interfaces:
       - position
-    mode: 0  # JOINT_POSITION
+    control_mode_interface: joint_position
 
 joint_impedance_trajectory_controller:
   ros__parameters:
@@ -84,7 +84,7 @@ joint_impedance_trajectory_controller:
       - position
     state_interfaces:
       - position
-    mode: 2  # JOINT_IMPEDANCE
+    control_mode_interface: joint_impedance
 
 left_arm_position_controller:
   ros__parameters:
@@ -146,10 +146,12 @@ right_arm_impedance_controller:
 left_arm_cartesian_controller:
   ros__parameters:
     side: left
+    control_mode: cartesian_impedance
 
 right_arm_cartesian_controller:
   ros__parameters:
     side: right
+    control_mode: cartesian_impedance
 
 left_force_torque_broadcaster:
   ros__parameters:

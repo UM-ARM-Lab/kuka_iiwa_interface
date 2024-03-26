@@ -43,7 +43,9 @@ add_library(victor_hardware
         src/side.cpp
         src/async_executor.cpp
         src/lcm_ros_conversions.cpp
+        src/lcm_ostream_operators.cpp
         src/validators.cpp
+        include/victor_hardware/lcm_ostream_operators.hpp
         # template implementations
         include/victor_hardware/kuka_control_mode_client.hpp
         include/victor_hardware/lcm_listener.hpp
