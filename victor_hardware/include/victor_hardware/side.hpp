@@ -44,6 +44,7 @@ class Side {
                          std::string const& send_provider, std::string const& recv_provider);
 
   void gripperCommandROSCallback(const msg::Robotiq3FingerCommand& command);
+  void read_motion_status(const victor_lcm_interface::motion_status& status);
   void publish_motion_status(victor_lcm_interface::motion_status const& msg);
   void publish_gripper_status(victor_lcm_interface::robotiq_3finger_status const& msg);
   [[nodiscard]] hardware_interface::return_type send_motion_command();
@@ -62,7 +63,7 @@ class Side {
   double hw_cmd_cartesian_impedance_control_mode_;
 
   // These get bound to state interfaces
-  std::array<double, 6> hw_ft_{};
+  std::array<double, 6> hw_state_ft_{};
   geometry_msgs::msg::Pose hw_state_cartesian_pose_;
   geometry_msgs::msg::Pose hw_state_cmd_cartesian_pose_;
 
@@ -88,6 +89,7 @@ class Side {
   // callback groups for each ROS thing
   rclcpp::CallbackGroup::SharedPtr getter_callback_group_;
   rclcpp::CallbackGroup::SharedPtr setter_callback_group_;
+
 
  private:
   rclcpp::Logger logger_;

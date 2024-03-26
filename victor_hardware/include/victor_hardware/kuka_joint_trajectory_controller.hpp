@@ -22,7 +22,7 @@ class KukaJointTrajectoryController : public joint_trajectory_controller::JointT
 
   controller_interface::CallbackReturn on_init() override;
 
- private:
+ protected:
   std::string control_mode_interface_;
 
   rclcpp::node_interfaces::OnSetParametersCallbackHandle::SharedPtr set_parameters_handle_;

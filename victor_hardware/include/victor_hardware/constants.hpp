@@ -31,7 +31,7 @@ const std::string DEFAULT_CONTROL_MODE_STATUS_CHANNEL("control_mode_status");
 const std::string DEFAULT_GRIPPER_COMMAND_CHANNEL("gripper_command");
 const std::string DEFAULT_GRIPPER_STATUS_CHANNEL("gripper_status");
 
-// ROS2 control interface
+// ROS2 command interfaces
 static const char* const COMMANDED_POSITION = "commanded_position";
 static const char* const EXTERNAL_TORQUE = "external_torque";
 const std::string CARTESIAN_XT_INTERFACE = "cartesian_pose/xt";
@@ -45,6 +45,22 @@ const std::string JOINT_POSITION_INTERFACE = "joint_position";
 const std::string JOINT_IMPEDANCE_INTERFACE = "joint_impedance";
 const std::string CARTESIAN_POSE_INTERFACE = "cartesian_pose";
 const std::string CARTESIAN_IMPEDANCE_INTERFACE = "cartesian_impedance";
+
+// ROS2 state interfaces
+const std::string MEASURED_XT_STATE_INTERFACE = "measured/cartesian_pose/xt";
+const std::string MEASURED_YT_STATE_INTERFACE = "measured/cartesian_pose/yt";
+const std::string MEASURED_ZT_STATE_INTERFACE = "measured/cartesian_pose/zt";
+const std::string MEASURED_WR_STATE_INTERFACE = "measured/cartesian_pose/wr";
+const std::string MEASURED_XR_STATE_INTERFACE = "measured/cartesian_pose/xr";
+const std::string MEASURED_YR_STATE_INTERFACE = "measured/cartesian_pose/yr";
+const std::string MEASURED_ZR_STATE_INTERFACE = "measured/cartesian_pose/zr";
+const std::string COMMANDED_XT_STATE_INTERFACE = "commanded/cartesian_pose/xt";
+const std::string COMMANDED_YT_STATE_INTERFACE = "commanded/cartesian_pose/yt";
+const std::string COMMANDED_ZT_STATE_INTERFACE = "commanded/cartesian_pose/zt";
+const std::string COMMANDED_WR_STATE_INTERFACE = "commanded/cartesian_pose/wr";
+const std::string COMMANDED_XR_STATE_INTERFACE = "commanded/cartesian_pose/xr";
+const std::string COMMANDED_YR_STATE_INTERFACE = "commanded/cartesian_pose/yr";
+const std::string COMMANDED_ZR_STATE_INTERFACE = "commanded/cartesian_pose/zr";
 
 constexpr victor_lcm_interface::control_mode_parameters default_control_mode_parameters() {
   victor_lcm_interface::control_mode_parameters params{};

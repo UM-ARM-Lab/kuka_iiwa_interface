@@ -31,7 +31,7 @@ class KukaCartesianController : public controller_interface::ControllerInterface
 
   controller_interface::return_type update(const rclcpp::Time &time, const rclcpp::Duration &period) override;
 
- private:
+ protected:
   std::string side_name_;
   std::string arm_name_;
   std::string control_mode_interface_;

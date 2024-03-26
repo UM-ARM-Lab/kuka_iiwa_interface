@@ -14,16 +14,32 @@ namespace victor_hardware {
 
 Side::Side(std::string const& name) : side_name_(name), logger_(rclcpp::get_logger("VictorHardwareInterface." + name)) {
   hw_cmd_position_.fill(std::numeric_limits<double>::quiet_NaN());
-  hw_ft_.fill(0.0);
+  hw_state_ft_.fill(0.0);
 }
 
 void Side::add_state_interfaces(std::vector<hardware_interface::StateInterface>& state_interfaces) {
-  state_interfaces.emplace_back(side_name_ + "_force_torque_sensor", "force.x", &hw_ft_[0]);
-  state_interfaces.emplace_back(side_name_ + "_force_torque_sensor", "force.y", &hw_ft_[1]);
-  state_interfaces.emplace_back(side_name_ + "_force_torque_sensor", "force.z", &hw_ft_[2]);
-  state_interfaces.emplace_back(side_name_ + "_force_torque_sensor", "torque.x", &hw_ft_[3]);
-  state_interfaces.emplace_back(side_name_ + "_force_torque_sensor", "torque.y", &hw_ft_[4]);
-  state_interfaces.emplace_back(side_name_ + "_force_torque_sensor", "torque.z", &hw_ft_[5]);
+  state_interfaces.emplace_back(side_name_ + "_force_torque_sensor", "force.x", &hw_state_ft_[0]);
+  state_interfaces.emplace_back(side_name_ + "_force_torque_sensor", "force.y", &hw_state_ft_[1]);
+  state_interfaces.emplace_back(side_name_ + "_force_torque_sensor", "force.z", &hw_state_ft_[2]);
+  state_interfaces.emplace_back(side_name_ + "_force_torque_sensor", "torque.x", &hw_state_ft_[3]);
+  state_interfaces.emplace_back(side_name_ + "_force_torque_sensor", "torque.y", &hw_state_ft_[4]);
+  state_interfaces.emplace_back(side_name_ + "_force_torque_sensor", "torque.z", &hw_state_ft_[5]);
+
+  state_interfaces.emplace_back(side_name_, MEASURED_XT_STATE_INTERFACE, &hw_state_cartesian_pose_.position.x);
+  state_interfaces.emplace_back(side_name_, MEASURED_YT_STATE_INTERFACE, &hw_state_cartesian_pose_.position.y);
+  state_interfaces.emplace_back(side_name_, MEASURED_ZT_STATE_INTERFACE, &hw_state_cartesian_pose_.position.z);
+  state_interfaces.emplace_back(side_name_, MEASURED_WR_STATE_INTERFACE, &hw_state_cartesian_pose_.orientation.w);
+  state_interfaces.emplace_back(side_name_, MEASURED_XR_STATE_INTERFACE, &hw_state_cartesian_pose_.orientation.x);
+  state_interfaces.emplace_back(side_name_, MEASURED_YR_STATE_INTERFACE, &hw_state_cartesian_pose_.orientation.y);
+  state_interfaces.emplace_back(side_name_, MEASURED_ZR_STATE_INTERFACE, &hw_state_cartesian_pose_.orientation.z);
+
+  state_interfaces.emplace_back(side_name_, COMMANDED_XT_STATE_INTERFACE, &hw_state_cmd_cartesian_pose_.position.x);
+  state_interfaces.emplace_back(side_name_, COMMANDED_YT_STATE_INTERFACE, &hw_state_cmd_cartesian_pose_.position.y);
+  state_interfaces.emplace_back(side_name_, COMMANDED_ZT_STATE_INTERFACE, &hw_state_cmd_cartesian_pose_.position.z);
+  state_interfaces.emplace_back(side_name_, COMMANDED_WR_STATE_INTERFACE, &hw_state_cmd_cartesian_pose_.orientation.w);
+  state_interfaces.emplace_back(side_name_, COMMANDED_XR_STATE_INTERFACE, &hw_state_cmd_cartesian_pose_.orientation.x);
+  state_interfaces.emplace_back(side_name_, COMMANDED_YR_STATE_INTERFACE, &hw_state_cmd_cartesian_pose_.orientation.y);
+  state_interfaces.emplace_back(side_name_, COMMANDED_ZR_STATE_INTERFACE, &hw_state_cmd_cartesian_pose_.orientation.z);
 }
 
 void Side::add_command_interfaces(hardware_interface::HardwareInfo const& info,
@@ -53,7 +69,7 @@ void Side::add_command_interfaces(hardware_interface::HardwareInfo const& info,
 
 CallbackReturn Side::on_init(std::shared_ptr<rclcpp::Node> const& node, std::string const& send_provider,
                              std::string const& recv_provider) {
-  hw_ft_.fill(0);
+  hw_state_ft_.fill(0);
   send_lcm_ptr_ = std::make_shared<lcm::LCM>(send_provider);
   recv_lcm_ptr_ = std::make_shared<lcm::LCM>(recv_provider);
 
@@ -114,6 +130,32 @@ void Side::publish_gripper_status(const victor_lcm_interface::robotiq_3finger_st
   gripper_status_pub_->publish(ros_msg);
 }
 
+void Side::read_motion_status(const victor_lcm_interface::motion_status& status) {
+  // Copy the estimated external force torque readings from the motion status into the state interface
+  hw_state_ft_[0] = status.estimated_external_wrench.x;
+  hw_state_ft_[1] = status.estimated_external_wrench.y;
+  hw_state_ft_[2] = status.estimated_external_wrench.z;
+  hw_state_ft_[3] = status.estimated_external_wrench.a;
+  hw_state_ft_[4] = status.estimated_external_wrench.b;
+  hw_state_ft_[5] = status.estimated_external_wrench.c;
+
+  hw_state_cartesian_pose_.position.x = status.measured_cartesian_pose.xt;
+  hw_state_cartesian_pose_.position.y = status.measured_cartesian_pose.yt;
+  hw_state_cartesian_pose_.position.z = status.measured_cartesian_pose.zt;
+  hw_state_cartesian_pose_.orientation.w = status.measured_cartesian_pose.wr;
+  hw_state_cartesian_pose_.orientation.x = status.measured_cartesian_pose.xr;
+  hw_state_cartesian_pose_.orientation.y = status.measured_cartesian_pose.yr;
+  hw_state_cartesian_pose_.orientation.z = status.measured_cartesian_pose.zr;
+
+  hw_state_cmd_cartesian_pose_.position.x = status.commanded_cartesian_pose.xt;
+  hw_state_cmd_cartesian_pose_.position.y = status.commanded_cartesian_pose.yt;
+  hw_state_cmd_cartesian_pose_.position.z = status.commanded_cartesian_pose.zt;
+  hw_state_cmd_cartesian_pose_.orientation.w = status.commanded_cartesian_pose.wr;
+  hw_state_cmd_cartesian_pose_.orientation.x = status.commanded_cartesian_pose.xr;
+  hw_state_cmd_cartesian_pose_.orientation.y = status.commanded_cartesian_pose.yr;
+  hw_state_cmd_cartesian_pose_.orientation.z = status.commanded_cartesian_pose.zr;
+}
+
 hardware_interface::return_type Side::send_motion_command() {
   auto const now = std::chrono::system_clock::now();
   auto const now_tp = std::chrono::time_point_cast<std::chrono::seconds>(now);
@@ -148,7 +190,7 @@ hardware_interface::return_type Side::send_motion_command() {
 
   const auto validity_check_results = validateMotionCommand(motion_cmd);
   if (validity_check_results.first) {
-//    send_lcm_ptr_->publish(DEFAULT_MOTION_COMMAND_CHANNEL, &motion_cmd);
+    //    send_lcm_ptr_->publish(DEFAULT_MOTION_COMMAND_CHANNEL, &motion_cmd);
   } else {
     rclcpp::Clock clock;
     RCLCPP_WARN_STREAM_THROTTLE(logger_, clock, 5000,

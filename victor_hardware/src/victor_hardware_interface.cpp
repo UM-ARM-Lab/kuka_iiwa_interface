@@ -213,19 +213,8 @@ hardware_interface::return_type VictorHardwareInterface::read(const rclcpp::Time
   hw_states_position_[34] = right_finger_c_thetas[1];
   hw_states_position_[35] = right_finger_c_thetas[2];
 
-  // Copy the estimated external force torque readings from the motion status into the state interface
-  left.hw_ft_[0] = left_motion_status.estimated_external_wrench.x;
-  left.hw_ft_[1] = left_motion_status.estimated_external_wrench.y;
-  left.hw_ft_[2] = left_motion_status.estimated_external_wrench.z;
-  left.hw_ft_[3] = left_motion_status.estimated_external_wrench.a;
-  left.hw_ft_[4] = left_motion_status.estimated_external_wrench.b;
-  left.hw_ft_[5] = left_motion_status.estimated_external_wrench.c;
-  right.hw_ft_[0] = right_motion_status.estimated_external_wrench.x;
-  right.hw_ft_[1] = right_motion_status.estimated_external_wrench.y;
-  right.hw_ft_[2] = right_motion_status.estimated_external_wrench.z;
-  right.hw_ft_[3] = right_motion_status.estimated_external_wrench.a;
-  right.hw_ft_[4] = right_motion_status.estimated_external_wrench.b;
-  right.hw_ft_[5] = right_motion_status.estimated_external_wrench.c;
+  left.read_motion_status(left_motion_status);
+  right.read_motion_status(right_motion_status);
 
   return hardware_interface::return_type::OK;
 }
@@ -262,7 +251,7 @@ hardware_interface::return_type VictorHardwareInterface::prepare_command_mode_sw
   if (!has_control_mode_interface && !start_interfaces.empty()) {
     RCLCPP_WARN(logger, "No control mode interface claimed, likely an error.");
     RCLCPP_WARN(logger, "start_interfaces:");
-    for (auto const &iface : start_interfaces) {
+    for (auto const& iface : start_interfaces) {
       RCLCPP_WARN_STREAM(logger, "\t" << iface);
     }
   }
