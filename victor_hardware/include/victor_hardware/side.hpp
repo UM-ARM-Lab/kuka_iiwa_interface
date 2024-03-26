@@ -93,6 +93,7 @@ class Side {
 
  private:
   rclcpp::Logger logger_;
+  bool has_active_controller_{false};
 };
 
 }  // namespace victor_hardware

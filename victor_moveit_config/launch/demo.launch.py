@@ -99,7 +99,12 @@ def generate_launch_description():
         Node(
             package="controller_manager",
             executable="spawner",
-            arguments=["joint_impedance_trajectory_controller"],
+            arguments=[
+                "joint_impedance_trajectory_controller",
+                "joint_state_broadcaster",
+                "left_force_torque_broadcaster",
+                "right_force_torque_broadcaster",
+            ],
             output="screen",
         )
     )

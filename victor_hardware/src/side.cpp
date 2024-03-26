@@ -157,6 +157,11 @@ void Side::read_motion_status(const victor_lcm_interface::motion_status& status)
 }
 
 hardware_interface::return_type Side::send_motion_command() {
+  if (!has_active_controller_) {
+    RCLCPP_INFO(logger_, "No active controller yet, not sending motion command");
+    return hardware_interface::return_type::OK;
+  }
+
   auto const now = std::chrono::system_clock::now();
   auto const now_tp = std::chrono::time_point_cast<std::chrono::seconds>(now);
   std::chrono::duration<double> const now_dur_seconds = now_tp.time_since_epoch();
@@ -166,6 +171,7 @@ hardware_interface::return_type Side::send_motion_command() {
   motion_cmd.timestamp = now_seconds;
   // Assuming the current control mode is the correct one to use based on the controllers
   motion_cmd.control_mode.mode = control_mode_client_->getControlMode().control_mode.mode;
+  // the fields in hw_cmd_* are bound to the controllers, which update their values
   motion_cmd.joint_position.joint_1 = hw_cmd_position_[0];
   motion_cmd.joint_position.joint_2 = hw_cmd_position_[1];
   motion_cmd.joint_position.joint_3 = hw_cmd_position_[2];
@@ -190,7 +196,7 @@ hardware_interface::return_type Side::send_motion_command() {
 
   const auto validity_check_results = validateMotionCommand(motion_cmd);
   if (validity_check_results.first) {
-    //    send_lcm_ptr_->publish(DEFAULT_MOTION_COMMAND_CHANNEL, &motion_cmd);
+    send_lcm_ptr_->publish(DEFAULT_MOTION_COMMAND_CHANNEL, &motion_cmd);
   } else {
     rclcpp::Clock clock;
     RCLCPP_WARN_STREAM_THROTTLE(logger_, clock, 5000,
@@ -203,6 +209,8 @@ hardware_interface::return_type Side::send_motion_command() {
 hardware_interface::return_type Side::perform_command_mode_switch(const std::vector<std::string>& start_interfaces) {
   // Iterate over the start interfaces, and if any of them are of the form "side_name/control_mode_interface",
   // then switch that side to that control mode
+  has_active_controller_ = false;
+
   bool success = true;
   for (auto const& interface : start_interfaces) {
     if (interface == side_name_ + "/" + JOINT_POSITION_INTERFACE) {
@@ -219,6 +227,8 @@ hardware_interface::return_type Side::perform_command_mode_switch(const std::vec
   if (!success) {
     return hardware_interface::return_type::ERROR;
   }
+
+  has_active_controller_ = true;
 
   return hardware_interface::return_type::OK;
 }
