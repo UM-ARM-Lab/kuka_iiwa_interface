@@ -249,6 +249,22 @@ hardware_interface::return_type VictorHardwareInterface::prepare_command_mode_sw
     const std::vector<std::string>& start_interfaces, const std::vector<std::string>& stop_interfaces) {
   // Check for errors:
   //  - no control mode interfaces are claimed, that's likely an error
+  auto is_control_mode_interface = [&](hardware_interface::InterfaceInfo const& interface) {
+    // check if the interface name contains any of the control mode interface names
+    return (interface.name.find(JOINT_POSITION_INTERFACE) != std::string::npos ||
+            interface.name.find(JOINT_IMPEDANCE_INTERFACE) != std::string::npos ||
+            interface.name.find(CARTESIAN_POSE_INTERFACE) != std::string::npos ||
+            interface.name.find(CARTESIAN_IMPEDANCE_INTERFACE) != std::string::npos);
+  };
+  auto has_control_mode_interface_func = [&](hardware_interface::ComponentInfo const& joint) {
+    return std::any_of(joint.command_interfaces.begin(), joint.command_interfaces.end(), is_control_mode_interface);
+  };
+  bool has_control_mode_interface =
+      std::any_of(info_.joints.begin(), info_.joints.end(), has_control_mode_interface_func);
+
+  if (!has_control_mode_interface) {
+    RCLCPP_WARN(logger, "No control mode interface claimed, likely an error.");
+  }
 
   return SystemInterface::prepare_command_mode_switch(start_interfaces, stop_interfaces);
 }

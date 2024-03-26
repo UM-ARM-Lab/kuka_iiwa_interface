@@ -3,6 +3,7 @@
 #include <string>
 #include <victor_hardware/constants.hpp>
 #include <victor_hardware/kuka_joint_trajectory_controller.hpp>
+#include <victor_hardware/lcm_ostream_operators.hpp>
 
 namespace victor_hardware {
 
@@ -19,8 +20,9 @@ controller_interface::InterfaceConfiguration KukaJointTrajectoryController::comm
 controller_interface::CallbackReturn KukaJointTrajectoryController::on_init() {
   auto node = get_node();
 
-  // Read this once at the beginning, use it in on_activate()
   control_mode_interface_ = node->get_parameter("control_mode_interface").as_string();
+
+  RCLCPP_INFO_STREAM(node->get_logger(), node->get_name() << ": " << control_mode_interface_);
 
   left_send_lcm_ptr_ = std::make_shared<lcm::LCM>(LEFT_SEND_PROVIDER);
   right_send_lcm_ptr_ = std::make_shared<lcm::LCM>(RIGHT_SEND_PROVIDER);
@@ -135,14 +137,33 @@ controller_interface::CallbackReturn KukaJointTrajectoryController::on_init() {
   return joint_trajectory_controller::JointTrajectoryController::on_init();
 }
 
+controller_interface::CallbackReturn KukaJointTrajectoryController::on_activate(
+    const rclcpp_lifecycle::State &previous_state) {
+  auto const &update_result = updateControlModeParams();
+  if (!update_result.first) {
+    RCLCPP_ERROR_STREAM(get_node()->get_logger(), update_result.second);
+    return controller_interface::CallbackReturn::ERROR;
+  }
+  return JointTrajectoryController::on_activate(previous_state);
+}
+
 ErrorType KukaJointTrajectoryController::updateControlModeParams() {
   auto const &validate_mode_result = validateControlMode(kuka_mode_params_);
   if (!validate_mode_result.first) {
     return validate_mode_result;
   }
 
-  left_send_lcm_ptr_->publish(DEFAULT_CONTROL_MODE_COMMAND_CHANNEL, &kuka_mode_params_);
-  right_send_lcm_ptr_->publish(DEFAULT_CONTROL_MODE_COMMAND_CHANNEL, &kuka_mode_params_);
+  RCLCPP_INFO(get_node()->get_logger(), "Updating control mode params: ");
+  RCLCPP_INFO_STREAM(get_node()->get_logger(), kuka_mode_params_);
+
+  // Send it a bunch of times to make sure it gets there, and to stall to let the change take place...
+  // Since the HW IF will be reading and sending the new params
+  for (auto i{0}; i < 10; ++i) {
+    left_send_lcm_ptr_->publish(DEFAULT_CONTROL_MODE_COMMAND_CHANNEL, &kuka_mode_params_);
+    right_send_lcm_ptr_->publish(DEFAULT_CONTROL_MODE_COMMAND_CHANNEL, &kuka_mode_params_);
+
+    usleep(1000);
+  }
 
   return {true, ""};
 }

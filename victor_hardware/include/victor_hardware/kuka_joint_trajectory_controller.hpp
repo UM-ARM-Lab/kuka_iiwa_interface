@@ -16,6 +16,8 @@ class KukaJointTrajectoryController : public joint_trajectory_controller::JointT
 
   [[nodiscard]] controller_interface::InterfaceConfiguration command_interface_configuration() const override;
 
+  controller_interface::CallbackReturn on_activate(const rclcpp_lifecycle::State &previous_state) override;
+
   controller_interface::CallbackReturn on_init() override;
 
  private:

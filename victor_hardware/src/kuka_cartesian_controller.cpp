@@ -2,6 +2,7 @@
 #include <vector>
 #include <victor_hardware/constants.hpp>
 #include <victor_hardware/kuka_cartesian_controller.hpp>
+#include <victor_hardware/lcm_ostream_operators.hpp>
 #include <victor_hardware/validators.hpp>
 
 namespace victor_hardware {
@@ -107,6 +108,11 @@ controller_interface::CallbackReturn KukaCartesianController::on_configure(
 
 controller_interface::CallbackReturn KukaCartesianController::on_activate(
     const rclcpp_lifecycle::State &previous_state) {
+  auto const &update_result = updateControlModeParams();
+  if (!update_result.first) {
+    RCLCPP_ERROR_STREAM(get_node()->get_logger(), update_result.second);
+    return controller_interface::CallbackReturn::ERROR;
+  }
   return controller_interface::CallbackReturn::SUCCESS;
 }
 
@@ -134,6 +140,26 @@ controller_interface::return_type KukaCartesianController::update(const rclcpp::
   command_interfaces_[6].set_value(latest_cmd_msg_->pose.orientation.z);
 
   return controller_interface::return_type::OK;
+}
+ErrorType KukaCartesianController::updateControlModeParams() {
+  // TODO: wrap up the common usage pattern into a separate class so it's easier to implement/wrap new controllers!
+  auto const &validate_mode_result = validateControlMode(kuka_mode_params_);
+  if (!validate_mode_result.first) {
+    return validate_mode_result;
+  }
+
+  RCLCPP_INFO(get_node()->get_logger(), "Updating control mode params: ");
+  RCLCPP_INFO_STREAM(get_node()->get_logger(), kuka_mode_params_);
+
+  // Send it a bunch of times to make sure it gets there, and to stall to let the change take place...
+  // Since the HW IF will be reading and sending the new params
+  for (auto i{0}; i < 10; ++i) {
+    send_lcm_ptr_->publish(DEFAULT_CONTROL_MODE_COMMAND_CHANNEL, &kuka_mode_params_);
+
+    usleep(1000);
+  }
+
+  return {true, ""};
 }
 
 }  // namespace victor_hardware
