@@ -25,8 +25,6 @@ class KukaJointTrajectoryController : public joint_trajectory_controller::JointT
  protected:
   std::string control_mode_interface_;
 
-  rclcpp::node_interfaces::OnSetParametersCallbackHandle::SharedPtr set_parameters_handle_;
-
   LCMPtr left_send_lcm_ptr_;
   LCMPtr right_send_lcm_ptr_;
 

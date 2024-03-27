@@ -1,4 +1,4 @@
-from typing import Sequence, Optional, Callable
+from typing import Sequence, Optional, Callable, List
 
 import numpy as np
 
@@ -61,7 +61,6 @@ class Side:
         self.lower, self.upper = self.parser_joint_limits()
 
         self.pub_group = MutuallyExclusiveCallbackGroup()
-        self.cm_srv_group = MutuallyExclusiveCallbackGroup()
 
         self.joint_cmd_pub = node.create_publisher(Float64MultiArray, f"{self.arm_name}_position_controller", 10,
                                                    callback_group=self.pub_group)
@@ -70,10 +69,6 @@ class Side:
         self.gripper_command = node.create_publisher(Robotiq3FingerCommand, f"victor/{self.arm_name}/gripper_command",
                                                      10, callback_group=self.pub_group)
 
-        self.switch_controllers_client = node.create_client(SwitchController, f"controller_manager/switch_controllers",
-                                                            callback_group=self.cm_srv_group)
-        self.list_controllers_client = node.create_client(ListControllers, f"controller_manager/list_controllers",
-                                                          callback_group=self.cm_srv_group)
 
         self.motion_status = Listener(node, MotionStatus, f"victor/{self.arm_name}/motion_status", 10)
         self.gripper_status = Listener(node, Robotiq3FingerStatus, f"victor/{self.arm_name}/gripper_status", 10)
@@ -211,6 +206,12 @@ class Victor:
 
         self.joint_states_listener = Listener(node, JointState, 'joint_states', 10)
 
+        self.cm_srv_group = MutuallyExclusiveCallbackGroup()
+        self.switch_controller_client = node.create_client(SwitchController, f"controller_manager/switch_controller",
+                                                           callback_group=self.cm_srv_group)
+        self.list_controllers_client = node.create_client(ListControllers, f"controller_manager/list_controllers",
+                                                          callback_group=self.cm_srv_group)
+
         # Subscribe to robot description so that we can get the joints and joint limits
         # This callback will only be called once at the beginning.
         # To get the parsed URDF, either pass in a user callback or use `victor.urdf`.
@@ -280,3 +281,11 @@ class Victor:
 
         joint_positions = dict(zip(left_names + right_names, left_commanded_positions + right_commanded_positions))
         return joint_positions
+
+    def deactivate_all_controllers(self):
+        res = self.list_controllers_client.call(ListControllers.Request())
+
+    def activate_controllers(self, controllers: List[str]):
+        req = SwitchController.Request()
+        req.activate_controllers = controllers
+        self.switch_controller_client.call(req)

@@ -17,15 +17,12 @@
 #include <victor_hardware_interfaces/msg/motion_status.hpp>
 #include <victor_hardware_interfaces/msg/robotiq3_finger_command.hpp>
 #include <victor_hardware_interfaces/msg/robotiq3_finger_status.hpp>
-#include <victor_hardware_interfaces/srv/get_control_mode.hpp>
-#include <victor_hardware_interfaces/srv/set_control_mode.hpp>
 #include <victor_lcm_interface/control_mode_parameters.hpp>
 #include <victor_lcm_interface/motion_command.hpp>
 #include <victor_lcm_interface/motion_status.hpp>
 #include <victor_lcm_interface/robotiq_3finger_status.hpp>
 
 namespace msg = victor_hardware_interfaces::msg;
-namespace srv = victor_hardware_interfaces::srv;
 
 using CallbackReturn = rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn;
 
@@ -73,8 +70,6 @@ class Side {
 
   std::unique_ptr<LcmListener<victor_lcm_interface::motion_status>> motion_status_listener_;
   std::unique_ptr<LcmListener<victor_lcm_interface::robotiq_3finger_status>> gripper_status_listener_;
-  rclcpp::Service<srv::SetControlMode>::SharedPtr set_control_mode_server_;
-  rclcpp::Service<srv::GetControlMode>::SharedPtr get_control_mode_server_;
   rclcpp::Client<controller_manager_msgs::srv::SwitchController>::SharedPtr switch_controller_client_;
 
   std::shared_ptr<KukaControlModeClientNode> control_mode_client_;

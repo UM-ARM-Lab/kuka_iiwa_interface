@@ -97,9 +97,8 @@ left_arm_position_controller:
       - victor_left_arm_joint_6
       - victor_left_arm_joint_7
     interface_name: position
-    # This tells us which LCM url to talk to
-    side: left
-    mode: 0
+    side: left # This tells us which LCM url to talk to
+    control_mode: joint_position # this is the command mode interface name in ros2 control
 
 left_arm_impedance_controller:
   ros__parameters:
@@ -113,7 +112,7 @@ left_arm_impedance_controller:
       - victor_left_arm_joint_7
     interface_name: position
     side: left
-    mode: 2
+    control_mode: joint_impedance
 
 right_arm_position_controller:
   ros__parameters:
@@ -127,7 +126,7 @@ right_arm_position_controller:
       - victor_right_arm_joint_7
     interface_name: position
     side: right
-    mode: 0
+    control_mode: joint_position
 
 right_arm_impedance_controller:
   ros__parameters:
@@ -141,7 +140,7 @@ right_arm_impedance_controller:
       - victor_right_arm_joint_7
     interface_name: position
     side: right
-    mode: 2
+    control_mode: joint_impedance
 
 left_arm_cartesian_controller:
   ros__parameters:

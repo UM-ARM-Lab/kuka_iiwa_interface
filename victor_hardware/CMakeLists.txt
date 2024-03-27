@@ -12,19 +12,20 @@ set(THIS_PACKAGE_INCLUDE_DEPENDS
         ament_cmake
         controller_interface
         controller_manager_msgs
-        pluginlib
-        hardware_interface
+        ament_index_cpp
         arm_utilities
+        hardware_interface
         joint_trajectory_controller
         lcm
-        victor_hardware_interfaces
-        robotiq_3f_transmission_plugins
-        ament_index_cpp
-        yaml-cpp
+        pluginlib
+        position_controllers
         rclcpp
         rclcpp_lifecycle
         rclpy
+        robotiq_3f_transmission_plugins
         std_srvs
+        victor_hardware_interfaces
+        yaml-cpp
 )
 
 foreach (THIS_PACKAGE_INCLUDE_DEPEND ${THIS_PACKAGE_INCLUDE_DEPENDS})
@@ -53,6 +54,7 @@ add_library(victor_hardware
         # Controllers and broadcasters also get added to this library
         src/kuka_cartesian_controller.cpp
         src/kuka_joint_trajectory_controller.cpp
+        src/kuka_joint_group_position_controller.cpp
 )
 target_include_directories(
         victor_hardware

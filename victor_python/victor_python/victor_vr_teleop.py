@@ -20,6 +20,7 @@ from ament_index_python import get_package_share_path
 from arm_utilities.filters import BatchOnlineFilter
 from arm_utilities.numpy_conversions import transform_to_mat, mat_to_transform
 from arm_utilities.transformation_helper import np_tf_inv
+from controller_manager_msgs.srv import SwitchController
 from geometry_msgs.msg import Pose
 from geometry_msgs.msg import TransformStamped
 from moveit.core.robot_model import RobotModel, JointModelGroup
@@ -30,7 +31,6 @@ from rclpy.node import Node
 from sensor_msgs.msg import JointState
 from tf2_ros import TransformBroadcaster
 from victor_hardware_interfaces.msg import MotionStatus, ControlMode, Robotiq3FingerStatus
-from victor_hardware_interfaces.srv import SetControlMode
 from victor_python.victor import Victor, Side
 from victor_python.victor_utils import get_control_mode_params
 from victor_python.victor_utils import get_gripper_closed_fraction_msg, jvq_to_list
@@ -240,7 +240,6 @@ class VictorTeleopNode(Node):
         self.tf_broadcaster = TransformBroadcaster(self)
         self.vr_sub = self.create_subscription(ControllersInfo, "vr_controller_info", self.on_controllers_info, 10)
 
-
         self.left = SideTeleop(self, self.victor.left, self.moveitpy, self.tf_broadcaster,
                                controller_usability_rotation=transforms3d.euler.euler2mat(np.pi, 0, 0))
         self.right = SideTeleop(self, self.victor.right, self.moveitpy, self.tf_broadcaster)
@@ -259,7 +258,11 @@ class VictorTeleopNode(Node):
         thread.start()
 
     def set_control_modes(self):
-        req = SetControlMode.Request()
+        # Call switch_controllers
+        self.victor.deactivate_all_controllers()
+        self.victor.activate_controllers(['left_arm_impedance_controller', 'right_arm_impedance_controller'])
+
+        # Update ros params for that controller
         req.new_control_mode = get_control_mode_params(ControlMode.JOINT_IMPEDANCE, vel=1.0, accel=0.1)
 
         self.victor.left.set_control_mode_client.call(req)

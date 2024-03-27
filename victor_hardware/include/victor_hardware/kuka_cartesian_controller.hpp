@@ -40,8 +40,6 @@ class KukaCartesianController : public controller_interface::ControllerInterface
 
   rclcpp::Subscription<geometry_msgs::msg::Pose>::SharedPtr cmd_sub_;
 
-  rclcpp::node_interfaces::OnSetParametersCallbackHandle::SharedPtr set_parameters_handle_;
-
   LCMPtr send_lcm_ptr_;
 
   ControlModeParamsHelper::SharedPtr params_helper_;
