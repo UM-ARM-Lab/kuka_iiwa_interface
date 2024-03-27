@@ -44,5 +44,4 @@ controller_interface::CallbackReturn KukaJointTrajectoryController::on_activate(
 }  // namespace victor_hardware
 
 #include <pluginlib/class_list_macros.hpp>
-
 PLUGINLIB_EXPORT_CLASS(victor_hardware::KukaJointTrajectoryController, controller_interface::ControllerInterface)

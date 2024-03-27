@@ -3,14 +3,28 @@
          type="victor_hardware::KukaCartesianController"
          base_class_type="controller_interface::ControllerInterface">
     <description>
-      ROS2 controller for the Kuka LBR iiwa 7 R800 Cartesian controller
+      Custom ROS2 controller for the Kuka LBR iiwa 7 R800 Cartesian controller
+    </description>
+  </class>
+  <class name="victor_hardware/KukaLocalCartesianController"
+         type="victor_hardware::KukaLocalCartesianController"
+         base_class_type="controller_interface::ControllerInterface">
+    <description>
+      Custom ROS2 controller for the Kuka LBR iiwa 7 R800 Cartesian controller with local clipping
     </description>
   </class>
   <class name="victor_hardware/KukaJointTrajectoryController"
          type="victor_hardware::KukaJointTrajectoryController"
          base_class_type="controller_interface::ControllerInterface">
     <description>
-      ROS2 controller for the Kuka LBR iiwa 7 R800 Cartesian controller
+      Customized version of the standard ros2 joint_trajectory_controller that also handles kuka control modes
+    </description>
+  </class>
+  <class name="victor_hardware/KukaJointGroupPositionController"
+         type="victor_hardware::KukaJointGroupPositionController"
+         base_class_type="controller_interface::ControllerInterface">
+    <description>
+      Customized version of the standard ros2 joint_group_position_controller that also handles kuka control modes
     </description>
   </class>
 </library>

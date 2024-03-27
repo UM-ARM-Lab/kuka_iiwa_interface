@@ -10,9 +10,11 @@ set(CMAKE_CXX_STANDARD 20)
 
 set(THIS_PACKAGE_INCLUDE_DEPENDS
         ament_cmake
+        ament_index_cpp
         controller_interface
         controller_manager_msgs
-        ament_index_cpp
+        Eigen3
+        eigen3_cmake_module
         arm_utilities
         hardware_interface
         joint_trajectory_controller
@@ -55,6 +57,7 @@ add_library(victor_hardware
         src/kuka_cartesian_controller.cpp
         src/kuka_joint_trajectory_controller.cpp
         src/kuka_joint_group_position_controller.cpp
+        src/kuka_local_cartesian_controller.cpp
 )
 target_include_directories(
         victor_hardware

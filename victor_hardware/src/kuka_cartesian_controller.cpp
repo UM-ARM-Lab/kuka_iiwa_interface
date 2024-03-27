@@ -3,7 +3,6 @@
 #include <vector>
 #include <victor_hardware/constants.hpp>
 #include <victor_hardware/kuka_cartesian_controller.hpp>
-#include <victor_hardware/lcm_ostream_operators.hpp>
 #include <victor_hardware/validators.hpp>
 
 namespace victor_hardware {
@@ -93,5 +92,4 @@ controller_interface::return_type KukaCartesianController::update(const rclcpp::
 }  // namespace victor_hardware
 
 #include <pluginlib/class_list_macros.hpp>
-
 PLUGINLIB_EXPORT_CLASS(victor_hardware::KukaCartesianController, controller_interface::ControllerInterface)

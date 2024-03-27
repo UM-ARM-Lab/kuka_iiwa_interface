@@ -38,3 +38,6 @@ controller_interface::CallbackReturn KukaJointGroupPositionController::on_activa
 }
 
 }  // namespace victor_hardware
+
+#include <pluginlib/class_list_macros.hpp>
+PLUGINLIB_EXPORT_CLASS(victor_hardware::KukaJointGroupPositionController, controller_interface::ControllerInterface)
