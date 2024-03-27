@@ -1,6 +1,5 @@
 #include <eigen3/Eigen/Dense>
 #include <eigen3/Eigen/Geometry>
-#include <lifecycle_msgs/msg/state.hpp>
 #include <string>
 #include <vector>
 #include <victor_hardware/constants.hpp>
@@ -10,6 +9,11 @@
 namespace victor_hardware {
 
 controller_interface::CallbackReturn KukaLocalCartesianController::on_init() {
+  auto node = get_node();
+
+  node->declare_parameter<double>("max_norm_trans", 0.05);
+  node->declare_parameter<double>("max_norm_rot", 0.05);
+
   return KukaCartesianController::on_init();
 }
 
@@ -52,13 +56,13 @@ controller_interface::return_type KukaLocalCartesianController::update(const rcl
   Eigen::Quaterniond desired_orientation(latest_cmd_msg_->orientation.w, latest_cmd_msg_->orientation.x,
                                          latest_cmd_msg_->orientation.y, latest_cmd_msg_->orientation.z);
 
-  double const max_norm_trans = 0.05;
+  double const max_norm_trans = get_node()->get_parameter("max_norm_trans").as_double();
   double const norm_trans = (desired_position - current_position).norm();
   if (norm_trans > max_norm_trans) {
     desired_position = current_position + (desired_position - current_position) / norm_trans * max_norm_trans;
   }
 
-  double const max_norm_rot_rad = 0.05;
+  double const max_norm_rot_rad = get_node()->get_parameter("max_norm_rot").as_double();
   double const norm_max_rad = current_orientation.angularDistance(desired_orientation);
   if (norm_max_rad > max_norm_rot_rad) {
     desired_orientation = current_orientation.slerp(max_norm_rot_rad / norm_max_rad, desired_orientation);
