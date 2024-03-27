@@ -14,7 +14,6 @@
 #include <victor_hardware/validators.hpp>
 #include <victor_hardware/types.hpp>
 #include <victor_hardware_interfaces/msg/control_mode_parameters.hpp>
-#include <victor_hardware_interfaces/msg/motion_command.hpp>
 #include <victor_hardware_interfaces/msg/motion_status.hpp>
 #include <victor_hardware_interfaces/msg/robotiq3_finger_command.hpp>
 #include <victor_hardware_interfaces/msg/robotiq3_finger_status.hpp>

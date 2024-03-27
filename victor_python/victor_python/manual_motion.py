@@ -1,12 +1,13 @@
 import time
 
-from victor_hardware_interfaces.msg import MotionCommand, MotionStatus
 import numpy as np
 
 import rclpy
-from victor_python.victor import Victor, Side
-from victor_python.victor_utils import jvq_to_list, list_to_jvq
 from rclpy.node import Node
+from std_msgs.msg import Float64MultiArray
+from victor_hardware_interfaces.msg import MotionStatus
+from victor_python.victor import Victor, Side
+from victor_python.victor_utils import jvq_to_list
 
 
 class ManualMotionFilter:
@@ -41,16 +42,12 @@ class ManualMotionFilter:
 
         if delta < self.threshold:
             return
-        
+
         # Low pass filter to avoid jerky motions
         alpha = dt / (self.low_pass_tau + dt)
         filtered_cmd_np = (1.0 - alpha) * commanded_np + alpha * measured_np
 
-        cmd = MotionCommand()
-        cmd.header.stamp = self.node.get_clock().now().to_msg()
-        cmd.control_mode = status.active_control_mode
-        cmd.joint_position = list_to_jvq(filtered_cmd_np)
-        self.side.motion_command.publish(cmd)
+        self.side.send_joint_cmd(filtered_cmd_np)
 
 
 class ManualMotion(Node):

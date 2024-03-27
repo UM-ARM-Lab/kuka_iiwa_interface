@@ -202,16 +202,6 @@ msg::MotionStatus motionStatusLcmToRos(const victor_lcm_interface::motion_status
   return ros_status;
 }
 
-victor_lcm_interface::motion_command motionCommandRosToLcm(const msg::MotionCommand& ros_command) {
-  victor_lcm_interface::motion_command lcm_command{};
-  lcm_command.cartesian_pose = poseRosToLcm(ros_command.cartesian_pose);
-  lcm_command.joint_position = jvqRosToLcm(ros_command.joint_position);
-  lcm_command.joint_velocity = jvqRosToLcm(ros_command.joint_velocity);
-  lcm_command.control_mode = controlModeRosToLcm(ros_command.control_mode);
-  lcm_command.timestamp = rclcpp::Time(ros_command.header.stamp).seconds();
-  return lcm_command;
-}
-
 msg::ControlModeParameters controlModeParamsLcmToRos(const victor_lcm_interface::control_mode_parameters& lcm_cmp) {
   msg::ControlModeParameters ros_cmp;
   ros_cmp.cartesian_control_mode_limits = cartesianControlModeLimitsLcmToRos(lcm_cmp.cartesian_control_mode_limits);

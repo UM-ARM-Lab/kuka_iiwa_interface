@@ -9,7 +9,6 @@
 #include <victor_hardware_interfaces/msg/joint_impedance_parameters.hpp>
 #include <victor_hardware_interfaces/msg/joint_path_execution_parameters.hpp>
 #include <victor_hardware_interfaces/msg/joint_value_quantity.hpp>
-#include <victor_hardware_interfaces/msg/motion_command.hpp>
 #include <victor_hardware_interfaces/msg/motion_status.hpp>
 #include <victor_hardware_interfaces/msg/robotiq3_finger_actuator_command.hpp>
 #include <victor_hardware_interfaces/msg/robotiq3_finger_actuator_status.hpp>
@@ -86,8 +85,6 @@ msg::ControlMode controlModeLcmToRos(const victor_lcm_interface::control_mode& l
 victor_lcm_interface::control_mode controlModeRosToLcm(const msg::ControlMode& ros_cm);
 
 msg::MotionStatus motionStatusLcmToRos(const victor_lcm_interface::motion_status& lcm_status);
-
-victor_lcm_interface::motion_command motionCommandRosToLcm(const msg::MotionCommand& ros_command);
 
 msg::ControlModeParameters controlModeParamsLcmToRos(const victor_lcm_interface::control_mode_parameters& lcm_cmp);
 

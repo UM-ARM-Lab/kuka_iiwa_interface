@@ -110,7 +110,7 @@ class Side:
 
     def send_joint_cmd(self, joint_positions):
         """
-        Send a MotionCommand with joint_positions, ordered joint1 to joint 7.
+        Send a Float64MultiArray with joint_positions, ordered joint1 to joint 7.
         """
         if len(joint_positions) != 7:
             raise ValueError(f"joint_positions must be length 7, got {len(joint_positions)}")
@@ -140,7 +140,7 @@ class Side:
 
     def send_cartesian_cmd(self, target_hand_in_root: TransformStamped):
         """
-        Fills out, validates, and sends a MotionCommand in cartesian impedance mode.
+        Fills out, validates, and sends a Pose to the cartesian impedance controller.
         """
         active_mode: ControlMode = self.control_mode_listener.get().control_mode
         if active_mode.mode != ControlMode.CARTESIAN_IMPEDANCE:

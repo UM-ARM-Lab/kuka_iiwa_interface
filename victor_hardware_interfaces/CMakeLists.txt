@@ -19,7 +19,6 @@ rosidl_generate_interfaces(victor_hardware_interfaces
   "msg/JointImpedanceParameters.msg"
   "msg/JointPathExecutionParameters.msg"
   "msg/JointValueQuantity.msg"
-  "msg/MotionCommand.msg"
   "msg/MotionStatus.msg"
   "msg/Robotiq3FingerActuatorCommand.msg"
   "msg/Robotiq3FingerActuatorStatus.msg"
