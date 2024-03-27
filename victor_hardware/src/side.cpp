@@ -188,8 +188,9 @@ void Side::read_motion_status(const victor_lcm_interface::motion_status& status)
 }
 
 hardware_interface::return_type Side::send_motion_command() {
+  rclcpp::Clock clock;
   if (!has_active_controller_) {
-    RCLCPP_INFO(logger_, "No active controller yet, not sending motion command");
+    RCLCPP_INFO(logger_, clock, 5000, "No active controller yet, not sending motion command");
     return hardware_interface::return_type::OK;
   }
 
@@ -212,7 +213,6 @@ hardware_interface::return_type Side::send_motion_command() {
   if (validity_check_results.first) {
     send_lcm_ptr_->publish(DEFAULT_MOTION_COMMAND_CHANNEL, &motion_cmd_);
   } else {
-    rclcpp::Clock clock;
     RCLCPP_WARN_STREAM_THROTTLE(logger_, clock, 5000,
                                 "Invalid motion command, " << validity_check_results.second << ", not sending");
   }
