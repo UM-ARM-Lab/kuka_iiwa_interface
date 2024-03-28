@@ -1,0 +1,4 @@
+victor_hardware_interfaces/CartesianValueQuantity max_path_deviation
+victor_hardware_interfaces/CartesianValueQuantity max_cartesian_velocity
+victor_hardware_interfaces/CartesianValueQuantity max_control_force
+bool stop_on_max_control_force

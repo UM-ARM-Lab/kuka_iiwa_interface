@@ -97,15 +97,17 @@ def generate_launch_description():
 
     ld.add_action(
         Node(
-            package="controller_manager",
-            executable="spawner",
-            arguments=[
-                "joint_impedance_trajectory_controller",
-                "joint_state_broadcaster",
-                "left_force_torque_broadcaster",
-                "right_force_torque_broadcaster",
-            ],
-            output="screen",
+            package="rqt_reconfigure",
+            executable="rqt_reconfigure",
+        )
+    )
+
+
+    ld.add_action(
+        IncludeLaunchDescription(
+            PythonLaunchDescriptionSource(
+                str(moveit_config.package_path / "launch/spawn_controllers.launch.py"),
+            ),
         )
     )
 

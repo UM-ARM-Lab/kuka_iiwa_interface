@@ -9,8 +9,15 @@ find_package(std_msgs REQUIRED)
 find_package(geometry_msgs REQUIRED)
 
 rosidl_generate_interfaces(victor_hardware_interfaces
+  "msg/CartesianControlModeLimits.msg"
+  "msg/CartesianImpedanceParameters.msg"
+  "msg/CartesianPathExecutionParameters.msg"
   "msg/CartesianValueQuantity.msg"
+  "msg/ControlMode.msg"
+  "msg/ControlModeParameters.msg"
   "msg/GraspStatus.msg"
+  "msg/JointImpedanceParameters.msg"
+  "msg/JointPathExecutionParameters.msg"
   "msg/JointValueQuantity.msg"
   "msg/MotionStatus.msg"
   "msg/Robotiq3FingerActuatorCommand.msg"

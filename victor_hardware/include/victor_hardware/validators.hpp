@@ -6,15 +6,12 @@
 #include <victor_hardware_interfaces/msg/motion_status.hpp>
 #include <victor_hardware_interfaces/msg/robotiq3_finger_command.hpp>
 #include <victor_hardware_interfaces/msg/robotiq3_finger_status.hpp>
-#include <victor_hardware_interfaces/srv/get_control_mode.hpp>
-#include <victor_hardware_interfaces/srv/set_control_mode.hpp>
 #include <victor_lcm_interface/control_mode_parameters.hpp>
 #include <victor_lcm_interface/motion_command.hpp>
 #include <victor_lcm_interface/motion_status.hpp>
 #include <victor_lcm_interface/robotiq_3finger_status.hpp>
 
 namespace msg = victor_hardware_interfaces::msg;
-namespace srv = victor_hardware_interfaces::srv;
 
 namespace victor_hardware {
 
