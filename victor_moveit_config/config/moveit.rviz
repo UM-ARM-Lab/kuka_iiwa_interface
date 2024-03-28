@@ -362,7 +362,7 @@ Visualization Manager:
         Show Robot Visual: true
         Show Trail: false
         State Display Time: 0.05s
-        Trail Step Size: 12
+        Trail Step Size: 6
         Trajectory Topic: display_planned_path
         Use Sim Time: false
       Planning Metrics:
@@ -693,7 +693,7 @@ Visualization Manager:
         Show Robot Collision: false
         Show Robot Visual: true
       Value: true
-      Velocity_Scaling_Factor: 1
+      Velocity_Scaling_Factor: 0.5000000000000001
   Enabled: true
   Global Options:
     Background Color: 48; 48; 48
@@ -719,18 +719,18 @@ Visualization Manager:
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: 0.5855110883712769
-        Y: -0.005425533279776573
-        Z: 1.1801140308380127
+        X: 0.6673199534416199
+        Y: 0.05350378155708313
+        Z: 1.1017870903015137
       Focal Shape Fixed Size: true
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 0.17000021040439606
+      Pitch: 0.2647964358329773
       Target Frame: victor_root
       Value: Orbit (rviz_default_plugins)
-      Yaw: 0.5020002722740173
+      Yaw: 0.14199873805046082
     Saved: ~
 Window Geometry:
   Displays:

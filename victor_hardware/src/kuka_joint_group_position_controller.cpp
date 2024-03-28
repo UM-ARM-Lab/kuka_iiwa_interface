@@ -37,6 +37,40 @@ controller_interface::CallbackReturn KukaJointGroupPositionController::on_activa
   return JointGroupPositionController::on_activate(previous_state);
 }
 
+
+controller_interface::return_type KukaJointGroupPositionController::update(const rclcpp::Time &time, const rclcpp::Duration &period) {
+
+  RCLCPP_INFO(get_node()->get_logger(), "KukaJointGroupPositionController::update");
+
+  auto joint_commands = rt_command_ptr_.readFromRT();
+
+  RCLCPP_INFO_STREAM(get_node()->get_logger(), "cmd " << *joint_commands);
+  // no command received yet
+  if (!joint_commands || !(*joint_commands))
+  {
+    return controller_interface::return_type::OK;
+  }
+
+  RCLCPP_INFO_STREAM(get_node()->get_logger(), "sizes " << (*joint_commands)->data.size() << " " << command_interfaces_.size());
+  if ((*joint_commands)->data.size() != command_interfaces_.size())
+  {
+    RCLCPP_ERROR_THROTTLE(
+      get_node()->get_logger(), *(get_node()->get_clock()), 1000,
+      "command size (%zu) does not match number of interfaces (%zu)",
+      (*joint_commands)->data.size(), command_interfaces_.size());
+    return controller_interface::return_type::ERROR;
+  }
+
+  for (auto index = 0ul; index < command_interfaces_.size(); ++index)
+  {
+    command_interfaces_[index].set_value((*joint_commands)->data[index]);
+  }
+
+  return controller_interface::return_type::OK;
+
+  // return KukaJointGroupPositionController::update(time, period);
+}
+
 }  // namespace victor_hardware
 
 #include <pluginlib/class_list_macros.hpp>

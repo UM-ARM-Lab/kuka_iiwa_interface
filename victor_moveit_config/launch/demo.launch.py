@@ -92,6 +92,7 @@ def generate_launch_description():
                 moveit_config.robot_description,
                 str(moveit_config.package_path / "config/ros2_controllers.yaml"),
             ],
+            output="screen",
         )
     )
 

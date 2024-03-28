@@ -23,7 +23,7 @@ controller_interface::CallbackReturn KukaCartesianController::on_init() {
 
   // ROS subscriber for receiving commands
   cmd_sub_ = node->create_subscription<geometry_msgs::msg::Pose>(
-      arm_name_ + "/cartesian_pose", 10,
+      "~/pose", 10,
       [this](geometry_msgs::msg::Pose::SharedPtr msg) { latest_cmd_msg_.emplace(*msg); });
 
   return controller_interface::CallbackReturn::SUCCESS;
