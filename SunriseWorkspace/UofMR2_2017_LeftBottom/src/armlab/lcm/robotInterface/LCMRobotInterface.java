@@ -555,11 +555,6 @@ public class LCMRobotInterface extends RoboticsAPIApplication implements LCMSubs
         boolean canUpdate(control_mode_parameters cmd)
         {
         	getLogger().info("Checking if cartesian mode can update");
-        	getLogger().info(
-        	Double.toString(((CartesianImpedanceControlMode)cartesian_smartservo_motion_.getMode()).getMaxCartesianVelocity()[0]));
-        	
-        	cartesian_control_mode_limits ccm = Conversions.ccmToControlModeLimits((CartesianImpedanceControlMode)cartesian_smartservo_motion_.getMode());
-        	getLogger().info("Successfully got max cartesian velocity");
         	
             return super.canUpdate(cmd) &&
                 Utils.areEqual(cmd.cartesian_path_execution_params, cartesian_path_execution_params_) &&
@@ -608,9 +603,8 @@ public class LCMRobotInterface extends RoboticsAPIApplication implements LCMSubs
     
     private class CartesianImpedanceController extends CartesianController
     {
-
+    	public CartesianImpedanceControlMode ccm_;
         public CartesianImpedanceController(control_mode_parameters cmd) {
-            //getLogger().info("Building new Cartesian Impedance control mode");
             active_control_mode_ = new control_mode();
             active_control_mode_.mode = control_mode.CARTESIAN_IMPEDANCE;
             
@@ -628,47 +622,57 @@ public class LCMRobotInterface extends RoboticsAPIApplication implements LCMSubs
             }
 
             cartesian_smartservo_motion_ = createSmartServoLINMotion(cmd.cartesian_path_execution_params);
-            
-            CartesianImpedanceControlMode ccm = new CartesianImpedanceControlMode();
-            ccm.parametrize(CartDOF.X).setDamping(cmd.cartesian_impedance_params.cartesian_damping.x);
-            ccm.parametrize(CartDOF.Y).setDamping(cmd.cartesian_impedance_params.cartesian_damping.y);
-            ccm.parametrize(CartDOF.Z).setDamping(cmd.cartesian_impedance_params.cartesian_damping.z);
-            ccm.parametrize(CartDOF.A).setDamping(cmd.cartesian_impedance_params.cartesian_damping.a);
-            ccm.parametrize(CartDOF.B).setDamping(cmd.cartesian_impedance_params.cartesian_damping.b);
-            ccm.parametrize(CartDOF.C).setDamping(cmd.cartesian_impedance_params.cartesian_damping.c);
-            ccm.parametrize(CartDOF.X).setStiffness(cmd.cartesian_impedance_params.cartesian_stiffness.x);
-            ccm.parametrize(CartDOF.Y).setStiffness(cmd.cartesian_impedance_params.cartesian_stiffness.y);
-            ccm.parametrize(CartDOF.Z).setStiffness(cmd.cartesian_impedance_params.cartesian_stiffness.z);
-            ccm.parametrize(CartDOF.A).setStiffness(cmd.cartesian_impedance_params.cartesian_stiffness.a);
-            ccm.parametrize(CartDOF.B).setStiffness(cmd.cartesian_impedance_params.cartesian_stiffness.b);
-            ccm.parametrize(CartDOF.C).setStiffness(cmd.cartesian_impedance_params.cartesian_stiffness.c);
-            ccm.setNullSpaceDamping(cmd.cartesian_impedance_params.nullspace_damping);
-            ccm.setNullSpaceStiffness(cmd.cartesian_impedance_params.nullspace_stiffness);
+
+            ccm_ = new CartesianImpedanceControlMode();
+            setCartesianParams(cmd);
+            cartesian_smartservo_motion_.setMode(ccm_);
+            getLogger().info("Built new Cartesian Impedance control mode");
+        }
+        
+
+        @Override
+        void update(control_mode_parameters cmd) {
+            setCartesianParams(cmd);
+            cartesian_smartservo_motion_.getRuntime().changeControlModeSettings(ccm_);
+        }
+        
+        void setCartesianParams(control_mode_parameters cmd) {
+            ccm_.parametrize(CartDOF.X).setDamping(cmd.cartesian_impedance_params.cartesian_damping.x);
+            ccm_.parametrize(CartDOF.Y).setDamping(cmd.cartesian_impedance_params.cartesian_damping.y);
+            ccm_.parametrize(CartDOF.Z).setDamping(cmd.cartesian_impedance_params.cartesian_damping.z);
+            ccm_.parametrize(CartDOF.A).setDamping(cmd.cartesian_impedance_params.cartesian_damping.a);
+            ccm_.parametrize(CartDOF.B).setDamping(cmd.cartesian_impedance_params.cartesian_damping.b);
+            ccm_.parametrize(CartDOF.C).setDamping(cmd.cartesian_impedance_params.cartesian_damping.c);
+            ccm_.parametrize(CartDOF.X).setStiffness(cmd.cartesian_impedance_params.cartesian_stiffness.x);
+            ccm_.parametrize(CartDOF.Y).setStiffness(cmd.cartesian_impedance_params.cartesian_stiffness.y);
+            ccm_.parametrize(CartDOF.Z).setStiffness(cmd.cartesian_impedance_params.cartesian_stiffness.z);
+            ccm_.parametrize(CartDOF.A).setStiffness(cmd.cartesian_impedance_params.cartesian_stiffness.a);
+            ccm_.parametrize(CartDOF.B).setStiffness(cmd.cartesian_impedance_params.cartesian_stiffness.b);
+            ccm_.parametrize(CartDOF.C).setStiffness(cmd.cartesian_impedance_params.cartesian_stiffness.c);
+            ccm_.setNullSpaceDamping(cmd.cartesian_impedance_params.nullspace_damping);
+            ccm_.setNullSpaceStiffness(cmd.cartesian_impedance_params.nullspace_stiffness);
             //*1000 is conversion from m (LCM) to mm (Kuka)
-            ccm.setMaxPathDeviation(cmd.cartesian_control_mode_limits.max_path_deviation.x * 1000,
+            ccm_.setMaxPathDeviation(cmd.cartesian_control_mode_limits.max_path_deviation.x * 1000,
                                     cmd.cartesian_control_mode_limits.max_path_deviation.y * 1000,
                                     cmd.cartesian_control_mode_limits.max_path_deviation.z * 1000,
                                     cmd.cartesian_control_mode_limits.max_path_deviation.a,
                                     cmd.cartesian_control_mode_limits.max_path_deviation.b,
                                     cmd.cartesian_control_mode_limits.max_path_deviation.c);
-            ccm.setMaxCartesianVelocity(cmd.cartesian_control_mode_limits.max_cartesian_velocity.x * 1000,
+            ccm_.setMaxCartesianVelocity(cmd.cartesian_control_mode_limits.max_cartesian_velocity.x * 1000,
                                         cmd.cartesian_control_mode_limits.max_cartesian_velocity.y * 1000,
                                         cmd.cartesian_control_mode_limits.max_cartesian_velocity.z * 1000,
                                         cmd.cartesian_control_mode_limits.max_cartesian_velocity.a,
                                         cmd.cartesian_control_mode_limits.max_cartesian_velocity.b,
                                         cmd.cartesian_control_mode_limits.max_cartesian_velocity.c);
-            ccm.setMaxControlForce(cmd.cartesian_control_mode_limits.max_control_force.x,
+            ccm_.setMaxControlForce(cmd.cartesian_control_mode_limits.max_control_force.x,
                                    cmd.cartesian_control_mode_limits.max_control_force.y,
                                    cmd.cartesian_control_mode_limits.max_control_force.z,
                                    cmd.cartesian_control_mode_limits.max_control_force.a,
                                    cmd.cartesian_control_mode_limits.max_control_force.b,
                                    cmd.cartesian_control_mode_limits.max_control_force.c,
-                                   cmd.cartesian_control_mode_limits.stop_on_max_control_force);
-            
-            cartesian_smartservo_motion_.setMode(ccm);
-            getLogger().info("Built new Cartesian Impedance control mode");
+                                   cmd.cartesian_control_mode_limits.stop_on_max_control_force); 
         }
-
+        
         @Override
         void setDestination(Targets targets)
         {
