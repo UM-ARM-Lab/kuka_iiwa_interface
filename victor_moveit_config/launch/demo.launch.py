@@ -102,7 +102,7 @@ def generate_launch_description():
         )
     )
 
-
+    # Spawn controllers
     ld.add_action(
         IncludeLaunchDescription(
             PythonLaunchDescriptionSource(
@@ -110,6 +110,21 @@ def generate_launch_description():
             ),
         )
     )
+
+    for controller in ["left_arm_cartesian_controller",
+                       "right_arm_cartesian_controller",
+                       "left_arm_position_controller",
+                       "left_arm_impedance_controller",
+                       "right_arm_position_controller",
+                       "right_arm_impedance_controller"]:
+        ld.add_action(
+            Node(
+                package="controller_manager",
+                executable="spawner",
+                arguments=["--inactive", controller],
+                output="screen",
+            )
+        )
 
     ld.add_action(
         Node(

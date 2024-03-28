@@ -9,20 +9,12 @@ moveit_simple_controller_manager:
     - left_force_torque_broadcaster
     - right_force_torque_broadcaster
     - joint_impedance_trajectory_controller
-
-  inactive_controller_names:
     - joint_position_trajectory_controller
-    - left_arm_cartesian_controller
-    - right_arm_cartesian_controller
-    - left_arm_position_controller
-    - left_arm_impedance_controller
-    - right_arm_position_controller
-    - right_arm_impedance_controller
 
   joint_position_trajectory_controller:
     action_ns: follow_joint_trajectory
     type: FollowJointTrajectory
-    default: true
+    default: false
     joints:
       - victor_left_arm_joint_1
       - victor_left_arm_joint_2

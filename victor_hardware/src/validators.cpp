@@ -10,15 +10,15 @@ ErrorType validateJointPathExecutionParams(const victor_lcm_interface::joint_pat
   std::string message;
   if (params.joint_relative_velocity <= 0.0 || params.joint_relative_velocity > 1.0) {
     valid = false;
-    message += "+Invalid joint relative velocity";
+    message += "Invalid joint relative velocity";
   }
   if (params.joint_relative_acceleration <= 0.0 || params.joint_relative_acceleration > 1.0) {
     valid = false;
-    message += "+Invalid joint relative acceleration";
+    message += "Invalid joint relative acceleration";
   }
   if (params.override_joint_acceleration < 0.0 || params.override_joint_acceleration > 10.0) {
     valid = false;
-    message += "+Invalid override joint acceleration";
+    message += "Invalid override joint acceleration";
   }
   return {valid, message};
 }
@@ -31,61 +31,61 @@ ErrorType validateCartesianPathExecutionParams(
   // Velocities, mm/s, rad/s, and 1/s respectively
   if (params.max_velocity.x <= 0.0) {
     valid = false;
-    message += "+Invalid DoF X max velocity";
+    message += "Invalid DoF X max velocity";
   }
   if (params.max_velocity.y <= 0.0) {
     valid = false;
-    message += "+Invalid DoF Y max velocity";
+    message += "Invalid DoF Y max velocity";
   }
   if (params.max_velocity.z <= 0.0) {
     valid = false;
-    message += "+Invalid DoF Z max velocity";
+    message += "Invalid DoF Z max velocity";
   }
   if (params.max_velocity.a <= 0.0) {
     valid = false;
-    message += "+Invalid DoF A max velocity";
+    message += "Invalid DoF A max velocity";
   }
   if (params.max_velocity.b <= 0.0) {
     valid = false;
-    message += "+Invalid DoF B max velocity";
+    message += "Invalid DoF B max velocity";
   }
   if (params.max_velocity.c <= 0.0) {
     valid = false;
-    message += "+Invalid DoF C max velocity";
+    message += "Invalid DoF C max velocity";
   }
   if (params.max_nullspace_velocity <= 0.0) {
     valid = false;
-    message += "+Invalid nullspace max velocity";
+    message += "Invalid nullspace max velocity";
   }
 
   // Accelerations, mm/s^2, rad/s^2, and 1/s^2 respectively
   if (params.max_acceleration.x <= 0.0) {
     valid = false;
-    message += "+Invalid DoF X max acceleration";
+    message += "Invalid DoF X max acceleration";
   }
   if (params.max_acceleration.y <= 0.0) {
     valid = false;
-    message += "+Invalid DoF Y max acceleration";
+    message += "Invalid DoF Y max acceleration";
   }
   if (params.max_acceleration.z <= 0.0) {
     valid = false;
-    message += "+Invalid DoF Z max acceleration";
+    message += "Invalid DoF Z max acceleration";
   }
   if (params.max_acceleration.a <= 0.0) {
     valid = false;
-    message += "+Invalid DoF A max acceleration";
+    message += "Invalid DoF A max acceleration";
   }
   if (params.max_acceleration.b <= 0.0) {
     valid = false;
-    message += "+Invalid DoF B max acceleration";
+    message += "Invalid DoF B max acceleration";
   }
   if (params.max_acceleration.c <= 0.0) {
     valid = false;
-    message += "+Invalid DoF C max acceleration";
+    message += "Invalid DoF C max acceleration";
   }
   if (params.max_nullspace_acceleration <= 0.0) {
     valid = false;
-    message += "+Invalid nullspace max acceleration";
+    message += "Invalid nullspace max acceleration";
   }
 
   return {valid, message};
@@ -98,61 +98,61 @@ ErrorType validateJointImpedanceParams(const victor_lcm_interface::joint_impedan
   // Joint damping - unitless
   if (params.joint_damping.joint_1 < 0.0 || params.joint_damping.joint_1 > 1.0) {
     valid = false;
-    message += "+Invalid joint 1 damping";
+    message += "Invalid joint 1 damping";
   }
   if (params.joint_damping.joint_2 < 0.0 || params.joint_damping.joint_2 > 1.0) {
     valid = false;
-    message += "+Invalid joint 2 damping";
+    message += "Invalid joint 2 damping";
   }
   if (params.joint_damping.joint_3 < 0.0 || params.joint_damping.joint_3 > 1.0) {
     valid = false;
-    message += "+Invalid joint 3 damping";
+    message += "Invalid joint 3 damping";
   }
   if (params.joint_damping.joint_4 < 0.0 || params.joint_damping.joint_4 > 1.0) {
     valid = false;
-    message += "+Invalid joint 4 damping";
+    message += "Invalid joint 4 damping";
   }
   if (params.joint_damping.joint_5 < 0.0 || params.joint_damping.joint_5 > 1.0) {
     valid = false;
-    message += "+Invalid joint 5 damping";
+    message += "Invalid joint 5 damping";
   }
   if (params.joint_damping.joint_6 < 0.0 || params.joint_damping.joint_6 > 1.0) {
     valid = false;
-    message += "+Invalid joint 6 damping";
+    message += "Invalid joint 6 damping";
   }
   if (params.joint_damping.joint_7 < 0.0 || params.joint_damping.joint_7 > 1.0) {
     valid = false;
-    message += "+Invalid joint 7 damping";
+    message += "Invalid joint 7 damping";
   }
 
   // Joint stiffness - Nm/rad
   if (params.joint_stiffness.joint_1 < 0.0) {
     valid = false;
-    message += "+Invalid joint 1 stiffness";
+    message += "Invalid joint 1 stiffness";
   }
   if (params.joint_stiffness.joint_2 < 0.0) {
     valid = false;
-    message += "+Invalid joint 2 stiffness";
+    message += "Invalid joint 2 stiffness";
   }
   if (params.joint_stiffness.joint_3 < 0.0) {
     valid = false;
-    message += "+Invalid joint 3 stiffness";
+    message += "Invalid joint 3 stiffness";
   }
   if (params.joint_stiffness.joint_4 < 0.0) {
     valid = false;
-    message += "+Invalid joint 4 stiffness";
+    message += "Invalid joint 4 stiffness";
   }
   if (params.joint_stiffness.joint_5 < 0.0) {
     valid = false;
-    message += "+Invalid joint 5 stiffness";
+    message += "Invalid joint 5 stiffness";
   }
   if (params.joint_stiffness.joint_6 < 0.0) {
     valid = false;
-    message += "+Invalid joint 6 stiffness";
+    message += "Invalid joint 6 stiffness";
   }
   if (params.joint_stiffness.joint_7 < 0.0) {
     valid = false;
-    message += "+Invalid joint 7 stiffness";
+    message += "Invalid joint 7 stiffness";
   }
 
   return {valid, message};
@@ -165,63 +165,63 @@ ErrorType validateCartesianImpedanceParams(const victor_lcm_interface::cartesian
   // Damping - unitless
   if (params.cartesian_damping.x < 0.1 || params.cartesian_damping.x > 1.0) {
     valid = false;
-    message += "+Invalid DoF X damping";
+    message += "Invalid DoF X damping";
   }
   if (params.cartesian_damping.y < 0.1 || params.cartesian_damping.y > 1.0) {
     valid = false;
-    message += "+Invalid DoF Y damping";
+    message += "Invalid DoF Y damping";
   }
   if (params.cartesian_damping.z < 0.1 || params.cartesian_damping.z > 1.0) {
     valid = false;
-    message += "+Invalid DoF Z damping";
+    message += "Invalid DoF Z damping";
   }
   if (params.cartesian_damping.a < 0.1 || params.cartesian_damping.a > 1.0) {
     valid = false;
-    message += "+Invalid DoF A damping";
+    message += "Invalid DoF A damping";
   }
   if (params.cartesian_damping.b < 0.1 || params.cartesian_damping.b > 1.0) {
     valid = false;
-    message += "+Invalid DoF B damping";
+    message += "Invalid DoF B damping";
   }
   if (params.cartesian_damping.c < 0.1 || params.cartesian_damping.c > 1.0) {
     valid = false;
-    message += "+Invalid DoF C damping";
+    message += "Invalid DoF C damping";
   }
   if (params.nullspace_damping < 0.3 || params.nullspace_damping > 1.0) {
     valid = false;
-    message += "+Invalid nullspace damping";
+    message += "Invalid nullspace damping";
   }
 
   // Stiffness - units N/m, Nm/rad, no idea for nullspace
   if (params.cartesian_stiffness.x < 0.0 || params.cartesian_stiffness.x > 5000.0) {
     valid = false;
-    message += "+Invalid DoF X stiffness";
+    message += "Invalid DoF X stiffness";
   }
   if (params.cartesian_stiffness.y < 0.0 || params.cartesian_stiffness.y > 5000.0) {
     valid = false;
-    message += "+Invalid DoF Y stiffness";
+    message += "Invalid DoF Y stiffness";
   }
   if (params.cartesian_stiffness.z < 0.0 || params.cartesian_stiffness.z > 5000.0) {
     valid = false;
-    message += "+Invalid DoF Z stiffness";
+    message += "Invalid DoF Z stiffness";
   }
   // TODO: original values set by Calder were < 0.1 and > 300.0 - documentation states < 0.0 and > 300.0; why was it
   // set to 0.1?
   if (params.cartesian_stiffness.a < 0.0 || params.cartesian_stiffness.a > 300.0) {
     valid = false;
-    message += "+Invalid DoF A stiffness";
+    message += "Invalid DoF A stiffness";
   }
   if (params.cartesian_stiffness.b < 0.0 || params.cartesian_stiffness.b > 300.0) {
     valid = false;
-    message += "+Invalid DoF B stiffness";
+    message += "Invalid DoF B stiffness";
   }
   if (params.cartesian_stiffness.c < 0.0 || params.cartesian_stiffness.c > 300.0) {
     valid = false;
-    message += "+Invalid DoF C stiffness";
+    message += "Invalid DoF C stiffness";
   }
   if (params.nullspace_stiffness < 0.0) {
     valid = false;
-    message += "+Invalid nullspace stiffness";
+    message += "Invalid nullspace stiffness";
   }
 
   return {valid, message};
@@ -234,79 +234,79 @@ ErrorType validateCartesianControlModeLimits(const victor_lcm_interface::cartesi
   // Path deviation
   if (params.max_path_deviation.x <= 0.0) {
     valid = false;
-    message += "+Invalid DoF X max path deviation";
+    message += "Invalid DoF X max path deviation";
   }
   if (params.max_path_deviation.y <= 0.0) {
     valid = false;
-    message += "+Invalid DoF Y max path deviation";
+    message += "Invalid DoF Y max path deviation";
   }
   if (params.max_path_deviation.z <= 0.0) {
     valid = false;
-    message += "+Invalid DoF Z max path deviation";
+    message += "Invalid DoF Z max path deviation";
   }
   if (params.max_path_deviation.a <= 0.0) {
     valid = false;
-    message += "+Invalid DoF A max path deviation";
+    message += "Invalid DoF A max path deviation";
   }
   if (params.max_path_deviation.b <= 0.0) {
     valid = false;
-    message += "+Invalid DoF B max path deviation";
+    message += "Invalid DoF B max path deviation";
   }
   if (params.max_path_deviation.c <= 0.0) {
     valid = false;
-    message += "+Invalid DoF C max path deviation";
+    message += "Invalid DoF C max path deviation";
   }
 
   // Cartesian velocity
   if (params.max_cartesian_velocity.x <= 0.0) {
     valid = false;
-    message += "+Invalid DoF X max cartesian velocity";
+    message += "Invalid DoF X max cartesian velocity";
   }
   if (params.max_cartesian_velocity.y <= 0.0) {
     valid = false;
-    message += "+Invalid DoF Y max cartesian velocity";
+    message += "Invalid DoF Y max cartesian velocity";
   }
   if (params.max_cartesian_velocity.z <= 0.0) {
     valid = false;
-    message += "+Invalid DoF Z max cartesian velocity";
+    message += "Invalid DoF Z max cartesian velocity";
   }
   if (params.max_cartesian_velocity.a <= 0.0) {
     valid = false;
-    message += "+Invalid DoF A max cartesian velocity";
+    message += "Invalid DoF A max cartesian velocity";
   }
   if (params.max_cartesian_velocity.b <= 0.0) {
     valid = false;
-    message += "+Invalid DoF B max cartesian velocity";
+    message += "Invalid DoF B max cartesian velocity";
   }
   if (params.max_cartesian_velocity.c <= 0.0) {
     valid = false;
-    message += "+Invalid DoF C max cartesian velocity";
+    message += "Invalid DoF C max cartesian velocity";
   }
 
   // Cartesian force
   if (params.max_control_force.x <= 0.0) {
     valid = false;
-    message += "+Invalid DoF X max control force";
+    message += "Invalid DoF X max control force";
   }
   if (params.max_control_force.y <= 0.0) {
     valid = false;
-    message += "+Invalid DoF Y max control force";
+    message += "Invalid DoF Y max control force";
   }
   if (params.max_control_force.z <= 0.0) {
     valid = false;
-    message += "+Invalid DoF Z max control force";
+    message += "Invalid DoF Z max control force";
   }
   if (params.max_control_force.a <= 0.0) {
     valid = false;
-    message += "+Invalid DoF A max control force";
+    message += "Invalid DoF A max control force";
   }
   if (params.max_control_force.b <= 0.0) {
     valid = false;
-    message += "+Invalid DoF B max control force";
+    message += "Invalid DoF B max control force";
   }
   if (params.max_control_force.c <= 0.0) {
     valid = false;
-    message += "+Invalid DoF C max control force";
+    message += "Invalid DoF C max control force";
   }
 
   return {valid, message};
@@ -322,7 +322,7 @@ ErrorType validateControlMode(const victor_lcm_interface::control_mode_parameter
       params.control_mode.mode != victor_lcm_interface::control_mode::CARTESIAN_POSE &&
       params.control_mode.mode != victor_lcm_interface::control_mode::CARTESIAN_IMPEDANCE) {
     valid = false;
-    message += "+Invalid control mode";
+    message += "Invalid control mode";
   }
 
   // Check each part of the control mode
@@ -366,7 +366,7 @@ ErrorType validateCartesianPose(const geometry_msgs::msg::Pose &pose, const std:
     if (error > 1e-6) {
       valid = false;
       message +=
-          "+Commanded cartesian pose quaternion is not normalized, squared norm = " + std::to_string(quat_squared_norm);
+          "Commanded cartesian pose quaternion is not normalized, squared norm = " + std::to_string(quat_squared_norm);
     }
   }
   return {valid, message};
@@ -413,17 +413,17 @@ ErrorType validateFingerCommand(const msg::Robotiq3FingerActuatorCommand &comman
   std::string message;
   if (command.position > 1.0 || command.position < 0.0) {
     valid = false;
-    message += "+Invalid finger position";
+    message += "Invalid finger position";
   }
 
   if (command.force > 1.0 || command.force < 0.0) {
     valid = false;
-    message += "+Invalid finger force";
+    message += "Invalid finger force";
   }
 
   if (command.speed > 1.0 || command.speed < 0.0) {
     valid = false;
-    message += "+Invalid finger speed";
+    message += "Invalid finger speed";
   }
 
   return {valid, message};
