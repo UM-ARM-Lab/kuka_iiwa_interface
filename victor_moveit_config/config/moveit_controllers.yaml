@@ -9,6 +9,14 @@ moveit_simple_controller_manager:
     - left_force_torque_broadcaster
     - right_force_torque_broadcaster
     - joint_impedance_trajectory_controller
+
+  inactive_controller_names:
+    - left_arm_position_controller
+    - left_arm_impedance_controller
+    - left_arm_cartesian_controller
+    - right_arm_position_controller
+    - right_arm_impedance_controller
+    - right_arm_cartesian_controller
     - joint_position_trajectory_controller
 
   joint_position_trajectory_controller:
