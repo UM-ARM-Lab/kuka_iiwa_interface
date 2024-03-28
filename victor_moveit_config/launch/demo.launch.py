@@ -110,6 +110,13 @@ def generate_launch_description():
     )
 
     ld.add_action(
+        Node(
+            package="rqt_controller_manager",
+            executable="rqt_controller_manager",
+        )
+    )
+
+    ld.add_action(
         IncludeLaunchDescription(
             PythonLaunchDescriptionSource(
                 str(moveit_config.package_path / "launch/move_group.launch.py"),
