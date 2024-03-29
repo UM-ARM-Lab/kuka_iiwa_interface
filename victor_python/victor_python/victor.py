@@ -1,10 +1,7 @@
 from typing import Sequence, Optional, Callable, List
 
 import numpy as np
-
 import rclpy
-from arm_robots.robot import load_moveit_config
-from arm_utilities.listener import Listener
 from controller_manager_msgs.msg import ControllerState
 from controller_manager_msgs.srv import ListControllers, SwitchController
 from geometry_msgs.msg import Pose
@@ -19,6 +16,9 @@ from std_msgs.msg import String
 from urdf_parser_py.urdf import Robot as RobotURDF
 from urdf_parser_py.urdf import URDF
 from urdf_parser_py.xml_reflection import core
+
+from arm_robots.robot import load_moveit_config
+from arm_utilities.listener import Listener
 from victor_hardware_interfaces.msg import MotionStatus, Robotiq3FingerStatus, Robotiq3FingerCommand, \
     ControlModeParameters, ControlMode
 from victor_python.robotiq_finger_angles import compute_finger_angles, get_finger_angle_names, compute_scissor_angle, \
@@ -197,7 +197,12 @@ class Side:
 
         return joint_state
 
-    def list_active_controllers(self):
+    def get_active_controller_names(self):
+        controllers = self.get_active_controllers()
+        controller_names = [controller.name for controller in controllers]
+        return controller_names
+
+    def get_active_controllers(self) -> List[ControllerState]:
         # Call the list controllers ROS service
         req = ListControllers.Request()
         res: ListControllers.Response = self.list_controllers_client.call(req)
@@ -211,10 +216,7 @@ class Side:
 
         # filter out any control that does not contain any interfaces for this side
         controllers = [controller for controller in controllers if self.is_claimed_by(controller)]
-
-        controller_names = [controller.name for controller in controllers]
-
-        return controller_names
+        return controllers
 
     def is_claimed_by(self, controller: ControllerState):
         return any([self.arm_name in interface for interface in controller.claimed_interfaces])

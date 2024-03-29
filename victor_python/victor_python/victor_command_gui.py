@@ -6,15 +6,17 @@ from pathlib import Path
 from typing import Dict
 
 import numpy as np
+import rclpy
 from PyQt5 import uic
 from PyQt5.QtCore import pyqtSignal, QTimer
 from PyQt5.QtWidgets import QApplication, QMainWindow, QWidget, QHBoxLayout
-
-import rclpy
 from rclpy.executors import MultiThreadedExecutor
 from rclpy.node import Node
 from std_msgs.msg import Float64MultiArray
+from trajectory_msgs.msg import JointTrajectory, JointTrajectoryPoint
 from urdf_parser_py.urdf import Robot
+
+from arm_utilities.ros_helpers import wait_for_subscriber
 from victor_hardware_interfaces.msg import Robotiq3FingerCommand, Robotiq3FingerStatus, \
     Robotiq3FingerActuatorStatus, Robotiq3FingerActuatorCommand
 from victor_python.victor import Victor, Side, ROBOTIQ_OPEN, ROBOTIQ_CLOSED
@@ -116,7 +118,7 @@ class ArmWidget(QWidget):
     def periodic_update(self):
         active_control_mode = self.side.control_mode_listener.get().control_mode.mode
 
-        active_controller_names = self.side.list_active_controllers()
+        active_controller_names = self.side.get_active_controller_names()
 
         if len(active_controller_names) == 0:
             self.activeControllerChanged.emit("No active controllers", "", active_control_mode)
@@ -191,7 +193,40 @@ class ArmWidget(QWidget):
         thread.start()
 
     def publish_arm_cmd(self):
-        self.side.send_joint_cmd(self.get_float64_from_sliders())
+        # First we need to infer which controller is running, and then send the command to that controller
+        active_controllers = self.side.get_active_controllers()
+        if len(active_controllers) == 0:
+            print("No active controllers")
+            return
+        elif len(active_controllers) > 1:
+            print("Multiple active controllers!!! Probably a bug...")
+            return
+
+        active_controller = active_controllers[0]
+        current_commanded_positions_dict = self.victor.get_joint_cmd_dict()
+        if active_controller.type == 'victor_hardware/KukaJointTrajectoryController':
+            joint_names_for_controller = []
+            current_commanded_positions_for_controller = []
+            for cmd_if in active_controller.required_command_interfaces:
+                if 'position' in cmd_if:
+                    joint_name = cmd_if.split('/')[1]
+                    joint_names_for_controller.append(joint_name)
+                    current_commanded_positions_for_controller.append(current_commanded_positions_dict[joint_name])
+
+            traj_msg = JointTrajectory()
+            traj_msg.joint_names = joint_names_for_controller
+            traj_msg.points = [JointTrajectoryPoint(positions=current_commanded_positions_for_controller)]
+
+            jtc_pub = self.node.create_publisher(JointTrajectory, f'{active_controller.name}/joint_trajectory', 10)
+            wait_for_subscriber(jtc_pub)
+            jtc_pub.publish(traj_msg)
+        elif active_controller.type == 'victor_hardware/KukaJointGroupPositionController':
+            joint_cmd_msg = self.get_float64_from_sliders()
+            joint_cmd_pub = self.node.create_publisher(Float64MultiArray, f'{active_controller.name}/commands', 10)
+            wait_for_subscriber(joint_cmd_pub)
+            joint_cmd_pub.publish(joint_cmd_msg)
+        else:
+            print(f"Unknown controller type {active_controller.type}")
 
     def publish_gripper_cmd(self):
         self.side.gripper_command.publish(self.gripper_cmd)
