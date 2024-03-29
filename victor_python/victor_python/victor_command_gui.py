@@ -53,6 +53,7 @@ class VictorCommandWindow(QMainWindow):
 
 class ArmWidget(QWidget):
     initial_robot_data = pyqtSignal(Robot, dict, Robotiq3FingerStatus)
+    activeControllerChanged = pyqtSignal(str, str, int)
 
     def __init__(self, node: Node, victor: Victor, arm_name: str, side: Side):
         QWidget.__init__(self)
@@ -92,10 +93,40 @@ class ArmWidget(QWidget):
         self.finger_c_widget.cmdChanged.connect(self.on_finger_c_cmd_changed)
         self.scissor_widget.cmdChanged.connect(self.on_scissor_cmd_changed)
 
+        self.activeControllerChanged.connect(self.setControllerText)
         self.initial_robot_data.connect(self.on_initial_robot_data)
 
         # Start things as disabled, since we have to wait for the robot description to enable them
         self.reset_sliders_button.setEnabled(False)
+
+        # Periodically check for changes in which ROS2 controllers are running
+        self.timer = QTimer()
+        self.timer.timeout.connect(self.periodic_update_async)
+        self.timer.start(1000)
+
+    def setControllerText(self, controller_name: str, expected_control_mode: str, active_control_mode: int):
+        self.active_controller_edit.setText(controller_name)
+        self.expected_control_mode_edit.setText(expected_control_mode)
+        self.active_control_mode_edit.setText(str(active_control_mode))
+
+    def periodic_update_async(self):
+        thread = threading.Thread(target=self.periodic_update)
+        thread.start()
+
+    def periodic_update(self):
+        active_control_mode = self.side.control_mode_listener.get().control_mode.mode
+
+        active_controller_names = self.side.list_active_controllers()
+
+        if len(active_controller_names) == 0:
+            self.activeControllerChanged.emit("No active controllers", "", active_control_mode)
+        elif len(active_controller_names) > 1:
+            self.activeControllerChanged.emit("Multiple active controllers!!! Probably a bug...", "", active_control_mode)
+        else:
+            active_controller_name = active_controller_names[0]
+            control_mode = self.side.get_control_mode_for_controller(active_controller_name)
+
+            self.activeControllerChanged.emit(active_controller_name, control_mode, active_control_mode)
 
     def on_robot_description(self, robot_description: Robot):
         """ Called off the main thread """
@@ -120,6 +151,8 @@ class ArmWidget(QWidget):
 
         # Enable things
         self.reset_sliders_button.setEnabled(True)
+
+        self.reset_sliders()
 
         # Connect the sliders
         for joint_idx in range(7):

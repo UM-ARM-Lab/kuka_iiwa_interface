@@ -5,9 +5,11 @@ import numpy as np
 import rclpy
 from arm_robots.robot import load_moveit_config
 from arm_utilities.listener import Listener
+from controller_manager_msgs.msg import ControllerState
 from controller_manager_msgs.srv import ListControllers, SwitchController
 from geometry_msgs.msg import Pose
 from geometry_msgs.msg import TransformStamped
+from rcl_interfaces.srv import GetParameters
 from rclpy.callback_groups import MutuallyExclusiveCallbackGroup
 from rclpy.node import Node
 from rclpy.qos import QoSDurabilityPolicy, QoSProfile
@@ -61,6 +63,7 @@ class Side:
         self.lower, self.upper = self.parser_joint_limits()
 
         self.pub_group = MutuallyExclusiveCallbackGroup()
+        self.cm_srv_group = MutuallyExclusiveCallbackGroup()
 
         self.joint_cmd_pub = node.create_publisher(Float64MultiArray, f"{self.arm_name}_position_controller", 10,
                                                    callback_group=self.pub_group)
@@ -68,7 +71,8 @@ class Side:
                                                        callback_group=self.pub_group)
         self.gripper_command = node.create_publisher(Robotiq3FingerCommand, f"victor/{self.arm_name}/gripper_command",
                                                      10, callback_group=self.pub_group)
-
+        self.list_controllers_client = node.create_client(ListControllers, f"controller_manager/list_controllers",
+                                                          callback_group=self.cm_srv_group)
 
         self.motion_status = Listener(node, MotionStatus, f"victor/{self.arm_name}/motion_status", 10)
         self.gripper_status = Listener(node, Robotiq3FingerStatus, f"victor/{self.arm_name}/gripper_status", 10)
@@ -193,6 +197,42 @@ class Side:
 
         return joint_state
 
+    def list_active_controllers(self):
+        # Call the list controllers ROS service
+        req = ListControllers.Request()
+        res: ListControllers.Response = self.list_controllers_client.call(req)
+        controllers = res.controller
+
+        # filter out anything with "broadcaster" in the name
+        controllers = [controller for controller in controllers if "broadcaster" not in controller.name]
+
+        # remove inactive controllers
+        controllers = [controller for controller in controllers if controller.state == "active"]
+
+        # filter out any control that does not contain any interfaces for this side
+        controllers = [controller for controller in controllers if self.is_claimed_by(controller)]
+
+        controller_names = [controller.name for controller in controllers]
+
+        return controller_names
+
+    def is_claimed_by(self, controller: ControllerState):
+        return any([self.arm_name in interface for interface in controller.claimed_interfaces])
+
+    def get_control_mode_for_controller(self, controller_name: str) -> str:
+        # get the ROS param "control_mode" on the given controller's node
+        srv_client = self.node.create_client(GetParameters, f"{controller_name}/get_parameters")
+        success = srv_client.wait_for_service(timeout_sec=1.0)
+        if not success:
+            raise RuntimeError(f"Could not get parameters from {controller_name}")
+
+        req = GetParameters.Request()
+        req.names = ["control_mode"]
+        res = srv_client.call(req)
+        control_mode = res.values[0].string_value
+
+        return control_mode
+
 
 class Victor:
 
@@ -281,11 +321,3 @@ class Victor:
 
         joint_positions = dict(zip(left_names + right_names, left_commanded_positions + right_commanded_positions))
         return joint_positions
-
-    def deactivate_all_controllers(self):
-        res = self.list_controllers_client.call(ListControllers.Request())
-
-    def activate_controllers(self, controllers: List[str]):
-        req = SwitchController.Request()
-        req.activate_controllers = controllers
-        self.switch_controller_client.call(req)
