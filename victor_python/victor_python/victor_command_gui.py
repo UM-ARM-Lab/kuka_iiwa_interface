@@ -2,22 +2,22 @@
 import signal
 import sys
 import threading
+from copy import deepcopy
 from pathlib import Path
-from typing import Dict
 
 import numpy as np
-import rclpy
 from PyQt5 import uic
 from PyQt5.QtCore import pyqtSignal, QTimer
 from PyQt5.QtWidgets import QApplication, QMainWindow, QWidget, QHBoxLayout
+from victor_hardware_interfaces.msg import Robotiq3FingerCommand, Robotiq3FingerStatus, \
+    Robotiq3FingerActuatorStatus, Robotiq3FingerActuatorCommand
+
+import rclpy
 from rclpy.executors import MultiThreadedExecutor
 from rclpy.node import Node
 from std_msgs.msg import Float64MultiArray
 from trajectory_msgs.msg import JointTrajectory, JointTrajectoryPoint
 from urdf_parser_py.urdf import Robot
-
-from victor_hardware_interfaces.msg import Robotiq3FingerCommand, Robotiq3FingerStatus, \
-    Robotiq3FingerActuatorStatus, Robotiq3FingerActuatorCommand
 from victor_python.victor import Victor, Side, ROBOTIQ_OPEN, ROBOTIQ_CLOSED
 from victor_python.victor_utils import get_gripper_closed_fraction_msg
 
@@ -40,6 +40,8 @@ class VictorCommandWindow(QMainWindow):
 
         self.victor = Victor(node, robot_description_cb=self.robot_description_callback)
 
+        # self.thread_pool = ThreadPool
+
         self.left_arm_widget = ArmWidget(node, self.victor, 'left_arm', self.victor.left)
         self.right_arm_widget = ArmWidget(node, self.victor, 'right_arm', self.victor.right)
 
@@ -51,9 +53,13 @@ class VictorCommandWindow(QMainWindow):
         self.left_arm_widget.on_robot_description(robot)
         self.right_arm_widget.on_robot_description(robot)
 
+        self.left_arm_widget.after_initial_robot_data.emit()
+        self.right_arm_widget.after_initial_robot_data.emit()
+
 
 class ArmWidget(QWidget):
-    initial_robot_data = pyqtSignal(Robot, dict, Robotiq3FingerStatus)
+    initial_robot_data = pyqtSignal(Robot, Robotiq3FingerStatus)
+    after_initial_robot_data = pyqtSignal()
     activeControllerChanged = pyqtSignal(str, str, int)
 
     def __init__(self, node: Node, victor: Victor, arm_name: str, side: Side):
@@ -70,7 +76,7 @@ class ArmWidget(QWidget):
         # Add slider widgets for each joint, but we don't have values yet
         self.slider_widgets = []
         for joint_idx in range(7):
-            slider_widget = SliderWidget(f"Joint {joint_idx + 1} Command")
+            slider_widget = ArmJointSliderWidget(f"Joint {joint_idx + 1} Command", joint_idx)
             slider_widget.setEnabled(False)
             self.slider_widgets.append(slider_widget)
             self.arm_layout.addWidget(slider_widget)
@@ -96,6 +102,7 @@ class ArmWidget(QWidget):
 
         self.activeControllerChanged.connect(self.setControllerText)
         self.initial_robot_data.connect(self.on_initial_robot_data)
+        self.after_initial_robot_data.connect(self.connect_and_enable_sliders)
 
         # Start things as disabled, since we have to wait for the robot description to enable them
         self.reset_sliders_button.setEnabled(False)
@@ -122,7 +129,8 @@ class ArmWidget(QWidget):
         if len(active_controller_names) == 0:
             self.activeControllerChanged.emit("No active controllers", "", active_control_mode)
         elif len(active_controller_names) > 1:
-            self.activeControllerChanged.emit("Multiple active controllers!!! Probably a bug...", "", active_control_mode)
+            self.activeControllerChanged.emit("Multiple active controllers!!! Probably a bug...", "",
+                                              active_control_mode)
         else:
             active_controller_name = active_controller_names[0]
             control_mode = self.side.get_control_mode_for_controller(active_controller_name)
@@ -131,16 +139,15 @@ class ArmWidget(QWidget):
 
     def on_robot_description(self, robot_description: Robot):
         """ Called off the main thread """
-        # Initialize the command objects to the current state
-        joint_states_dict = self.victor.get_joint_cmd_dict()
+        print(f"waiting for {self.side.name} gripper status...")
         gripper_status: Robotiq3FingerStatus = self.side.gripper_status.get()
+        print(f"got {self.side.name} gripper status")
 
         # Emit back to the main thread
-        self.initial_robot_data.emit(robot_description, joint_states_dict, gripper_status)
+        self.initial_robot_data.emit(robot_description, gripper_status)
 
     def on_initial_robot_data(self,
                               robot: Robot,
-                              joint_states_dict: Dict,
                               gripper_status: Robotiq3FingerStatus):
         """ Called on the main thread """
 
@@ -157,10 +164,20 @@ class ArmWidget(QWidget):
 
         # Connect the sliders
         for joint_idx in range(7):
+            expected_joint_name = f"victor_{self.arm_name}_joint_{joint_idx + 1}"
+            joint = robot.joint_map[expected_joint_name]
+            lower_deg = joint_angle_to_slider_pos(joint.limit.lower)
+            upper_deg = joint_angle_to_slider_pos(joint.limit.upper)
+
+            slider_widget = self.slider_widgets[joint_idx]
+            slider_widget.slider.setRange(lower_deg, upper_deg)
+
+    def connect_and_enable_sliders(self):
+        for joint_idx in range(7):
             slider_widget = self.slider_widgets[joint_idx]
             slider_widget.setEnabled(True)
             slider_widget.connect()
-            slider_widget.slider.valueChanged.connect(self.publish_arm_cmd_async)
+            slider_widget.jointChanged.connect(self.publish_arm_cmd_async)
 
     def reset_sliders(self):
         # Read the current joint states and update the sliders
@@ -187,11 +204,11 @@ class ArmWidget(QWidget):
         self.gripper_cmd.scissor_command = cmd
         self.publish_gripper_cmd()
 
-    def publish_arm_cmd_async(self):
-        thread = threading.Thread(target=self.publish_arm_cmd)
+    def publish_arm_cmd_async(self, slider_idx: int, joint_angle: float):
+        thread = threading.Thread(target=self.publish_arm_cmd, args=(slider_idx, joint_angle))
         thread.start()
 
-    def publish_arm_cmd(self):
+    def publish_arm_cmd(self, slider_idx: int, joint_angle: float):
         # First we need to infer which controller is running, and then send the command to that controller
         active_controllers = self.side.get_active_controllers()
         if len(active_controllers) == 0:
@@ -208,16 +225,32 @@ class ArmWidget(QWidget):
             current_commanded_positions_for_controller = []
             for cmd_if in active_controller.required_command_interfaces:
                 if 'position' in cmd_if:
-                    joint_name = cmd_if.split('/')[1]
+                    joint_name = cmd_if.split('/')[0]
                     joint_names_for_controller.append(joint_name)
                     current_commanded_positions_for_controller.append(current_commanded_positions_dict[joint_name])
 
+            # Initialize the end positions to the current commanded positions,
+            # then update the ones for the sliders of this side
+            end_positions = deepcopy(current_commanded_positions_for_controller)
+
+            joint_name = f"victor_{self.arm_name}_joint_{slider_idx + 1}"
+            joint_idx_for_controller = joint_names_for_controller.index(joint_name)
+            end_positions[joint_idx_for_controller] = joint_angle
+
+            start_point = JointTrajectoryPoint(positions=current_commanded_positions_for_controller)
+            end_point = JointTrajectoryPoint()
+            end_point.positions = end_positions
+            end_point.time_from_start.sec = 0
+            end_point.time_from_start.nanosec = 100_000_000
+
             traj_msg = JointTrajectory()
             traj_msg.joint_names = joint_names_for_controller
-            traj_msg.points = [JointTrajectoryPoint(positions=current_commanded_positions_for_controller)]
+            traj_msg.points = [start_point, end_point]
 
+            print("waiting to create pub...")
             jtc_pub = self.side.get_jtc_cmd_pub(active_controller.name)
             jtc_pub.publish(traj_msg)
+            print("pub!")
         elif active_controller.type == 'victor_hardware/KukaJointGroupPositionController':
             joint_cmd_msg = self.get_float64_from_sliders()
             joint_cmd_pub = self.side.get_joint_cmd_pub(active_controller.name)
@@ -251,12 +284,15 @@ class SliderWidget(QWidget):
 
     def connect(self):
         self.slider.valueChanged.connect(self.slider_changed)
-        self.value_edit.textChanged.connect(self.value_edit_changed)
+        self.value_edit.editingFinished.connect(self.value_edit_changed)
 
-    def value_edit_changed(self, text):
+    def value_edit_changed(self):
+        text = self.value_edit.text()
+        print(f'value edit changed: {text}')
         self.slider.setValue(int(text))
 
     def slider_changed(self, value):
+        print(f"slider changed: {value}")
         self.value_edit.setText(str(value))
 
     def get_value(self):
@@ -267,12 +303,28 @@ class SliderWidget(QWidget):
         self.value_edit.setText(str(value))
 
 
+class ArmJointSliderWidget(SliderWidget):
+    jointChanged = pyqtSignal(int, float)
+
+    def __init__(self, label: str, joint_idx: int):
+        SliderWidget.__init__(self, label)
+        self.joint_idx = joint_idx
+
+    def value_edit_changed(self):
+        super().value_edit_changed()
+
+    def slider_changed(self, value):
+        super().slider_changed(value)
+        self.jointChanged.emit(self.joint_idx, slider_pos_to_joint_angle(value))
+
+
 class FingerSliderWidget(SliderWidget):
 
     def __init__(self, label: str):
         SliderWidget.__init__(self, label)
 
-    def value_edit_changed(self, text):
+    def value_edit_changed(self):
+        text = self.value_edit.text()
         try:
             fraction = self.fraction_to_slider_pos(float(text))
             self.slider.setValue(int(fraction))
@@ -363,6 +415,7 @@ def main():
 
     # use a QTimer to call spin regularly
     def _spin_once():
+        # print(".", end="")
         executor.spin_once()
 
     timer = QTimer()

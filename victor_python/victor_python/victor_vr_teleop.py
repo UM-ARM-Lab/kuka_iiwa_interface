@@ -17,7 +17,7 @@ import transforms3d
 
 import rclpy
 from ament_index_python import get_package_share_path
-from arm_utilities.filters import BatchOnlineFilter
+# from arm_utilities.filters import BatchOnlineFilter
 from arm_utilities.numpy_conversions import transform_to_mat, mat_to_transform
 from arm_utilities.transformation_helper import np_tf_inv
 from controller_manager_msgs.srv import SwitchController
@@ -86,7 +86,13 @@ class SideTeleop:
 
         self.filter_pub = self.node.create_publisher(JointState, 'filtered_joint_states', 10)
 
-        self.filter = BatchOnlineFilter(numtaps=20, cutoff=0.1)
+        # self.filter = BatchOnlineFilter(numtaps=20, cutoff=0.1)
+
+        active_controller_names = self.side.get_active_controller_names()
+        if len(active_controller_names) != 1:
+            raise ValueError(f"Expected exactly one active controller, got {active_controller_names}")
+        active_controller_name = active_controller_names[0]
+        self.joint_cmd_pub = self.side.get_joint_cmd_pub(active_controller_name)
 
     def on_start_recording(self, controller_info: ControllerInfo):
         controller_in_vr0 = self.get_controller_in_vr(controller_info)
@@ -117,18 +123,19 @@ class SideTeleop:
 
         if joint_positions is not None:
             # TODO: use filtered joint positions!
-            self.side.send_joint_cmd(joint_positions)
+            self.side.send_joint_cmd(self.joint_cmd_pub, joint_positions)
 
-            joint_positions_filtered = self.filter.update(joint_positions)
-            joint_state_msg = JointState()
-            joint_state_msg.name = [f"victor_{self.side.arm_name}_joint_{i}" for i in
-                                    range(len(joint_positions_filtered))]
-            joint_state_msg.position = joint_positions_filtered.squeeze().tolist()
-            self.filter_pub.publish(joint_state_msg)
+            # joint_positions_filtered = self.filter.update(joint_positions)
+            # joint_state_msg = JointState()
+            # joint_state_msg.name = [f"victor_{self.side.arm_name}_joint_{i}" for i in
+            #                         range(len(joint_positions_filtered))]
+            # joint_state_msg.position = joint_positions_filtered.squeeze().tolist()
+            # self.filter_pub.publish(joint_state_msg)
 
         if abs(open_fraction - self.last_send_open_fraction) > 0.05:
             # FIXME: make scissor controllable?
-            self.side.gripper_command.publish(get_gripper_closed_fraction_msg(open_fraction, scissor_position=self.scissor_position))
+            self.side.gripper_command.publish(
+                get_gripper_closed_fraction_msg(open_fraction, scissor_position=self.scissor_position))
             self.last_send_open_fraction = open_fraction
 
         return {
@@ -328,7 +335,7 @@ class VictorTeleopNode(Node):
                         self.latest_action_dict.update(left_action)
                     if controller_info.trackpad_button:
                         self.left.toggle_gripper()
-                        sleep(0.25) # HACK to handle multiple rapid press events
+                        sleep(0.25)  # HACK to handle multiple rapid press events
                 elif 'right' in controller_info.controller_name:
                     if controller_info.grip_button:
                         right_action = self.right.send_cmd(controller_info, open_fraction)

@@ -2,7 +2,7 @@ from typing import Sequence, Optional, Callable, List
 
 import numpy as np
 import rclpy
-from arm_utilities.arm_utilities.ros_helpers import wait_for_subscriber
+from arm_utilities.ros_helpers import wait_for_subscriber
 from arm_utilities.listener import Listener
 from controller_manager_msgs.msg import ControllerState
 from controller_manager_msgs.srv import ListControllers, SwitchController
@@ -80,6 +80,8 @@ class Side:
         self.control_mode_listener = Listener(node, ControlModeParameters,
                                               f"victor/{self.arm_name}/control_mode_parameters", 10)
 
+        self.controller_publishers: dict[str, Publisher] = {}
+
     def open_gripper(self, scissor_position=0.5):
         # TODO: implementing blocking grasping
         self.gripper_command.publish(get_gripper_closed_fraction_msg(ROBOTIQ_OPEN, scissor_position))
@@ -109,14 +111,20 @@ class Side:
         return names, commanded_positions
 
     def get_jtc_cmd_pub(self, active_controller_name: str):
-        jtc_cmd_pub = self.node.create_publisher(JointTrajectory, f'{active_controller_name}/joint_trajectory', 10)
-        wait_for_subscriber(jtc_cmd_pub)
-        return jtc_cmd_pub
+        if active_controller_name not in self.controller_publishers:
+            jtc_cmd_pub = self.node.create_publisher(JointTrajectory, f'{active_controller_name}/joint_trajectory', 10)
+            wait_for_subscriber(jtc_cmd_pub)
+            self.controller_publishers[active_controller_name] = jtc_cmd_pub
+
+        return self.controller_publishers[active_controller_name]
 
     def get_joint_cmd_pub(self, active_controller_name: str):
-        joint_cmd_pub = self.node.create_publisher(Float64MultiArray, f'{active_controller_name}/commands', 10)
-        wait_for_subscriber(joint_cmd_pub)
-        return joint_cmd_pub
+        if active_controller_name not in self.controller_publishers:
+            joint_cmd_pub = self.node.create_publisher(Float64MultiArray, f'{active_controller_name}/commands', 10)
+            wait_for_subscriber(joint_cmd_pub)
+            self.controller_publishers[active_controller_name] = joint_cmd_pub
+
+        return self.controller_publishers[active_controller_name]
 
     def send_joint_cmd(self, joint_cmd_pub: Publisher, joint_positions):
         """
@@ -214,19 +222,22 @@ class Side:
         return controller_names
 
     def get_active_controllers(self) -> List[ControllerState]:
-        # Call the list controllers ROS service
-        req = ListControllers.Request()
-        res: ListControllers.Response = self.list_controllers_client.call(req)
-        controllers = res.controller
-
-        # filter out anything with "broadcaster" in the name
-        controllers = [controller for controller in controllers if "broadcaster" not in controller.name]
+        controllers = self.get_all_controllers()
 
         # remove inactive controllers
         controllers = [controller for controller in controllers if controller.state == "active"]
 
         # filter out any control that does not contain any interfaces for this side
         controllers = [controller for controller in controllers if self.is_claimed_by(controller)]
+        return controllers
+
+    def get_all_controllers(self) -> List[ControllerState]:
+        # Call the list controllers ROS service
+        req = ListControllers.Request()
+        res: ListControllers.Respotyse = self.list_controllers_client.call(req)
+        controllers = res.controller
+        # filter out anything with "broadcaster" in the name
+        controllers = [controller for controller in controllers if "broadcaster" not in controller.name]
         return controllers
 
     def is_claimed_by(self, controller: ControllerState):

@@ -35,8 +35,8 @@ def main():
     node.get_logger().info('Wrench republisher started')
 
     hand_wrench_pub = {
-        'left': node.create_publisher(WrenchStamped, 'left_gripper/wrench', 10),
-        'right': node.create_publisher(WrenchStamped, 'right_gripper/wrench', 10)
+        'left': node.create_publisher(WrenchStamped, 'left_arm/wrench', 10),
+        'right': node.create_publisher(WrenchStamped, 'right_arm/wrench', 10)
     }
 
     left_subscriber = node.create_subscription(MotionStatus, 'left_arm/motion_status',
