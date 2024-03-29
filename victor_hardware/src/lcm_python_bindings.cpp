@@ -124,61 +124,6 @@ PYBIND11_MODULE(lcm_python_bindings, m) {
       .def_readwrite("stop_on_max_control_force",
                      &victor_lcm_interface::cartesian_control_mode_limits::stop_on_max_control_force);
 
-  /**
-    struct control_mode
-    {
-      const int8_t JOINT_POSITION=0;
-      const int8_t JOINT_IMPEDANCE=2;
-      const int8_t CARTESIAN_POSE=1;
-      const int8_t CARTESIAN_IMPEDANCE=3;
-    }
-    struct robotiq_3finger_command
-    {
-      double timestamp;
-      victor_lcm_interface.robotiq_3finger_actuator_command finger_a_command;
-      victor_lcm_interface.robotiq_3finger_actuator_command finger_b_command;
-      victor_lcm_interface.robotiq_3finger_actuator_command finger_c_command;
-      victor_lcm_interface.robotiq_3finger_actuator_command scissor_command;
-    }
-
-    struct robotiq_3finger_object_status
-    {
-      const int8_t IN_MOTION=0;
-      const int8_t AT_REQUESTED=1;
-      const int8_t STOPPED=2;
-      const int8_t CONTACT_OPENING=3;
-      const int8_t CONTACT_CLOSING=4;
-    }
-
-    struct robotiq_3finger_status
-    {
-      const int8_t GRIPPER_RESET=0;
-      const int8_t GRIPPER_ACTIVATION=1;
-      const int8_t GRIPPER_STOPPED_OR_BUSY=0;
-      const int8_t GRIPPER_GOTO=1;
-      const int8_t GRIPPER_RESET_OR_AUTO_RELEASE=0;
-      const int8_t GRIPPER_ACTIVATION_IN_PROGRESS=1;
-      const int8_t GRIPPER_MODE_CHANGE_IN_PROGRESS=2;
-      const int8_t GRIPPER_ACTIVATION_MODE_CHANGE_COMPLETE=3;
-      const int8_t GRIPPER_STOPPED_UNKNOWN=0;
-      const int8_t GRIPPER_IN_MOTION=1;
-      const int8_t GRIPPER_ONE_OR_TWO_STOPPED_EARLY=2;
-      const int8_t GRIPPER_ALL_STOPPED_EARLY=3;
-      const int8_t GRIPPER_ALL_AT_REQUESTED=4;
-      const int8_t NO_FAULTS=0;
-      const int8_t PRIORITY_ACTIVATION_MUST_BE_SET=9;
-      const int8_t PRIORITY_MODE_CHANGE_NEEDED=17;
-      const int8_t PRIORITY_NEEDS_ACTIVATION=25;
-      const int8_t MAJOR_ACTIVATION_FAULT=10;
-      const int8_t MAJOR_CHANGING_MODE_FAULT=18;
-      const int8_t MAJOR_AUTO_RELEASE_COMPLETE=26;
-      const int8_t MINOR_COMM_CHIP_NOT_READY=12;
-      const int8_t MINOR_CHANGING_MODE_FAULT=20;
-      const int8_t MINOR_AUTO_RELEASE_IN_PROGRESS=28;
-  }
-
-   */
-
   py::class_<victor_lcm_interface::cartesian_impedance_parameters>(m, "CartesianImpedanceParameters")
       .def(py::init<>())
       .def_readwrite("cartesian_stiffness", &victor_lcm_interface::cartesian_impedance_parameters::cartesian_stiffness)
@@ -218,7 +163,10 @@ PYBIND11_MODULE(lcm_python_bindings, m) {
   py::class_<victor_lcm_interface::control_mode>(m, "ControlMode")
       .def(py::init<>())
       .def_readwrite("mode", &victor_lcm_interface::control_mode::mode)
-      .def_readonly_static("JOINT_POSITION", &victor_lcm_interface::control_mode::JOINT_POSITION);
+      .def_readonly_static("JOINT_POSITION", &victor_lcm_interface::control_mode::JOINT_POSITION)
+      .def_readonly_static("JOINT_IMPEDANCE", &victor_lcm_interface::control_mode::JOINT_IMPEDANCE)
+      .def_readonly_static("CARTESIAN_POSE", &victor_lcm_interface::control_mode::CARTESIAN_POSE)
+      .def_readonly_static("CARTESIAN_IMPEDANCE", &victor_lcm_interface::control_mode::CARTESIAN_IMPEDANCE);
 
   py::class_<victor_lcm_interface::joint_impedance_parameters>(m, "JointImpedanceParameters")
       .def(py::init<>())
@@ -282,6 +230,7 @@ PYBIND11_MODULE(lcm_python_bindings, m) {
       .def_readwrite("position", &victor_lcm_interface::robotiq_3finger_actuator_status::position)
       .def_readwrite("current", &victor_lcm_interface::robotiq_3finger_actuator_status::current);
 
+
   py::class_<victor_lcm_interface::robotiq_3finger_command>(m, "Robotiq3FingerCommand")
       .def(py::init<>())
       .def_readwrite("timestamp", &victor_lcm_interface::robotiq_3finger_command::timestamp)
@@ -293,7 +242,13 @@ PYBIND11_MODULE(lcm_python_bindings, m) {
   py::class_<victor_lcm_interface::robotiq_3finger_object_status>(m, "Robotiq3FingerObjectStatus")
       .def(py::init<>())
       .def_readwrite("timestamp", &victor_lcm_interface::robotiq_3finger_object_status::timestamp)
-      .def_readwrite("status", &victor_lcm_interface::robotiq_3finger_object_status::status);
+      .def_readwrite("status", &victor_lcm_interface::robotiq_3finger_object_status::status)
+      .def_readonly_static("IN_MOTION", &victor_lcm_interface::robotiq_3finger_object_status::IN_MOTION)
+      .def_readonly_static("AT_REQUESTED", &victor_lcm_interface::robotiq_3finger_object_status::AT_REQUESTED)
+      .def_readonly_static("STOPPED", &victor_lcm_interface::robotiq_3finger_object_status::STOPPED)
+      .def_readonly_static("CONTACT_OPENING", &victor_lcm_interface::robotiq_3finger_object_status::CONTACT_OPENING)
+      .def_readonly_static("CONTACT_CLOSING", &victor_lcm_interface::robotiq_3finger_object_status::CONTACT_CLOSING);
+
 
   py::class_<victor_lcm_interface::robotiq_3finger_status>(m, "Robotiq3FingerStatus")
       .def(py::init<>())
@@ -310,6 +265,29 @@ PYBIND11_MODULE(lcm_python_bindings, m) {
       .def_readwrite("gripper_action_status", &victor_lcm_interface::robotiq_3finger_status::gripper_action_status)
       .def_readwrite("gripper_system_status", &victor_lcm_interface::robotiq_3finger_status::gripper_system_status)
       .def_readwrite("gripper_motion_status", &victor_lcm_interface::robotiq_3finger_status::gripper_motion_status)
-      .def_readwrite("gripper_fault_status", &victor_lcm_interface::robotiq_3finger_status::gripper_fault_status);
-
+      .def_readwrite("gripper_fault_status", &victor_lcm_interface::robotiq_3finger_status::gripper_fault_status)
+      .def_readonly_static("GRIPPER_RESET", &victor_lcm_interface::robotiq_3finger_status::GRIPPER_RESET)
+      .def_readonly_static("GRIPPER_ACTIVATION", &victor_lcm_interface::robotiq_3finger_status::GRIPPER_ACTIVATION)
+      .def_readonly_static("GRIPPER_STOPPED_OR_BUSY", &victor_lcm_interface::robotiq_3finger_status::GRIPPER_STOPPED_OR_BUSY)
+      .def_readonly_static("GRIPPER_GOTO", &victor_lcm_interface::robotiq_3finger_status::GRIPPER_GOTO)
+      .def_readonly_static("GRIPPER_RESET_OR_AUTO_RELEASE", &victor_lcm_interface::robotiq_3finger_status::GRIPPER_RESET_OR_AUTO_RELEASE)
+      .def_readonly_static("GRIPPER_ACTIVATION_IN_PROGRESS", &victor_lcm_interface::robotiq_3finger_status::GRIPPER_ACTIVATION_IN_PROGRESS)
+      .def_readonly_static("GRIPPER_MODE_CHANGE_IN_PROGRESS", &victor_lcm_interface::robotiq_3finger_status::GRIPPER_MODE_CHANGE_IN_PROGRESS)
+      .def_readonly_static("GRIPPER_ACTIVATION_MODE_CHANGE_COMPLETE", &victor_lcm_interface::robotiq_3finger_status::GRIPPER_ACTIVATION_MODE_CHANGE_COMPLETE)
+      .def_readonly_static("GRIPPER_STOPPED_UNKNOWN", &victor_lcm_interface::robotiq_3finger_status::GRIPPER_STOPPED_UNKNOWN)
+      .def_readonly_static("GRIPPER_IN_MOTION", &victor_lcm_interface::robotiq_3finger_status::GRIPPER_IN_MOTION)
+      .def_readonly_static("GRIPPER_ONE_OR_TWO_STOPPED_EARLY", &victor_lcm_interface::robotiq_3finger_status::GRIPPER_ONE_OR_TWO_STOPPED_EARLY)
+      .def_readonly_static("GRIPPER_ALL_STOPPED_EARLY", &victor_lcm_interface::robotiq_3finger_status::GRIPPER_ALL_STOPPED_EARLY)
+      .def_readonly_static("GRIPPER_ALL_AT_REQUESTED", &victor_lcm_interface::robotiq_3finger_status::GRIPPER_ALL_AT_REQUESTED)
+      .def_readonly_static("NO_FAULTS", &victor_lcm_interface::robotiq_3finger_status::NO_FAULTS)
+      .def_readonly_static("PRIORITY_ACTIVATION_MUST_BE_SET", &victor_lcm_interface::robotiq_3finger_status::PRIORITY_ACTIVATION_MUST_BE_SET)
+      .def_readonly_static("PRIORITY_MODE_CHANGE_NEEDED", &victor_lcm_interface::robotiq_3finger_status::PRIORITY_MODE_CHANGE_NEEDED)
+      .def_readonly_static("PRIORITY_NEEDS_ACTIVATION", &victor_lcm_interface::robotiq_3finger_status::PRIORITY_NEEDS_ACTIVATION)
+      .def_readonly_static("MAJOR_ACTIVATION_FAULT", &victor_lcm_interface::robotiq_3finger_status::MAJOR_ACTIVATION_FAULT)
+      .def_readonly_static("MAJOR_CHANGING_MODE_FAULT", &victor_lcm_interface::robotiq_3finger_status::MAJOR_CHANGING_MODE_FAULT)
+      .def_readonly_static("MAJOR_AUTO_RELEASE_COMPLETE", &victor_lcm_interface::robotiq_3finger_status::MAJOR_AUTO_RELEASE_COMPLETE)
+      .def_readonly_static("MINOR_COMM_CHIP_NOT_READY", &victor_lcm_interface::robotiq_3finger_status::MINOR_COMM_CHIP_NOT_READY)
+      .def_readonly_static("MINOR_CHANGING_MODE_FAULT", &victor_lcm_interface::robotiq_3finger_status::MINOR_CHANGING_MODE_FAULT)
+      .def_readonly_static("MINOR_AUTO_RELEASE_IN_PROGRESS", &victor_lcm_interface::robotiq_3finger_status::MINOR_AUTO_RELEASE_IN_PROGRESS);
+  }
 }
