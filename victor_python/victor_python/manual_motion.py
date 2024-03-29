@@ -1,10 +1,9 @@
 import time
 
 import numpy as np
-
 import rclpy
 from rclpy.node import Node
-from std_msgs.msg import Float64MultiArray
+
 from victor_hardware_interfaces.msg import MotionStatus
 from victor_python.victor import Victor, Side
 from victor_python.victor_utils import jvq_to_list
@@ -23,6 +22,12 @@ class ManualMotionFilter:
         self.side = side
         self.threshold = threshold
         self.last_t = time.time()
+
+        active_controller_names = self.side.get_active_controller_names()
+        if len(active_controller_names) != 1:
+            raise ValueError(f"Expected 1 active controller, got {len(active_controller_names)}")
+        active_controller_name = active_controller_names[0]
+        self.joint_cmd_pub = self.side.get_joint_cmd_pub(active_controller_name)
 
     def update(self):
         now = time.time()
@@ -47,7 +52,7 @@ class ManualMotionFilter:
         alpha = dt / (self.low_pass_tau + dt)
         filtered_cmd_np = (1.0 - alpha) * commanded_np + alpha * measured_np
 
-        self.side.send_joint_cmd(filtered_cmd_np)
+        self.side.send_joint_cmd(self.joint_cmd_pub, filtered_cmd_np)
 
 
 class ManualMotion(Node):

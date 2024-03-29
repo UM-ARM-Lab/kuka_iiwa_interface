@@ -16,7 +16,6 @@ from std_msgs.msg import Float64MultiArray
 from trajectory_msgs.msg import JointTrajectory, JointTrajectoryPoint
 from urdf_parser_py.urdf import Robot
 
-from arm_utilities.ros_helpers import wait_for_subscriber
 from victor_hardware_interfaces.msg import Robotiq3FingerCommand, Robotiq3FingerStatus, \
     Robotiq3FingerActuatorStatus, Robotiq3FingerActuatorCommand
 from victor_python.victor import Victor, Side, ROBOTIQ_OPEN, ROBOTIQ_CLOSED
@@ -217,14 +216,12 @@ class ArmWidget(QWidget):
             traj_msg.joint_names = joint_names_for_controller
             traj_msg.points = [JointTrajectoryPoint(positions=current_commanded_positions_for_controller)]
 
-            jtc_pub = self.node.create_publisher(JointTrajectory, f'{active_controller.name}/joint_trajectory', 10)
-            wait_for_subscriber(jtc_pub)
+            jtc_pub = self.side.get_jtc_cmd_pub(active_controller.name)
             jtc_pub.publish(traj_msg)
         elif active_controller.type == 'victor_hardware/KukaJointGroupPositionController':
             joint_cmd_msg = self.get_float64_from_sliders()
-            joint_cmd_pub = self.node.create_publisher(Float64MultiArray, f'{active_controller.name}/commands', 10)
-            wait_for_subscriber(joint_cmd_pub)
-            joint_cmd_pub.publish(joint_cmd_msg)
+            joint_cmd_pub = self.side.get_joint_cmd_pub(active_controller.name)
+            self.side.send_joint_cmd(joint_cmd_pub, joint_cmd_msg)
         else:
             print(f"Unknown controller type {active_controller.type}")
 

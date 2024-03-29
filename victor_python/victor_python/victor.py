@@ -2,6 +2,8 @@ from typing import Sequence, Optional, Callable, List
 
 import numpy as np
 import rclpy
+from arm_utilities.arm_utilities.ros_helpers import wait_for_subscriber
+from arm_utilities.listener import Listener
 from controller_manager_msgs.msg import ControllerState
 from controller_manager_msgs.srv import ListControllers, SwitchController
 from geometry_msgs.msg import Pose
@@ -9,16 +11,17 @@ from geometry_msgs.msg import TransformStamped
 from rcl_interfaces.srv import GetParameters
 from rclpy.callback_groups import MutuallyExclusiveCallbackGroup
 from rclpy.node import Node
+from rclpy.publisher import Publisher
 from rclpy.qos import QoSDurabilityPolicy, QoSProfile
 from sensor_msgs.msg import JointState
 from std_msgs.msg import Float64MultiArray
 from std_msgs.msg import String
+from trajectory_msgs.msg import JointTrajectory
 from urdf_parser_py.urdf import Robot as RobotURDF
 from urdf_parser_py.urdf import URDF
 from urdf_parser_py.xml_reflection import core
 
 from arm_robots.robot import load_moveit_config
-from arm_utilities.listener import Listener
 from victor_hardware_interfaces.msg import MotionStatus, Robotiq3FingerStatus, Robotiq3FingerCommand, \
     ControlModeParameters, ControlMode
 from victor_python.robotiq_finger_angles import compute_finger_angles, get_finger_angle_names, compute_scissor_angle, \
@@ -65,8 +68,6 @@ class Side:
         self.pub_group = MutuallyExclusiveCallbackGroup()
         self.cm_srv_group = MutuallyExclusiveCallbackGroup()
 
-        self.joint_cmd_pub = node.create_publisher(Float64MultiArray, f"{self.arm_name}_position_controller", 10,
-                                                   callback_group=self.pub_group)
         self.cartesian_cmd_pub = node.create_publisher(Pose, f"{self.arm_name}_cartesian_controller", 10,
                                                        callback_group=self.pub_group)
         self.gripper_command = node.create_publisher(Robotiq3FingerCommand, f"victor/{self.arm_name}/gripper_command",
@@ -107,7 +108,17 @@ class Side:
         names = [f"victor_{self.arm_name}_joint_{i}" for i in range(1, 8)]
         return names, commanded_positions
 
-    def send_joint_cmd(self, joint_positions):
+    def get_jtc_cmd_pub(self, active_controller_name: str):
+        jtc_cmd_pub = self.node.create_publisher(JointTrajectory, f'{active_controller_name}/joint_trajectory', 10)
+        wait_for_subscriber(jtc_cmd_pub)
+        return jtc_cmd_pub
+
+    def get_joint_cmd_pub(self, active_controller_name: str):
+        joint_cmd_pub = self.node.create_publisher(Float64MultiArray, f'{active_controller_name}/commands', 10)
+        wait_for_subscriber(joint_cmd_pub)
+        return joint_cmd_pub
+
+    def send_joint_cmd(self, joint_cmd_pub: Publisher, joint_positions):
         """
         Send a Float64MultiArray with joint_positions, ordered joint1 to joint 7.
         """
@@ -125,7 +136,7 @@ class Side:
         msg = Float64MultiArray()
         msg.data = joint_positions
 
-        self.joint_cmd_pub.publish(msg)
+        joint_cmd_pub.publish(msg)
 
     def parser_joint_limits(self):
         lower = []
