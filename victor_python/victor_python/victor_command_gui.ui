@@ -43,29 +43,6 @@
         </item>
        </layout>
       </widget>
-      <widget class="QWidget" name="control_mode_tab">
-       <attribute name="title">
-        <string>Control Mode Parameters</string>
-       </attribute>
-       <layout class="QVBoxLayout" name="verticalLayout_3">
-        <item>
-         <widget class="QGroupBox" name="left_params_group">
-          <property name="title">
-           <string>Left</string>
-          </property>
-          <layout class="QVBoxLayout" name="verticalLayout_5"/>
-         </widget>
-        </item>
-        <item>
-         <widget class="QGroupBox" name="right_params_group">
-          <property name="title">
-           <string>Right</string>
-          </property>
-          <layout class="QVBoxLayout" name="verticalLayout_6"/>
-         </widget>
-        </item>
-       </layout>
-      </widget>
      </widget>
     </item>
    </layout>

@@ -20,7 +20,7 @@ controller_interface::InterfaceConfiguration KukaJointTrajectoryController::comm
 controller_interface::CallbackReturn KukaJointTrajectoryController::on_init() {
   auto node = get_node();
 
-  control_mode_interface_ = node->get_parameter("control_mode_interface").as_string();
+  control_mode_interface_ = node->get_parameter("control_mode").as_string();
   int8_t const mode = control_mode_interface_ == JOINT_IMPEDANCE_INTERFACE ? victor_lcm_interface::control_mode::JOINT_IMPEDANCE : victor_lcm_interface::control_mode::JOINT_POSITION;
 
   left_send_lcm_ptr_ = std::make_shared<lcm::LCM>(LEFT_SEND_PROVIDER);
