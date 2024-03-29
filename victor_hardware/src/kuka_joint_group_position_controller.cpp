@@ -16,11 +16,6 @@ controller_interface::CallbackReturn KukaJointGroupPositionController::on_init()
   send_lcm_ptr_ = std::make_shared<lcm::LCM>(send_provider);
   params_helper_ = std::make_shared<ControlModeParamsHelper>(node, LCMPtrs{send_lcm_ptr_}, mode);
 
-  latest_cmd_msg_ = std::make_shared<std_msgs::msg::Float64MultiArray>();
-
-  cmd_sub_ = node->create_subscription<std_msgs::msg::Float64MultiArray>(
-      "~/my_commands", 10, [this](std_msgs::msg::Float64MultiArray::SharedPtr msg) { latest_cmd_msg_ = msg; });
-
   return JointGroupPositionController::on_init();
 }
 
@@ -38,38 +33,23 @@ controller_interface::CallbackReturn KukaJointGroupPositionController::on_activa
     return controller_interface::CallbackReturn::ERROR;
   }
 
+  base_command_interface_configuration_ = JointGroupPositionController::command_interface_configuration();
+
   return JointGroupPositionController::on_activate(previous_state);
 }
-controller_interface::return_type KukaJointGroupPositionController::update(const rclcpp::Time& time,
-                                                                           const rclcpp::Duration& period) {
-  if (!latest_cmd_msg_) {
-    RCLCPP_WARN_THROTTLE(get_node()->get_logger(), *(get_node()->get_clock()), 1000, "No command received yet");
-    return controller_interface::return_type::ERROR;
-  }
-
-  for (auto index = 0ul; index < command_interfaces_.size() - 1; ++index) {
-    command_interfaces_[index].set_value(latest_cmd_msg_->data[index]);
-  }
-
-  return controller_interface::return_type::OK;
-}
-
 
 controller_interface::return_type KukaJointGroupPositionController::update(const rclcpp::Time &time, const rclcpp::Duration &period) {
 
-  RCLCPP_INFO(get_node()->get_logger(), "KukaJointGroupPositionController::update");
-
   auto joint_commands = rt_command_ptr_.readFromRT();
 
-  RCLCPP_INFO_STREAM(get_node()->get_logger(), "cmd " << *joint_commands);
   // no command received yet
   if (!joint_commands || !(*joint_commands))
   {
     return controller_interface::return_type::OK;
   }
 
-  RCLCPP_INFO_STREAM(get_node()->get_logger(), "sizes " << (*joint_commands)->data.size() << " " << command_interfaces_.size());
-  if ((*joint_commands)->data.size() != command_interfaces_.size())
+  auto const &expected_num_joints = base_command_interface_configuration_.names.size();
+  if ((*joint_commands)->data.size() != expected_num_joints)
   {
     RCLCPP_ERROR_THROTTLE(
       get_node()->get_logger(), *(get_node()->get_clock()), 1000,
@@ -78,14 +58,12 @@ controller_interface::return_type KukaJointGroupPositionController::update(const
     return controller_interface::return_type::ERROR;
   }
 
-  for (auto index = 0ul; index < command_interfaces_.size(); ++index)
+  for (auto index = 0ul; index < expected_num_joints; ++index)
   {
     command_interfaces_[index].set_value((*joint_commands)->data[index]);
   }
 
   return controller_interface::return_type::OK;
-
-  // return KukaJointGroupPositionController::update(time, period);
 }
 
 }  // namespace victor_hardware

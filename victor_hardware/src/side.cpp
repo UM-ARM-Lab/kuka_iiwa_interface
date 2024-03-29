@@ -5,6 +5,7 @@
 #include <rclcpp/rclcpp.hpp>
 #include <victor_hardware/constants.hpp>
 #include <victor_hardware/lcm_ros_conversions.hpp>
+#include <victor_hardware/lcm_ostream_operators.hpp>
 #include <victor_hardware/side.hpp>
 #include <victor_hardware/validators.hpp>
 
@@ -223,32 +224,30 @@ hardware_interface::return_type Side::send_motion_command() {
 hardware_interface::return_type Side::perform_command_mode_switch(const std::vector<std::string>& start_interfaces) {
   // Iterate over the start interfaces, and if any of them are of the form "side_name/control_mode_interface",
   // then switch that side to that control mode
-  has_active_controller_ = false;
+
+  auto update_control_mode_and_active_controller = [&](auto mode) {
+      latest_control_mode_ = mode;
+      has_active_controller_ = control_mode_client_->updateControlMode(latest_control_mode_);
+      reset_motion_cmd_to_current_measured();
+      return has_active_controller_;
+  };
 
   bool success = true;
   for (auto const& interface : start_interfaces) {
     if (interface == side_name_ + "/" + JOINT_POSITION_INTERFACE) {
-      latest_control_mode_ = victor_lcm_interface::control_mode::JOINT_POSITION;
-      success = control_mode_client_->updateControlMode(latest_control_mode_);
+      success = update_control_mode_and_active_controller(victor_lcm_interface::control_mode::JOINT_POSITION);
     } else if (interface == side_name_ + "/" + JOINT_IMPEDANCE_INTERFACE) {
-      latest_control_mode_ = victor_lcm_interface::control_mode::JOINT_IMPEDANCE;
-      success = control_mode_client_->updateControlMode(latest_control_mode_);
+      success = update_control_mode_and_active_controller(victor_lcm_interface::control_mode::JOINT_IMPEDANCE);
     } else if (interface == side_name_ + "/" + CARTESIAN_POSE_INTERFACE) {
-      latest_control_mode_ = victor_lcm_interface::control_mode::CARTESIAN_POSE;
-      success = control_mode_client_->updateControlMode(latest_control_mode_);
+      success = update_control_mode_and_active_controller(victor_lcm_interface::control_mode::CARTESIAN_POSE);
     } else if (interface == side_name_ + "/" + CARTESIAN_IMPEDANCE_INTERFACE) {
-      latest_control_mode_ = victor_lcm_interface::control_mode::CARTESIAN_IMPEDANCE;
-      success = control_mode_client_->updateControlMode(latest_control_mode_);
+      success = update_control_mode_and_active_controller(victor_lcm_interface::control_mode::CARTESIAN_IMPEDANCE);
     }
   }
 
   if (!success) {
     return hardware_interface::return_type::ERROR;
   }
-
-  reset_motion_cmd_to_current_measured();
-
-  has_active_controller_ = true;
 
   return hardware_interface::return_type::OK;
 }

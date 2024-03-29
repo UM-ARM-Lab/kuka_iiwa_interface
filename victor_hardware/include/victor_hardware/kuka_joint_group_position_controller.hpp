@@ -25,9 +25,7 @@ class KukaJointGroupPositionController : public position_controllers::JointGroup
 
   LCMPtr send_lcm_ptr_;
 
-  rclcpp::Subscription<std_msgs::msg::Float64MultiArray>::SharedPtr cmd_sub_;
-  std_msgs::msg::Float64MultiArray::SharedPtr latest_cmd_msg_;
-
+  controller_interface::InterfaceConfiguration base_command_interface_configuration_;
 
   ControlModeParamsHelper::SharedPtr params_helper_;
 };
