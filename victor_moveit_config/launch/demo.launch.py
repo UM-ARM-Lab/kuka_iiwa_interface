@@ -14,7 +14,7 @@ def generate_launch_description():
 
     ld = LaunchDescription()
     ld.add_action(DeclareBooleanLaunchArg("use_rviz", default_value=True))
-    ld.add_action(DeclareBooleanLaunchArg("victor_command_gui", default_value=True))
+    ld.add_action(DeclareBooleanLaunchArg("victor_command_gui", default_value=False))
 
     ld.add_action(
         Node(
@@ -59,13 +59,13 @@ def generate_launch_description():
             namespace="victor",
         )
     )
-    ld.add_action(
-        Node(
-            package="victor_python",
-            executable="arm_wrench_republisher.py",
-            namespace="victor",
-        )
-    )
+    # ld.add_action(
+    #     Node(
+    #         package="victor_python",
+    #         executable="arm_wrench_republisher.py",
+    #         namespace="victor",
+    #     )
+    # )
 
     # Given the published joint states, publish tf for the robot links
     ld.add_action(
@@ -103,7 +103,7 @@ def generate_launch_description():
         )
     )
 
-    # Spawn controllers
+    # Spawncontrollers
     ld.add_action(
         IncludeLaunchDescription(
             PythonLaunchDescriptionSource(

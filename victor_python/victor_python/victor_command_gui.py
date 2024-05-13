@@ -75,8 +75,10 @@ class ArmWidget(QWidget):
 
         # Add slider widgets for each joint, but we don't have values yet
         self.slider_widgets = []
+        j_lower, j_upper = np.rad2deg(side.lower).astype(np.int), np.rad2deg(side.upper).astype(np.int)
         for joint_idx in range(7):
             slider_widget = ArmJointSliderWidget(f"Joint {joint_idx + 1} Command", joint_idx)
+            slider_widget.slider.setRange(j_lower[joint_idx], j_upper[joint_idx])
             slider_widget.setEnabled(False)
             self.slider_widgets.append(slider_widget)
             self.arm_layout.addWidget(slider_widget)
@@ -182,10 +184,13 @@ class ArmWidget(QWidget):
     def reset_sliders(self):
         # Read the current joint states and update the sliders
         joint_states_dict = self.victor.get_joint_cmd_dict()
+        print("Resetting slider ", self.arm_name)
+        print(joint_states_dict)
         for joint_idx in range(7):
             expected_joint_name = f"victor_{self.arm_name}_joint_{joint_idx + 1}"
             current_rad = joint_states_dict[expected_joint_name]
             slider_pos = joint_angle_to_slider_pos(current_rad)
+            print(slider_pos)
             self.slider_widgets[joint_idx].set_value(slider_pos)
 
     def on_finger_a_cmd_changed(self, cmd: Robotiq3FingerActuatorCommand):
@@ -220,14 +225,19 @@ class ArmWidget(QWidget):
 
         active_controller = active_controllers[0]
         current_commanded_positions_dict = self.victor.get_joint_cmd_dict()
+        print(active_controller.type, active_controller.name)
+
+        # victor_hardware/KukaJointTrajectoryController joint_impedance_trajectory_controller
         if active_controller.type == 'victor_hardware/KukaJointTrajectoryController':
             joint_names_for_controller = []
             current_commanded_positions_for_controller = []
+
             for cmd_if in active_controller.required_command_interfaces:
                 if 'position' in cmd_if:
                     joint_name = cmd_if.split('/')[0]
                     joint_names_for_controller.append(joint_name)
                     current_commanded_positions_for_controller.append(current_commanded_positions_dict[joint_name])
+            print(current_commanded_positions_for_controller)
 
             # Initialize the end positions to the current commanded positions,
             # then update the ones for the sliders of this side
@@ -248,13 +258,16 @@ class ArmWidget(QWidget):
             traj_msg.points = [start_point, end_point]
 
             print("waiting to create pub...")
+
             jtc_pub = self.side.get_jtc_cmd_pub(active_controller.name)
+            print("Got publisher")
             jtc_pub.publish(traj_msg)
-            print("pub!")
+
         elif active_controller.type == 'victor_hardware/KukaJointGroupPositionController':
             joint_cmd_msg = self.get_float64_from_sliders()
             joint_cmd_pub = self.side.get_joint_cmd_pub(active_controller.name)
-            self.side.send_joint_cmd(joint_cmd_pub, joint_cmd_msg)
+            # print(len(joint_cmd_msg))
+            self.side.send_joint_cmd(joint_cmd_pub, joint_cmd_msg.data)
         else:
             print(f"Unknown controller type {active_controller.type}")
 
