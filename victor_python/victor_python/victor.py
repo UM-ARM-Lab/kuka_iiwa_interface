@@ -234,8 +234,21 @@ class Side:
     def get_all_controllers(self) -> List[ControllerState]:
         # Call the list controllers ROS service
         req = ListControllers.Request()
-        res: ListControllers.Respotyse = self.list_controllers_client.call(req)
+        print(f"Getting controllers for {self.arm_name}")
+        # res: ListControllers.Respotyse = self.list_controllers_client.call(req)
+        # print(f"Got controllers for {self.arm_name}")
+
+        future = self.list_controllers_client.call_async(req)
+        for _ in range(50):
+            rclpy.spin_until_future_complete(self.node, future, timeout_sec=1.0)
+            res = future.result()
+            print(f"future done {future.done()} cancelled {future.cancelled()} exception {future.exception()}")
+            if res is not None:
+                break
+        # import pdb; pdb.set_trace()
+        print(f"result: {res}")
         controllers = res.controller
+        print(f"Got controllers for {self.arm_name}", controllers)
         # filter out anything with "broadcaster" in the name
         controllers = [controller for controller in controllers if "broadcaster" not in controller.name]
         return controllers

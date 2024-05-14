@@ -12,6 +12,7 @@ from PyQt5.QtWidgets import QApplication, QMainWindow, QWidget, QHBoxLayout
 from victor_hardware_interfaces.msg import Robotiq3FingerCommand, Robotiq3FingerStatus, \
     Robotiq3FingerActuatorStatus, Robotiq3FingerActuatorCommand
 
+import asyncio
 import rclpy
 from rclpy.executors import MultiThreadedExecutor
 from rclpy.node import Node
@@ -78,7 +79,6 @@ class ArmWidget(QWidget):
         j_lower, j_upper = np.rad2deg(side.lower).astype(np.int), np.rad2deg(side.upper).astype(np.int)
         for joint_idx in range(7):
             slider_widget = ArmJointSliderWidget(f"Joint {joint_idx + 1} Command", joint_idx)
-            slider_widget.slider.setRange(j_lower[joint_idx], j_upper[joint_idx])
             slider_widget.setEnabled(False)
             self.slider_widgets.append(slider_widget)
             self.arm_layout.addWidget(slider_widget)
@@ -112,7 +112,7 @@ class ArmWidget(QWidget):
         # Periodically check for changes in which ROS2 controllers are running
         self.timer = QTimer()
         self.timer.timeout.connect(self.periodic_update_async)
-        self.timer.start(1000)
+        self.timer.start(5000)
 
     def setControllerText(self, controller_name: str, expected_control_mode: str, active_control_mode: int):
         self.active_controller_edit.setText(controller_name)
@@ -184,13 +184,10 @@ class ArmWidget(QWidget):
     def reset_sliders(self):
         # Read the current joint states and update the sliders
         joint_states_dict = self.victor.get_joint_cmd_dict()
-        print("Resetting slider ", self.arm_name)
-        print(joint_states_dict)
         for joint_idx in range(7):
             expected_joint_name = f"victor_{self.arm_name}_joint_{joint_idx + 1}"
             current_rad = joint_states_dict[expected_joint_name]
             slider_pos = joint_angle_to_slider_pos(current_rad)
-            print(slider_pos)
             self.slider_widgets[joint_idx].set_value(slider_pos)
 
     def on_finger_a_cmd_changed(self, cmd: Robotiq3FingerActuatorCommand):
@@ -214,8 +211,14 @@ class ArmWidget(QWidget):
         thread.start()
 
     def publish_arm_cmd(self, slider_idx: int, joint_angle: float):
+
+        import time
+        t1 = time.time()
         # First we need to infer which controller is running, and then send the command to that controller
         active_controllers = self.side.get_active_controllers()
+        t_get_controlelr = time.time()
+        print("get controller take ", t_get_controlelr-t1)
+        # return
         if len(active_controllers) == 0:
             print("No active controllers")
             return
@@ -225,9 +228,8 @@ class ArmWidget(QWidget):
 
         active_controller = active_controllers[0]
         current_commanded_positions_dict = self.victor.get_joint_cmd_dict()
-        print(active_controller.type, active_controller.name)
+        t_cmd = time.time()
 
-        # victor_hardware/KukaJointTrajectoryController joint_impedance_trajectory_controller
         if active_controller.type == 'victor_hardware/KukaJointTrajectoryController':
             joint_names_for_controller = []
             current_commanded_positions_for_controller = []
@@ -237,8 +239,6 @@ class ArmWidget(QWidget):
                     joint_name = cmd_if.split('/')[0]
                     joint_names_for_controller.append(joint_name)
                     current_commanded_positions_for_controller.append(current_commanded_positions_dict[joint_name])
-            print(current_commanded_positions_for_controller)
-
             # Initialize the end positions to the current commanded positions,
             # then update the ones for the sliders of this side
             end_positions = deepcopy(current_commanded_positions_for_controller)
@@ -257,10 +257,12 @@ class ArmWidget(QWidget):
             traj_msg.joint_names = joint_names_for_controller
             traj_msg.points = [start_point, end_point]
 
-            print("waiting to create pub...")
-
+            t2 = time.time()
+            print("compile msg time ", t2-t_cmd)
             jtc_pub = self.side.get_jtc_cmd_pub(active_controller.name)
-            print("Got publisher")
+            t3 = time.time()
+            print("Get publisher time ", t3-t2)
+            # print("Got publisher")
             jtc_pub.publish(traj_msg)
 
         elif active_controller.type == 'victor_hardware/KukaJointGroupPositionController':
@@ -270,6 +272,8 @@ class ArmWidget(QWidget):
             self.side.send_joint_cmd(joint_cmd_pub, joint_cmd_msg.data)
         else:
             print(f"Unknown controller type {active_controller.type}")
+        print("Publish elapse ", time.time()-t3)
+        print("----------------------")
 
     def publish_gripper_cmd(self):
         self.side.gripper_command.publish(self.gripper_cmd)

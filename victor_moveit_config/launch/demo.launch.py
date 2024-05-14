@@ -24,41 +24,42 @@ def generate_launch_description():
         )
     )
 
-    ld.add_action(
-        Node(
-            package="joy",
-            executable="joy_node",
-            name="xbox_joystick",
-            namespace="victor",
-            output="screen",
-        )
-    )
+    # ld.add_action(
+    #     Node(
+    #         package="joy",
+    #         executable="joy_node",
+    #         name="xbox_joystick",
+    #         namespace="victor",
+    #         output="screen",
+    #     )
+    # )
 
-    ld.add_action(
-        Node(
-            package="victor_python",
-            executable="robotiq_grippers_joystick_node.py",
-            name="robotiq_grippers_joystick_node",
-            output="screen",
-            namespace="victor",
-            parameters=[
-                {
-                    "enable_finger_open_close_control": True,
-                    "enable_scissor_open_close_control": True,
-                }
-            ]
-        )
-    )
+    # ld.add_action(
+    #     Node(
+    #         package="victor_python",
+    #         executable="robotiq_grippers_joystick_node.py",
+    #         name="robotiq_grippers_joystick_node",
+    #         output="screen",
+    #         namespace="victor",
+    #         parameters=[
+    #             {
+    #                 "enable_finger_open_close_control": True,
+    #                 "enable_scissor_open_close_control": True,
+    #             }
+    #         ]
+    #     )
+    # )
 
-    ld.add_action(
-        Node(
-            package="victor_python",
-            executable="arm_wrench_republisher.py",
-            name="arm_wrench_republisher",
-            output="screen",
-            namespace="victor",
-        )
-    )
+    # ld.add_action(
+    #     Node(
+    #         package="victor_python",
+    #         executable="arm_wrench_republisher.py",
+    #         name="arm_wrench_republisher",
+    #         output="screen",
+    #         namespace="victor",
+    #     )
+    # )
+
     # ld.add_action(
     #     Node(
     #         package="victor_python",
@@ -75,14 +76,14 @@ def generate_launch_description():
             ),
         )
     )
-    ld.add_action(
-        IncludeLaunchDescription(
-            PythonLaunchDescriptionSource(
-                str(moveit_config.package_path / "launch/moveit_rviz.launch.py")
-            ),
-            condition=IfCondition(LaunchConfiguration("use_rviz")),
-        )
-    )
+    # ld.add_action(
+    #     IncludeLaunchDescription(
+    #         PythonLaunchDescriptionSource(
+    #             str(moveit_config.package_path / "launch/moveit_rviz.launch.py")
+    #         ),
+    #         condition=IfCondition(LaunchConfiguration("use_rviz")),
+    #     )
+    # )
 
     ld.add_action(
         Node(
@@ -96,12 +97,12 @@ def generate_launch_description():
         )
     )
 
-    ld.add_action(
-        Node(
-            package="rqt_reconfigure",
-            executable="rqt_reconfigure",
-        )
-    )
+    # ld.add_action(
+    #     Node(
+    #         package="rqt_reconfigure",
+    #         executable="rqt_reconfigure",
+    #     )
+    # )
 
     # Spawncontrollers
     ld.add_action(
@@ -120,19 +121,19 @@ def generate_launch_description():
         )
     )
 
-    ld.add_action(
-        Node(
-            package="rqt_controller_manager",
-            executable="rqt_controller_manager",
-        )
-    )
+    # ld.add_action(
+    #     Node(
+    #         package="rqt_controller_manager",
+    #         executable="rqt_controller_manager",
+    #     )
+    # )
 
-    ld.add_action(
-        IncludeLaunchDescription(
-            PythonLaunchDescriptionSource(
-                str(moveit_config.package_path / "launch/move_group.launch.py"),
-            ),
-        )
-    )
+    # ld.add_action(
+    #     IncludeLaunchDescription(
+    #         PythonLaunchDescriptionSource(
+    #             str(moveit_config.package_path / "launch/move_group.launch.py"),
+    #         ),
+    #     )
+    # )
 
     return ld
