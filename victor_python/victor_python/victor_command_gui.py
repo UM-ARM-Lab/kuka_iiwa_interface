@@ -4,7 +4,7 @@ import sys
 import threading
 from copy import deepcopy
 from pathlib import Path
-
+from threading import Thread
 import numpy as np
 from PyQt5 import uic
 from PyQt5.QtCore import pyqtSignal, QTimer
@@ -112,7 +112,7 @@ class ArmWidget(QWidget):
         # Periodically check for changes in which ROS2 controllers are running
         self.timer = QTimer()
         self.timer.timeout.connect(self.periodic_update_async)
-        self.timer.start(5000)
+        self.timer.start(1000)
 
     def setControllerText(self, controller_name: str, expected_control_mode: str, active_control_mode: int):
         self.active_controller_edit.setText(controller_name)
@@ -422,7 +422,7 @@ def main():
 
     node = Node('victor_command_gui')
 
-    executor = MultiThreadedExecutor()
+    executor = MultiThreadedExecutor(2)
     executor.add_node(node)
 
     app = QApplication(sys.argv)
@@ -430,14 +430,9 @@ def main():
     widget = VictorCommandWindow(node)
     widget.showMaximized()
 
-    # use a QTimer to call spin regularly
-    def _spin_once():
-        # print(".", end="")
-        executor.spin_once()
-
-    timer = QTimer()
-    timer.timeout.connect(_spin_once)
-    timer.start(10)
+    spin_thread = Thread(target=executor.spin)
+    spin_thread.start()
+    print("Started spin thread")
 
     exit_code = app.exec_()
 

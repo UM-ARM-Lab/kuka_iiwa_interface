@@ -1,5 +1,5 @@
 from typing import Sequence, Optional, Callable, List
-
+import time
 import numpy as np
 import rclpy
 from arm_utilities.ros_helpers import wait_for_subscriber
@@ -74,7 +74,9 @@ class Side:
                                                      10, callback_group=self.pub_group)
         self.list_controllers_client = node.create_client(ListControllers, f"controller_manager/list_controllers",
                                                           callback_group=self.cm_srv_group)
-
+        while not self.list_controllers_client.wait_for_service(timeout_sec=1.0):
+            self.node.get_logger().info('list controller service not available, waiting again...')
+        self.get_get_parameters_client = {}
         self.motion_status = Listener(node, MotionStatus, f"victor/{self.arm_name}/motion_status", 10)
         self.gripper_status = Listener(node, Robotiq3FingerStatus, f"victor/{self.arm_name}/gripper_status", 10)
         self.control_mode_listener = Listener(node, ControlModeParameters,
@@ -222,6 +224,7 @@ class Side:
         return controller_names
 
     def get_active_controllers(self) -> List[ControllerState]:
+        print("getting active controllers")
         controllers = self.get_all_controllers()
 
         # remove inactive controllers
@@ -231,25 +234,19 @@ class Side:
         controllers = [controller for controller in controllers if self.is_claimed_by(controller)]
         return controllers
 
-    def get_all_controllers(self) -> List[ControllerState]:
+    def get_all_controllers(self, mode="async") -> List[ControllerState]:
+
         # Call the list controllers ROS service
         req = ListControllers.Request()
-        print(f"Getting controllers for {self.arm_name}")
-        # res: ListControllers.Respotyse = self.list_controllers_client.call(req)
-        # print(f"Got controllers for {self.arm_name}")
-
-        future = self.list_controllers_client.call_async(req)
-        for _ in range(50):
-            rclpy.spin_until_future_complete(self.node, future, timeout_sec=1.0)
+        if mode == "sync":
+            res: ListControllers.Respotyse = self.list_controllers_client.call(req)
+        elif mode=="async":
+            print("getting the controllers")
+            future = self.list_controllers_client.call_async(req)
+            rclpy.spin_until_future_complete(self.node, future)
             res = future.result()
-            print(f"future done {future.done()} cancelled {future.cancelled()} exception {future.exception()}")
-            if res is not None:
-                break
-        # import pdb; pdb.set_trace()
-        print(f"result: {res}")
+        print("Got the controllers")
         controllers = res.controller
-        print(f"Got controllers for {self.arm_name}", controllers)
-        # filter out anything with "broadcaster" in the name
         controllers = [controller for controller in controllers if "broadcaster" not in controller.name]
         return controllers
 
@@ -257,15 +254,23 @@ class Side:
         return any([self.arm_name in interface for interface in controller.claimed_interfaces])
 
     def get_control_mode_for_controller(self, controller_name: str) -> str:
+        print("getting control mode")
         # get the ROS param "control_mode" on the given controller's node
-        srv_client = self.node.create_client(GetParameters, f"{controller_name}/get_parameters")
-        success = srv_client.wait_for_service(timeout_sec=1.0)
-        if not success:
-            raise RuntimeError(f"Could not get parameters from {controller_name}")
+        if controller_name not in self.get_get_parameters_client:
+            srv_client = self.node.create_client(GetParameters, f"{controller_name}/get_parameters")
+            success = srv_client.wait_for_service(timeout_sec=1.0)
+            if not success:
+                raise RuntimeError(f"Could not get parameters from {controller_name}")
+            self.get_get_parameters_client[controller_name] = srv_client
+        else:
+            srv_client = self.get_get_parameters_client[controller_name]
 
         req = GetParameters.Request()
         req.names = ["control_mode"]
         res = srv_client.call(req)
+        # future = srv_client.call_async(req)
+        # rclpy.spin_until_future_complete(self.node, future)
+        # res = future.result()
         control_mode = res.values[0].string_value
 
         return control_mode
