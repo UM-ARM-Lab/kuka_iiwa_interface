@@ -4,10 +4,16 @@ Panels:
     Name: Displays
     Property Tree Widget:
       Expanded:
+        - /Global Options1
         - /MotionPlanning1
-        - /MotionPlanning1/Planned Path1
+        - /MotionPlanning1/Scene Geometry1
+        - /MotionPlanning1/Scene Robot1
+        - /MotionPlanning1/Planning Request1
+        - /TF1
+        - /TF1/Frames1/victor_left_tool01
+        - /TF1/Tree1
       Splitter Ratio: 0.5
-    Tree Height: 291
+    Tree Height: 336
   - Class: rviz_common/Help
     Name: Help
   - Class: rviz_common/Views
@@ -359,7 +365,7 @@ Visualization Manager:
         Robot Alpha: 0.5
         Robot Color: 150; 50; 150
         Show Robot Collision: false
-        Show Robot Visual: true
+        Show Robot Visual: false
         Show Trail: false
         State Display Time: 0.05s
         Trail Step Size: 6
@@ -693,7 +699,214 @@ Visualization Manager:
         Show Robot Collision: false
         Show Robot Visual: true
       Value: true
-      Velocity_Scaling_Factor: 0.5000000000000001
+      Velocity_Scaling_Factor: 0.1
+    - Class: rviz_default_plugins/TF
+      Enabled: true
+      Frame Timeout: 15
+      Frames:
+        All Enabled: false
+        victor_base_plate:
+          Value: false
+        victor_base_plate_mount:
+          Value: false
+        victor_left_arm_cartesian_cmd:
+          Value: false
+        victor_left_arm_flange:
+          Value: false
+        victor_left_arm_link_0:
+          Value: false
+        victor_left_arm_link_1:
+          Value: false
+        victor_left_arm_link_2:
+          Value: false
+        victor_left_arm_link_3:
+          Value: false
+        victor_left_arm_link_4:
+          Value: false
+        victor_left_arm_link_5:
+          Value: false
+        victor_left_arm_link_6:
+          Value: false
+        victor_left_arm_link_7:
+          Value: false
+        victor_left_arm_mount:
+          Value: false
+        victor_left_arm_sunrise_palm_surface:
+          Value: false
+        victor_left_arm_world_frame_kuka:
+          Value: false
+        victor_left_finger_a_link_0:
+          Value: false
+        victor_left_finger_a_link_1:
+          Value: false
+        victor_left_finger_a_link_2:
+          Value: false
+        victor_left_finger_a_link_3:
+          Value: false
+        victor_left_finger_b_link_0:
+          Value: false
+        victor_left_finger_b_link_1:
+          Value: false
+        victor_left_finger_b_link_2:
+          Value: false
+        victor_left_finger_b_link_3:
+          Value: false
+        victor_left_finger_c_link_0:
+          Value: false
+        victor_left_finger_c_link_1:
+          Value: false
+        victor_left_finger_c_link_2:
+          Value: false
+        victor_left_finger_c_link_3:
+          Value: false
+        victor_left_gripper_mounting_bracket:
+          Value: false
+        victor_left_palm:
+          Value: false
+        victor_left_tool0:
+          Value: true
+        victor_pedestal:
+          Value: false
+        victor_right_arm_cartesian_cmd:
+          Value: false
+        victor_right_arm_flange:
+          Value: false
+        victor_right_arm_link_0:
+          Value: false
+        victor_right_arm_link_1:
+          Value: false
+        victor_right_arm_link_2:
+          Value: false
+        victor_right_arm_link_3:
+          Value: false
+        victor_right_arm_link_4:
+          Value: false
+        victor_right_arm_link_5:
+          Value: false
+        victor_right_arm_link_6:
+          Value: false
+        victor_right_arm_link_7:
+          Value: false
+        victor_right_arm_mount:
+          Value: false
+        victor_right_arm_sunrise_palm_surface:
+          Value: false
+        victor_right_arm_world_frame_kuka:
+          Value: false
+        victor_right_finger_a_link_0:
+          Value: false
+        victor_right_finger_a_link_1:
+          Value: false
+        victor_right_finger_a_link_2:
+          Value: false
+        victor_right_finger_a_link_3:
+          Value: false
+        victor_right_finger_b_link_0:
+          Value: false
+        victor_right_finger_b_link_1:
+          Value: false
+        victor_right_finger_b_link_2:
+          Value: false
+        victor_right_finger_b_link_3:
+          Value: false
+        victor_right_finger_c_link_0:
+          Value: false
+        victor_right_finger_c_link_1:
+          Value: false
+        victor_right_finger_c_link_2:
+          Value: false
+        victor_right_finger_c_link_3:
+          Value: false
+        victor_right_gripper_mounting_bracket:
+          Value: false
+        victor_right_palm:
+          Value: false
+        victor_right_tool0:
+          Value: true
+        victor_root:
+          Value: true
+      Marker Scale: 1
+      Name: TF
+      Show Arrows: true
+      Show Axes: true
+      Show Names: false
+      Tree:
+        victor_root:
+          victor_pedestal:
+            victor_base_plate_mount:
+              victor_base_plate:
+                victor_left_arm_mount:
+                  victor_left_arm_link_0:
+                    victor_left_arm_cartesian_cmd:
+                      {}
+                    victor_left_arm_link_1:
+                      victor_left_arm_link_2:
+                        victor_left_arm_link_3:
+                          victor_left_arm_link_4:
+                            victor_left_arm_link_5:
+                              victor_left_arm_link_6:
+                                victor_left_arm_link_7:
+                                  victor_left_arm_flange:
+                                    victor_left_arm_sunrise_palm_surface:
+                                      {}
+                                    victor_left_gripper_mounting_bracket:
+                                      victor_left_palm:
+                                        victor_left_finger_a_link_0:
+                                          victor_left_finger_a_link_1:
+                                            victor_left_finger_a_link_2:
+                                              victor_left_finger_a_link_3:
+                                                {}
+                                        victor_left_finger_b_link_0:
+                                          victor_left_finger_b_link_1:
+                                            victor_left_finger_b_link_2:
+                                              victor_left_finger_b_link_3:
+                                                {}
+                                        victor_left_finger_c_link_0:
+                                          victor_left_finger_c_link_1:
+                                            victor_left_finger_c_link_2:
+                                              victor_left_finger_c_link_3:
+                                                {}
+                                        victor_left_tool0:
+                                          {}
+                  victor_left_arm_world_frame_kuka:
+                    {}
+                victor_right_arm_mount:
+                  victor_right_arm_link_0:
+                    victor_right_arm_cartesian_cmd:
+                      {}
+                    victor_right_arm_link_1:
+                      victor_right_arm_link_2:
+                        victor_right_arm_link_3:
+                          victor_right_arm_link_4:
+                            victor_right_arm_link_5:
+                              victor_right_arm_link_6:
+                                victor_right_arm_link_7:
+                                  victor_right_arm_flange:
+                                    victor_right_arm_sunrise_palm_surface:
+                                      {}
+                                    victor_right_gripper_mounting_bracket:
+                                      victor_right_palm:
+                                        victor_right_finger_a_link_0:
+                                          victor_right_finger_a_link_1:
+                                            victor_right_finger_a_link_2:
+                                              victor_right_finger_a_link_3:
+                                                {}
+                                        victor_right_finger_b_link_0:
+                                          victor_right_finger_b_link_1:
+                                            victor_right_finger_b_link_2:
+                                              victor_right_finger_b_link_3:
+                                                {}
+                                        victor_right_finger_c_link_0:
+                                          victor_right_finger_c_link_1:
+                                            victor_right_finger_c_link_2:
+                                              victor_right_finger_c_link_3:
+                                                {}
+                                        victor_right_tool0:
+                                          {}
+                  victor_right_arm_world_frame_kuka:
+                    {}
+      Update Interval: 0
+      Value: true
   Enabled: true
   Global Options:
     Background Color: 48; 48; 48
@@ -712,7 +925,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz_default_plugins/Orbit
-      Distance: 2.2968223094940186
+      Distance: 5.679196357727051
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
@@ -727,15 +940,15 @@ Visualization Manager:
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 0.2647964358329773
+      Pitch: 0.6347965598106384
       Target Frame: victor_root
       Value: Orbit (rviz_default_plugins)
-      Yaw: 0.14199873805046082
+      Yaw: 6.12200927734375
     Saved: ~
 Window Geometry:
   Displays:
     collapsed: false
-  Height: 1016
+  Height: 1043
   Help:
     collapsed: false
   Hide Left Dock: false
@@ -744,9 +957,9 @@ Window Geometry:
     collapsed: false
   MotionPlanning - Trajectory Slider:
     collapsed: false
-  QMainWindow State: 000000ff00000000fd0000000100000000000002b40000039efc0200000005fb000000100044006900730070006c006100790073010000003d00000160000000c900fffffffb00000044004d006f00740069006f006e0050006c0061006e006e0069006e00670020002d0020005400720061006a006500630074006f0072007900200053006c006900640065007201000001a30000004f0000004100fffffffb0000001c004d006f00740069006f006e0050006c0061006e006e0069006e006701000001f8000001e30000017d00fffffffb0000000800480065006c0070000000029a0000006e0000006e00fffffffb0000000a00560069006500770073000000031d000000be000000a400ffffff000004800000039e00000004000000040000000800000008fc0000000100000002000000010000000a0054006f006f006c00730100000000ffffffff0000000000000000
+  QMainWindow State: 000000ff00000000fd0000000100000000000002b4000003b9fc0200000005fb000000100044006900730070006c006100790073010000003d0000018d000000c900fffffffb00000044004d006f00740069006f006e0050006c0061006e006e0069006e00670020002d0020005400720061006a006500630074006f0072007900200053006c00690064006500720000000162000000be0000001600000016fb0000001c004d006f00740069006f006e0050006c0061006e006e0069006e006701000001d0000002260000017d00fffffffb0000000800480065006c0070000000029a0000006e0000006e00fffffffb0000000a00560069006500770073000000031d000000be000000a400ffffff000004c6000003b900000004000000040000000800000008fc0000000100000002000000010000000a0054006f006f006c00730100000000ffffffff0000000000000000
   Views:
     collapsed: false
-  Width: 1850
-  X: 70
-  Y: 27
+  Width: 1920
+  X: 1920
+  Y: 0

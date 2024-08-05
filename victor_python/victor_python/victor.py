@@ -1,18 +1,24 @@
-from typing import Sequence, Optional, Callable, List
+import copy
+
+from rclpy.task import Future
+from typing import Sequence, Optional, Callable, List, Union, Tuple, Any
 import time
 import numpy as np
 import rclpy
 from arm_utilities.ros_helpers import wait_for_subscriber
 from arm_utilities.listener import Listener
+from shape_msgs.msg import SolidPrimitive
+
+from std_msgs.msg import Header, String
+from moveit_msgs.msg import CollisionObject, PlanningScene
 from controller_manager_msgs.msg import ControllerState
 from controller_manager_msgs.srv import ListControllers, SwitchController
-from geometry_msgs.msg import Pose
+from geometry_msgs.msg import Pose, PoseStamped, Point, Quaternion
 from geometry_msgs.msg import TransformStamped
 from rcl_interfaces.srv import GetParameters
-from rclpy.callback_groups import MutuallyExclusiveCallbackGroup
+from rclpy.callback_groups import MutuallyExclusiveCallbackGroup, ReentrantCallbackGroup
 from rclpy.node import Node
 from rclpy.publisher import Publisher
-from rclpy.qos import QoSDurabilityPolicy, QoSProfile
 from sensor_msgs.msg import JointState
 from std_msgs.msg import Float64MultiArray
 from std_msgs.msg import String
@@ -20,7 +26,20 @@ from trajectory_msgs.msg import JointTrajectory
 from urdf_parser_py.urdf import Robot as RobotURDF
 from urdf_parser_py.urdf import URDF
 from urdf_parser_py.xml_reflection import core
-
+from moveit_msgs.srv import (
+    ApplyPlanningScene,
+    GetCartesianPath,
+    GetMotionPlan,
+    GetPlanningScene,
+    GetPositionFK,
+    GetPositionIK,
+)
+from rclpy.qos import (
+    QoSDurabilityPolicy,
+    QoSHistoryPolicy,
+    QoSProfile,
+    QoSReliabilityPolicy,
+)
 from arm_robots.robot import load_moveit_config
 from victor_hardware_interfaces.msg import MotionStatus, Robotiq3FingerStatus, Robotiq3FingerCommand, \
     ControlModeParameters, ControlMode
@@ -240,7 +259,7 @@ class Side:
         req = ListControllers.Request()
         if mode == "sync":
             res: ListControllers.Respotyse = self.list_controllers_client.call(req)
-        elif mode=="async":
+        elif mode == "async":
             print("getting the controllers")
             future = self.list_controllers_client.call_async(req)
             rclpy.spin_until_future_complete(self.node, future)
@@ -278,13 +297,16 @@ class Side:
 
 class Victor:
 
-    def __init__(self, node: Node, robot_description_cb: Optional[Callable[[RobotURDF], None]] = None):
+    def __init__(self, node: Node, robot_description_cb: Optional[Callable[[RobotURDF], None]] = None,
+                 callback_group=None,
+                 ):
         super().__init__()
         self.node = node
         self.robot_description_user_cb = robot_description_cb
 
         self.left = Side(node, 'left')
         self.right = Side(node, 'right')
+        self.base_link = "victor_root"
 
         self.joint_states_listener = Listener(node, JointState, 'joint_states', 10)
 
@@ -302,7 +324,404 @@ class Victor:
         self.sub = node.create_subscription(String, 'robot_description', self.robot_description_callback, qos,
                                             callback_group=self.description_callback_group)
 
+        callback_group = ReentrantCallbackGroup()
+        # Create a service for getting the planning scene
+        self._get_planning_scene_service = self.node.create_client(
+            srv_type=GetPlanningScene,
+            srv_name="get_planning_scene",
+            qos_profile=QoSProfile(
+                durability=QoSDurabilityPolicy.VOLATILE,
+                reliability=QoSReliabilityPolicy.RELIABLE,
+                history=QoSHistoryPolicy.KEEP_LAST,
+                depth=1,
+            ),
+            callback_group=callback_group,
+        )
+        self.__planning_scene = None
+        self.__old_planning_scene = None
+        self.__old_allowed_collision_matrix = None
+
+        # Create a service for applying the planning scene
+        self._apply_planning_scene_service = self.node.create_client(
+            srv_type=ApplyPlanningScene,
+            srv_name="apply_planning_scene",
+            qos_profile=QoSProfile(
+                durability=QoSDurabilityPolicy.VOLATILE,
+                reliability=QoSReliabilityPolicy.RELIABLE,
+                history=QoSHistoryPolicy.KEEP_LAST,
+                depth=1,
+            ),
+            callback_group=callback_group,
+        )
+        self.__collision_object_publisher = self.node.create_publisher(
+            CollisionObject, "/collision_object", 10
+        )
         self.urdf: Optional[RobotURDF] = None
+
+    @property
+    def planning_scene(self) -> Optional[PlanningScene]:
+        return self.__planning_scene
+
+    def add_collision_primitive(
+            self,
+            id: str,
+            primitive_type: int,
+            dimensions: Tuple[float, float, float],
+            pose: Optional[Union[PoseStamped, Pose]] = None,
+            position: Optional[Union[Point, Tuple[float, float, float]]] = None,
+            quat_xyzw: Optional[
+                Union[Quaternion, Tuple[float, float, float, float]]
+            ] = None,
+            frame_id: Optional[str] = None,
+            operation: int = CollisionObject.ADD,
+    ):
+        """
+        Add collision object with a primitive geometry specified by its dimensions.
+
+        `primitive_type` can be one of the following:
+            - `SolidPrimitive.BOX`
+            - `SolidPrimitive.SPHERE`
+            - `SolidPrimitive.CYLINDER`
+            - `SolidPrimitive.CONE`
+        """
+
+        if (pose is None) and (position is None or quat_xyzw is None):
+            raise ValueError(
+                "Either `pose` or `position` and `quat_xyzw` must be specified!"
+            )
+
+        if isinstance(pose, PoseStamped):
+            pose_stamped = pose
+        elif isinstance(pose, Pose):
+            pose_stamped = PoseStamped(
+                header=Header(
+                    stamp=self.node.get_clock().now().to_msg(),
+                    frame_id=(
+                        frame_id if frame_id is not None else self.base_link
+                    ),
+                ),
+                pose=pose,
+            )
+        else:
+            if not isinstance(position, Point):
+                position = Point(
+                    x=float(position[0]), y=float(position[1]), z=float(position[2])
+                )
+            if not isinstance(quat_xyzw, Quaternion):
+                quat_xyzw = Quaternion(
+                    x=float(quat_xyzw[0]),
+                    y=float(quat_xyzw[1]),
+                    z=float(quat_xyzw[2]),
+                    w=float(quat_xyzw[3]),
+                )
+            pose_stamped = PoseStamped(
+                header=Header(
+                    stamp=self.node.get_clock().now().to_msg(),
+                    frame_id=(
+                        frame_id if frame_id is not None else self.base_link
+                    ),
+                ),
+                pose=Pose(position=position, orientation=quat_xyzw),
+            )
+
+        msg = CollisionObject(
+            header=pose_stamped.header,
+            id=id,
+            operation=operation,
+            pose=pose_stamped.pose,
+        )
+
+        msg.primitives.append(
+            SolidPrimitive(type=primitive_type, dimensions=dimensions)
+        )
+
+        self.__collision_object_publisher.publish(msg)
+
+    def add_collision_box(
+            self,
+            id: str,
+            size: Tuple[float, float, float],
+            pose: Optional[Union[PoseStamped, Pose]] = None,
+            position: Optional[Union[Point, Tuple[float, float, float]]] = None,
+            quat_xyzw: Optional[
+                Union[Quaternion, Tuple[float, float, float, float]]
+            ] = None,
+            frame_id: Optional[str] = None,
+            operation: int = CollisionObject.ADD,
+    ):
+        """
+        Add collision object with a box geometry specified by its size.
+        """
+
+        assert len(size) == 3, "Invalid size of the box!"
+
+        self.add_collision_primitive(
+            id=id,
+            primitive_type=SolidPrimitive.BOX,
+            dimensions=size,
+            pose=pose,
+            position=position,
+            quat_xyzw=quat_xyzw,
+            frame_id=frame_id,
+            operation=operation,
+        )
+
+    def add_collision_sphere(
+            self,
+            id: str,
+            radius: float,
+            pose: Optional[Union[PoseStamped, Pose]] = None,
+            position: Optional[Union[Point, Tuple[float, float, float]]] = None,
+            quat_xyzw: Optional[
+                Union[Quaternion, Tuple[float, float, float, float]]
+            ] = None,
+            frame_id: Optional[str] = None,
+            operation: int = CollisionObject.ADD,
+    ):
+        """
+        Add collision object with a sphere geometry specified by its radius.
+        """
+
+        if quat_xyzw is None:
+            quat_xyzw = Quaternion(x=0.0, y=0.0, z=0.0, w=1.0)
+
+        self.add_collision_primitive(
+            id=id,
+            primitive_type=SolidPrimitive.SPHERE,
+            dimensions=[
+                radius,
+            ],
+            pose=pose,
+            position=position,
+            quat_xyzw=quat_xyzw,
+            frame_id=frame_id,
+            operation=operation,
+        )
+
+    def add_collision_cylinder(
+            self,
+            id: str,
+            height: float,
+            radius: float,
+            pose: Optional[Union[PoseStamped, Pose]] = None,
+            position: Optional[Union[Point, Tuple[float, float, float]]] = None,
+            quat_xyzw: Optional[
+                Union[Quaternion, Tuple[float, float, float, float]]
+            ] = None,
+            frame_id: Optional[str] = None,
+            operation: int = CollisionObject.ADD,
+    ):
+        """
+        Add collision object with a cylinder geometry specified by its height and radius.
+        """
+
+        self.add_collision_primitive(
+            id=id,
+            primitive_type=SolidPrimitive.CYLINDER,
+            dimensions=[height, radius],
+            pose=pose,
+            position=position,
+            quat_xyzw=quat_xyzw,
+            frame_id=frame_id,
+            operation=operation,
+        )
+
+    def add_collision_cone(
+            self,
+            id: str,
+            height: float,
+            radius: float,
+            pose: Optional[Union[PoseStamped, Pose]] = None,
+            position: Optional[Union[Point, Tuple[float, float, float]]] = None,
+            quat_xyzw: Optional[
+                Union[Quaternion, Tuple[float, float, float, float]]
+            ] = None,
+            frame_id: Optional[str] = None,
+            operation: int = CollisionObject.ADD,
+    ):
+        """
+        Add collision object with a cone geometry specified by its height and radius.
+        """
+
+        self.add_collision_primitive(
+            id=id,
+            primitive_type=SolidPrimitive.CONE,
+            dimensions=[height, radius],
+            pose=pose,
+            position=position,
+            quat_xyzw=quat_xyzw,
+            frame_id=frame_id,
+            operation=operation,
+        )
+
+    def add_collision_mesh(
+            self,
+            filepath: Optional[str],
+            id: str,
+            pose: Optional[Union[PoseStamped, Pose]] = None,
+            position: Optional[Union[Point, Tuple[float, float, float]]] = None,
+            quat_xyzw: Optional[
+                Union[Quaternion, Tuple[float, float, float, float]]
+            ] = None,
+            frame_id: Optional[str] = None,
+            operation: int = CollisionObject.ADD,
+            scale: Union[float, Tuple[float, float, float]] = 1.0,
+            mesh: Optional[Any] = None,
+    ):
+        """
+        Add collision object with a mesh geometry. Either `filepath` must be
+        specified or `mesh` must be provided.
+        Note: This function required 'trimesh' Python module to be installed.
+        """
+
+        # Load the mesh
+        try:
+            import trimesh
+        except ImportError as err:
+            raise ImportError(
+                "Python module 'trimesh' not found! Please install it manually in order "
+                "to add collision objects into the MoveIt 2 planning scene."
+            ) from err
+
+        # Check the parameters
+        if (pose is None) and (position is None or quat_xyzw is None):
+            raise ValueError(
+                "Either `pose` or `position` and `quat_xyzw` must be specified!"
+            )
+        if (filepath is None and mesh is None) or (
+                filepath is not None and mesh is not None
+        ):
+            raise ValueError("Exactly one of `filepath` or `mesh` must be specified!")
+        if mesh is not None and not isinstance(mesh, trimesh.Trimesh):
+            raise ValueError("`mesh` must be an instance of `trimesh.Trimesh`!")
+
+        if isinstance(pose, PoseStamped):
+            pose_stamped = pose
+        elif isinstance(pose, Pose):
+            pose_stamped = PoseStamped(
+                header=Header(
+                    stamp=self.node.get_clock().now().to_msg(),
+                    frame_id=(
+                        frame_id if frame_id is not None else self.base_link
+                    ),
+                ),
+                pose=pose,
+            )
+        else:
+            if not isinstance(position, Point):
+                position = Point(
+                    x=float(position[0]), y=float(position[1]), z=float(position[2])
+                )
+            if not isinstance(quat_xyzw, Quaternion):
+                quat_xyzw = Quaternion(
+                    x=float(quat_xyzw[0]),
+                    y=float(quat_xyzw[1]),
+                    z=float(quat_xyzw[2]),
+                    w=float(quat_xyzw[3]),
+                )
+            pose_stamped = PoseStamped(
+                header=Header(
+                    stamp=self.node.get_clock().now().to_msg(),
+                    frame_id=(
+                        frame_id if frame_id is not None else self.base_link
+                    ),
+                ),
+                pose=Pose(position=position, orientation=quat_xyzw),
+            )
+
+        msg = CollisionObject(
+            header=pose_stamped.header,
+            id=id,
+            operation=operation,
+            pose=pose_stamped.pose,
+        )
+
+        if filepath is not None:
+            mesh = trimesh.load(filepath)
+
+        # Scale the mesh
+        if isinstance(scale, float):
+            scale = (scale, scale, scale)
+        if not (scale[0] == scale[1] == scale[2] == 1.0):
+            # If the mesh was passed in as a parameter, make a copy of it to
+            # avoid transforming the original.
+            if filepath is not None:
+                mesh = mesh.copy()
+            # Transform the mesh
+            transform = np.eye(4)
+            np.fill_diagonal(transform, scale)
+            mesh.apply_transform(transform)
+
+        msg.meshes.append(
+            Mesh(
+                triangles=[MeshTriangle(vertex_indices=face) for face in mesh.faces],
+                vertices=[
+                    Point(x=vert[0], y=vert[1], z=vert[2]) for vert in mesh.vertices
+                ],
+            )
+        )
+
+        self.__collision_object_publisher.publish(msg)
+
+    def remove_collision_object(self, id: str):
+        """
+        Remove collision object specified by its `id`.
+        """
+
+        msg = CollisionObject()
+        msg.id = id
+        msg.operation = CollisionObject.REMOVE
+        msg.header.stamp = self.node.get_clock().now().to_msg()
+        self.__collision_object_publisher.publish(msg)
+
+    def remove_collision_mesh(self, id: str):
+        """
+        Remove collision mesh specified by its `id`.
+        Identical to `remove_collision_object()`.
+        """
+
+        self.remove_collision_object(id)
+
+    def update_planning_scene(self) -> bool:
+        """
+        Gets the current planning scene. Returns whether the service call was
+        successful.
+        """
+
+        if not self._get_planning_scene_service.service_is_ready():
+            self.node.get_logger().warn(
+                f"Service '{self._get_planning_scene_service.srv_name}' is not yet available. Better luck next time!"
+            )
+            return False
+        self.__planning_scene = self._get_planning_scene_service.call(
+            GetPlanningScene.Request()
+        ).scene
+        return True
+
+    def clear_all_collision_objects(self) -> Optional[Future]:
+        """
+        Removes all attached and un-attached collision objects from the planning scene.
+
+        Returns a future for the ApplyPlanningScene service call.
+        """
+        # Update the planning scene
+        if not self.update_planning_scene():
+            return None
+        self.__old_planning_scene = copy.deepcopy(self.__planning_scene)
+
+        # Remove all collision objects from the planning scene
+        self.__planning_scene.world.collision_objects = []
+        self.__planning_scene.robot_state.attached_collision_objects = []
+
+        # Apply the new planning scene
+        if not self._apply_planning_scene_service.service_is_ready():
+            self.node.get_logger().warn(
+                f"Service '{self._apply_planning_scene_service.srv_name}' is not yet available. Better luck next time!"
+            )
+            return None
+        return self._apply_planning_scene_service.call_async(
+            ApplyPlanningScene.Request(scene=self.__planning_scene)
+        )
 
     def wait_for_urdf(self):
         while self.urdf is None:
