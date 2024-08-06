@@ -10,10 +10,9 @@ Panels:
         - /MotionPlanning1/Scene Robot1
         - /MotionPlanning1/Planning Request1
         - /TF1
-        - /TF1/Frames1/victor_left_tool01
         - /TF1/Tree1
       Splitter Ratio: 0.5
-    Tree Height: 336
+    Tree Height: 422
   - Class: rviz_common/Help
     Name: Help
   - Class: rviz_common/Views
@@ -716,17 +715,17 @@ Visualization Manager:
         victor_left_arm_link_0:
           Value: false
         victor_left_arm_link_1:
-          Value: false
+          Value: true
         victor_left_arm_link_2:
-          Value: false
+          Value: true
         victor_left_arm_link_3:
-          Value: false
+          Value: true
         victor_left_arm_link_4:
-          Value: false
+          Value: true
         victor_left_arm_link_5:
-          Value: false
+          Value: true
         victor_left_arm_link_6:
-          Value: false
+          Value: true
         victor_left_arm_link_7:
           Value: false
         victor_left_arm_mount:
@@ -738,27 +737,27 @@ Visualization Manager:
         victor_left_finger_a_link_0:
           Value: false
         victor_left_finger_a_link_1:
-          Value: false
+          Value: true
         victor_left_finger_a_link_2:
-          Value: false
+          Value: true
         victor_left_finger_a_link_3:
-          Value: false
+          Value: true
         victor_left_finger_b_link_0:
-          Value: false
+          Value: true
         victor_left_finger_b_link_1:
-          Value: false
+          Value: true
         victor_left_finger_b_link_2:
-          Value: false
+          Value: true
         victor_left_finger_b_link_3:
-          Value: false
+          Value: true
         victor_left_finger_c_link_0:
-          Value: false
+          Value: true
         victor_left_finger_c_link_1:
-          Value: false
+          Value: true
         victor_left_finger_c_link_2:
-          Value: false
+          Value: true
         victor_left_finger_c_link_3:
-          Value: false
+          Value: true
         victor_left_gripper_mounting_bracket:
           Value: false
         victor_left_palm:
@@ -774,17 +773,17 @@ Visualization Manager:
         victor_right_arm_link_0:
           Value: false
         victor_right_arm_link_1:
-          Value: false
+          Value: true
         victor_right_arm_link_2:
-          Value: false
+          Value: true
         victor_right_arm_link_3:
-          Value: false
+          Value: true
         victor_right_arm_link_4:
-          Value: false
+          Value: true
         victor_right_arm_link_5:
-          Value: false
+          Value: true
         victor_right_arm_link_6:
-          Value: false
+          Value: true
         victor_right_arm_link_7:
           Value: false
         victor_right_arm_mount:
@@ -796,27 +795,27 @@ Visualization Manager:
         victor_right_finger_a_link_0:
           Value: false
         victor_right_finger_a_link_1:
-          Value: false
+          Value: true
         victor_right_finger_a_link_2:
-          Value: false
+          Value: true
         victor_right_finger_a_link_3:
-          Value: false
+          Value: true
         victor_right_finger_b_link_0:
-          Value: false
+          Value: true
         victor_right_finger_b_link_1:
-          Value: false
+          Value: true
         victor_right_finger_b_link_2:
-          Value: false
+          Value: true
         victor_right_finger_b_link_3:
-          Value: false
+          Value: true
         victor_right_finger_c_link_0:
-          Value: false
+          Value: true
         victor_right_finger_c_link_1:
-          Value: false
+          Value: true
         victor_right_finger_c_link_2:
-          Value: false
+          Value: true
         victor_right_finger_c_link_3:
-          Value: false
+          Value: true
         victor_right_gripper_mounting_bracket:
           Value: false
         victor_right_palm:
@@ -940,10 +939,10 @@ Visualization Manager:
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 0.6347965598106384
+      Pitch: 0.7397965788841248
       Target Frame: victor_root
       Value: Orbit (rviz_default_plugins)
-      Yaw: 6.12200927734375
+      Yaw: 0.373830646276474
     Saved: ~
 Window Geometry:
   Displays:
@@ -957,7 +956,7 @@ Window Geometry:
     collapsed: false
   MotionPlanning - Trajectory Slider:
     collapsed: false
-  QMainWindow State: 000000ff00000000fd0000000100000000000002b4000003b9fc0200000005fb000000100044006900730070006c006100790073010000003d0000018d000000c900fffffffb00000044004d006f00740069006f006e0050006c0061006e006e0069006e00670020002d0020005400720061006a006500630074006f0072007900200053006c00690064006500720000000162000000be0000001600000016fb0000001c004d006f00740069006f006e0050006c0061006e006e0069006e006701000001d0000002260000017d00fffffffb0000000800480065006c0070000000029a0000006e0000006e00fffffffb0000000a00560069006500770073000000031d000000be000000a400ffffff000004c6000003b900000004000000040000000800000008fc0000000100000002000000010000000a0054006f006f006c00730100000000ffffffff0000000000000000
+  QMainWindow State: 000000ff00000000fd0000000100000000000002b4000003b9fc0200000005fb000000100044006900730070006c006100790073010000003d000001e3000000c900fffffffb00000044004d006f00740069006f006e0050006c0061006e006e0069006e00670020002d0020005400720061006a006500630074006f0072007900200053006c00690064006500720000000162000000be0000004100fffffffb0000001c004d006f00740069006f006e0050006c0061006e006e0069006e00670100000226000001d00000017d00fffffffb0000000800480065006c0070000000029a0000006e0000006e00fffffffb0000000a00560069006500770073000000031d000000be000000a400ffffff000004c6000003b900000004000000040000000800000008fc0000000100000002000000010000000a0054006f006f006c00730100000000ffffffff0000000000000000
   Views:
     collapsed: false
   Width: 1920

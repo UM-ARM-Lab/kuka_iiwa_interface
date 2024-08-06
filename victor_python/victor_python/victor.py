@@ -4,13 +4,14 @@ from rclpy.task import Future
 from typing import Sequence, Optional, Callable, List, Union, Tuple, Any
 import time
 import numpy as np
+from transforms3d._gohlketransforms import quaternion_from_euler
 import rclpy
 from arm_utilities.ros_helpers import wait_for_subscriber
 from arm_utilities.listener import Listener
 from shape_msgs.msg import SolidPrimitive
 
 from std_msgs.msg import Header, String
-from moveit_msgs.msg import CollisionObject, PlanningScene
+
 from controller_manager_msgs.msg import ControllerState
 from controller_manager_msgs.srv import ListControllers, SwitchController
 from geometry_msgs.msg import Pose, PoseStamped, Point, Quaternion
@@ -26,6 +27,8 @@ from trajectory_msgs.msg import JointTrajectory
 from urdf_parser_py.urdf import Robot as RobotURDF
 from urdf_parser_py.urdf import URDF
 from urdf_parser_py.xml_reflection import core
+from moveit.core.robot_state import RobotState
+from moveit_msgs.msg import CollisionObject, PlanningScene
 from moveit_msgs.srv import (
     ApplyPlanningScene,
     GetCartesianPath,
@@ -40,13 +43,12 @@ from rclpy.qos import (
     QoSProfile,
     QoSReliabilityPolicy,
 )
-from arm_robots.robot import load_moveit_config
 from victor_hardware_interfaces.msg import MotionStatus, Robotiq3FingerStatus, Robotiq3FingerCommand, \
     ControlModeParameters, ControlMode
 from victor_python.robotiq_finger_angles import compute_finger_angles, get_finger_angle_names, compute_scissor_angle, \
     get_scissor_joint_name
 from victor_python.victor_utils import is_gripper_closed, get_gripper_closed_fraction_msg, jvq_to_list
-
+from arm_robots.robot import load_moveit_config, load_moveitpy
 # Suppress error messages from urdf_parser_py
 core.on_error = lambda *args: None
 
@@ -286,10 +288,10 @@ class Side:
 
         req = GetParameters.Request()
         req.names = ["control_mode"]
-        res = srv_client.call(req)
-        # future = srv_client.call_async(req)
-        # rclpy.spin_until_future_complete(self.node, future)
-        # res = future.result()
+        # res = srv_client.call(req)
+        future = srv_client.call_async(req)
+        rclpy.spin_until_future_complete(self.node, future)
+        res = future.result()
         control_mode = res.values[0].string_value
 
         return control_mode
@@ -357,6 +359,100 @@ class Victor:
             CollisionObject, "/collision_object", 10
         )
         self.urdf: Optional[RobotURDF] = None
+        # load moveitpy
+        self.moveitpy, self.moveit_config = load_moveitpy("victor")
+        self.planning_components = {}
+
+    def set_controller(self, control_mode: str):
+        """
+          const std::string JOINT_POSITION_INTERFACE = "joint_position";
+          const std::string JOINT_IMPEDANCE_INTERFACE = "joint_impedance";
+          const std::string CARTESIAN_POSE_INTERFACE = "cartesian_pose";
+          const std::string CARTESIAN_IMPEDANCE_INTERFACE = "cartesian_impedance";
+          - joint_impedance_trajectory_controller
+          - left_arm_position_controller
+          - left_arm_impedance_controller
+          - left_arm_cartesian_controller
+          - right_arm_position_controller
+          - right_arm_impedance_controller
+          - right_arm_cartesian_controller
+          - joint_position_trajectory_controller
+          """
+        assert control_mode in ["position_controller", "impedance_controller",
+                                "joint_position_trajectory_controller", "joint_impedance_trajectory_controller",
+                                "cartesian_controller",
+                                ]
+        left_active_controllers = self.left.get_active_controller_names()
+        right_active_controllers = self.right.get_active_controller_names()
+        active_controllers = list(set(left_active_controllers + right_active_controllers))
+        req = SwitchController.Request()
+        req.deactivate_controllers = [controller for controller in active_controllers if controller not in control_mode]
+        if control_mode in ["joint_position_trajectory", "joint_impedance_trajectory"]:
+            req.activate_controllers = [control_mode]
+        else:
+            req.activate_controllers = [f"{side}_arm_{control_mode}" for side in ["left", "right"]]
+
+        future = self.switch_controller_client.call_async(req)
+        rclpy.spin_until_future_complete(self.node, future)
+        res = future.result()
+        if not res.ok:
+            print(f"Failed to switch controllers: {res.ok}")
+
+        return res
+
+
+    def get_moveit_planning_component(self, group_name):
+        if group_name not in self.planning_components:
+            self.planning_components[group_name] = self.moveitpy.get_planning_component(group_name)
+        return self.planning_components[group_name]
+
+    def plan_to_joint_config(self, group_name: str, joint_config: Union[List, np.ndarray]):
+        planning_component = self.get_moveit_planning_component(group_name)
+        planning_component.set_start_state_to_current_state()
+        psm = self.moveitpy.get_planning_scene_monitor()
+        robot_model = self.moveitpy.get_robot_model()
+        robot_state = RobotState(robot_model)
+        robot_state.set_joint_group_positions(group_name, joint_config)
+        planning_component.set_goal_state(robot_state=robot_state)
+        plan_result = planning_component.plan()
+        if plan_result:
+            robot_trajectory = plan_result.trajectory
+            exe_result = self.moveitpy.execute(robot_trajectory, controllers=[])
+        else:
+            print("Planning failed")
+        return plan_result
+
+    def plan_to_pose(self, group_name: str, ee_link_name, target_pose):
+        planning_component = self.get_moveit_planning_component(group_name)
+        planning_component.set_start_state_to_current_state()
+        pose_goal = PoseStamped()
+        pose_goal.header.frame_id = "victor_root"
+        pose_goal.pose.position.x = target_pose[0]
+        pose_goal.pose.position.y = target_pose[1]
+        pose_goal.pose.position.z = target_pose[2]
+        if len(target_pose) == 6:
+            q = quaternion_from_euler(target_pose[3], target_pose[4], target_pose[5])
+            pose_goal.pose.orientation.x = q[0]
+            pose_goal.pose.orientation.y = q[1]
+            pose_goal.pose.orientation.z = q[2]
+            pose_goal.pose.orientation.w = q[3]
+        elif len(target_pose) == 7:
+            q = np.array(target_pose[3:7])
+            q /= np.linalg.norm(q)
+            pose_goal.pose.orientation.x = q[0]
+            pose_goal.pose.orientation.y = q[1]
+            pose_goal.pose.orientation.z = q[2]
+            pose_goal.pose.orientation.w = q[3]
+
+        planning_component.set_goal_state(pose_stamped_msg=pose_goal, pose_link=ee_link_name)
+
+        plan_result = planning_component.plan()
+        if plan_result:
+            robot_trajectory = plan_result.trajectory
+            exe_result = self.moveitpy.execute(robot_trajectory, controllers=[])
+        else:
+            print("Planning failed")
+        return plan_result
 
     @property
     def planning_scene(self) -> Optional[PlanningScene]:

@@ -422,7 +422,7 @@ def main():
 
     node = Node('victor_command_gui')
 
-    executor = MultiThreadedExecutor(2)
+    executor = MultiThreadedExecutor(3)
     executor.add_node(node)
 
     app = QApplication(sys.argv)

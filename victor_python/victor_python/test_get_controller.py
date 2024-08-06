@@ -24,7 +24,7 @@ def main():
         x = victor.left.get_all_controllers()
         t2 = time.time()
         y = victor.right.get_all_controllers()
-        active_controller_name = victor.right.get_active_controller_names()[0]
+        active_controller_name = victor.right.get_active_controller_names()
         # control_mode = victor.right.get_control_mode_for_controller(active_controller_name)
         t3 = time.time()
         print(f"{i}-th  Left: {t2-t1}, Right: {t3-t2}")
