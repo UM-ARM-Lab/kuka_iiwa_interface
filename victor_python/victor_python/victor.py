@@ -1,5 +1,7 @@
 import copy
 
+from arm_utilities.conversions import convert_to_pose_msg
+from moveit import MoveItPy
 from rclpy.task import Future
 from typing import Sequence, Optional, Callable, List, Union, Tuple, Any
 import time
@@ -8,13 +10,14 @@ from transforms3d._gohlketransforms import quaternion_from_euler
 import rclpy
 from arm_utilities.ros_helpers import wait_for_subscriber
 from arm_utilities.listener import Listener
+from arm_utilities.tf2wrapper import TF2Wrapper
 from shape_msgs.msg import SolidPrimitive
 
 from std_msgs.msg import Header, String
 
 from controller_manager_msgs.msg import ControllerState
 from controller_manager_msgs.srv import ListControllers, SwitchController
-from geometry_msgs.msg import Pose, PoseStamped, Point, Quaternion
+from geometry_msgs.msg import Pose, PoseStamped, Point, Quaternion, Transform
 from geometry_msgs.msg import TransformStamped
 from rcl_interfaces.srv import GetParameters
 from rclpy.callback_groups import MutuallyExclusiveCallbackGroup, ReentrantCallbackGroup
@@ -49,6 +52,7 @@ from victor_python.robotiq_finger_angles import compute_finger_angles, get_finge
     get_scissor_joint_name
 from victor_python.victor_utils import is_gripper_closed, get_gripper_closed_fraction_msg, jvq_to_list
 from arm_robots.robot import load_moveit_config, load_moveitpy
+
 # Suppress error messages from urdf_parser_py
 core.on_error = lambda *args: None
 
@@ -80,6 +84,7 @@ class Side:
         self.arm_name = f"{self.name}_arm"
         self.cartesian_cmd_tool_frame = f'victor_{self.arm_name}_{CARTESIAN_CMD_FRAME_SUFFIX}'
         self.cartesian_cmd_base_frame = f'victor_{self.arm_name}_cartesian_cmd'
+        self.tool_frame = "victor_" + name + "_" + TOOL_FRAME_SUFFIX
 
         # This depends on moveit being installed and importable, but not on moveit_py or on the move_group node
         self.moveit_config = load_moveit_config("victor").to_dict()
@@ -143,13 +148,13 @@ class Side:
 
     def get_joint_cmd_pub(self, active_controller_name: str):
         if active_controller_name not in self.controller_publishers:
-            joint_cmd_pub = self.node.create_publisher(Float64MultiArray, f'{active_controller_name}/commands', 10)
+            joint_cmd_pub = self.node.create_publisher(Float64MultiArray, f'/{active_controller_name}/commands', 10)
             wait_for_subscriber(joint_cmd_pub)
             self.controller_publishers[active_controller_name] = joint_cmd_pub
 
         return self.controller_publishers[active_controller_name]
 
-    def send_joint_cmd(self, joint_cmd_pub: Publisher, joint_positions):
+    def send_joint_cmd(self, joint_positions):
         """
         Send a Float64MultiArray with joint_positions, ordered joint1 to joint 7.
         """
@@ -164,9 +169,10 @@ class Side:
         if active_mode.control_mode.mode not in [ControlMode.JOINT_POSITION, ControlMode.JOINT_IMPEDANCE]:
             raise ControlModeError(f"Cannot send joint command in {active_mode} mode")
 
+        active_controller_name = self.get_active_controller_names()[0]
+        joint_cmd_pub = self.get_joint_cmd_pub(active_controller_name)
         msg = Float64MultiArray()
-        msg.data = joint_positions
-
+        msg.data = list(joint_positions)
         joint_cmd_pub.publish(msg)
 
     def parser_joint_limits(self):
@@ -272,10 +278,9 @@ class Side:
         return controllers
 
     def is_claimed_by(self, controller: ControllerState):
-        return any([self.arm_name in interface for interface in controller.claimed_interfaces])
+        return any([self.name in interface for interface in controller.claimed_interfaces])
 
     def get_control_mode_for_controller(self, controller_name: str) -> str:
-        print("getting control mode")
         # get the ROS param "control_mode" on the given controller's node
         if controller_name not in self.get_get_parameters_client:
             srv_client = self.node.create_client(GetParameters, f"{controller_name}/get_parameters")
@@ -288,7 +293,6 @@ class Side:
 
         req = GetParameters.Request()
         req.names = ["control_mode"]
-        # res = srv_client.call(req)
         future = srv_client.call_async(req)
         rclpy.spin_until_future_complete(self.node, future)
         res = future.result()
@@ -308,6 +312,7 @@ class Victor:
 
         self.left = Side(node, 'left')
         self.right = Side(node, 'right')
+        self.tf_wrapper = TF2Wrapper(node)
         self.base_link = "victor_root"
 
         self.joint_states_listener = Listener(node, JointState, 'joint_states', 10)
@@ -361,23 +366,16 @@ class Victor:
         self.urdf: Optional[RobotURDF] = None
         # load moveitpy
         self.moveitpy, self.moveit_config = load_moveitpy("victor")
+        ik_control_config = load_moveit_config("victor",
+                                               "config/ik_controller_kinematics.yaml").to_dict()
+        self.ik_control_moveitpy = MoveItPy("victor_ik_control", config_dict=ik_control_config)
+        self.local_ik_robot_model = self.ik_control_moveitpy.get_robot_model()
         self.planning_components = {}
 
+    def get_link_pose(self, link_name: str, base_frame: str = "victor_root") -> Transform:
+        return self.tf_wrapper.get_transform(base_frame, link_name)
+
     def set_controller(self, control_mode: str):
-        """
-          const std::string JOINT_POSITION_INTERFACE = "joint_position";
-          const std::string JOINT_IMPEDANCE_INTERFACE = "joint_impedance";
-          const std::string CARTESIAN_POSE_INTERFACE = "cartesian_pose";
-          const std::string CARTESIAN_IMPEDANCE_INTERFACE = "cartesian_impedance";
-          - joint_impedance_trajectory_controller
-          - left_arm_position_controller
-          - left_arm_impedance_controller
-          - left_arm_cartesian_controller
-          - right_arm_position_controller
-          - right_arm_impedance_controller
-          - right_arm_cartesian_controller
-          - joint_position_trajectory_controller
-          """
         assert control_mode in ["position_controller", "impedance_controller",
                                 "joint_position_trajectory_controller", "joint_impedance_trajectory_controller",
                                 "cartesian_controller",
@@ -400,6 +398,11 @@ class Victor:
 
         return res
 
+    def get_active_controller_names(self):
+        left_controller_name = self.left.get_active_controller_names()
+        right_controller_name = self.right.get_active_controller_names()
+        controller_names = {"left": left_controller_name, "right": right_controller_name}
+        return controller_names
 
     def get_moveit_planning_component(self, group_name):
         if group_name not in self.planning_components:
@@ -453,6 +456,26 @@ class Victor:
         else:
             print("Planning failed")
         return plan_result
+
+    def move_to_pose(self, group_name: str, target_pose):
+        if group_name == "left_arm":
+            side = self.left
+        elif group_name == "right_arm":
+            side = self.right
+        else:
+            raise ValueError(f"Unknown group_name {group_name}")
+        current_state = RobotState(self.local_ik_robot_model)
+        motion_status: MotionStatus = side.motion_status.get()
+        current_cmd_positions = jvq_to_list(motion_status.commanded_joint_position)
+        current_state.set_joint_group_positions(side.arm_name, current_cmd_positions)
+        current_state.update()
+
+        robot_state = copy.deepcopy(current_state)
+        pose_goal = convert_to_pose_msg(self.node, target_pose, frame_id=self.base_link).pose
+        ok = robot_state.set_from_ik(side.arm_name, pose_goal, side.tool_frame)
+        if ok:
+            joint_angles = robot_state.get_joint_group_positions(side.arm_name)
+            side.send_joint_cmd(joint_angles)
 
     @property
     def planning_scene(self) -> Optional[PlanningScene]:
@@ -614,7 +637,7 @@ class Victor:
         self.add_collision_primitive(
             id=id,
             primitive_type=SolidPrimitive.CYLINDER,
-            dimensions=[height, radius],
+            dimensions=(height, radius),
             pose=pose,
             position=position,
             quat_xyzw=quat_xyzw,

@@ -123,7 +123,7 @@ class SideTeleop:
 
         if joint_positions is not None:
             # TODO: use filtered joint positions!
-            self.side.send_joint_cmd(self.joint_cmd_pub, joint_positions)
+            self.side.send_joint_cmd(joint_positions)
 
             # joint_positions_filtered = self.filter.update(joint_positions)
             # joint_state_msg = JointState()

@@ -52,7 +52,7 @@ class ManualMotionFilter:
         alpha = dt / (self.low_pass_tau + dt)
         filtered_cmd_np = (1.0 - alpha) * commanded_np + alpha * measured_np
 
-        self.side.send_joint_cmd(self.joint_cmd_pub, filtered_cmd_np)
+        self.side.send_joint_cmd(filtered_cmd_np)
 
 
 class ManualMotion(Node):

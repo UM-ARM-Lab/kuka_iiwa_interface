@@ -267,9 +267,8 @@ class ArmWidget(QWidget):
 
         elif active_controller.type == 'victor_hardware/KukaJointGroupPositionController':
             joint_cmd_msg = self.get_float64_from_sliders()
-            joint_cmd_pub = self.side.get_joint_cmd_pub(active_controller.name)
             # print(len(joint_cmd_msg))
-            self.side.send_joint_cmd(joint_cmd_pub, joint_cmd_msg.data)
+            self.side.send_joint_cmd(joint_cmd_msg.data)
         else:
             print(f"Unknown controller type {active_controller.type}")
         print("Publish elapse ", time.time()-t3)
