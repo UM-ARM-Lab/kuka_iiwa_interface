@@ -31,7 +31,7 @@ from urdf_parser_py.urdf import Robot as RobotURDF
 from urdf_parser_py.urdf import URDF
 from urdf_parser_py.xml_reflection import core
 from moveit.core.robot_state import RobotState
-from moveit_msgs.msg import CollisionObject, PlanningScene
+from moveit_msgs.msg import CollisionObject, PlanningScene, Constraints, MoveItErrorCodes
 from moveit_msgs.srv import (
     ApplyPlanningScene,
     GetCartesianPath,
@@ -251,9 +251,7 @@ class Side:
         return controller_names
 
     def get_active_controllers(self) -> List[ControllerState]:
-        print("getting active controllers")
         controllers = self.get_all_controllers()
-
         # remove inactive controllers
         controllers = [controller for controller in controllers if controller.state == "active"]
 
@@ -262,17 +260,16 @@ class Side:
         return controllers
 
     def get_all_controllers(self, mode="async") -> List[ControllerState]:
-
         # Call the list controllers ROS service
         req = ListControllers.Request()
         if mode == "sync":
-            res: ListControllers.Respotyse = self.list_controllers_client.call(req)
+            res = self.list_controllers_client.call(req)
         elif mode == "async":
-            print("getting the controllers")
             future = self.list_controllers_client.call_async(req)
-            rclpy.spin_until_future_complete(self.node, future)
+            rate = self.node.create_rate(1000)
+            while not future.done():
+                rate.sleep()
             res = future.result()
-        print("Got the controllers")
         controllers = res.controller
         controllers = [controller for controller in controllers if "broadcaster" not in controller.name]
         return controllers
@@ -294,7 +291,9 @@ class Side:
         req = GetParameters.Request()
         req.names = ["control_mode"]
         future = srv_client.call_async(req)
-        rclpy.spin_until_future_complete(self.node, future)
+        rate = self.node.create_rate(1000)
+        while not future.done():
+            rate.sleep()
         res = future.result()
         control_mode = res.values[0].string_value
 
@@ -331,7 +330,7 @@ class Victor:
         self.sub = node.create_subscription(String, 'robot_description', self.robot_description_callback, qos,
                                             callback_group=self.description_callback_group)
 
-        callback_group = ReentrantCallbackGroup()
+        self._reentrant_callback_group = ReentrantCallbackGroup()
         # Create a service for getting the planning scene
         self._get_planning_scene_service = self.node.create_client(
             srv_type=GetPlanningScene,
@@ -342,7 +341,7 @@ class Victor:
                 history=QoSHistoryPolicy.KEEP_LAST,
                 depth=1,
             ),
-            callback_group=callback_group,
+            callback_group=self._reentrant_callback_group,
         )
         self.__planning_scene = None
         self.__old_planning_scene = None
@@ -358,7 +357,7 @@ class Victor:
                 history=QoSHistoryPolicy.KEEP_LAST,
                 depth=1,
             ),
-            callback_group=callback_group,
+            callback_group=self._reentrant_callback_group,
         )
         self.__collision_object_publisher = self.node.create_publisher(
             CollisionObject, "/collision_object", 10
@@ -385,13 +384,17 @@ class Victor:
         active_controllers = list(set(left_active_controllers + right_active_controllers))
         req = SwitchController.Request()
         req.deactivate_controllers = [controller for controller in active_controllers if controller not in control_mode]
-        if control_mode in ["joint_position_trajectory", "joint_impedance_trajectory"]:
+        if control_mode in ["joint_position_trajectory_controller", "joint_impedance_trajectory_controller"]:
             req.activate_controllers = [control_mode]
         else:
             req.activate_controllers = [f"{side}_arm_{control_mode}" for side in ["left", "right"]]
 
+        # res = self.switch_controller_client.call(req)
         future = self.switch_controller_client.call_async(req)
-        rclpy.spin_until_future_complete(self.node, future)
+        rate = self.node.create_rate(10)
+        while not future.done():
+            rate.sleep()
+        # rclpy.spin_until_future_complete(self.node, future)
         res = future.result()
         if not res.ok:
             print(f"Failed to switch controllers: {res.ok}")
@@ -409,7 +412,7 @@ class Victor:
             self.planning_components[group_name] = self.moveitpy.get_planning_component(group_name)
         return self.planning_components[group_name]
 
-    def plan_to_joint_config(self, group_name: str, joint_config: Union[List, np.ndarray]):
+    def plan_to_joint_config(self, joint_config: Union[List, np.ndarray], group_name: str=None):
         planning_component = self.get_moveit_planning_component(group_name)
         planning_component.set_start_state_to_current_state()
         psm = self.moveitpy.get_planning_scene_monitor()
@@ -425,9 +428,8 @@ class Victor:
             print("Planning failed")
         return plan_result
 
-    def plan_to_pose(self, group_name: str, ee_link_name, target_pose):
-        planning_component = self.get_moveit_planning_component(group_name)
-        planning_component.set_start_state_to_current_state()
+    def plan_to_pose(self, target_pose, group_name: str=None, ee_link_name:str=None):
+
         pose_goal = PoseStamped()
         pose_goal.header.frame_id = "victor_root"
         pose_goal.pose.position.x = target_pose[0]
@@ -446,7 +448,8 @@ class Victor:
             pose_goal.pose.orientation.y = q[1]
             pose_goal.pose.orientation.z = q[2]
             pose_goal.pose.orientation.w = q[3]
-
+        planning_component = self.get_moveit_planning_component(group_name)
+        planning_component.set_start_state_to_current_state()
         planning_component.set_goal_state(pose_stamped_msg=pose_goal, pose_link=ee_link_name)
 
         plan_result = planning_component.plan()
@@ -456,6 +459,25 @@ class Victor:
         else:
             print("Planning failed")
         return plan_result
+
+    def compute_ik_moviepy(self, translation, orientation, group_name):
+        if group_name == "left_arm":
+            side = self.left
+        elif group_name == "right_arm":
+            side = self.right
+        else:
+            raise ValueError(f"Unknown group_name {group_name}")
+        current_state = RobotState(self.local_ik_robot_model)
+        motion_status: MotionStatus = side.motion_status.get()
+        current_cmd_positions = jvq_to_list(motion_status.commanded_joint_position)
+        current_state.set_joint_group_positions(side.arm_name, current_cmd_positions)
+        current_state.update()
+
+        robot_state = copy.deepcopy(current_state)
+        target_pose = convert_to_pose_msg(self.node, translation+ orientation, frame_id=self.base_link).pose
+        pose_goal = convert_to_pose_msg(self.node, target_pose, frame_id=self.base_link).pose
+        ok = robot_state.set_from_ik(side.arm_name, pose_goal, side.tool_frame)
+        return ok
 
     def move_to_pose(self, group_name: str, target_pose):
         if group_name == "left_arm":
@@ -475,7 +497,15 @@ class Victor:
         ok = robot_state.set_from_ik(side.arm_name, pose_goal, side.tool_frame)
         if ok:
             joint_angles = robot_state.get_joint_group_positions(side.arm_name)
-            side.send_joint_cmd(joint_angles)
+            # print(current_cmd_positions)
+            # print(joint_angles / np.pi * 180)
+            print("diff ", np.abs(joint_angles - current_cmd_positions) / np.pi * 180)
+            print("IK solution ", joint_angles / np.pi * 180)
+            res = side.send_joint_cmd(joint_angles)
+            time.sleep(6)
+        else:
+            print("IK failed")
+        return ok
 
     @property
     def planning_scene(self) -> Optional[PlanningScene]:
@@ -895,9 +925,176 @@ class Victor:
         joint_positions = dict(zip(joint_state.name, joint_state.position))
         return joint_positions
 
+    def get_left_joint_positions(self):
+        joint_positions_dict = self.get_joint_cmd_dict()
+        left_joint_positions = [joint_positions_dict[name] for name in joint_positions_dict if 'left' in name]
+        return left_joint_positions
+
+    def get_right_joint_positions(self):
+        joint_positions_dict = self.get_joint_cmd_dict()
+        right_joint_positions = [joint_positions_dict[name] for name in joint_positions_dict if 'right' in name]
+        return right_joint_positions
+
     def get_joint_cmd_dict(self):
         left_names, left_commanded_positions = self.left.get_names_and_cmd()
         right_names, right_commanded_positions = self.right.get_names_and_cmd()
 
         joint_positions = dict(zip(left_names + right_names, left_commanded_positions + right_commanded_positions))
         return joint_positions
+
+    def __init_compute_ik(self):
+        # Service client for IK
+        self.__compute_ik_client = self.node.create_client(
+            srv_type=GetPositionIK,
+            srv_name="compute_ik",
+            callback_group=self._reentrant_callback_group,
+        )
+
+        self.__compute_ik_req = GetPositionIK.Request()
+        self.__compute_ik_req.ik_request.robot_state.is_diff = False
+        self.__compute_ik_req.ik_request.avoid_collisions = True
+        self.__compute_ik_req.ik_request.pose_stamped.header.frame_id = (
+            self.base_link
+        )
+
+    def compute_ik(
+            self,
+            position: Union[Point, Tuple[float, float, float]],
+            quat_xyzw: Union[Quaternion, Tuple[float, float, float, float]],
+            group_name: str,
+            start_joint_state: Optional[Union[JointState, List[float]]] = None,
+            constraints: Optional[Constraints] = None,
+            wait_for_server_timeout_sec: Optional[float] = 1.0,
+    ) -> Optional[JointState]:
+        """
+        Call compute_ik_async and wait on future
+        """
+        future = self.compute_ik_async(
+            **{key: value for key, value in locals().items() if key != "self"}
+        )
+
+        if future is None:
+            return None
+
+        # 10ms sleep
+        rate = self.node.create_rate(10)
+        while not future.done():
+            rate.sleep()
+
+        return self.get_compute_ik_result(future)
+
+    def get_compute_ik_result(
+            self,
+            future: Future,
+    ) -> Optional[JointState]:
+        """
+        Takes in a future returned by compute_ik_async and returns the joint states
+        if the future is done and successful, else None.
+        """
+        if not future.done():
+            self.node.get_logger().warn(
+                "Cannot get IK result because future is not done."
+            )
+            return None
+
+        res = future.result()
+
+        if MoveItErrorCodes.SUCCESS == res.error_code.val:
+            return res.solution.joint_state
+        else:
+            self.node.get_logger().warn(
+                f"IK computation failed! Error code: {res.error_code.val}."
+            )
+            return None
+
+    def compute_ik_async(
+            self,
+            position: Union[Point, Tuple[float, float, float]],
+            quat_xyzw: Union[Quaternion, Tuple[float, float, float, float]],
+            group_name: str,
+            start_joint_state: Optional[Union[JointState, List[float]]] = None,
+            constraints: Optional[Constraints] = None,
+            wait_for_server_timeout_sec: Optional[float] = 1.0,
+    ) -> Optional[Future]:
+        """
+        Compute inverse kinematics for the given pose. To indicate beginning of the search space,
+        `start_joint_state` can be specified. Furthermore, `constraints` can be imposed on the
+        computed IK.
+          - `start_joint_state` defaults to current joint state.
+          - `constraints` defaults to None.
+        """
+
+        if not hasattr(self, "__compute_ik_client"):
+            self.__init_compute_ik()
+
+        if isinstance(position, Point):
+            self.__compute_ik_req.ik_request.pose_stamped.pose.position = position
+        else:
+            self.__compute_ik_req.ik_request.pose_stamped.pose.position.x = float(
+                position[0]
+            )
+            self.__compute_ik_req.ik_request.pose_stamped.pose.position.y = float(
+                position[1]
+            )
+            self.__compute_ik_req.ik_request.pose_stamped.pose.position.z = float(
+                position[2]
+            )
+        if isinstance(quat_xyzw, Quaternion):
+            self.__compute_ik_req.ik_request.pose_stamped.pose.orientation = quat_xyzw
+        else:
+            self.__compute_ik_req.ik_request.pose_stamped.pose.orientation.x = float(
+                quat_xyzw[0]
+            )
+            self.__compute_ik_req.ik_request.pose_stamped.pose.orientation.y = float(
+                quat_xyzw[1]
+            )
+            self.__compute_ik_req.ik_request.pose_stamped.pose.orientation.z = float(
+                quat_xyzw[2]
+            )
+            self.__compute_ik_req.ik_request.pose_stamped.pose.orientation.w = float(
+                quat_xyzw[3]
+            )
+
+        if start_joint_state is not None:
+            if isinstance(start_joint_state, JointState):
+                self.__compute_ik_req.ik_request.robot_state.joint_state = (
+                    start_joint_state
+                )
+        self.__compute_ik_req.ik_request.group_name = group_name
+        if constraints is not None:
+            self.__compute_ik_req.ik_request.constraints = constraints
+
+        stamp = self.node.get_clock().now().to_msg()
+        self.__compute_ik_req.ik_request.pose_stamped.header.stamp = stamp
+
+        if not self.__compute_ik_client.wait_for_service(
+                timeout_sec=wait_for_server_timeout_sec
+        ):
+            self.node.get_logger().warn(
+                f"Service '{self.__compute_ik_client.srv_name}' is not yet available. Better luck next time!"
+            )
+            return None
+
+        return self.__compute_ik_client.call_async(self.__compute_ik_req)
+
+
+def init_joint_state(
+    joint_names: List[str],
+    joint_positions: Optional[List[str]] = None,
+    joint_velocities: Optional[List[str]] = None,
+    joint_effort: Optional[List[str]] = None,
+) -> JointState:
+    joint_state = JointState()
+
+    joint_state.name = joint_names
+    joint_state.position = (
+        joint_positions if joint_positions is not None else [0.0] * len(joint_names)
+    )
+    joint_state.velocity = (
+        joint_velocities if joint_velocities is not None else [0.0] * len(joint_names)
+    )
+    joint_state.effort = (
+        joint_effort if joint_effort is not None else [0.0] * len(joint_names)
+    )
+
+    return joint_state

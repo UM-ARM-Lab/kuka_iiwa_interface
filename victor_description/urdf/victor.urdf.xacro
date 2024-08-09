@@ -44,16 +44,7 @@
     <link name="$(arg robot_name)_right_arm_world_frame_kuka">
     </link>
 
-    <!-- arm to gripper adapter -->
-    <xacro:include filename="$(find victor_description)/urdf/iiwa7_to_robotiq_adapter.xacro"/>
-    <xacro:iia7_to_robotiq_adapter parent="$(arg robot_name)_left_arm_flange" prefix="$(arg robot_name)_left">
-        <origin xyz="0 0 -0.01" rpy="0 0 0"/>
-    </xacro:iia7_to_robotiq_adapter>
-    <xacro:iia7_to_robotiq_adapter parent="$(arg robot_name)_right_arm_flange" prefix="$(arg robot_name)_right">
-        <origin xyz="0 0 -0.01" rpy="0 0 0"/>
-    </xacro:iia7_to_robotiq_adapter>
-
-    <!-- Cartesian commands -->
+        <!-- Cartesian commands -->
     <joint name="$(arg robot_name)_left_arm_cartesian_cmd_joint" type="fixed">
         <origin xyz="0 0 0" rpy="${PI/2} 0 0"/>
         <parent link="$(arg robot_name)_left_arm_link_0"/>
@@ -70,6 +61,14 @@
     <link name="$(arg robot_name)_right_arm_cartesian_cmd">
     </link>
 
+    <!-- arm to gripper adapter -->
+    <xacro:include filename="$(find victor_description)/urdf/iiwa7_to_robotiq_adapter.xacro"/>
+    <xacro:iia7_to_robotiq_adapter parent="$(arg robot_name)_left_arm_flange" prefix="$(arg robot_name)_left">
+        <origin xyz="0 0 -0.01" rpy="0 0 0"/>
+    </xacro:iia7_to_robotiq_adapter>
+    <xacro:iia7_to_robotiq_adapter parent="$(arg robot_name)_right_arm_flange" prefix="$(arg robot_name)_right">
+        <origin xyz="0 0 -0.01" rpy="0 0 0"/>
+    </xacro:iia7_to_robotiq_adapter>
 
     <!-- Robotiq grippers -->
     <xacro:if value="${gripper == 'robotiq'}">

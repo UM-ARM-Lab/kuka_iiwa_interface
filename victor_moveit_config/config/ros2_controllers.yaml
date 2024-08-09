@@ -2,7 +2,7 @@
 # the mode numbers used are defined by the LCM control_mode message
 controller_manager:
   ros__parameters:
-    update_rate: 1000  # Hz
+    update_rate: 10000  # Hz
 
     # These are derived from the standard ros2 controllers, but with added control mode parameters
     joint_position_trajectory_controller:

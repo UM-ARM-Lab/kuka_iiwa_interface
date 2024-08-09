@@ -10,17 +10,19 @@ right_arm:
   orientation_threshold: 0.03
   cost_threshold: 0.005
   minimal_displacement_weight: 0.01
+  avoid_joint_limits_weight: 0.01
   gd_step_size: 0.0001
 left_arm:
   kinematics_solver: pick_ik/PickIkPlugin
-  kinematics_solver_timeout: 0.05
-  kinematics_solver_attempts: 3
+  kinematics_solver_timeout: 0.005
+  kinematics_solver_attempts: 1
   mode: global
   stop_optimization_on_valid_solution: true
   position_scale: 1.0
   rotation_scale: 0.5
   position_threshold: 0.01
   orientation_threshold: 0.03
-  cost_threshold: 0.001
+  cost_threshold: 0.01
   minimal_displacement_weight: 0.01
+  avoid_joint_limits_weight: 0.01
   gd_step_size: 0.0001

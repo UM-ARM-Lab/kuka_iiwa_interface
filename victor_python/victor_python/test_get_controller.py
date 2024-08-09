@@ -11,7 +11,7 @@ def main():
     victor = Victor(node)
     mode = "async" # sync async
     if mode=="async":
-        executor = MultiThreadedExecutor()
+        executor = MultiThreadedExecutor(2)
         executor.add_node(node)
         spin_thread = Thread(target=executor.spin)
         spin_thread.start()
@@ -25,7 +25,6 @@ def main():
         t2 = time.time()
         y = victor.right.get_all_controllers()
         active_controller_name = victor.right.get_active_controller_names()
-        # control_mode = victor.right.get_control_mode_for_controller(active_controller_name)
         t3 = time.time()
         print(f"{i}-th  Left: {t2-t1}, Right: {t3-t2}")
     print("Total time ", time.time()-t0)

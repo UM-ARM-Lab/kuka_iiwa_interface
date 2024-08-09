@@ -6,16 +6,16 @@ plan_request_params:
   planning_pipeline: ompl
   planner_id: ompl
   planning_time: 1.0
-  max_velocity_scaling_factor: 1.0
-  max_acceleration_scaling_factor: 1.0
+  max_velocity_scaling_factor: 0.1
+  max_acceleration_scaling_factor: 0.1
 
 ompl_rrtc:
   plan_request_params:
     planning_attempts: 1
     planning_pipeline: ompl
     planner_id: "RRTConnectkConfigDefault"
-    max_velocity_scaling_factor: 1.0
-    max_acceleration_scaling_factor: 1.0
+    max_velocity_scaling_factor: 0.1
+    max_acceleration_scaling_factor: 0.1
     planning_time: 1.0
 
 pilz_lin:

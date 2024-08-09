@@ -1,26 +1,30 @@
 right_arm:
   kinematics_solver: pick_ik/PickIkPlugin
-  kinematics_solver_timeout: 0.001
+  kinematics_solver_timeout: 0.05
   kinematics_solver_attempts: 3
   mode: global
-  stop_optimization_on_valid_solution: true
+  stop_optimization_on_valid_solution: false
   position_scale: 1.0
-  rotation_scale: 0.5
+  rotation_scale: 0.05
   position_threshold: 0.01
-  orientation_threshold: 0.02
-  cost_threshold: 0.001
+  orientation_threshold: 0.4
+  cost_threshold: 0.05
   minimal_displacement_weight: 0.005
+  avoid_joint_limits_weight: 0.05
   gd_step_size: 0.0001
+  memetic_num_threads: 2
+  memetic_population_size: 32
 left_arm:
   kinematics_solver: pick_ik/PickIkPlugin
   kinematics_solver_timeout: 0.001
   kinematics_solver_attempts: 3
   mode: global
-  stop_optimization_on_valid_solution: true
+  stop_optimization_on_valid_solution: false
   position_scale: 1.0
   rotation_scale: 0.5
-  position_threshold: 0.01
-  orientation_threshold: 0.02
+  position_threshold: 0.1
+  orientation_threshold: 0.1
   cost_threshold: 0.001
   minimal_displacement_weight: 0.005
+  avoid_joint_limits_weight: 0.05
   gd_step_size: 0.0001

@@ -271,7 +271,7 @@ class ArmWidget(QWidget):
             self.side.send_joint_cmd(joint_cmd_msg.data)
         else:
             print(f"Unknown controller type {active_controller.type}")
-        print("Publish elapse ", time.time()-t3)
+        # print("Publish elapse ", time.time()-t3)
         print("----------------------")
 
     def publish_gripper_cmd(self):

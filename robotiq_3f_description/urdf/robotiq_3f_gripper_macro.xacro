@@ -63,7 +63,7 @@
         <joint name="${prefix}palm_tool0" type="fixed">
             <parent link="${prefix}palm"/>
             <child link="${prefix}tool0"/>
-            <origin xyz="0.0 0.0875 0.0" rpy="0 0 1.5707"/>
+            <origin xyz="0.0 0.1475 0.0" rpy="0 0 1.5707"/>
         </joint>
         <!-- end of joint list -->
     </xacro:macro>

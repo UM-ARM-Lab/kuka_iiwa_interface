@@ -1,7 +1,5 @@
-from enum import Enum, auto
-
 from typing import List, Sequence
-
+from enum import Enum, auto
 from victor_hardware_interfaces.msg import ControlMode, ControlModeParameters, Robotiq3FingerStatus, \
     Robotiq3FingerCommand, JointValueQuantity
 
