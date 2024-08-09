@@ -53,6 +53,19 @@ from victor_python.robotiq_finger_angles import compute_finger_angles, get_finge
 from victor_python.victor_utils import is_gripper_closed, get_gripper_closed_fraction_msg, jvq_to_list
 from arm_robots.robot import load_moveit_config, load_moveitpy
 
+from moveit_msgs.action import ExecuteTrajectory, MoveGroup
+from moveit_msgs.msg import (
+    AllowedCollisionEntry,
+    AttachedCollisionObject,
+    CollisionObject,
+    Constraints,
+    JointConstraint,
+    MoveItErrorCodes,
+    OrientationConstraint,
+    PlanningScene,
+    PositionConstraint,
+)
+
 # Suppress error messages from urdf_parser_py
 core.on_error = lambda *args: None
 
@@ -303,7 +316,7 @@ class Side:
 class Victor:
 
     def __init__(self, node: Node, robot_description_cb: Optional[Callable[[RobotURDF], None]] = None,
-                 callback_group=None,
+                 callback_group=None, move_group_name="right_arm", end_effector_name="victor_right_tool0",
                  ):
         super().__init__()
         self.node = node
@@ -313,6 +326,10 @@ class Victor:
         self.right = Side(node, 'right')
         self.tf_wrapper = TF2Wrapper(node)
         self.base_link = "victor_root"
+        self.end_effector_name = end_effector_name
+        self.move_group_name = move_group_name
+        self.joint_names = self.right.get_names_and_cmd()[0]
+        
 
         self.joint_states_listener = Listener(node, JointState, 'joint_states', 10)
 
@@ -346,6 +363,45 @@ class Victor:
         self.__planning_scene = None
         self.__old_planning_scene = None
         self.__old_allowed_collision_matrix = None
+
+
+        # 
+        
+        self.__move_action_goal = self.__init_move_action_goal(
+            frame_id=self.base_link, # base_link_name` - Name of the robot base link
+            group_name=self.move_group_name,   #Name of the planning group for robot arm
+            end_effector=self.end_effector_name, # Name of the robot end effector
+        )
+
+        # Create a separate service client for Cartesian planning
+        self._plan_cartesian_path_service = self.node.create_client(
+            srv_type=GetCartesianPath,
+            srv_name="compute_cartesian_path",
+            qos_profile=QoSProfile(
+                durability=QoSDurabilityPolicy.VOLATILE,
+                reliability=QoSReliabilityPolicy.RELIABLE,
+                history=QoSHistoryPolicy.KEEP_LAST,
+                depth=1,
+            ),
+            callback_group=callback_group,
+        )
+        self.__cartesian_path_request = GetCartesianPath.Request()
+
+        # Also create a separate service client for planning
+        self._plan_kinematic_path_service = self.node.create_client(
+            srv_type=GetMotionPlan,
+            srv_name="plan_kinematic_path",
+            qos_profile=QoSProfile(
+                durability=QoSDurabilityPolicy.VOLATILE,
+                reliability=QoSReliabilityPolicy.RELIABLE,
+                history=QoSHistoryPolicy.KEEP_LAST,
+                depth=1,
+            ),
+            callback_group=callback_group,
+        )
+        self.__kinematic_path_request = GetMotionPlan.Request()
+
+
 
         # Create a service for applying the planning scene
         self._apply_planning_scene_service = self.node.create_client(
@@ -1076,6 +1132,532 @@ class Victor:
             return None
 
         return self.__compute_ik_client.call_async(self.__compute_ik_req)
+    
+
+
+
+    ##############################################################################################
+    def plan_async(
+        self,
+        pose: Optional[Union[PoseStamped, Pose]] = None,
+        position: Optional[Union[Point, Tuple[float, float, float]]] = None,
+        quat_xyzw: Optional[
+            Union[Quaternion, Tuple[float, float, float, float]]
+        ] = None,
+        joint_positions: Optional[List[float]] = None,
+        joint_names: Optional[List[str]] = None,
+        frame_id: Optional[str] = None,
+        target_link: Optional[str] = None,
+        tolerance_position: float = 0.001,
+        tolerance_orientation: Union[float, Tuple[float, float, float]] = 0.001,
+        tolerance_joint_position: float = 0.001,
+        weight_position: float = 1.0,
+        weight_orientation: float = 1.0,
+        weight_joint_position: float = 1.0,
+        start_joint_state: Optional[Union[JointState, List[float]]] = None,
+        cartesian: bool = False,
+        max_step: float = 0.0025,
+    ) -> Optional[Future]:
+        """
+        Plan motion based on previously set goals. Optional arguments can be passed in to
+        internally use `set_position_goal()`, `set_orientation_goal()` or `set_joint_goal()`
+        to define a goal during the call. If no trajectory is found within the timeout
+        duration, `None` is returned. To plan from the different position than the current
+        one, optional argument `start_` can be defined.
+        """
+
+        pose_stamped = None
+        if pose is not None:
+            if isinstance(pose, PoseStamped):
+                pose_stamped = pose
+            elif isinstance(pose, Pose):
+                pose_stamped = PoseStamped(
+                    header=Header(
+                        stamp=self.node.get_clock().now().to_msg(),
+                        frame_id=(
+                            frame_id if frame_id is not None else self.base_link
+                        ),
+                    ),
+                    pose=pose,
+                )
+
+            self.set_position_goal(
+                position=pose_stamped.pose.position,
+                frame_id=pose_stamped.header.frame_id,
+                target_link=target_link,
+                tolerance=tolerance_position,
+                weight=weight_position,
+            )
+            self.set_orientation_goal(
+                quat_xyzw=pose_stamped.pose.orientation,
+                frame_id=pose_stamped.header.frame_id,
+                target_link=target_link,
+                tolerance=tolerance_orientation,
+                weight=weight_orientation,
+            )
+        else:
+            if position is not None:
+                if not isinstance(position, Point):
+                    position = Point(
+                        x=float(position[0]), y=float(position[1]), z=float(position[2])
+                    )
+
+                self.set_position_goal(
+                    position=position,
+                    frame_id=frame_id,
+                    target_link=target_link,
+                    tolerance=tolerance_position,
+                    weight=weight_position,
+                )
+
+            if quat_xyzw is not None:
+                if not isinstance(quat_xyzw, Quaternion):
+                    quat_xyzw = Quaternion(
+                        x=float(quat_xyzw[0]),
+                        y=float(quat_xyzw[1]),
+                        z=float(quat_xyzw[2]),
+                        w=float(quat_xyzw[3]),
+                    )
+
+                self.set_orientation_goal(
+                    quat_xyzw=quat_xyzw,
+                    frame_id=frame_id,
+                    target_link=target_link,
+                    tolerance=tolerance_orientation,
+                    weight=weight_orientation,
+                )
+
+        if joint_positions is not None:
+            self.set_joint_goal(
+                joint_positions=joint_positions,
+                joint_names=joint_names,
+                tolerance=tolerance_joint_position,
+                weight=weight_joint_position,
+            )
+
+        # Define starting state for the plan (default to the current state)
+        if start_joint_state is not None:
+            if isinstance(start_joint_state, JointState):
+                self.__move_action_goal.request.start_state.joint_state = (
+                    start_joint_state
+                )
+            else:
+                a = self.get_joint_states()
+                self.__move_action_goal.request.start_state.joint_state = (
+                    init_joint_state(
+                        joint_names=self.joint_names,
+                        joint_positions=start_joint_state,
+                    )
+                )
+        elif self.joint_state is not None:
+            #TODO: get correct current joint state for a specifc group 
+            current_joint_state = self.get_joint_states()
+            assert False, "Implemented current states"
+            self.__move_action_goal.request.start_state.joint_state = current_joint_state
+
+        # Plan trajectory asynchronously by service call
+        if cartesian:
+            future = self._plan_cartesian_path(
+                max_step=max_step,
+                frame_id=(
+                    pose_stamped.header.frame_id
+                    if pose_stamped is not None
+                    else frame_id
+                ),
+            )
+        else:
+            # Use service
+            future = self._plan_kinematic_path()
+
+        # Clear all previous goal constrains
+        self.clear_goal_constraints()
+        self.clear_path_constraints()
+
+        return future
+    
+ 
+    
+    def _plan_kinematic_path(self) -> Optional[Future]:
+        # Reuse request from move action goal
+        self.__kinematic_path_request.motion_plan_request = (
+            self.__move_action_goal.request
+        )
+
+        stamp = self.node.get_clock().now().to_msg()
+        self.__kinematic_path_request.motion_plan_request.workspace_parameters.header.stamp = (
+            stamp
+        )
+        for (
+            constraints
+        ) in self.__kinematic_path_request.motion_plan_request.goal_constraints:
+            for position_constraint in constraints.position_constraints:
+                position_constraint.header.stamp = stamp
+            for orientation_constraint in constraints.orientation_constraints:
+                orientation_constraint.header.stamp = stamp
+
+        if not self._plan_kinematic_path_service.service_is_ready():
+            self.node.get_logger().warn(
+                f"Service '{self._plan_kinematic_path_service.srv_name}' is not yet available. Better luck next time!"
+            )
+            return None
+
+        return self._plan_kinematic_path_service.call_async(
+            self.__kinematic_path_request
+        )
+
+    def _plan_cartesian_path(
+        self,
+        max_step: float = 0.0025,
+        frame_id: Optional[str] = None,
+    ) -> Optional[Future]:
+        # Reuse request from move action goal
+        self.__cartesian_path_request.start_state = (
+            self.__move_action_goal.request.start_state
+        )
+
+        # The below attributes were introduced in Iron and do not exist in Humble.
+        if hasattr(self.__cartesian_path_request, "max_velocity_scaling_factor"):
+            self.__cartesian_path_request.max_velocity_scaling_factor = (
+                self.__move_action_goal.request.max_velocity_scaling_factor
+            )
+        if hasattr(self.__cartesian_path_request, "max_acceleration_scaling_factor"):
+            self.__cartesian_path_request.max_acceleration_scaling_factor = (
+                self.__move_action_goal.request.max_acceleration_scaling_factor
+            )
+
+        self.__cartesian_path_request.group_name = (
+            self.__move_action_goal.request.group_name
+        )
+        self.__cartesian_path_request.link_name = self.__end_effector_name
+        self.__cartesian_path_request.max_step = max_step
+
+        self.__cartesian_path_request.header.frame_id = (
+            frame_id if frame_id is not None else self.base_link
+        )
+
+        stamp = self.node.get_clock().now().to_msg()
+        self.__cartesian_path_request.header.stamp = stamp
+
+        self.__cartesian_path_request.path_constraints = (
+            self.__move_action_goal.request.path_constraints
+        )
+        for (
+            position_constraint
+        ) in self.__cartesian_path_request.path_constraints.position_constraints:
+            position_constraint.header.stamp = stamp
+        for (
+            orientation_constraint
+        ) in self.__cartesian_path_request.path_constraints.orientation_constraints:
+            orientation_constraint.header.stamp = stamp
+        # no header in joint_constraint message type
+
+        target_pose = Pose()
+        target_pose.position = (
+            self.__move_action_goal.request.goal_constraints[-1]
+            .position_constraints[-1]
+            .constraint_region.primitive_poses[0]
+            .position
+        )
+        target_pose.orientation = (
+            self.__move_action_goal.request.goal_constraints[-1]
+            .orientation_constraints[-1]
+            .orientation
+        )
+
+        self.__cartesian_path_request.waypoints = [target_pose]
+
+        if not self._plan_cartesian_path_service.service_is_ready():
+            self.node.get_logger().warn(
+                f"Service '{self._plan_cartesian_path_service.srv_name}' is not yet available. Better luck next time!"
+            )
+            return None
+
+        return self._plan_cartesian_path_service.call_async(
+            self.__cartesian_path_request
+        )
+    
+    def create_position_constraint(
+        self,
+        position: Union[Point, Tuple[float, float, float]],
+        frame_id: Optional[str] = None,
+        target_link: Optional[str] = None,
+        tolerance: float = 0.001,
+        weight: float = 1.0,
+    ) -> PositionConstraint:
+        """
+        Create Cartesian position constraint of `target_link` with respect to `frame_id`.
+          - `frame_id` defaults to the base link
+          - `target_link` defaults to end effector
+        """
+
+        # Create new position constraint
+        constraint = PositionConstraint()
+
+        # Define reference frame and target link
+        constraint.header.frame_id = (
+            frame_id if frame_id is not None else self.base_link
+        )
+        constraint.link_name = (
+            target_link if target_link is not None else self.__end_effector_name
+        )
+
+        # Define target position
+        constraint.constraint_region.primitive_poses.append(Pose())
+        if isinstance(position, Point):
+            constraint.constraint_region.primitive_poses[0].position = position
+        else:
+            constraint.constraint_region.primitive_poses[0].position.x = float(
+                position[0]
+            )
+            constraint.constraint_region.primitive_poses[0].position.y = float(
+                position[1]
+            )
+            constraint.constraint_region.primitive_poses[0].position.z = float(
+                position[2]
+            )
+
+        # Define goal region as a sphere with radius equal to the tolerance
+        constraint.constraint_region.primitives.append(SolidPrimitive())
+        constraint.constraint_region.primitives[0].type = 2  # Sphere
+        constraint.constraint_region.primitives[0].dimensions = [tolerance]
+
+        # Set weight of the constraint
+        constraint.weight = weight
+
+        return constraint
+
+    def set_position_goal(
+        self,
+        position: Union[Point, Tuple[float, float, float]],
+        frame_id: Optional[str] = None,
+        target_link: Optional[str] = None,
+        tolerance: float = 0.001,
+        weight: float = 1.0,
+    ):
+        """
+        Set Cartesian position goal of `target_link` with respect to `frame_id`.
+          - `frame_id` defaults to the base link
+          - `target_link` defaults to end effector
+        """
+
+        constraint = self.create_position_constraint(
+            position=position,
+            frame_id=frame_id,
+            target_link=target_link,
+            tolerance=tolerance,
+            weight=weight,
+        )
+
+        # Append to other constraints
+        self.__move_action_goal.request.goal_constraints[
+            -1
+        ].position_constraints.append(constraint)
+
+    def create_orientation_constraint(
+        self,
+        quat_xyzw: Union[Quaternion, Tuple[float, float, float, float]],
+        frame_id: Optional[str] = None,
+        target_link: Optional[str] = None,
+        tolerance: Union[float, Tuple[float, float, float]] = 0.001,
+        weight: float = 1.0,
+        parameterization: int = 0,  # 0: Euler, 1: Rotation Vector
+    ) -> OrientationConstraint:
+        """
+        Create a Cartesian orientation constraint of `target_link` with respect to `frame_id`.
+          - `frame_id` defaults to the base link
+          - `target_link` defaults to end effector
+        """
+
+        # Create new position constraint
+        constraint = OrientationConstraint()
+
+        # Define reference frame and target link
+        constraint.header.frame_id = (
+            frame_id if frame_id is not None else self.base_link
+        )
+        constraint.link_name = (
+            target_link if target_link is not None else self.__end_effector_name
+        )
+
+        # Define target orientation
+        if isinstance(quat_xyzw, Quaternion):
+            constraint.orientation = quat_xyzw
+        else:
+            constraint.orientation.x = float(quat_xyzw[0])
+            constraint.orientation.y = float(quat_xyzw[1])
+            constraint.orientation.z = float(quat_xyzw[2])
+            constraint.orientation.w = float(quat_xyzw[3])
+
+        # Define tolerances
+        if type(tolerance) == float:
+            tolerance_xyz = (tolerance, tolerance, tolerance)
+        else:
+            tolerance_xyz = tolerance
+        constraint.absolute_x_axis_tolerance = tolerance_xyz[0]
+        constraint.absolute_y_axis_tolerance = tolerance_xyz[1]
+        constraint.absolute_z_axis_tolerance = tolerance_xyz[2]
+
+        # Define parameterization (how to interpret the tolerance)
+        constraint.parameterization = parameterization
+
+        # Set weight of the constraint
+        constraint.weight = weight
+
+        return constraint
+
+    def set_orientation_goal(
+        self,
+        quat_xyzw: Union[Quaternion, Tuple[float, float, float, float]],
+        frame_id: Optional[str] = None,
+        target_link: Optional[str] = None,
+        tolerance: Union[float, Tuple[float, float, float]] = 0.001,
+        weight: float = 1.0,
+        parameterization: int = 0,  # 0: Euler, 1: Rotation Vector
+    ):
+        """
+        Set Cartesian orientation goal of `target_link` with respect to `frame_id`.
+          - `frame_id` defaults to the base link
+          - `target_link` defaults to end effector
+        """
+
+        constraint = self.create_orientation_constraint(
+            quat_xyzw=quat_xyzw,
+            frame_id=frame_id,
+            target_link=target_link,
+            tolerance=tolerance,
+            weight=weight,
+            parameterization=parameterization,
+        )
+
+        # Append to other constraints
+        self.__move_action_goal.request.goal_constraints[
+            -1
+        ].orientation_constraints.append(constraint)
+    
+    def create_joint_constraints(
+        self,
+        joint_positions: List[float],
+        joint_names: Optional[List[str]] = None,
+        tolerance: float = 0.001,
+        weight: float = 1.0,
+    ) -> List[JointConstraint]:
+        """
+        Creates joint space constraints. With `joint_names` specified, `joint_positions` can be
+        defined for specific joints in an arbitrary order. Otherwise, first **n** joints
+        passed into the constructor is used, where **n** is the length of `joint_positions`.
+        """
+
+        constraints = []
+
+        # Use default joint names if not specified
+        if joint_names == None:
+            joint_names = self.joint_names
+
+        for i in range(len(joint_positions)):
+            # Create a new constraint for each joint
+            constraint = JointConstraint()
+
+            # Define joint name
+            constraint.joint_name = joint_names[i]
+
+            # Define the target joint position
+            constraint.position = joint_positions[i]
+
+            # Define telerances
+            constraint.tolerance_above = tolerance
+            constraint.tolerance_below = tolerance
+
+            # Set weight of the constraint
+            constraint.weight = weight
+
+            constraints.append(constraint)
+
+        return constraints
+
+    def set_joint_goal(
+        self,
+        joint_positions: List[float],
+        joint_names: Optional[List[str]] = None,
+        tolerance: float = 0.001,
+        weight: float = 1.0,
+    ):
+        """
+        Set joint space goal. With `joint_names` specified, `joint_positions` can be
+        defined for specific joints in an arbitrary order. Otherwise, first **n** joints
+        passed into the constructor is used, where **n** is the length of `joint_positions`.
+        """
+
+        constraints = self.create_joint_constraints(
+            joint_positions=joint_positions,
+            joint_names=joint_names,
+            tolerance=tolerance,
+            weight=weight,
+        )
+
+        # Append to other constraints
+        self.__move_action_goal.request.goal_constraints[-1].joint_constraints.extend(
+            constraints
+        )
+
+    
+    def clear_goal_constraints(self):
+        """
+        Clear all goal constraints that were previously set.
+        Note that this function is called automatically after each `plan_kinematic_path()`.
+        """
+
+        self.__move_action_goal.request.goal_constraints = [Constraints()]
+    
+    def clear_path_constraints(self):
+        """
+        Clear all path constraints that were previously set.
+        Note that this function is called automatically after each `plan_kinematic_path()`.
+        """
+
+        self.__move_action_goal.request.path_constraints = Constraints()
+
+    @classmethod
+    def __init_move_action_goal(
+        cls, frame_id: str, group_name: str, end_effector: str
+    ) -> MoveGroup.Goal:
+        move_action_goal = MoveGroup.Goal()
+        move_action_goal.request.workspace_parameters.header.frame_id = frame_id
+        # move_action_goal.request.workspace_parameters.header.stamp = "Set during request"
+        move_action_goal.request.workspace_parameters.min_corner.x = -1.0
+        move_action_goal.request.workspace_parameters.min_corner.y = -1.0
+        move_action_goal.request.workspace_parameters.min_corner.z = -1.0
+        move_action_goal.request.workspace_parameters.max_corner.x = 1.0
+        move_action_goal.request.workspace_parameters.max_corner.y = 1.0
+        move_action_goal.request.workspace_parameters.max_corner.z = 1.0
+        # move_action_goal.request.start_state = "Set during request"
+        move_action_goal.request.goal_constraints = [Constraints()]
+        move_action_goal.request.path_constraints = Constraints()
+        # move_action_goal.request.trajectory_constraints = "Ignored"
+        # move_action_goal.request.reference_trajectories = "Ignored"
+        move_action_goal.request.pipeline_id = ""
+        move_action_goal.request.planner_id = ""
+        move_action_goal.request.group_name = group_name
+        move_action_goal.request.num_planning_attempts = 5
+        move_action_goal.request.allowed_planning_time = 0.5
+        move_action_goal.request.max_velocity_scaling_factor = 0.0
+        move_action_goal.request.max_acceleration_scaling_factor = 0.0
+        # Note: Attribute was renamed in Iron (https://github.com/ros-planning/moveit_msgs/pull/130)
+        if hasattr(move_action_goal.request, "cartesian_speed_limited_link"):
+            move_action_goal.request.cartesian_speed_limited_link = end_effector
+        else:
+            move_action_goal.request.cartesian_speed_end_effector_link = end_effector
+        move_action_goal.request.max_cartesian_speed = 0.0
+
+        # move_action_goal.planning_options.planning_scene_diff = "Ignored"
+        move_action_goal.planning_options.plan_only = False
+        # move_action_goal.planning_options.look_around = "Ignored"
+        # move_action_goal.planning_options.look_around_attempts = "Ignored"
+        # move_action_goal.planning_options.max_safe_execution_cost = "Ignored"
+        # move_action_goal.planning_options.replan = "Ignored"
+        # move_action_goal.planning_options.replan_attempts = "Ignored"
+        # move_action_goal.planning_options.replan_delay = "Ignored"
+
+        return move_action_goal
 
 
 def init_joint_state(
