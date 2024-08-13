@@ -1,4 +1,7 @@
 import copy
+import threading
+
+from rclpy.action import ActionClient
 
 from arm_utilities.conversions import convert_to_pose_msg
 from moveit import MoveItPy
@@ -116,12 +119,13 @@ class Side:
         while not self.list_controllers_client.wait_for_service(timeout_sec=1.0):
             self.node.get_logger().info('list controller service not available, waiting again...')
         self.get_get_parameters_client = {}
-        self.motion_status = Listener(node, MotionStatus, f"victor/{self.arm_name}/motion_status", 10)
+        self.motion_status = Listener(node, MotionStatus, f"/victor/{self.arm_name}/motion_status", 10)
         self.gripper_status = Listener(node, Robotiq3FingerStatus, f"victor/{self.arm_name}/gripper_status", 10)
         self.control_mode_listener = Listener(node, ControlModeParameters,
                                               f"victor/{self.arm_name}/control_mode_parameters", 10)
 
         self.controller_publishers: dict[str, Publisher] = {}
+        self.active_controller_name = None
 
     def open_gripper(self, scissor_position=0.5):
         # TODO: implementing blocking grasping
@@ -145,15 +149,23 @@ class Side:
         control_mode_res: ControlModeParameters = self.control_mode_listener.get()
         return control_mode_res.control_mode
 
-    def get_names_and_cmd(self):
+    def get_names_and_cmd_joints(self):
         status: MotionStatus = self.motion_status.get()
         commanded_positions = jvq_to_list(status.commanded_joint_position)
         names = [f"victor_{self.arm_name}_joint_{i}" for i in range(1, 8)]
         return names, commanded_positions
 
+    def get_names_and_measured_joints(self):
+        status: MotionStatus = self.motion_status.get()
+        measured_positions = jvq_to_list(status.measured_joint_position)
+        names = [f"victor_{self.arm_name}_joint_{i}" for i in range(1, 8)]
+        return names, measured_positions
+
     def get_jtc_cmd_pub(self, active_controller_name: str):
         if active_controller_name not in self.controller_publishers:
-            jtc_cmd_pub = self.node.create_publisher(JointTrajectory, f'{active_controller_name}/joint_trajectory', 10)
+            jtc_cmd_pub = self.node.create_publisher(JointTrajectory,
+                                                     f'{active_controller_name}/joint_trajectory',
+                                                     10, callback_group=ReentrantCallbackGroup())
             wait_for_subscriber(jtc_cmd_pub)
             self.controller_publishers[active_controller_name] = jtc_cmd_pub
 
@@ -181,12 +193,15 @@ class Side:
         active_mode: ControlModeParameters = self.control_mode_listener.get()
         if active_mode.control_mode.mode not in [ControlMode.JOINT_POSITION, ControlMode.JOINT_IMPEDANCE]:
             raise ControlModeError(f"Cannot send joint command in {active_mode} mode")
-
-        active_controller_name = self.get_active_controller_names()[0]
-        joint_cmd_pub = self.get_joint_cmd_pub(active_controller_name)
+        if self.active_controller_name is None:
+            self.get_and_update_active_controllers()
+        joint_cmd_pub = self.get_joint_cmd_pub(self.active_controller_name)
         msg = Float64MultiArray()
         msg.data = list(joint_positions)
         joint_cmd_pub.publish(msg)
+
+    def send_jtc_cmd(self, joint_positions):
+        pass
 
     def parser_joint_limits(self):
         lower = []
@@ -259,17 +274,21 @@ class Side:
         return joint_state
 
     def get_active_controller_names(self):
-        controllers = self.get_active_controllers()
+        controllers = self.get_and_update_active_controllers()
         controller_names = [controller.name for controller in controllers]
         return controller_names
 
-    def get_active_controllers(self) -> List[ControllerState]:
+    def get_and_update_active_controllers(self) -> List[ControllerState]:
         controllers = self.get_all_controllers()
         # remove inactive controllers
         controllers = [controller for controller in controllers if controller.state == "active"]
 
         # filter out any control that does not contain any interfaces for this side
         controllers = [controller for controller in controllers if self.is_claimed_by(controller)]
+        if len(controllers) > 0:
+            self.active_controller_name = controllers[0].name
+        else:
+            self.active_controller_name = None
         return controllers
 
     def get_all_controllers(self, mode="async") -> List[ControllerState]:
@@ -328,15 +347,17 @@ class Victor:
         self.base_link = "victor_root"
         self.end_effector_name = end_effector_name
         self.move_group_name = move_group_name
-        self.joint_names = self.right.get_names_and_cmd()[0]
-        
+        # self.joint_names = self.right.get_names_and_cmd()[0]
+        self.joint_names = [f"victor_right_joint_{i}" for i in range(1, 8)]
 
         self.joint_states_listener = Listener(node, JointState, 'joint_states', 10)
 
         self.cm_srv_group = MutuallyExclusiveCallbackGroup()
-        self.switch_controller_client = node.create_client(SwitchController, f"controller_manager/switch_controller",
+        self.switch_controller_client = node.create_client(SwitchController,
+                                                           f"controller_manager/switch_controller",
                                                            callback_group=self.cm_srv_group)
-        self.list_controllers_client = node.create_client(ListControllers, f"controller_manager/list_controllers",
+        self.list_controllers_client = node.create_client(ListControllers,
+                                                          f"controller_manager/list_controllers",
                                                           callback_group=self.cm_srv_group)
 
         # Subscribe to robot description so that we can get the joints and joint limits
@@ -364,13 +385,10 @@ class Victor:
         self.__old_planning_scene = None
         self.__old_allowed_collision_matrix = None
 
-
-        # 
-        
         self.__move_action_goal = self.__init_move_action_goal(
-            frame_id=self.base_link, # base_link_name` - Name of the robot base link
-            group_name=self.move_group_name,   #Name of the planning group for robot arm
-            end_effector=self.end_effector_name, # Name of the robot end effector
+            frame_id=self.base_link,  # base_link_name` - Name of the robot base link
+            group_name=self.move_group_name,  # Name of the planning group for robot arm
+            end_effector=self.end_effector_name,  # Name of the robot end effector
         )
 
         # Create a separate service client for Cartesian planning
@@ -401,8 +419,6 @@ class Victor:
         )
         self.__kinematic_path_request = GetMotionPlan.Request()
 
-
-
         # Create a service for applying the planning scene
         self._apply_planning_scene_service = self.node.create_client(
             srv_type=ApplyPlanningScene,
@@ -418,6 +434,9 @@ class Victor:
         self.__collision_object_publisher = self.node.create_publisher(
             CollisionObject, "/collision_object", 10
         )
+
+        self.__ignore_new_calls_while_executing = True
+
         self.urdf: Optional[RobotURDF] = None
         # load moveitpy
         self.moveitpy, self.moveit_config = load_moveitpy("victor")
@@ -426,6 +445,15 @@ class Victor:
         self.ik_control_moveitpy = MoveItPy("victor_ik_control", config_dict=ik_control_config)
         self.local_ik_robot_model = self.ik_control_moveitpy.get_robot_model()
         self.planning_components = {}
+
+        # Internal states that monitor the current motion requests and execution
+        self.__is_motion_requested = False
+        self.__is_executing = False
+        self.motion_suceeded = False
+        self.__execution_goal_handle = None
+        self.__last_error_code = None
+        self.__wait_until_executed_rate = self.node.create_rate(1000.0)
+        self.__execution_mutex = threading.Lock()
 
     def get_link_pose(self, link_name: str, base_frame: str = "victor_root") -> Transform:
         return self.tf_wrapper.get_transform(base_frame, link_name)
@@ -454,10 +482,12 @@ class Victor:
         res = future.result()
         if not res.ok:
             print(f"Failed to switch controllers: {res.ok}")
+        else:
+            self.get_and_update_active_controller_names()
 
         return res
 
-    def get_active_controller_names(self):
+    def get_and_update_active_controller_names(self):
         left_controller_name = self.left.get_active_controller_names()
         right_controller_name = self.right.get_active_controller_names()
         controller_names = {"left": left_controller_name, "right": right_controller_name}
@@ -468,10 +498,44 @@ class Victor:
             self.planning_components[group_name] = self.moveitpy.get_planning_component(group_name)
         return self.planning_components[group_name]
 
-    def plan_to_joint_config(self, joint_config: Union[List, np.ndarray], group_name: str=None):
+    def wait_until_motion_start(self, timeout=3):
+        prev_joint_pos = self.get_joint_pos_dict()
+        move = False
+        start_time = time.time()
+        while not move and time.time() - start_time < timeout:
+            time.sleep(0.05)
+            new_joint_pos = self.get_joint_pos_dict()
+            change = False
+            for k in prev_joint_pos.keys():
+                change += np.abs(prev_joint_pos[k] - new_joint_pos[k])
+
+            prev_joint_pos = new_joint_pos
+            if change > 0.01:
+                move = True
+        if not move:
+            self.node.get_logger().warn("Robot is still not moving after {} seconds".format(timeout))
+        return move
+
+    def wait_until_motion_done(self, timeout=15):
+        prev_joint_pos = self.get_joint_pos_dict()
+        steady = False
+        start_time = time.time()
+        while not steady and time.time() - start_time < timeout:
+            time.sleep(0.1)
+            new_joint_pos = self.get_joint_pos_dict()
+            change = 0
+            for k in prev_joint_pos.keys():
+                change += np.abs(prev_joint_pos[k] - new_joint_pos[k])
+            prev_joint_pos = new_joint_pos
+            if change < 0.01:
+                steady = True
+        if not steady:
+            self.node.get_logger().warn("Robot is still not steady after {} seconds".format(timeout))
+        return steady
+
+    def plan_to_joint_config(self, joint_config: Union[List, np.ndarray], group_name: str = None):
         planning_component = self.get_moveit_planning_component(group_name)
         planning_component.set_start_state_to_current_state()
-        psm = self.moveitpy.get_planning_scene_monitor()
         robot_model = self.moveitpy.get_robot_model()
         robot_state = RobotState(robot_model)
         robot_state.set_joint_group_positions(group_name, joint_config)
@@ -480,12 +544,12 @@ class Victor:
         if plan_result:
             robot_trajectory = plan_result.trajectory
             exe_result = self.moveitpy.execute(robot_trajectory, controllers=[])
+            self.wait_until_motion_done()
         else:
             print("Planning failed")
         return plan_result
 
-    def plan_to_pose(self, target_pose, group_name: str=None, ee_link_name:str=None):
-
+    def plan_to_pose(self, target_pose, group_name: str = None, ee_link_name: str = None):
         pose_goal = PoseStamped()
         pose_goal.header.frame_id = "victor_root"
         pose_goal.pose.position.x = target_pose[0]
@@ -530,9 +594,30 @@ class Victor:
         current_state.update()
 
         robot_state = copy.deepcopy(current_state)
-        target_pose = convert_to_pose_msg(self.node, translation+ orientation, frame_id=self.base_link).pose
+        target_pose = convert_to_pose_msg(self.node, translation + orientation, frame_id=self.base_link).pose
         pose_goal = convert_to_pose_msg(self.node, target_pose, frame_id=self.base_link).pose
         ok = robot_state.set_from_ik(side.arm_name, pose_goal, side.tool_frame)
+        return ok
+
+    def __move_to_pose_ik_step(self, target_pose, side):
+        current_state = RobotState(self.local_ik_robot_model)
+        motion_status: MotionStatus = side.motion_status.get()
+        current_cmd_positions = jvq_to_list(motion_status.commanded_joint_position)
+        current_state.set_joint_group_positions(side.arm_name, current_cmd_positions)
+        current_state.update()
+
+        robot_state = copy.deepcopy(current_state)
+        pose_goal = convert_to_pose_msg(self.node, target_pose, frame_id=self.base_link).pose
+        ok = robot_state.set_from_ik(side.arm_name, pose_goal, side.tool_frame)
+        if ok:
+            joint_angles = robot_state.get_joint_group_positions(side.arm_name)
+            # print(current_cmd_positions)
+            # print(joint_angles / np.pi * 180)
+            print("IK solution ", joint_angles / np.pi * 180)
+            res = side.send_joint_cmd(joint_angles)
+            time.sleep(6)
+        else:
+            print("IK failed")
         return ok
 
     def move_to_pose(self, group_name: str, target_pose):
@@ -555,10 +640,10 @@ class Victor:
             joint_angles = robot_state.get_joint_group_positions(side.arm_name)
             # print(current_cmd_positions)
             # print(joint_angles / np.pi * 180)
-            print("diff ", np.abs(joint_angles - current_cmd_positions) / np.pi * 180)
             print("IK solution ", joint_angles / np.pi * 180)
             res = side.send_joint_cmd(joint_angles)
-            time.sleep(6)
+            self.wait_until_motion_start()
+            self.wait_until_motion_done()
         else:
             print("IK failed")
         return ok
@@ -641,6 +726,10 @@ class Victor:
         )
 
         self.__collision_object_publisher.publish(msg)
+        psm = self.moveitpy.get_planning_scene_monitor()
+        with psm.read_write() as scene:  # local update just to make sure
+            scene.apply_collision_object(msg)
+            scene.current_state.update()
 
     def add_collision_box(
             self,
@@ -938,9 +1027,6 @@ class Victor:
         if self.robot_description_user_cb:
             self.robot_description_user_cb(self.urdf)
 
-    def get_joint_states(self) -> JointState:
-        return self.joint_states_listener.get()
-
     def get_measured_joint_states_from_status(self, include_gripper: bool = True) -> JointState:
         # Make a JointState message from the motion status messages
         joint_state = JointState()
@@ -972,14 +1058,17 @@ class Victor:
     def get_control_modes(self):
         return {'left': self.left.get_arm_control_mode(), 'right': self.right.get_arm_control_mode()}
 
-    def get_joint_positions(self, joint_names: Optional[Sequence[str]] = None):
-        position_of_joint = self.get_joint_positions_dict()
-        return [position_of_joint[name] for name in joint_names]
+    def get_joint_states(self) -> JointState:
+        return self.joint_states_listener.get()
 
     def get_joint_positions_dict(self):
         joint_state = self.get_joint_states()
         joint_positions = dict(zip(joint_state.name, joint_state.position))
         return joint_positions
+
+    def get_joint_positions(self, joint_names: Optional[Sequence[str]] = None):
+        position_of_joint = self.get_joint_positions_dict()
+        return [position_of_joint[name] for name in joint_names]
 
     def get_left_joint_positions(self):
         joint_positions_dict = self.get_joint_cmd_dict()
@@ -992,10 +1081,15 @@ class Victor:
         return right_joint_positions
 
     def get_joint_cmd_dict(self):
-        left_names, left_commanded_positions = self.left.get_names_and_cmd()
-        right_names, right_commanded_positions = self.right.get_names_and_cmd()
-
+        left_names, left_commanded_positions = self.left.get_names_and_cmd_joints()
+        right_names, right_commanded_positions = self.right.get_names_and_cmd_joints()
         joint_positions = dict(zip(left_names + right_names, left_commanded_positions + right_commanded_positions))
+        return joint_positions
+
+    def get_joint_pos_dict(self):
+        left_names, left_measured_positions = self.left.get_names_and_measured_joints()
+        right_names, right_measured_positions = self.right.get_names_and_measured_joints()
+        joint_positions = dict(zip(left_names + right_names, left_measured_positions + right_measured_positions))
         return joint_positions
 
     def __init_compute_ik(self):
@@ -1132,31 +1226,148 @@ class Victor:
             return None
 
         return self.__compute_ik_client.call_async(self.__compute_ik_req)
-    
-
-
 
     ##############################################################################################
+    def plan(
+            self,
+            pose: Optional[Union[PoseStamped, Pose]] = None,
+            position: Optional[Union[Point, Tuple[float, float, float]]] = None,
+            quat_xyzw: Optional[
+                Union[Quaternion, Tuple[float, float, float, float]]
+            ] = None,
+            joint_positions: Optional[List[float]] = None,
+            joint_names: Optional[List[str]] = None,
+            frame_id: Optional[str] = None,
+            target_link: Optional[str] = None,
+            tolerance_position: float = 0.001,
+            tolerance_orientation: Union[float, Tuple[float, float, float]] = 0.001,
+            tolerance_joint_position: float = 0.001,
+            weight_position: float = 1.0,
+            weight_orientation: float = 1.0,
+            weight_joint_position: float = 1.0,
+            start_joint_state: Optional[Union[JointState, List[float]]] = None,
+            cartesian: bool = False,
+            max_step: float = 0.0025,
+            cartesian_fraction_threshold: float = 0.0,
+    ) -> Optional[JointTrajectory]:
+        """
+        Call plan_async and wait on future
+        """
+        future = self.plan_async(
+            **{
+                key: value
+                for key, value in locals().items()
+                if key not in ["self", "cartesian_fraction_threshold"]
+            }
+        )
+
+        if future is None:
+            return None
+
+        # 100ms sleep
+        rate = self.node.create_rate(10)
+        while not future.done():
+            rate.sleep()
+
+        return self.get_trajectory(
+            future,
+            cartesian=cartesian,
+            cartesian_fraction_threshold=cartesian_fraction_threshold,
+        )
+
+    def get_trajectory(
+            self,
+            future: Future,
+            cartesian: bool = False,
+            cartesian_fraction_threshold: float = 0.0,
+    ) -> Optional[JointTrajectory]:
+        """
+        Takes in a future returned by plan_async and returns the trajectory if the future is done
+        and planning was successful, else None.
+
+        For cartesian plans, the plan is rejected if the fraction of the path that was completed is
+        less than `cartesian_fraction_threshold`.
+        """
+        if not future.done():
+            self.node.get_logger().warn(
+                "Cannot get trajectory because future is not done."
+            )
+            return None
+
+        res = future.result()
+
+        # Cartesian
+        if cartesian:
+            if MoveItErrorCodes.SUCCESS == res.error_code.val:
+                if res.fraction >= cartesian_fraction_threshold:
+                    return res.solution.joint_trajectory
+                else:
+                    self.node.get_logger().warn(
+                        f"Planning failed! Cartesian planner completed {res.fraction} "
+                        f"of the trajectory, less than the threshold {cartesian_fraction_threshold}."
+                    )
+                    return None
+            else:
+                self.node.get_logger().warn(
+                    f"Planning failed! Error code: {res.error_code.val}."
+                )
+                return None
+
+        # Else Kinematic
+        res = res.motion_plan_response
+        if MoveItErrorCodes.SUCCESS == res.error_code.val:
+            return res.trajectory.joint_trajectory
+        else:
+            self.node.get_logger().warn(
+                f"Planning failed! Error code: {res.error_code.val}."
+            )
+            return None
+
+    def execute(self, joint_trajectory: JointTrajectory):
+        """
+        Execute joint_trajectory by communicating directly with the controller.
+        """
+
+        if self.__ignore_new_calls_while_executing and (
+                self.__is_motion_requested or self.__is_executing
+        ):
+            self.node.get_logger().warn(
+                "Controller is already following a trajectory. Skipping motion."
+            )
+            return
+
+        execute_trajectory_goal = init_execute_trajectory_goal(
+            joint_trajectory=joint_trajectory
+        )
+
+        if execute_trajectory_goal is None:
+            self.node.get_logger().warn(
+                "Cannot execute motion because the provided/planned trajectory is invalid."
+            )
+            return
+
+        self._send_goal_async_execute_trajectory(goal=execute_trajectory_goal)
+
     def plan_async(
-        self,
-        pose: Optional[Union[PoseStamped, Pose]] = None,
-        position: Optional[Union[Point, Tuple[float, float, float]]] = None,
-        quat_xyzw: Optional[
-            Union[Quaternion, Tuple[float, float, float, float]]
-        ] = None,
-        joint_positions: Optional[List[float]] = None,
-        joint_names: Optional[List[str]] = None,
-        frame_id: Optional[str] = None,
-        target_link: Optional[str] = None,
-        tolerance_position: float = 0.001,
-        tolerance_orientation: Union[float, Tuple[float, float, float]] = 0.001,
-        tolerance_joint_position: float = 0.001,
-        weight_position: float = 1.0,
-        weight_orientation: float = 1.0,
-        weight_joint_position: float = 1.0,
-        start_joint_state: Optional[Union[JointState, List[float]]] = None,
-        cartesian: bool = False,
-        max_step: float = 0.0025,
+            self,
+            pose: Optional[Union[PoseStamped, Pose]] = None,
+            position: Optional[Union[Point, Tuple[float, float, float]]] = None,
+            quat_xyzw: Optional[
+                Union[Quaternion, Tuple[float, float, float, float]]
+            ] = None,
+            joint_positions: Optional[List[float]] = None,
+            joint_names: Optional[List[str]] = None,
+            frame_id: Optional[str] = None,
+            target_link: Optional[str] = None,
+            tolerance_position: float = 0.001,
+            tolerance_orientation: Union[float, Tuple[float, float, float]] = 0.001,
+            tolerance_joint_position: float = 0.001,
+            weight_position: float = 1.0,
+            weight_orientation: float = 1.0,
+            weight_joint_position: float = 1.0,
+            start_joint_state: Optional[Union[JointState, List[float]]] = None,
+            cartesian: bool = False,
+            max_step: float = 0.0025,
     ) -> Optional[Future]:
         """
         Plan motion based on previously set goals. Optional arguments can be passed in to
@@ -1249,11 +1460,6 @@ class Victor:
                         joint_positions=start_joint_state,
                     )
                 )
-        elif self.joint_state is not None:
-            #TODO: get correct current joint state for a specifc group 
-            current_joint_state = self.get_joint_states()
-            assert False, "Implemented current states"
-            self.__move_action_goal.request.start_state.joint_state = current_joint_state
 
         # Plan trajectory asynchronously by service call
         if cartesian:
@@ -1274,9 +1480,7 @@ class Victor:
         self.clear_path_constraints()
 
         return future
-    
- 
-    
+
     def _plan_kinematic_path(self) -> Optional[Future]:
         # Reuse request from move action goal
         self.__kinematic_path_request.motion_plan_request = (
@@ -1288,7 +1492,7 @@ class Victor:
             stamp
         )
         for (
-            constraints
+                constraints
         ) in self.__kinematic_path_request.motion_plan_request.goal_constraints:
             for position_constraint in constraints.position_constraints:
                 position_constraint.header.stamp = stamp
@@ -1306,9 +1510,9 @@ class Victor:
         )
 
     def _plan_cartesian_path(
-        self,
-        max_step: float = 0.0025,
-        frame_id: Optional[str] = None,
+            self,
+            max_step: float = 0.0025,
+            frame_id: Optional[str] = None,
     ) -> Optional[Future]:
         # Reuse request from move action goal
         self.__cartesian_path_request.start_state = (
@@ -1328,7 +1532,7 @@ class Victor:
         self.__cartesian_path_request.group_name = (
             self.__move_action_goal.request.group_name
         )
-        self.__cartesian_path_request.link_name = self.__end_effector_name
+        self.__cartesian_path_request.link_name = self.end_effector_name
         self.__cartesian_path_request.max_step = max_step
 
         self.__cartesian_path_request.header.frame_id = (
@@ -1342,11 +1546,11 @@ class Victor:
             self.__move_action_goal.request.path_constraints
         )
         for (
-            position_constraint
+                position_constraint
         ) in self.__cartesian_path_request.path_constraints.position_constraints:
             position_constraint.header.stamp = stamp
         for (
-            orientation_constraint
+                orientation_constraint
         ) in self.__cartesian_path_request.path_constraints.orientation_constraints:
             orientation_constraint.header.stamp = stamp
         # no header in joint_constraint message type
@@ -1375,14 +1579,14 @@ class Victor:
         return self._plan_cartesian_path_service.call_async(
             self.__cartesian_path_request
         )
-    
+
     def create_position_constraint(
-        self,
-        position: Union[Point, Tuple[float, float, float]],
-        frame_id: Optional[str] = None,
-        target_link: Optional[str] = None,
-        tolerance: float = 0.001,
-        weight: float = 1.0,
+            self,
+            position: Union[Point, Tuple[float, float, float]],
+            frame_id: Optional[str] = None,
+            target_link: Optional[str] = None,
+            tolerance: float = 0.001,
+            weight: float = 1.0,
     ) -> PositionConstraint:
         """
         Create Cartesian position constraint of `target_link` with respect to `frame_id`.
@@ -1398,7 +1602,7 @@ class Victor:
             frame_id if frame_id is not None else self.base_link
         )
         constraint.link_name = (
-            target_link if target_link is not None else self.__end_effector_name
+            target_link if target_link is not None else self.end_effector_name
         )
 
         # Define target position
@@ -1427,12 +1631,12 @@ class Victor:
         return constraint
 
     def set_position_goal(
-        self,
-        position: Union[Point, Tuple[float, float, float]],
-        frame_id: Optional[str] = None,
-        target_link: Optional[str] = None,
-        tolerance: float = 0.001,
-        weight: float = 1.0,
+            self,
+            position: Union[Point, Tuple[float, float, float]],
+            frame_id: Optional[str] = None,
+            target_link: Optional[str] = None,
+            tolerance: float = 0.001,
+            weight: float = 1.0,
     ):
         """
         Set Cartesian position goal of `target_link` with respect to `frame_id`.
@@ -1454,13 +1658,13 @@ class Victor:
         ].position_constraints.append(constraint)
 
     def create_orientation_constraint(
-        self,
-        quat_xyzw: Union[Quaternion, Tuple[float, float, float, float]],
-        frame_id: Optional[str] = None,
-        target_link: Optional[str] = None,
-        tolerance: Union[float, Tuple[float, float, float]] = 0.001,
-        weight: float = 1.0,
-        parameterization: int = 0,  # 0: Euler, 1: Rotation Vector
+            self,
+            quat_xyzw: Union[Quaternion, Tuple[float, float, float, float]],
+            frame_id: Optional[str] = None,
+            target_link: Optional[str] = None,
+            tolerance: Union[float, Tuple[float, float, float]] = 0.001,
+            weight: float = 1.0,
+            parameterization: int = 0,  # 0: Euler, 1: Rotation Vector
     ) -> OrientationConstraint:
         """
         Create a Cartesian orientation constraint of `target_link` with respect to `frame_id`.
@@ -1476,7 +1680,7 @@ class Victor:
             frame_id if frame_id is not None else self.base_link
         )
         constraint.link_name = (
-            target_link if target_link is not None else self.__end_effector_name
+            target_link if target_link is not None else self.end_effector_name
         )
 
         # Define target orientation
@@ -1506,13 +1710,13 @@ class Victor:
         return constraint
 
     def set_orientation_goal(
-        self,
-        quat_xyzw: Union[Quaternion, Tuple[float, float, float, float]],
-        frame_id: Optional[str] = None,
-        target_link: Optional[str] = None,
-        tolerance: Union[float, Tuple[float, float, float]] = 0.001,
-        weight: float = 1.0,
-        parameterization: int = 0,  # 0: Euler, 1: Rotation Vector
+            self,
+            quat_xyzw: Union[Quaternion, Tuple[float, float, float, float]],
+            frame_id: Optional[str] = None,
+            target_link: Optional[str] = None,
+            tolerance: Union[float, Tuple[float, float, float]] = 0.001,
+            weight: float = 1.0,
+            parameterization: int = 0,  # 0: Euler, 1: Rotation Vector
     ):
         """
         Set Cartesian orientation goal of `target_link` with respect to `frame_id`.
@@ -1533,13 +1737,13 @@ class Victor:
         self.__move_action_goal.request.goal_constraints[
             -1
         ].orientation_constraints.append(constraint)
-    
+
     def create_joint_constraints(
-        self,
-        joint_positions: List[float],
-        joint_names: Optional[List[str]] = None,
-        tolerance: float = 0.001,
-        weight: float = 1.0,
+            self,
+            joint_positions: List[float],
+            joint_names: Optional[List[str]] = None,
+            tolerance: float = 0.001,
+            weight: float = 1.0,
     ) -> List[JointConstraint]:
         """
         Creates joint space constraints. With `joint_names` specified, `joint_positions` can be
@@ -1575,11 +1779,11 @@ class Victor:
         return constraints
 
     def set_joint_goal(
-        self,
-        joint_positions: List[float],
-        joint_names: Optional[List[str]] = None,
-        tolerance: float = 0.001,
-        weight: float = 1.0,
+            self,
+            joint_positions: List[float],
+            joint_names: Optional[List[str]] = None,
+            tolerance: float = 0.001,
+            weight: float = 1.0,
     ):
         """
         Set joint space goal. With `joint_names` specified, `joint_positions` can be
@@ -1599,7 +1803,6 @@ class Victor:
             constraints
         )
 
-    
     def clear_goal_constraints(self):
         """
         Clear all goal constraints that were previously set.
@@ -1607,7 +1810,7 @@ class Victor:
         """
 
         self.__move_action_goal.request.goal_constraints = [Constraints()]
-    
+
     def clear_path_constraints(self):
         """
         Clear all path constraints that were previously set.
@@ -1618,7 +1821,7 @@ class Victor:
 
     @classmethod
     def __init_move_action_goal(
-        cls, frame_id: str, group_name: str, end_effector: str
+            cls, frame_id: str, group_name: str, end_effector: str
     ) -> MoveGroup.Goal:
         move_action_goal = MoveGroup.Goal()
         move_action_goal.request.workspace_parameters.header.frame_id = frame_id
@@ -1659,12 +1862,39 @@ class Victor:
 
         return move_action_goal
 
+    def _send_goal_async_execute_trajectory(
+            self,
+            goal: ExecuteTrajectory,
+            wait_until_response: bool = False,
+    ):
+        self.__execution_mutex.acquire()
+
+        if not self._execute_trajectory_action_client.server_is_ready():
+            self.node.get_logger().warn(
+                f"Action server '{self._execute_trajectory_action_client._action_name}' is not yet available. Better luck next time!"
+            )
+            return
+
+        self.__last_error_code = None
+        self.__is_motion_requested = True
+        self.__send_goal_future_execute_trajectory = (
+            self._execute_trajectory_action_client.send_goal_async(
+                goal=goal,
+                feedback_callback=None,
+            )
+        )
+
+        self.__send_goal_future_execute_trajectory.add_done_callback(
+            self.__response_callback_execute_trajectory
+        )
+        self.__execution_mutex.release()
+
 
 def init_joint_state(
-    joint_names: List[str],
-    joint_positions: Optional[List[str]] = None,
-    joint_velocities: Optional[List[str]] = None,
-    joint_effort: Optional[List[str]] = None,
+        joint_names: List[str],
+        joint_positions: Optional[List[float]] = None,
+        joint_velocities: Optional[List[float]] = None,
+        joint_effort: Optional[List[float]] = None,
 ) -> JointState:
     joint_state = JointState()
 
@@ -1680,3 +1910,16 @@ def init_joint_state(
     )
 
     return joint_state
+
+
+def init_execute_trajectory_goal(
+        joint_trajectory: JointTrajectory,
+) -> Optional[ExecuteTrajectory.Goal]:
+    if joint_trajectory is None:
+        return None
+
+    execute_trajectory_goal = ExecuteTrajectory.Goal()
+
+    execute_trajectory_goal.trajectory.joint_trajectory = joint_trajectory
+
+    return execute_trajectory_goal

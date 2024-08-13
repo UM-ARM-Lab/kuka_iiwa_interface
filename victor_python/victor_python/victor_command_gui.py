@@ -76,7 +76,7 @@ class ArmWidget(QWidget):
 
         # Add slider widgets for each joint, but we don't have values yet
         self.slider_widgets = []
-        j_lower, j_upper = np.rad2deg(side.lower).astype(np.int), np.rad2deg(side.upper).astype(np.int)
+        j_lower, j_upper = np.rad2deg(side.lower).astype(np.int32), np.rad2deg(side.upper).astype(np.int32)
         for joint_idx in range(7):
             slider_widget = ArmJointSliderWidget(f"Joint {joint_idx + 1} Command", joint_idx)
             slider_widget.setEnabled(False)
@@ -215,7 +215,7 @@ class ArmWidget(QWidget):
         import time
         t1 = time.time()
         # First we need to infer which controller is running, and then send the command to that controller
-        active_controllers = self.side.get_active_controllers()
+        active_controllers = self.side.get_and_update_active_controllers()
         t_get_controlelr = time.time()
         print("get controller take ", t_get_controlelr-t1)
         # return
