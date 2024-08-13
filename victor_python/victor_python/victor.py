@@ -335,6 +335,7 @@ class Side:
 class Victor:
 
     def __init__(self, node: Node, robot_description_cb: Optional[Callable[[RobotURDF], None]] = None,
+                 enable_moveit=True,
                  callback_group=None, move_group_name="right_arm", end_effector_name="victor_right_tool0",
                  ):
         super().__init__()
@@ -439,11 +440,13 @@ class Victor:
 
         self.urdf: Optional[RobotURDF] = None
         # load moveitpy
-        self.moveitpy, self.moveit_config = load_moveitpy("victor")
-        ik_control_config = load_moveit_config("victor",
-                                               "config/ik_controller_kinematics.yaml").to_dict()
-        self.ik_control_moveitpy = MoveItPy("victor_ik_control", config_dict=ik_control_config)
-        self.local_ik_robot_model = self.ik_control_moveitpy.get_robot_model()
+        if enable_moveit:
+            self.moveitpy, self.moveit_config = load_moveitpy("victor")
+            ik_control_config = load_moveit_config("victor",
+                                                   "config/ik_controller_kinematics.yaml").to_dict()
+            self.ik_control_moveitpy = MoveItPy("victor_ik_control", config_dict=ik_control_config)
+            self.local_ik_robot_model = self.ik_control_moveitpy.get_robot_model()
+        self.enable_moveit = enable_moveit
         self.planning_components = {}
 
         # Internal states that monitor the current motion requests and execution
@@ -494,6 +497,8 @@ class Victor:
         return controller_names
 
     def get_moveit_planning_component(self, group_name):
+        if not self.enable_moveit:
+            self.node.get_logger().warn("Moveit is not enabled")
         if group_name not in self.planning_components:
             self.planning_components[group_name] = self.moveitpy.get_planning_component(group_name)
         return self.planning_components[group_name]
@@ -534,6 +539,9 @@ class Victor:
         return steady
 
     def plan_to_joint_config(self, joint_config: Union[List, np.ndarray], group_name: str = None):
+        if not self.enable_moveit:
+            self.node.get_logger().warn("Moveit is not enabled")
+            return
         planning_component = self.get_moveit_planning_component(group_name)
         planning_component.set_start_state_to_current_state()
         robot_model = self.moveitpy.get_robot_model()
@@ -550,6 +558,9 @@ class Victor:
         return plan_result
 
     def plan_to_pose(self, target_pose, group_name: str = None, ee_link_name: str = None):
+        if not self.enable_moveit:
+            self.node.get_logger().warn("Moveit is not enabled")
+            return
         pose_goal = PoseStamped()
         pose_goal.header.frame_id = "victor_root"
         pose_goal.pose.position.x = target_pose[0]
@@ -621,6 +632,9 @@ class Victor:
         return ok
 
     def move_to_pose(self, group_name: str, target_pose):
+        if not self.enable_moveit:
+            self.node.get_logger().warn("Moveit is not enabled")
+            return
         if group_name == "left_arm":
             side = self.left
         elif group_name == "right_arm":
@@ -674,7 +688,9 @@ class Victor:
             - `SolidPrimitive.CYLINDER`
             - `SolidPrimitive.CONE`
         """
-
+        if not self.enable_moveit:
+            self.node.get_logger().warn("Moveit is not enabled")
+            return
         if (pose is None) and (position is None or quat_xyzw is None):
             raise ValueError(
                 "Either `pose` or `position` and `quat_xyzw` must be specified!"

@@ -10,7 +10,7 @@ right_arm:
   orientation_threshold: 0.03
   cost_threshold: 0.005
   minimal_displacement_weight: 0.01
-  avoid_joint_limits_weight: 0.01
+  avoid_joint_limits_weight: 0.02
   gd_step_size: 0.0001
 left_arm:
   kinematics_solver: pick_ik/PickIkPlugin

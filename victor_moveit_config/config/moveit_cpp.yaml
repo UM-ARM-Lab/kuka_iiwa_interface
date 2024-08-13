@@ -2,21 +2,23 @@ planning_pipelines:
   pipeline_names: [ "ompl", "pilz_industrial_motion_planner" ]
 
 plan_request_params:
-  planning_attempts: 1
+  planning_attempts: 10
   planning_pipeline: ompl
   planner_id: ompl
-  planning_time: 1.0
+  planning_time: 5.0
   max_velocity_scaling_factor: 0.1
   max_acceleration_scaling_factor: 0.1
+  maximum_waypoint_distance: 0.15
 
 ompl_rrtc:
   plan_request_params:
-    planning_attempts: 1
+    planning_attempts: 10
     planning_pipeline: ompl
     planner_id: "RRTConnectkConfigDefault"
     max_velocity_scaling_factor: 0.1
     max_acceleration_scaling_factor: 0.1
-    planning_time: 1.0
+    planning_time: 5.0
+    maximum_waypoint_distance: 0.15
 
 pilz_lin:
   plan_request_params:

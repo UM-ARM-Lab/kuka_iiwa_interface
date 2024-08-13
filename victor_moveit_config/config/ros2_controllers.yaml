@@ -85,6 +85,7 @@ joint_impedance_trajectory_controller:
     state_interfaces:
       - position
     control_mode: joint_impedance
+    update_rate: 1000  # Hz
 
 left_arm_position_controller:
   ros__parameters:
@@ -113,6 +114,7 @@ left_arm_impedance_controller:
     interface_name: position
     side: left
     control_mode: joint_impedance
+    update_rate: 1000  # Hz
 
 right_arm_position_controller:
   ros__parameters:
@@ -141,6 +143,7 @@ right_arm_impedance_controller:
     interface_name: position
     side: right
     control_mode: joint_impedance
+    update_rate: 1000  # Hz
 
 left_arm_cartesian_controller:
   ros__parameters:
