@@ -351,7 +351,7 @@ class Victor:
         # self.joint_names = self.right.get_names_and_cmd()[0]
         self.joint_names = [f"victor_right_joint_{i}" for i in range(1, 8)]
 
-        self.joint_states_listener = Listener(node, JointState, 'joint_states', 10)
+        # self.joint_states_listener = Listener(node, JointState, 'joint_states', 10)
 
         self.cm_srv_group = MutuallyExclusiveCallbackGroup()
         self.switch_controller_client = node.create_client(SwitchController,
@@ -364,10 +364,10 @@ class Victor:
         # Subscribe to robot description so that we can get the joints and joint limits
         # This callback will only be called once at the beginning.
         # To get the parsed URDF, either pass in a user callback or use `victor.urdf`.
-        self.description_callback_group = None  # MutuallyExclusiveCallbackGroup()
-        qos = QoSProfile(depth=1, durability=QoSDurabilityPolicy.TRANSIENT_LOCAL)
-        self.sub = node.create_subscription(String, 'robot_description', self.robot_description_callback, qos,
-                                            callback_group=self.description_callback_group)
+        # self.description_callback_group = None  # MutuallyExclusiveCallbackGroup()
+        # qos = QoSProfile(depth=1, durability=QoSDurabilityPolicy.TRANSIENT_LOCAL)
+        # self.sub = node.create_subscription(String, 'robot_description', self.robot_description_callback, qos,
+        #                                     callback_group=self.description_callback_group)
 
         self._reentrant_callback_group = ReentrantCallbackGroup()
         # Create a service for getting the planning scene
