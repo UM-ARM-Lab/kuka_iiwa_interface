@@ -155,7 +155,7 @@
             <child link="${robot_name}_link_4"/>
             <origin xyz="0 0 0.19" rpy="${PI / 2} 0 0"/>
             <axis xyz="0 0 1"/>
-            <limit lower="${-120 * PI / 180}" upper="${120 * PI / 180}"
+            <limit lower="${-120 * PI / 180}" upper="${119 * PI / 180}"
                    effort="${max_effort}" velocity="2.2689280275926285"/>
             <dynamics damping="${joint_damping}"/>
         </joint>

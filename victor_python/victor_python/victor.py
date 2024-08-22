@@ -2,7 +2,7 @@ import copy
 import threading
 
 from rclpy.action import ActionClient
-
+from shape_msgs.msg import Mesh, MeshTriangle
 from arm_utilities.conversions import convert_to_pose_msg
 from moveit import MoveItPy
 from rclpy.task import Future
@@ -49,6 +49,7 @@ from rclpy.qos import (
     QoSProfile,
     QoSReliabilityPolicy,
 )
+from arm_utilities.transformation_helper import build_mat_from_transform
 from victor_hardware_interfaces.msg import MotionStatus, Robotiq3FingerStatus, Robotiq3FingerCommand, \
     ControlModeParameters, ControlMode
 from victor_python.robotiq_finger_angles import compute_finger_angles, get_finger_angle_names, compute_scissor_angle, \
@@ -89,13 +90,14 @@ class ControlModeError(Exception):
 
 class Side:
 
-    def __init__(self, node: Node, name: str):
+    def __init__(self, node: Node, name: str, tf_wrapper: TF2Wrapper):
         """
         Args:
             node: rclpy node
             name: either "left" or "right"
         """
         self.node = node
+        self.tf_wrapper = tf_wrapper
         self.name = name
         self.arm_name = f"{self.name}_arm"
         self.cartesian_cmd_tool_frame = f'victor_{self.arm_name}_{CARTESIAN_CMD_FRAME_SUFFIX}'
@@ -154,6 +156,18 @@ class Side:
         commanded_positions = jvq_to_list(status.commanded_joint_position)
         names = [f"victor_{self.arm_name}_joint_{i}" for i in range(1, 8)]
         return names, commanded_positions
+
+    def get_estimated_external_force(self):
+        status: MotionStatus = self.motion_status.get()
+        wr = status.estimated_external_wrench
+        T_base_to_palm = self.tf_wrapper.get_transform(
+            "victor_root",
+            f"victor_{self.arm_name}_sunrise_palm_surface")
+        force = np.array([wr.x, wr.y, wr.z, 1])
+        mat_base_to_palm = build_mat_from_transform(T_base_to_palm)
+        mat_base_to_palm[:, 3] = 0
+        force_T = mat_base_to_palm @ force
+        return force_T[:3]
 
     def get_names_and_measured_joints(self):
         status: MotionStatus = self.motion_status.get()
@@ -323,7 +337,7 @@ class Side:
         req = GetParameters.Request()
         req.names = ["control_mode"]
         future = srv_client.call_async(req)
-        rate = self.node.create_rate(1000)
+        rate = self.node.create_rate(100)
         while not future.done():
             rate.sleep()
         res = future.result()
@@ -342,16 +356,16 @@ class Victor:
         self.node = node
         self.robot_description_user_cb = robot_description_cb
 
-        self.left = Side(node, 'left')
-        self.right = Side(node, 'right')
         self.tf_wrapper = TF2Wrapper(node)
+        self.left = Side(node, 'left', self.tf_wrapper)
+        self.right = Side(node, 'right', self.tf_wrapper)
         self.base_link = "victor_root"
         self.end_effector_name = end_effector_name
         self.move_group_name = move_group_name
         # self.joint_names = self.right.get_names_and_cmd()[0]
         self.joint_names = [f"victor_right_joint_{i}" for i in range(1, 8)]
 
-        self.joint_states_listener = Listener(node, JointState, 'joint_states', 10)
+        # self.joint_states_listener = Listener(node, JointState, 'joint_states', 10)
 
         self.cm_srv_group = MutuallyExclusiveCallbackGroup()
         self.switch_controller_client = node.create_client(SwitchController,
@@ -364,10 +378,10 @@ class Victor:
         # Subscribe to robot description so that we can get the joints and joint limits
         # This callback will only be called once at the beginning.
         # To get the parsed URDF, either pass in a user callback or use `victor.urdf`.
-        self.description_callback_group = None  # MutuallyExclusiveCallbackGroup()
-        qos = QoSProfile(depth=1, durability=QoSDurabilityPolicy.TRANSIENT_LOCAL)
-        self.sub = node.create_subscription(String, 'robot_description', self.robot_description_callback, qos,
-                                            callback_group=self.description_callback_group)
+        # self.description_callback_group = None  # MutuallyExclusiveCallbackGroup()
+        # qos = QoSProfile(depth=1, durability=QoSDurabilityPolicy.TRANSIENT_LOCAL)
+        # self.sub = node.create_subscription(String, 'robot_description', self.robot_description_callback, qos,
+        #                                     callback_group=self.description_callback_group)
 
         self._reentrant_callback_group = ReentrantCallbackGroup()
         # Create a service for getting the planning scene
@@ -654,7 +668,7 @@ class Victor:
             joint_angles = robot_state.get_joint_group_positions(side.arm_name)
             # print(current_cmd_positions)
             # print(joint_angles / np.pi * 180)
-            print("IK solution ", joint_angles / np.pi * 180)
+            # print("IK solution ", joint_angles / np.pi * 180)
             res = side.send_joint_cmd(joint_angles)
             self.wait_until_motion_start()
             self.wait_until_motion_done()
