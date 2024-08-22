@@ -5,9 +5,9 @@ right_arm:
   mode: local
   stop_optimization_on_valid_solution: false
   position_scale: 2.
-  rotation_scale: 0.1
+  rotation_scale: 0.05
   position_threshold: 0.01
-  orientation_threshold: 0.4
+  orientation_threshold: 0.5
   cost_threshold: 0.05
   minimal_displacement_weight: 0.005
   avoid_joint_limits_weight: 0.05
