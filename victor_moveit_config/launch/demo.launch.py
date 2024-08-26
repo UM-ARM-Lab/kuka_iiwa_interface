@@ -59,15 +59,15 @@ def generate_launch_description():
             namespace="victor",
         )
     )
-    ld.add_action(
-        Node(
-            package="arm_robots",
-            executable="camera_pose_publisher.py",
-            name="camera_pose_publisher",
-            output="screen",
-            namespace="victor",
-        )
-    )
+    # ld.add_action(
+    #     Node(
+    #         package="arm_robots",
+    #         executable="camera_pose_publisher.py",
+    #         name="camera_pose_publisher",
+    #         output="screen",
+    #         namespace="victor",
+    #     )
+    # )
 
     # ld.add_action(
     #     Node(

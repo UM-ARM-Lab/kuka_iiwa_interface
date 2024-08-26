@@ -8,15 +8,14 @@ Panels:
         - /Status1
         - /MotionPlanning1
         - /MotionPlanning1/Scene Geometry1
-        - /MotionPlanning1/Scene Robot1
-        - /MotionPlanning1/Planning Request1
         - /TF1
         - /TF1/Frames1
+        - /TF1/Frames1/victor_left_tool01
         - /TF1/Tree1
         - /PointCloud21
         - /MarkerArray1
       Splitter Ratio: 0.5
-    Tree Height: 494
+    Tree Height: 341
   - Class: rviz_common/Help
     Name: Help
   - Class: rviz_common/Views
@@ -387,7 +386,7 @@ Visualization Manager:
         Goal State Color: 250; 128; 0
         Interactive Marker Size: 0
         Joint Violation Color: 255; 0; 255
-        Planning Group: right_arm
+        Planning Group: left_arm
         Query Goal State: true
         Query Start State: false
         Show Workspace: false
@@ -399,7 +398,7 @@ Visualization Manager:
         Scene Alpha: 0
         Scene Color: 50; 230; 50
         Scene Display Time: 0.009999999776482582
-        Show Scene Geometry: false
+        Show Scene Geometry: true
         Voxel Coloring: Z-Axis
         Voxel Rendering: Disabled
       Scene Robot:
@@ -761,7 +760,7 @@ Visualization Manager:
         victor_left_finger_c_link_2:
           Value: false
         victor_left_finger_c_link_3:
-          Value: false
+          Value: true
         victor_left_gripper_mounting_bracket:
           Value: false
         victor_left_palm:
@@ -825,7 +824,7 @@ Visualization Manager:
         victor_right_palm:
           Value: false
         victor_right_tool0:
-          Value: true
+          Value: false
         victor_root:
           Value: false
         zivid_optical_frame:
@@ -952,7 +951,7 @@ Visualization Manager:
       Enabled: true
       Name: MarkerArray
       Namespaces:
-        "": true
+        {}
       Topic:
         Depth: 5
         Durability Policy: Volatile
@@ -979,30 +978,30 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz_default_plugins/Orbit
-      Distance: 1.5130475759506226
+      Distance: 1.5919734239578247
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: 0.5367408990859985
-        Y: -0.49746423959732056
-        Z: 0.41882264614105225
+        X: 0.48858025670051575
+        Y: 0.550712525844574
+        Z: 0.6445541381835938
       Focal Shape Fixed Size: true
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 1.329796314239502
+      Pitch: 1.0147972106933594
       Target Frame: victor_root
       Value: Orbit (rviz_default_plugins)
-      Yaw: 5.949429988861084
+      Yaw: 2.874433994293213
     Saved: ~
 Window Geometry:
   Displays:
     collapsed: false
-  Height: 1043
+  Height: 1016
   Help:
     collapsed: false
   Hide Left Dock: false
@@ -1011,9 +1010,9 @@ Window Geometry:
     collapsed: false
   MotionPlanning - Trajectory Slider:
     collapsed: false
-  QMainWindow State: 000000ff00000000fd0000000100000000000002b4000003b9fc0200000005fb000000100044006900730070006c006100790073010000003d0000022b000000c900fffffffb00000044004d006f00740069006f006e0050006c0061006e006e0069006e00670020002d0020005400720061006a006500630074006f0072007900200053006c00690064006500720000000162000000be0000004100fffffffb0000001c004d006f00740069006f006e0050006c0061006e006e0069006e0067010000026e000001880000017d00fffffffb0000000800480065006c0070000000029a0000006e0000006e00fffffffb0000000a00560069006500770073000000031d000000be000000a400ffffff000004c6000003b900000004000000040000000800000008fc0000000100000002000000010000000a0054006f006f006c00730100000000ffffffff0000000000000000
+  QMainWindow State: 000000ff00000000fd0000000100000000000002b40000039efc0200000005fb000000100044006900730070006c006100790073010000003d00000192000000c900fffffffb00000044004d006f00740069006f006e0050006c0061006e006e0069006e00670020002d0020005400720061006a006500630074006f0072007900200053006c00690064006500720000000162000000be0000004100fffffffb0000001c004d006f00740069006f006e0050006c0061006e006e0069006e006701000001d5000002060000017d00fffffffb0000000800480065006c0070000000029a0000006e0000006e00fffffffb0000000a00560069006500770073000000031d000000be000000a400ffffff000004800000039e00000004000000040000000800000008fc0000000100000002000000010000000a0054006f006f006c00730100000000ffffffff0000000000000000
   Views:
     collapsed: false
-  Width: 1920
-  X: 1920
-  Y: 0
+  Width: 1850
+  X: 70
+  Y: 27

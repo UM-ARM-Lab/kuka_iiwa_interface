@@ -350,7 +350,7 @@ class Victor:
 
     def __init__(self, node: Node, robot_description_cb: Optional[Callable[[RobotURDF], None]] = None,
                  enable_moveit=True,
-                 callback_group=None, move_group_name="right_arm", end_effector_name="victor_right_tool0",
+                 callback_group=None, move_group_name="left_arm", end_effector_name="victor_left_tool0",
                  ):
         super().__init__()
         self.node = node
@@ -363,7 +363,7 @@ class Victor:
         self.end_effector_name = end_effector_name
         self.move_group_name = move_group_name
         # self.joint_names = self.right.get_names_and_cmd()[0]
-        self.joint_names = [f"victor_right_joint_{i}" for i in range(1, 8)]
+        # self.joint_names = [f"victor_right_joint_{i}" for i in range(1, 8)]
 
         # self.joint_states_listener = Listener(node, JointState, 'joint_states', 10)
 

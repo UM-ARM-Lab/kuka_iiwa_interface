@@ -12,8 +12,10 @@ using namespace std::chrono_literals;
 //std::string const RIGHT_RECV_PROVIDER = "udp://10.10.10.169:30001";
 //std::string const LEFT_RECV_PROVIDER = "udp://10.10.10.178:30002";  // armio
 //std::string const RIGHT_RECV_PROVIDER = "udp://10.10.10.178:30001";
-std::string const LEFT_RECV_PROVIDER = "udp://10.10.10.116:30002";  // armdual
-std::string const RIGHT_RECV_PROVIDER = "udp://10.10.10.116:30001";
+// std::string const LEFT_RECV_PROVIDER = "udp://10.10.10.116:30002";  // armdual
+// std::string const RIGHT_RECV_PROVIDER = "udp://10.10.10.116:30001";
+std::string const LEFT_RECV_PROVIDER = "udp://10.10.10.115:30002";  // armchair
+std::string const RIGHT_RECV_PROVIDER = "udp://10.10.10.115:30001";
 std::string const LEFT_SEND_PROVIDER = "udp://10.10.10.12:30000";
 std::string const RIGHT_SEND_PROVIDER = "udp://10.10.10.11:30000";
 
