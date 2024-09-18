@@ -10,9 +10,92 @@ from arm_utilities.transformation_helper import get_vec7_from_transform
 from victor_python.victor import Victor
 import sys
 import copy
+import zivid
+from zivid.experimental import calibration
+import zivid.settings    
+import pickle
+import datetime
+import cv2
 
 # sys.path.append("/home/zixuanh/UMD")
 # from visualization.plot import plot_seg_fig, plot_pointclouds
+class ZividCamera:
+    def __init__(self, 
+                 ws_crop=[0,-1, 0, -1],
+                 low_hsv=[0,0,0],
+                 high_hsv=[255,255,255],
+                 k=[0,0,0],
+                 extrinsic=None):
+
+        self.zivid_app = zivid.Application()
+        self.zivid = self.zivid_app.connect_camera()
+
+
+        self.frame = None
+        self.pc = None
+        self.rgb  = None
+        self.rgba = None
+
+
+        # Camera info
+        self.K = np.eye(3)
+        self.ws_crop = ws_crop
+        self.low_hsv =  low_hsv
+        self.high_hsv = high_hsv
+        self.extrinsic = extrinsic
+        self.kc, self.ko, self.ke = k[0],k[1],k[2]
+
+
+
+        camera_matrix = calibration.intrinsics(self.zivid).camera_matrix
+        distortion = calibration.intrinsics(self.zivid).distortion
+        self.intrinsics = np.array([
+            [camera_matrix.fx, 0, camera_matrix.cx],
+            [0, camera_matrix.fy, camera_matrix.cy],
+            [0, 0, 1]
+        ])
+        self.distortion = np.array([distortion.k1, distortion.k2, distortion.p1, distortion.p2, distortion.k3])
+        # self.settings = zivid.Settings.load("zivid_fast.yml")
+        suggest_settings_parameters = zivid.capture_assistant.SuggestSettingsParameters(
+            max_capture_time=datetime.timedelta(milliseconds=800),
+            ambient_light_frequency=zivid.capture_assistant.SuggestSettingsParameters.AmbientLightFrequency.none,
+        )
+        self.settings = zivid.capture_assistant.suggest_settings(self.zivid, suggest_settings_parameters)
+
+    
+    def update(self):
+        
+        self.frame = self.assisted_capture()
+        self.pc = self.frame.point_cloud().copy_data("xyz")
+        self.pc = np.nan_to_num(self.pc)
+        self.depth = self.pc[:,:,2]
+
+        self.rgba = self.frame.point_cloud().copy_data("rgba")
+        self.rgb = self.frame.point_cloud().copy_data("rgba")[:,:,0:3]
+        self.bgr = self.rgb[:,:,[2,1,0]]
+        self.GET_IMAGE = True
+
+        # cv2.imshow('frame', frame)
+        # cv2.waitKey(0)
+        # cv2.destroyAllWindows()
+        return self.rgb,self.pc,self.depth
+
+    # def get_seg_pc(self):
+    #     while not self.GET_IMAGE:
+    #         print("wait for the image........")        
+    #     if self.GET_IMAGE:
+    #         print("Get the image, change to point cloud")
+    #         self.mask = segment_hsv_for_rgb(self.rgb,self.low_hsv,self.high_hsv,self.ws_crop,k_c=self.kc,k_o=self.ko,k_e=self.ke)
+
+    #         self.pc_seg = self.pc[self.mask,:] # unit is cm?
+    #         self.pc_seg/=1000.0 #unit change to m
+    #         return self.pc_seg
+
+     
+  
+    def assisted_capture(self) -> zivid.Frame:
+        return self.zivid.capture(self.settings)
+
 
 
 def create_cfg():
@@ -205,7 +288,13 @@ def main():
 
     # external_force = victor.left.get_estimated_external_force()
 
-    for i in range(cfg.steps):
+    #SET UP THE CAMERA
+    camera = ZividCamera()
+
+    external_wrench_list = []
+    frames = []
+    KEEP_RUNNING = True
+    while KEEP_RUNNING:
         current_pose = victor.get_link_pose("victor_left_tool0")
         print("current_pose",current_pose)
         current_pose_np = np.array(get_vec7_from_transform(current_pose)) # dim 7
@@ -237,6 +326,26 @@ def main():
         # target_pose = set_target_pose(target_pose_np, current_pose)
        
         victor.move_to_pose("left_arm", target_pose)
+
+        # UPDATE THE RESULTS
+        victor.left.get_estimated_external_force()
+        lf_status =  victor.left.motion_status.get()
+        lf_wr = lf_status.estimated_external_wrench
+
+        rgb, xyz, depth = camera.update()
+
+        rbg_frame = rgb.astype(np.float32)
+        external_wrench_list.append(lf_wr)
+        frames.append(rbg_frame)
+        cv2.imwrite(f"frames/frame_rgb_mask_{i}.png",rbg_frame)
+        i+=1
+
+
+    
+    pickle.dump((external_wrench_list), open("ee_wrench.pkl","wb"))
+
+    
+
         
 
     # current_pose = victor.get_link_pose("victor_left_tool0")

@@ -449,6 +449,8 @@
     <disable_collisions link1="victor_right_finger_a_link_3" link2="victor_right_finger_c_link_2" reason="Never"/>
     <disable_collisions link1="victor_right_finger_a_link_3" link2="victor_right_finger_c_link_3" reason="Never"/>
     <disable_collisions link1="victor_right_finger_a_link_3" link2="victor_right_gripper_mounting_bracket" reason="Never"/>
+    <disable_collisions link1="victor_right_finger_a_link_3" link2="victor_right_palm" reason="Never"/>
+
     <disable_collisions link1="victor_right_finger_b_link_0" link2="victor_right_finger_b_link_1" reason="Adjacent"/>
     <disable_collisions link1="victor_right_finger_b_link_0" link2="victor_right_finger_b_link_2" reason="Never"/>
     <disable_collisions link1="victor_right_finger_b_link_0" link2="victor_right_finger_b_link_3" reason="Never"/>
@@ -474,6 +476,8 @@
     <disable_collisions link1="victor_right_finger_b_link_3" link2="victor_right_finger_c_link_0" reason="Never"/>
     <disable_collisions link1="victor_right_finger_b_link_3" link2="victor_right_finger_c_link_1" reason="Never"/>
     <disable_collisions link1="victor_right_finger_b_link_3" link2="victor_right_gripper_mounting_bracket" reason="Never"/>
+    <disable_collisions link1="victor_right_finger_b_link_3" link2="victor_right_palm" reason="Never"/>
+
     <disable_collisions link1="victor_right_finger_c_link_0" link2="victor_right_finger_c_link_1" reason="Adjacent"/>
     <disable_collisions link1="victor_right_finger_c_link_0" link2="victor_right_finger_c_link_2" reason="Never"/>
     <disable_collisions link1="victor_right_finger_c_link_0" link2="victor_right_finger_c_link_3" reason="Never"/>
@@ -487,5 +491,7 @@
     <disable_collisions link1="victor_right_finger_c_link_2" link2="victor_right_gripper_mounting_bracket" reason="Never"/>
     <disable_collisions link1="victor_right_finger_c_link_2" link2="victor_right_palm" reason="Never"/>
     <disable_collisions link1="victor_right_finger_c_link_3" link2="victor_right_gripper_mounting_bracket" reason="Never"/>
+    <disable_collisions link1="victor_right_finger_c_link_3" link2="victor_right_palm" reason="Never"/>
+
     <disable_collisions link1="victor_right_gripper_mounting_bracket" link2="victor_right_palm" reason="Adjacent"/>
 </robot>

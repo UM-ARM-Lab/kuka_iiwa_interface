@@ -10,7 +10,6 @@ Panels:
         - /MotionPlanning1/Scene Geometry1
         - /TF1
         - /TF1/Frames1
-        - /TF1/Frames1/victor_left_tool01
         - /TF1/Tree1
         - /PointCloud21
         - /MarkerArray1
@@ -978,7 +977,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz_default_plugins/Orbit
-      Distance: 1.5919734239578247
+      Distance: 4.0533976554870605
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
@@ -993,10 +992,10 @@ Visualization Manager:
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 1.0147972106933594
+      Pitch: 0.96979820728302
       Target Frame: victor_root
       Value: Orbit (rviz_default_plugins)
-      Yaw: 2.874433994293213
+      Yaw: 6.25580358505249
     Saved: ~
 Window Geometry:
   Displays:
