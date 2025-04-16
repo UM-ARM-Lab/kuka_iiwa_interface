@@ -475,11 +475,15 @@ class Victor:
     def get_link_pose(self, link_name: str, base_frame: str = "victor_root") -> Transform:
         return self.tf_wrapper.get_transform(base_frame, link_name)
 
-    def set_controller(self, control_mode: str):
+    def set_controller(self, control_mode: str, sides: str = ["left"]):
+        """
+        if only give one side and control model, then another side will be position_controller
+        """
         assert control_mode in ["position_controller", "impedance_controller",
                                 "joint_position_trajectory_controller", "joint_impedance_trajectory_controller",
-                                "cartesian_controller",
-                                ]
+                                "cartesian_controller", 
+                               ]
+                                
         left_active_controllers = self.left.get_active_controller_names()
         right_active_controllers = self.right.get_active_controller_names()
         active_controllers = list(set(left_active_controllers + right_active_controllers))
@@ -488,7 +492,15 @@ class Victor:
         if control_mode in ["joint_position_trajectory_controller", "joint_impedance_trajectory_controller"]:
             req.activate_controllers = [control_mode]
         else:
-            req.activate_controllers = [f"{side}_arm_{control_mode}" for side in ["left", "right"]]
+            if len(sides) == 1:
+                req.activate_controllers = [f"{side}_arm_{control_mode}" for side in sides]
+                another_side = "left" if sides[0] == "right" else "right"
+                req.activate_controllers.append(f"{another_side}_arm_position_controller")
+            elif len(sides) == 2:
+                req.activate_controllers = [f"{side}_arm_{control_mode}" for side in sides]
+            else:
+                assert False, "sides should be one or two"
+
 
         # res = self.switch_controller_client.call(req)
         future = self.switch_controller_client.call_async(req)

@@ -706,6 +706,12 @@ Visualization Manager:
       Frame Timeout: 15
       Frames:
         All Enabled: false
+        mocap_iron_chunk_2_iron_chunk_2:
+          Value: true
+        mocap_right_arm_base_right_arm_base:
+          Value: true
+        mocap_world:
+          Value: true
         victor_base_plate:
           Value: false
         victor_base_plate_mount:
@@ -715,18 +721,6 @@ Visualization Manager:
         victor_left_arm_flange:
           Value: false
         victor_left_arm_link_0:
-          Value: false
-        victor_left_arm_link_1:
-          Value: false
-        victor_left_arm_link_2:
-          Value: false
-        victor_left_arm_link_3:
-          Value: false
-        victor_left_arm_link_4:
-          Value: false
-        victor_left_arm_link_5:
-          Value: false
-        victor_left_arm_link_6:
           Value: false
         victor_left_arm_link_7:
           Value: false
@@ -738,28 +732,6 @@ Visualization Manager:
           Value: false
         victor_left_finger_a_link_0:
           Value: false
-        victor_left_finger_a_link_1:
-          Value: false
-        victor_left_finger_a_link_2:
-          Value: false
-        victor_left_finger_a_link_3:
-          Value: false
-        victor_left_finger_b_link_0:
-          Value: false
-        victor_left_finger_b_link_1:
-          Value: false
-        victor_left_finger_b_link_2:
-          Value: false
-        victor_left_finger_b_link_3:
-          Value: false
-        victor_left_finger_c_link_0:
-          Value: false
-        victor_left_finger_c_link_1:
-          Value: false
-        victor_left_finger_c_link_2:
-          Value: false
-        victor_left_finger_c_link_3:
-          Value: true
         victor_left_gripper_mounting_bracket:
           Value: false
         victor_left_palm:
@@ -774,49 +746,15 @@ Visualization Manager:
           Value: false
         victor_right_arm_link_0:
           Value: false
-        victor_right_arm_link_1:
-          Value: false
-        victor_right_arm_link_2:
-          Value: false
-        victor_right_arm_link_3:
-          Value: false
-        victor_right_arm_link_4:
-          Value: false
-        victor_right_arm_link_5:
-          Value: false
-        victor_right_arm_link_6:
-          Value: false
         victor_right_arm_link_7:
           Value: false
         victor_right_arm_mount:
-          Value: false
+          Value: true
         victor_right_arm_sunrise_palm_surface:
           Value: false
         victor_right_arm_world_frame_kuka:
           Value: false
         victor_right_finger_a_link_0:
-          Value: false
-        victor_right_finger_a_link_1:
-          Value: false
-        victor_right_finger_a_link_2:
-          Value: false
-        victor_right_finger_a_link_3:
-          Value: false
-        victor_right_finger_b_link_0:
-          Value: false
-        victor_right_finger_b_link_1:
-          Value: false
-        victor_right_finger_b_link_2:
-          Value: false
-        victor_right_finger_b_link_3:
-          Value: false
-        victor_right_finger_c_link_0:
-          Value: false
-        victor_right_finger_c_link_1:
-          Value: false
-        victor_right_finger_c_link_2:
-          Value: false
-        victor_right_finger_c_link_3:
           Value: false
         victor_right_gripper_mounting_bracket:
           Value: false
@@ -826,90 +764,33 @@ Visualization Manager:
           Value: false
         victor_root:
           Value: false
-        zivid_optical_frame:
-          Value: false
       Marker Scale: 1
       Name: TF
       Show Arrows: true
       Show Axes: true
       Show Names: false
       Tree:
-        victor_root:
-          victor_pedestal:
-            victor_base_plate_mount:
-              victor_base_plate:
-                victor_left_arm_mount:
-                  victor_left_arm_link_0:
-                    victor_left_arm_cartesian_cmd:
-                      {}
-                    victor_left_arm_link_1:
-                      victor_left_arm_link_2:
-                        victor_left_arm_link_3:
-                          victor_left_arm_link_4:
-                            victor_left_arm_link_5:
-                              victor_left_arm_link_6:
-                                victor_left_arm_link_7:
-                                  victor_left_arm_flange:
-                                    victor_left_arm_sunrise_palm_surface:
-                                      {}
-                                    victor_left_gripper_mounting_bracket:
-                                      victor_left_palm:
-                                        victor_left_finger_a_link_0:
-                                          victor_left_finger_a_link_1:
-                                            victor_left_finger_a_link_2:
-                                              victor_left_finger_a_link_3:
-                                                {}
-                                        victor_left_finger_b_link_0:
-                                          victor_left_finger_b_link_1:
-                                            victor_left_finger_b_link_2:
-                                              victor_left_finger_b_link_3:
-                                                {}
-                                        victor_left_finger_c_link_0:
-                                          victor_left_finger_c_link_1:
-                                            victor_left_finger_c_link_2:
-                                              victor_left_finger_c_link_3:
-                                                {}
-                                        victor_left_tool0:
-                                          {}
-                  victor_left_arm_world_frame_kuka:
-                    {}
-                victor_right_arm_mount:
-                  victor_right_arm_link_0:
-                    victor_right_arm_cartesian_cmd:
-                      {}
-                    victor_right_arm_link_1:
-                      victor_right_arm_link_2:
-                        victor_right_arm_link_3:
-                          victor_right_arm_link_4:
-                            victor_right_arm_link_5:
-                              victor_right_arm_link_6:
-                                victor_right_arm_link_7:
-                                  victor_right_arm_flange:
-                                    victor_right_arm_sunrise_palm_surface:
-                                      {}
-                                    victor_right_gripper_mounting_bracket:
-                                      victor_right_palm:
-                                        victor_right_finger_a_link_0:
-                                          victor_right_finger_a_link_1:
-                                            victor_right_finger_a_link_2:
-                                              victor_right_finger_a_link_3:
-                                                {}
-                                        victor_right_finger_b_link_0:
-                                          victor_right_finger_b_link_1:
-                                            victor_right_finger_b_link_2:
-                                              victor_right_finger_b_link_3:
-                                                {}
-                                        victor_right_finger_c_link_0:
-                                          victor_right_finger_c_link_1:
-                                            victor_right_finger_c_link_2:
-                                              victor_right_finger_c_link_3:
-                                                {}
-                                        victor_right_tool0:
-                                          {}
-                  victor_right_arm_world_frame_kuka:
-                    {}
-          zivid_optical_frame:
+        mocap_world:
+          mocap_iron_chunk_2_iron_chunk_2:
             {}
+          mocap_right_arm_base_right_arm_base:
+            {}
+          victor_root:
+            victor_pedestal:
+              victor_base_plate_mount:
+                victor_base_plate:
+                  victor_left_arm_mount:
+                    victor_left_arm_link_0:
+                      victor_left_arm_cartesian_cmd:
+                        {}
+                    victor_left_arm_world_frame_kuka:
+                      {}
+                  victor_right_arm_mount:
+                    victor_right_arm_link_0:
+                      victor_right_arm_cartesian_cmd:
+                        {}
+                    victor_right_arm_world_frame_kuka:
+                      {}
       Update Interval: 0
       Value: true
     - Alpha: 1
@@ -956,7 +837,7 @@ Visualization Manager:
         Durability Policy: Volatile
         History Policy: Keep Last
         Reliability Policy: Reliable
-        Value: /my_kpts
+        Value: /my_sphere
       Value: true
   Enabled: true
   Global Options:
@@ -977,25 +858,25 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz_default_plugins/Orbit
-      Distance: 4.0533976554870605
+      Distance: 2.167963743209839
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: 0.48858025670051575
-        Y: 0.550712525844574
-        Z: 0.6445541381835938
+        X: 0.6016858816146851
+        Y: -0.20305372774600983
+        Z: 0.7362355589866638
       Focal Shape Fixed Size: true
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 0.96979820728302
+      Pitch: 1.3297975063323975
       Target Frame: victor_root
       Value: Orbit (rviz_default_plugins)
-      Yaw: 6.25580358505249
+      Yaw: 3.1757497787475586
     Saved: ~
 Window Geometry:
   Displays:
