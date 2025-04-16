@@ -802,6 +802,69 @@ public class LCMRobotInterface extends RoboticsAPIApplication implements LCMSubs
         private final Timer timer_;
         private final TimerTask feedback_loop_task_;
         
+        public MotionStatusPublisher()
+        {
+            motion_status_msg_ = new motion_status();
+            motion_status_msg_.measured_joint_position = Conversions.jvqInitializer(0.0);
+            motion_status_msg_.commanded_joint_position = Conversions.jvqInitializer(0.0);
+            motion_status_msg_.measured_joint_velocity = Conversions.jvqInitializer(0.0);
+            motion_status_msg_.measured_joint_torque = Conversions.jvqInitializer(0.0);
+            motion_status_msg_.estimated_external_torque = Conversions.jvqInitializer(0.0);
+            motion_status_msg_.measured_cartesian_pose_abc = Conversions.cvqInitializer(0.0);
+            motion_status_msg_.commanded_cartesian_pose_abc = Conversions.cvqInitializer(0.0);
+            motion_status_msg_.measured_cartesian_pose = Conversions.identityPose();
+            motion_status_msg_.commanded_cartesian_pose = Conversions.identityPose();
+            motion_status_msg_.estimated_external_wrench = Conversions.cvqInitializer(0.0);
+            motion_status_msg_.active_control_mode = new control_mode();
+            
+            timer_ = new Timer();
+            feedback_loop_task_ = new TimerTask()
+            {
+                @Override
+                public void run ()
+                {
+                    synchronized (arm_io_lock_)
+                    {
+                        final double now = Utils.getUTCTimeAsDouble();
+                        motion_status_msg_.timestamp = now;
+                        motion_status_msg_.active_control_mode.mode = arm_controller_.active_control_mode_.mode;
+                        Conversions.jointPositionToJvq(iiwa7_arm_.getCurrentJointPosition(), motion_status_msg_.measured_joint_position);
+                        Conversions.jointPositionToJvq(iiwa7_arm_.getCommandedJointPosition(), motion_status_msg_.commanded_joint_position);
+                        Conversions.jvqInitializer(0.0, motion_status_msg_.measured_joint_velocity); // No joint velocity data exists natively
+                        Conversions.vectorToJvq(iiwa7_arm_.getMeasuredTorque().getTorqueValues(), motion_status_msg_.measured_joint_torque);
+                        Conversions.vectorToJvq(iiwa7_arm_.getExternalTorque().getTorqueValues(), motion_status_msg_.estimated_external_torque);
+                        Transformation commanded_world_ee = iiwa7_arm_.getCommandedCartesianPosition(end_effector_frame_).transformationFromWorld();
+                        Transformation measured_world_ee = iiwa7_arm_.getCurrentCartesianPosition(end_effector_frame_).transformationFromWorld();
+                        Conversions.transformationToCvq(measured_world_ee, motion_status_msg_.measured_cartesian_pose_abc);
+                        Conversions.transformationToCvq(commanded_world_ee, motion_status_msg_.commanded_cartesian_pose_abc);
+                        Conversions.transformationToPose(measured_world_ee, motion_status_msg_.measured_cartesian_pose);
+                        Conversions.transformationToPose(commanded_world_ee, motion_status_msg_.commanded_cartesian_pose);
+                        Conversions.forceTorqueToCvq(iiwa7_arm_.getExternalForceTorque(end_effector_frame_), motion_status_msg_.estimated_external_wrench);
+                    }
+                    lcm_publisher_.publish(MOTION_STATUS_CHANNEL, motion_status_msg_);
+                }
+            };
+        }
+        
+        public void start()
+        {
+            // schedule the task to run now, and then every T milliseconds
+            timer_.schedule(feedback_loop_task_, 0, MOTION_STATUS_FEEDBACK_PERIOD_MS);
+        }
+        
+        public void cancel()
+        {
+            timer_.cancel();
+        }
+    }
+        
+    private class Robotiq3FingerGripperPublisher
+    {
+        private final robotiq_3finger_status gripper_status_msg_;
+        
+        private final Timer timer_;
+        private final TimerTask feedback_loop_task_;
+        
         public Robotiq3FingerGripperPublisher()
         {
             // Double check some assertions regarding message definitions and internal representations
