@@ -87,7 +87,7 @@
             <child link="${robot_name}_link_2"/>
             <origin xyz="0 0 0.19" rpy="${PI / 2}   0 ${PI}"/>
             <axis xyz="0 0 1"/>
-            <limit lower="${-120 * PI / 180}" upper="${119 * PI / 180}"
+            <limit lower="${-119 * PI / 180}" upper="${119 * PI / 180}"
                    effort="${max_effort}" velocity="1.7453292519943295"/>
             <dynamics damping="${joint_damping}"/>
         </joint>
@@ -120,7 +120,7 @@
             <child link="${robot_name}_link_3"/>
             <origin xyz="0 0.21 0" rpy="${PI / 2} 0 ${PI}"/>
             <axis xyz="0 0 1"/>
-            <limit lower="${-170 * PI / 180}" upper="${170 * PI / 180}"
+            <limit lower="${-169 * PI / 180}" upper="${169 * PI / 180}"
                    effort="${max_effort}" velocity="1.7453292519943295"/>
             <dynamics damping="${joint_damping}"/>
         </joint>
@@ -155,7 +155,7 @@
             <child link="${robot_name}_link_4"/>
             <origin xyz="0 0 0.19" rpy="${PI / 2} 0 0"/>
             <axis xyz="0 0 1"/>
-            <limit lower="${-120 * PI / 180}" upper="${119 * PI / 180}"
+            <limit lower="${-119 * PI / 180}" upper="${119 * PI / 180}"
                    effort="${max_effort}" velocity="2.2689280275926285"/>
             <dynamics damping="${joint_damping}"/>
         </joint>
@@ -189,7 +189,7 @@
             <child link="${robot_name}_link_5"/>
             <origin xyz="0 0.21 0" rpy="${-PI / 2} ${PI} 0"/>
             <axis xyz="0 0 1"/>
-            <limit lower="${-170 * PI / 180}" upper="${170 * PI / 180}"
+            <limit lower="${-169 * PI / 180}" upper="${169 * PI / 180}"
                    effort="${max_effort}" velocity="2.443460952792061"/>
             <dynamics damping="${joint_damping}"/>
         </joint>
@@ -223,7 +223,7 @@
             <child link="${robot_name}_link_6"/>
             <origin xyz="0 0.06070 0.19" rpy="${PI / 2} 0 0"/>
             <axis xyz="0 0 1"/>
-            <limit lower="${-120 * PI / 180}" upper="${120 * PI / 180}"
+            <limit lower="${-119 * PI / 180}" upper="${119 * PI / 180}"
                    effort="${max_effort}" velocity="3.141592653589793"/>
             <dynamics damping="${joint_damping}"/>
         </joint>

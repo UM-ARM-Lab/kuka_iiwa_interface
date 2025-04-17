@@ -16,15 +16,17 @@ right_arm:
   memetic_population_size: 32
 left_arm:
   kinematics_solver: pick_ik/PickIkPlugin
-  kinematics_solver_timeout: 0.001
+  kinematics_solver_timeout: 0.2
   kinematics_solver_attempts: 3
-  mode: global
+  mode: local
   stop_optimization_on_valid_solution: false
   position_scale: 1.0
   rotation_scale: 0.5
   position_threshold: 0.1
-  orientation_threshold: 0.1
-  cost_threshold: 0.001
+  orientation_threshold: 0.5
+  cost_threshold: 0.05
   minimal_displacement_weight: 0.005
   avoid_joint_limits_weight: 0.05
   gd_step_size: 0.0001
+  memetic_num_threads: 8
+  memetic_population_size: 32

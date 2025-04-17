@@ -666,9 +666,6 @@ class Victor:
         ok = robot_state.set_from_ik(side.arm_name, pose_goal, side.tool_frame)
         if ok:
             joint_angles = robot_state.get_joint_group_positions(side.arm_name)
-            # print(current_cmd_positions)
-            # print(joint_angles / np.pi * 180)
-            # print("IK solution ", joint_angles / np.pi * 180)
             res = side.send_joint_cmd(joint_angles)
             self.wait_until_motion_start()
             self.wait_until_motion_done()

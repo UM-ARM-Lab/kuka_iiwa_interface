@@ -30,6 +30,7 @@ class ManualMotionFilter:
         self.joint_cmd_pub = self.side.get_joint_cmd_pub(active_controller_name)
 
     def update(self):
+        print("Updating")
         now = time.time()
         dt = now - self.last_t
         if dt < 0.25:
@@ -46,6 +47,7 @@ class ManualMotionFilter:
         delta = np.linalg.norm(measured_np - commanded_np)
 
         if delta < self.threshold:
+            print("Change too small, not sending command")
             return
 
         # Low pass filter to avoid jerky motions
@@ -60,14 +62,14 @@ class ManualMotion(Node):
     def __init__(self):
         super().__init__("victor_manual_motion")
         self.victor = Victor(self)
-        self.create_timer(0.1, self.update)
+        self.create_timer(0.01, self.update)
 
         self.left_filter = ManualMotionFilter(self, self.victor.left)
         self.right_filter = ManualMotionFilter(self, self.victor.right)
 
     def update(self):
         self.left_filter.update()
-        self.right_filter.update()
+        # self.right_filter.update()
 
 
 def main():

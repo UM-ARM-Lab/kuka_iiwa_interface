@@ -10,10 +10,10 @@ using namespace std::chrono_literals;
 //  and also the victor_lcm_bridge launch file.
 //std::string const LEFT_RECV_PROVIDER = "udp://10.10.10.169:30002";  // loki
 //std::string const RIGHT_RECV_PROVIDER = "udp://10.10.10.169:30001";
-//std::string const LEFT_RECV_PROVIDER = "udp://10.10.10.178:30002";  // armio
-//std::string const RIGHT_RECV_PROVIDER = "udp://10.10.10.178:30001";
-std::string const LEFT_RECV_PROVIDER = "udp://10.10.10.116:30002";  // armdual
-std::string const RIGHT_RECV_PROVIDER = "udp://10.10.10.116:30001";
+std::string const LEFT_RECV_PROVIDER = "udp://10.10.10.170:30002";  // armio
+std::string const RIGHT_RECV_PROVIDER = "udp://10.10.10.170:30001";
+//std::string const LEFT_RECV_PROVIDER = "udp://10.10.10.116:30002";  // armdual
+//std::string const RIGHT_RECV_PROVIDER = "udp://10.10.10.116:30001";
 std::string const LEFT_SEND_PROVIDER = "udp://10.10.10.12:30000";
 std::string const RIGHT_SEND_PROVIDER = "udp://10.10.10.11:30000";
 
@@ -70,7 +70,7 @@ const std::string COMMANDED_ZR_STATE_INTERFACE = "commanded/cartesian_pose/zr";
 constexpr auto DEFAULT_JOINT_RELATIVE_VELOCITY = 0.1;
 constexpr auto DEFAULT_JOINT_RELATIVE_ACCELERATION = 0.1;
 constexpr auto DEFAULT_OVERRIDE_JOINT_ACCELERATION = 0.0;
-constexpr auto DEFAULT_JOINT_DAMPING = 0.7;
+constexpr auto DEFAULT_JOINT_DAMPING = 1;
 constexpr auto DEFAULT_JOINT1_STIFFNESS = 600.0;
 constexpr auto DEFAULT_JOINT2_STIFFNESS = 600.0;
 constexpr auto DEFAULT_JOINT3_STIFFNESS = 300.0;
