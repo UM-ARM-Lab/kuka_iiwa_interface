@@ -1,8 +1,10 @@
 <launch>
     <arg name="model" default="$(find-pkg-share victor_description)/urdf/victor.urdf.xacro"/>
+    <arg name="enable_left_arm" default="true"/>
+    <arg name="enable_right_arm" default="true"/>
 
     <node name="robot_state_publisher" pkg="robot_state_publisher" exec="robot_state_publisher" namespace="victor">
-        <param name="robot_description" value="$(command 'xacro $(var model)')"/>
+        <param name="robot_description" value="$(command 'xacro $(var model) enable_left_arm:=$(var enable_left_arm) enable_right_arm:=$(var enable_right_arm)')"/>
     </node>
 </launch>
 

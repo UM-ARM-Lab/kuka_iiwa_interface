@@ -13,14 +13,24 @@ CallbackReturn VictorHardwareInterface::on_init(const hardware_interface::Hardwa
   if (hardware_interface::SystemInterface::on_init(info) != CallbackReturn::SUCCESS) {
     return CallbackReturn::ERROR;
   }
-
+  enable_left_arm_ = true;
+  enable_right_arm_ = false;
+  RCLCPP_INFO(logger, "enable_left_arm_: %d", enable_left_arm_);
+  RCLCPP_INFO(logger, "enable_right_arm_: %d", enable_right_arm_);
+  RCLCPP_INFO(logger, "Number of joints: %zu", info_.joints.size());
   hw_states_position_.resize(info_.joints.size(), std::numeric_limits<double>::quiet_NaN());
   hw_states_external_effort_.resize(info_.joints.size(), std::numeric_limits<double>::quiet_NaN());
   hw_states_cmd_position_.resize(info_.joints.size(), std::numeric_limits<double>::quiet_NaN());
   hw_states_external_torque_sensor_.resize(info_.joints.size(), 0);
 
   RCLCPP_INFO(logger, "===================================================================================");
-  RCLCPP_INFO(logger, "Please start the LCMRobotInterface application on BOTH pendants!");
+  if (enable_left_arm_ && enable_right_arm_) {
+    RCLCPP_INFO(logger, "Please start the LCMRobotInterface application on BOTH pendants!");
+  } else if (enable_left_arm_) {
+    RCLCPP_INFO(logger, "Please start the LCMRobotInterface application on LEFT pendant!");
+  } else if (enable_right_arm_) {
+    RCLCPP_INFO(logger, "Please start the LCMRobotInterface application on RIGHT pendant!");
+  }
   RCLCPP_INFO(logger, "===================================================================================");
 
   node_ = std::make_shared<rclcpp::Node>("victor_hardware_interface_node");
@@ -30,8 +40,13 @@ CallbackReturn VictorHardwareInterface::on_init(const hardware_interface::Hardwa
   executor_ = std::make_shared<AsyncExecutor>();
   executor_->add_node(node_);
 
-  left.on_init(node_, LEFT_SEND_PROVIDER, LEFT_RECV_PROVIDER);
-  right.on_init(node_, RIGHT_SEND_PROVIDER, RIGHT_RECV_PROVIDER);
+  // Only initialize enabled arms
+  if (enable_left_arm_) {
+    left.on_init(node_, LEFT_SEND_PROVIDER, LEFT_RECV_PROVIDER);
+  }
+  if (enable_right_arm_) {
+    right.on_init(node_, RIGHT_SEND_PROVIDER, RIGHT_RECV_PROVIDER);
+  }
 
   return CallbackReturn::SUCCESS;
 }
@@ -98,8 +113,12 @@ CallbackReturn VictorHardwareInterface::on_deactivate(const rclcpp_lifecycle::St
 
 void VictorHardwareInterface::LCMThread() {
   while (lcm_thread_running_) {
-    left.recv_lcm_ptr_->handleTimeout(1000);
-    right.recv_lcm_ptr_->handleTimeout(1000);
+    if (enable_left_arm_) {
+      left.recv_lcm_ptr_->handleTimeout(1000);
+    }
+    if (enable_right_arm_) {
+      right.recv_lcm_ptr_->handleTimeout(1000);
+    }
   }
 }
 
@@ -110,111 +129,142 @@ hardware_interface::return_type VictorHardwareInterface::read(const rclcpp::Time
     return hardware_interface::return_type::OK;
   }
 
-  if (!left.motion_status_listener_->hasLatestMessage() || !right.motion_status_listener_->hasLatestMessage() ||
-      !left.gripper_status_listener_->hasLatestMessage() || !right.gripper_status_listener_->hasLatestMessage()) {
+  // Check status only for enabled arms
+  bool left_ready = !enable_left_arm_ || 
+                   (left.motion_status_listener_->hasLatestMessage() && 
+                    left.gripper_status_listener_->hasLatestMessage());
+  bool right_ready = !enable_right_arm_ || 
+                    (right.motion_status_listener_->hasLatestMessage() && 
+                     right.gripper_status_listener_->hasLatestMessage());
+
+  if (!left_ready || !right_ready) {
     return hardware_interface::return_type::OK;
   }
-  auto const& left_motion_status = left.motion_status_listener_->getLatestMessage();
-  auto const& right_motion_status = right.motion_status_listener_->getLatestMessage();
 
-  hw_states_position_[0] = left_motion_status.measured_joint_position.joint_1;
-  hw_states_position_[1] = left_motion_status.measured_joint_position.joint_2;
-  hw_states_position_[2] = left_motion_status.measured_joint_position.joint_3;
-  hw_states_position_[3] = left_motion_status.measured_joint_position.joint_4;
-  hw_states_position_[4] = left_motion_status.measured_joint_position.joint_5;
-  hw_states_position_[5] = left_motion_status.measured_joint_position.joint_6;
-  hw_states_position_[6] = left_motion_status.measured_joint_position.joint_7;
-  hw_states_position_[7] = right_motion_status.measured_joint_position.joint_1;
-  hw_states_position_[8] = right_motion_status.measured_joint_position.joint_2;
-  hw_states_position_[9] = right_motion_status.measured_joint_position.joint_3;
-  hw_states_position_[10] = right_motion_status.measured_joint_position.joint_4;
-  hw_states_position_[11] = right_motion_status.measured_joint_position.joint_5;
-  hw_states_position_[12] = right_motion_status.measured_joint_position.joint_6;
-  hw_states_position_[13] = right_motion_status.measured_joint_position.joint_7;
+  // Set default values for all joints
+  std::fill(hw_states_position_.begin(), hw_states_position_.end(), 0.0);
+  std::fill(hw_states_external_effort_.begin(), hw_states_external_effort_.end(), 0.0);
+  std::fill(hw_states_external_torque_sensor_.begin(), hw_states_external_torque_sensor_.end(), 0.0);
 
-  hw_states_external_effort_[0] = left_motion_status.measured_joint_torque.joint_1;
-  hw_states_external_effort_[1] = left_motion_status.measured_joint_torque.joint_2;
-  hw_states_external_effort_[2] = left_motion_status.measured_joint_torque.joint_3;
-  hw_states_external_effort_[3] = left_motion_status.measured_joint_torque.joint_4;
-  hw_states_external_effort_[4] = left_motion_status.measured_joint_torque.joint_5;
-  hw_states_external_effort_[5] = left_motion_status.measured_joint_torque.joint_6;
-  hw_states_external_effort_[6] = left_motion_status.measured_joint_torque.joint_7;
-  hw_states_external_effort_[7] = right_motion_status.measured_joint_torque.joint_1;
-  hw_states_external_effort_[8] = right_motion_status.measured_joint_torque.joint_2;
-  hw_states_external_effort_[9] = right_motion_status.measured_joint_torque.joint_3;
-  hw_states_external_effort_[10] = right_motion_status.measured_joint_torque.joint_4;
-  hw_states_external_effort_[11] = right_motion_status.measured_joint_torque.joint_5;
-  hw_states_external_effort_[12] = right_motion_status.measured_joint_torque.joint_6;
-  hw_states_external_effort_[13] = right_motion_status.measured_joint_torque.joint_7;
+  // Update left arm state if enabled
+  if (enable_left_arm_) {
+    auto const& left_motion_status = left.motion_status_listener_->getLatestMessage();
+    
+    // Left arm joint positions
+    hw_states_position_[0] = left_motion_status.measured_joint_position.joint_1;
+    hw_states_position_[1] = left_motion_status.measured_joint_position.joint_2;
+    hw_states_position_[2] = left_motion_status.measured_joint_position.joint_3;
+    hw_states_position_[3] = left_motion_status.measured_joint_position.joint_4;
+    hw_states_position_[4] = left_motion_status.measured_joint_position.joint_5;
+    hw_states_position_[5] = left_motion_status.measured_joint_position.joint_6;
+    hw_states_position_[6] = left_motion_status.measured_joint_position.joint_7;
 
-  hw_states_external_torque_sensor_[0] = left_motion_status.estimated_external_torque.joint_1;
-  hw_states_external_torque_sensor_[1] = left_motion_status.estimated_external_torque.joint_2;
-  hw_states_external_torque_sensor_[2] = left_motion_status.estimated_external_torque.joint_3;
-  hw_states_external_torque_sensor_[3] = left_motion_status.estimated_external_torque.joint_4;
-  hw_states_external_torque_sensor_[4] = left_motion_status.estimated_external_torque.joint_5;
-  hw_states_external_torque_sensor_[5] = left_motion_status.estimated_external_torque.joint_6;
-  hw_states_external_torque_sensor_[6] = left_motion_status.estimated_external_torque.joint_7;
-  hw_states_external_torque_sensor_[7] = right_motion_status.estimated_external_torque.joint_1;
-  hw_states_external_torque_sensor_[8] = right_motion_status.estimated_external_torque.joint_2;
-  hw_states_external_torque_sensor_[9] = right_motion_status.estimated_external_torque.joint_3;
-  hw_states_external_torque_sensor_[10] = right_motion_status.estimated_external_torque.joint_4;
-  hw_states_external_torque_sensor_[11] = right_motion_status.estimated_external_torque.joint_5;
-  hw_states_external_torque_sensor_[12] = right_motion_status.estimated_external_torque.joint_6;
-  hw_states_external_torque_sensor_[13] = right_motion_status.estimated_external_torque.joint_7;
+    // Left arm joint efforts
+    hw_states_external_effort_[0] = left_motion_status.measured_joint_torque.joint_1;
+    hw_states_external_effort_[1] = left_motion_status.measured_joint_torque.joint_2;
+    hw_states_external_effort_[2] = left_motion_status.measured_joint_torque.joint_3;
+    hw_states_external_effort_[3] = left_motion_status.measured_joint_torque.joint_4;
+    hw_states_external_effort_[4] = left_motion_status.measured_joint_torque.joint_5;
+    hw_states_external_effort_[5] = left_motion_status.measured_joint_torque.joint_6;
+    hw_states_external_effort_[6] = left_motion_status.measured_joint_torque.joint_7;
 
-  // now also fill out the positions for the finger joints
-  auto const& left_gripper_status = left.gripper_status_listener_->getLatestMessage();
-  auto const& left_finger_a_pos =
-      robotiq_3f_transmission_plugins::double_to_uint8(left_gripper_status.finger_a_status.position);
-  auto const& left_finger_b_pos =
-      robotiq_3f_transmission_plugins::double_to_uint8(left_gripper_status.finger_b_status.position);
-  auto const& left_finger_c_pos =
-      robotiq_3f_transmission_plugins::double_to_uint8(left_gripper_status.finger_c_status.position);
-  auto const& left_scissor_pos =
-      robotiq_3f_transmission_plugins::double_to_uint8(left_gripper_status.scissor_status.position);
-  auto const& left_finger_a_thetas = robotiq_3f_transmission_plugins::get_finger_thetas(left_finger_a_pos);
-  auto const& left_finger_b_thetas = robotiq_3f_transmission_plugins::get_finger_thetas(left_finger_b_pos);
-  auto const& left_finger_c_thetas = robotiq_3f_transmission_plugins::get_finger_thetas(left_finger_c_pos);
-  auto const& left_scissor_theta = robotiq_3f_transmission_plugins::get_palm_finger_pos(left_scissor_pos);
-  hw_states_position_[14] = left_finger_a_thetas[0];
-  hw_states_position_[15] = left_finger_a_thetas[1];
-  hw_states_position_[16] = left_finger_a_thetas[2];
-  hw_states_position_[17] = left_scissor_theta;
-  hw_states_position_[18] = left_finger_b_thetas[0];
-  hw_states_position_[19] = left_finger_b_thetas[1];
-  hw_states_position_[20] = left_finger_b_thetas[2];
-  hw_states_position_[21] = -left_scissor_theta;
-  hw_states_position_[22] = left_finger_c_thetas[0];
-  hw_states_position_[23] = left_finger_c_thetas[1];
-  hw_states_position_[24] = left_finger_c_thetas[2];
+    // Left arm external torques
+    hw_states_external_torque_sensor_[0] = left_motion_status.estimated_external_torque.joint_1;
+    hw_states_external_torque_sensor_[1] = left_motion_status.estimated_external_torque.joint_2;
+    hw_states_external_torque_sensor_[2] = left_motion_status.estimated_external_torque.joint_3;
+    hw_states_external_torque_sensor_[3] = left_motion_status.estimated_external_torque.joint_4;
+    hw_states_external_torque_sensor_[4] = left_motion_status.estimated_external_torque.joint_5;
+    hw_states_external_torque_sensor_[5] = left_motion_status.estimated_external_torque.joint_6;
+    hw_states_external_torque_sensor_[6] = left_motion_status.estimated_external_torque.joint_7;
 
-  auto const& right_gripper_status = right.gripper_status_listener_->getLatestMessage();
-  auto const& right_finger_a_pos =
-      robotiq_3f_transmission_plugins::double_to_uint8(right_gripper_status.finger_a_status.position);
-  auto const& right_finger_b_pos =
-      robotiq_3f_transmission_plugins::double_to_uint8(right_gripper_status.finger_b_status.position);
-  auto const& right_finger_c_pos =
-      robotiq_3f_transmission_plugins::double_to_uint8(right_gripper_status.finger_c_status.position);
-  auto const& right_scissor_pos =
-      robotiq_3f_transmission_plugins::double_to_uint8(right_gripper_status.scissor_status.position);
-  auto const& right_finger_a_thetas = robotiq_3f_transmission_plugins::get_finger_thetas(right_finger_a_pos);
-  auto const& right_finger_b_thetas = robotiq_3f_transmission_plugins::get_finger_thetas(right_finger_b_pos);
-  auto const& right_finger_c_thetas = robotiq_3f_transmission_plugins::get_finger_thetas(right_finger_c_pos);
-  auto const& right_scissor_theta = robotiq_3f_transmission_plugins::get_palm_finger_pos(right_scissor_pos);
-  hw_states_position_[25] = right_finger_a_thetas[0];
-  hw_states_position_[26] = right_finger_a_thetas[1];
-  hw_states_position_[27] = right_finger_a_thetas[2];
-  hw_states_position_[28] = right_scissor_theta;
-  hw_states_position_[29] = right_finger_b_thetas[0];
-  hw_states_position_[30] = right_finger_b_thetas[1];
-  hw_states_position_[31] = right_finger_b_thetas[2];
-  hw_states_position_[32] = -right_scissor_theta;
-  hw_states_position_[33] = right_finger_c_thetas[0];
-  hw_states_position_[34] = right_finger_c_thetas[1];
-  hw_states_position_[35] = right_finger_c_thetas[2];
+    // Left gripper state
+    auto const& left_gripper_status = left.gripper_status_listener_->getLatestMessage();
+    auto const& left_finger_a_pos =
+        robotiq_3f_transmission_plugins::double_to_uint8(left_gripper_status.finger_a_status.position);
+    auto const& left_finger_b_pos =
+        robotiq_3f_transmission_plugins::double_to_uint8(left_gripper_status.finger_b_status.position);
+    auto const& left_finger_c_pos =
+        robotiq_3f_transmission_plugins::double_to_uint8(left_gripper_status.finger_c_status.position);
+    auto const& left_scissor_pos =
+        robotiq_3f_transmission_plugins::double_to_uint8(left_gripper_status.scissor_status.position);
+    auto const& left_finger_a_thetas = robotiq_3f_transmission_plugins::get_finger_thetas(left_finger_a_pos);
+    auto const& left_finger_b_thetas = robotiq_3f_transmission_plugins::get_finger_thetas(left_finger_b_pos);
+    auto const& left_finger_c_thetas = robotiq_3f_transmission_plugins::get_finger_thetas(left_finger_c_pos);
+    auto const& left_scissor_theta = robotiq_3f_transmission_plugins::get_palm_finger_pos(left_scissor_pos);
+    hw_states_position_[14] = left_finger_a_thetas[0];
+    hw_states_position_[15] = left_finger_a_thetas[1];
+    hw_states_position_[16] = left_finger_a_thetas[2];
+    hw_states_position_[17] = left_scissor_theta;
+    hw_states_position_[18] = left_finger_b_thetas[0];
+    hw_states_position_[19] = left_finger_b_thetas[1];
+    hw_states_position_[20] = left_finger_b_thetas[2];
+    hw_states_position_[21] = -left_scissor_theta;
+    hw_states_position_[22] = left_finger_c_thetas[0];
+    hw_states_position_[23] = left_finger_c_thetas[1];
+    hw_states_position_[24] = left_finger_c_thetas[2];
+    
+    left.read_motion_status(left_motion_status);
+  }
 
-  left.read_motion_status(left_motion_status);
-  right.read_motion_status(right_motion_status);
+  // Update right arm state if enabled
+  if (enable_right_arm_) {
+    auto const& right_motion_status = right.motion_status_listener_->getLatestMessage();
+    
+    // Right arm joint positions
+    hw_states_position_[7] = right_motion_status.measured_joint_position.joint_1;
+    hw_states_position_[8] = right_motion_status.measured_joint_position.joint_2;
+    hw_states_position_[9] = right_motion_status.measured_joint_position.joint_3;
+    hw_states_position_[10] = right_motion_status.measured_joint_position.joint_4;
+    hw_states_position_[11] = right_motion_status.measured_joint_position.joint_5;
+    hw_states_position_[12] = right_motion_status.measured_joint_position.joint_6;
+    hw_states_position_[13] = right_motion_status.measured_joint_position.joint_7;
+
+    // Right arm joint efforts
+    hw_states_external_effort_[7] = right_motion_status.measured_joint_torque.joint_1;
+    hw_states_external_effort_[8] = right_motion_status.measured_joint_torque.joint_2;
+    hw_states_external_effort_[9] = right_motion_status.measured_joint_torque.joint_3;
+    hw_states_external_effort_[10] = right_motion_status.measured_joint_torque.joint_4;
+    hw_states_external_effort_[11] = right_motion_status.measured_joint_torque.joint_5;
+    hw_states_external_effort_[12] = right_motion_status.measured_joint_torque.joint_6;
+    hw_states_external_effort_[13] = right_motion_status.measured_joint_torque.joint_7;
+
+    // Right arm external torques
+    hw_states_external_torque_sensor_[7] = right_motion_status.estimated_external_torque.joint_1;
+    hw_states_external_torque_sensor_[8] = right_motion_status.estimated_external_torque.joint_2;
+    hw_states_external_torque_sensor_[9] = right_motion_status.estimated_external_torque.joint_3;
+    hw_states_external_torque_sensor_[10] = right_motion_status.estimated_external_torque.joint_4;
+    hw_states_external_torque_sensor_[11] = right_motion_status.estimated_external_torque.joint_5;
+    hw_states_external_torque_sensor_[12] = right_motion_status.estimated_external_torque.joint_6;
+    hw_states_external_torque_sensor_[13] = right_motion_status.estimated_external_torque.joint_7;
+
+    // Right gripper state
+    auto const& right_gripper_status = right.gripper_status_listener_->getLatestMessage();
+    auto const& right_finger_a_pos =
+        robotiq_3f_transmission_plugins::double_to_uint8(right_gripper_status.finger_a_status.position);
+    auto const& right_finger_b_pos =
+        robotiq_3f_transmission_plugins::double_to_uint8(right_gripper_status.finger_b_status.position);
+    auto const& right_finger_c_pos =
+        robotiq_3f_transmission_plugins::double_to_uint8(right_gripper_status.finger_c_status.position);
+    auto const& right_scissor_pos =
+        robotiq_3f_transmission_plugins::double_to_uint8(right_gripper_status.scissor_status.position);
+    auto const& right_finger_a_thetas = robotiq_3f_transmission_plugins::get_finger_thetas(right_finger_a_pos);
+    auto const& right_finger_b_thetas = robotiq_3f_transmission_plugins::get_finger_thetas(right_finger_b_pos);
+    auto const& right_finger_c_thetas = robotiq_3f_transmission_plugins::get_finger_thetas(right_finger_c_pos);
+    auto const& right_scissor_theta = robotiq_3f_transmission_plugins::get_palm_finger_pos(right_scissor_pos);
+    hw_states_position_[25] = right_finger_a_thetas[0];
+    hw_states_position_[26] = right_finger_a_thetas[1];
+    hw_states_position_[27] = right_finger_a_thetas[2];
+    hw_states_position_[28] = right_scissor_theta;
+    hw_states_position_[29] = right_finger_b_thetas[0];
+    hw_states_position_[30] = right_finger_b_thetas[1];
+    hw_states_position_[31] = right_finger_b_thetas[2];
+    hw_states_position_[32] = -right_scissor_theta;
+    hw_states_position_[33] = right_finger_c_thetas[0];
+    hw_states_position_[34] = right_finger_c_thetas[1];
+    hw_states_position_[35] = right_finger_c_thetas[2];
+    
+    right.read_motion_status(right_motion_status);
+  }
 
   return hardware_interface::return_type::OK;
 }
@@ -225,8 +275,15 @@ hardware_interface::return_type VictorHardwareInterface::write(const rclcpp::Tim
     return hardware_interface::return_type::OK;
   }
 
-  auto const& left_return = left.send_motion_command();
-  auto const& right_return = right.send_motion_command();
+  hardware_interface::return_type left_return = hardware_interface::return_type::OK;
+  hardware_interface::return_type right_return = hardware_interface::return_type::OK;
+
+  if (enable_left_arm_) {
+    left_return = left.send_motion_command();
+  }
+  if (enable_right_arm_) {
+    right_return = right.send_motion_command();
+  }
 
   if (left_return != hardware_interface::return_type::OK || right_return != hardware_interface::return_type::OK) {
     return hardware_interface::return_type::ERROR;
@@ -260,8 +317,12 @@ hardware_interface::return_type VictorHardwareInterface::prepare_command_mode_sw
 }
 hardware_interface::return_type VictorHardwareInterface::perform_command_mode_switch(
     const std::vector<std::string>& start_interfaces, const std::vector<std::string>& stop_interfaces) {
-  left.perform_command_mode_switch(start_interfaces);
-  right.perform_command_mode_switch(start_interfaces);
+  if (enable_left_arm_) {
+    left.perform_command_mode_switch(start_interfaces);
+  }
+  if (enable_right_arm_) {
+    right.perform_command_mode_switch(start_interfaces);
+  }
   return SystemInterface::perform_command_mode_switch(start_interfaces, stop_interfaces);
 }
 

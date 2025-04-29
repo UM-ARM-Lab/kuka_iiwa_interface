@@ -1087,7 +1087,7 @@
   <joint name="victor_left_palm_tool0" type="fixed">
     <parent link="victor_left_palm"/>
     <child link="victor_left_tool0"/>
-    <origin rpy="0 0 1.5707" xyz="0.0 0.165 0.0"/>
+    <origin rpy="0 0 1.5707" xyz="0.0 0.265 0.0"/>
   </joint>
   <!-- end of joint list -->
   <!-- link list -->
@@ -1476,7 +1476,7 @@
   <joint name="victor_right_palm_tool0" type="fixed">
     <parent link="victor_right_palm"/>
     <child link="victor_right_tool0"/>
-    <origin rpy="0 0 1.5707" xyz="0.0 0.165 0.0"/>
+    <origin rpy="0 0 1.5707" xyz="0.0 0.265 0.0"/>
   </joint>
   <!-- end of joint list -->
   <joint name="left_gripper_joint" type="fixed">

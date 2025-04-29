@@ -373,7 +373,7 @@
         <toolTemplate class="" defaultMotionFrameRef="/PalmSurface" name="Robotiq3FingerGripper">
             <frames>
                 <frame id="_fc51f4fe-290b-4fe4-9565-36830b99e7b4" name="PalmSurface">
-                    <transformation a="0.78539816339" b="0.0" c="0.0" x="0.0" y="0.0" z="119.0"/>
+                    <transformation a="0.78539816339" b="0.0" c="0.0" x="0.0" y="0.0" z="265.0"/>
                 </frame>
             </frames>
             <loadData cogA="0.0" cogB="0.0" cogC="0.0" cogX="-9.621420717113658" cogY="-12.137397993093034" cogZ="78.79836941440239" inertiaX="0.0" inertiaY="0.0" inertiaZ="0.0" mass="2.5112771264950355"/>

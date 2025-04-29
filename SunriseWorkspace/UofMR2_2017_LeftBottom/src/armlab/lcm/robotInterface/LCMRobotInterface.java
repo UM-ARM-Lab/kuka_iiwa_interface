@@ -55,10 +55,10 @@ public class LCMRobotInterface extends RoboticsAPIApplication implements LCMSubs
     static final public String GRIPPER_COMMAND_CHANNEL = "gripper_command";
     static final public String GRIPPER_STATUS_CHANNEL = "gripper_status";
     
-    static final public int CONTROL_MODE_FEEDBACK_PERIOD_MS = 1000;
-    static final public int MOTION_STATUS_FEEDBACK_PERIOD_MS = 10; 
-    static final public int GRIPPER_FEEDBACK_PERIOD_MS = 100;
-    static final public int MAIN_LOOP_CONTROL_PERIOD_MS = 10; 
+    static final public int CONTROL_MODE_FEEDBACK_PERIOD_MS = 1000;      // 1 Hz
+    static final public int MOTION_STATUS_FEEDBACK_PERIOD_MS = 10;       // 100 Hz
+    static final public int GRIPPER_FEEDBACK_PERIOD_MS = 10;           // 10 Hz
+    static final public int MAIN_LOOP_CONTROL_PERIOD_MS = 10;           // 100 Hz
     
     static final public double MINIMUM_TRAJECTORY_EXECUTION_TIME = 20e-3;
     static final public double TIMEOUT_AFTER_GOAL_REACH = 3600;

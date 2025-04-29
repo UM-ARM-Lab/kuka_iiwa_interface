@@ -68,6 +68,9 @@ class VictorHardwareInterface : public hardware_interface::SystemInterface {
   std::vector<double> hw_states_cmd_position_;
   std::vector<double> hw_states_external_effort_;
   std::vector<double> hw_states_external_torque_sensor_;
+
+  bool enable_left_arm_{false};  // Flag to enable/disable left arm control
+  bool enable_right_arm_{false}; // Flag to enable/disable right arm control
 };
 
 }  // namespace victor_hardware

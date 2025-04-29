@@ -15,40 +15,42 @@ def generate_launch_description():
     ld = LaunchDescription()
     ld.add_action(DeclareBooleanLaunchArg("use_rviz", default_value=False))
     ld.add_action(DeclareBooleanLaunchArg("victor_command_gui", default_value=False))
+    ld.add_action(DeclareBooleanLaunchArg("enable_left_arm", default_value=True))
+    ld.add_action(DeclareBooleanLaunchArg("enable_right_arm", default_value=True))
 
-    ld.add_action(
-        Node(
-            package="victor_python",
-            executable="victor_command_gui.py",
-            condition=IfCondition(LaunchConfiguration("victor_command_gui")),
-        )
-    )
+    # ld.add_action(
+    #     Node(
+    #         package="victor_python",
+    #         executable="victor_command_gui.py",
+    #         condition=IfCondition(LaunchConfiguration("victor_command_gui")),
+    #     )
+    # )
 
-    ld.add_action(
-        Node(
-            package="joy",
-            executable="joy_node",
-            name="xbox_joystick",
-            namespace="victor",
-            output="screen",
-        )
-    )
+    # ld.add_action(
+    #     Node(
+    #         package="joy",
+    #         executable="joy_node",
+    #         name="xbox_joystick",
+    #         namespace="victor",
+    #         output="screen",
+    #     )
+    # )
 
-    ld.add_action(
-        Node(
-            package="victor_python",
-            executable="robotiq_grippers_joystick_node.py",
-            name="robotiq_grippers_joystick_node",
-            output="screen",
-            namespace="victor",
-            parameters=[
-                {
-                    "enable_finger_open_close_control": True,
-                    "enable_scissor_open_close_control": True,
-                }
-            ]
-        )
-    )
+    # ld.add_action(
+    #     Node(
+    #         package="victor_python",
+    #         executable="robotiq_grippers_joystick_node.py",
+    #         name="robotiq_grippers_joystick_node",
+    #         output="screen",
+    #         namespace="victor",
+    #         parameters=[
+    #             {
+    #                 "enable_finger_open_close_control": True,
+    #                 "enable_scissor_open_close_control": True,
+    #             }
+    #         ]
+    #     )
+    # )
 
     ld.add_action(
         Node(
@@ -59,15 +61,15 @@ def generate_launch_description():
             namespace="victor",
         )
     )
-    ld.add_action(
-        Node(
-            package="arm_robots",
-            executable="camera_pose_publisher.py",
-            name="camera_pose_publisher",
-            output="screen",
-            namespace="victor",
-        )
-    )
+    # ld.add_action(
+    #     Node(
+    #         package="arm_robots",
+    #         executable="camera_pose_publisher.py",
+    #         name="camera_pose_publisher",
+    #         output="screen",
+    #         namespace="victor",
+    #     )
+    # )
 
     # ld.add_action(
     #     Node(
@@ -126,7 +128,7 @@ def generate_launch_description():
         IncludeLaunchDescription(
             PythonLaunchDescriptionSource(
                 str(moveit_config.package_path / "launch/spawn_controllers.launch.py"),
-            ),
+            )
         )
     )
 
