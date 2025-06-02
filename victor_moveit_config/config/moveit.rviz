@@ -388,7 +388,7 @@ Visualization Manager:
         Interactive Marker Size: 0
         Joint Violation Color: 255; 0; 255
         Planning Group: left_arm
-        Query Goal State: true
+        Query Goal State: false
         Query Start State: false
         Show Workspace: false
         Start State Alpha: 1
@@ -708,16 +708,14 @@ Visualization Manager:
       Frame Timeout: 15
       Frames:
         All Enabled: false
-        mocap_nuts_nuts:
-          Value: false
-        mocap_right_arm_base_right_arm_base:
-          Value: false
-        mocap_table_1_table_1:
-          Value: false
         mocap_world:
           Value: false
-        mocap_wrench_small_wrench_small:
-          Value: false
+        nut_holder_m20:
+          Value: true
+        right_arm_base:
+          Value: true
+        table_1:
+          Value: true
         victor_base_plate:
           Value: false
         victor_base_plate_mount:
@@ -839,21 +837,19 @@ Visualization Manager:
         victor_root:
           Value: false
         zivid_optical_frame:
-          Value: false
+          Value: true
       Marker Scale: 1
       Name: TF
-      Show Arrows: true
+      Show Arrows: false
       Show Axes: true
       Show Names: false
       Tree:
         mocap_world:
-          mocap_nuts_nuts:
+          nut_holder_m20:
             {}
-          mocap_right_arm_base_right_arm_base:
+          right_arm_base:
             {}
-          mocap_table_1_table_1:
-            {}
-          mocap_wrench_small_wrench_small:
+          table_1:
             {}
           victor_root:
             victor_pedestal:
@@ -963,7 +959,7 @@ Visualization Manager:
         Filter size: 10
         History Policy: Keep Last
         Reliability Policy: Reliable
-        Value: my_pc
+        Value: pc
       Use Fixed Frame: true
       Use rainbow: true
       Value: true
@@ -998,25 +994,25 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz_default_plugins/Orbit
-      Distance: 3.512256622314453
+      Distance: 1.4268697500228882
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: 0.5367408990859985
-        Y: -0.49746423959732056
-        Z: 0.41882264614105225
-      Focal Shape Fixed Size: true
+        X: -0.13109833002090454
+        Y: 0.35419541597366333
+        Z: 0.40124595165252686
+      Focal Shape Fixed Size: false
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 0.354796826839447
+      Pitch: 0.4903984069824219
       Target Frame: victor_root
       Value: Orbit (rviz_default_plugins)
-      Yaw: 0.08124368637800217
+      Yaw: 0.25540193915367126
     Saved: ~
 Window Geometry:
   Displays:

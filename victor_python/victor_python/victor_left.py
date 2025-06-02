@@ -355,24 +355,27 @@ class VictorLeft:
         if not self.enable_moveit:
             self.node.get_logger().warn("Moveit is not enabled")
             return
-        pose_goal = PoseStamped()
-        pose_goal.header.frame_id = "victor_root"
-        pose_goal.pose.position.x = target_pose[0]
-        pose_goal.pose.position.y = target_pose[1]
-        pose_goal.pose.position.z = target_pose[2]
-        if len(target_pose) == 6:
-            q = quaternion_from_euler(target_pose[3], target_pose[4], target_pose[5])
-            pose_goal.pose.orientation.x = q[0]
-            pose_goal.pose.orientation.y = q[1]
-            pose_goal.pose.orientation.z = q[2]
-            pose_goal.pose.orientation.w = q[3]
-        elif len(target_pose) == 7:
-            q = np.array(target_pose[3:7])
-            q /= np.linalg.norm(q)
-            pose_goal.pose.orientation.x = q[0]
-            pose_goal.pose.orientation.y = q[1]
-            pose_goal.pose.orientation.z = q[2]
-            pose_goal.pose.orientation.w = q[3]
+        if isinstance(target_pose, PoseStamped):
+            pose_goal = target_pose
+        elif isinstance(target_pose, (List, np.ndarray)):
+            pose_goal = PoseStamped()
+            pose_goal.header.frame_id = "victor_root"
+            pose_goal.pose.position.x = target_pose[0]
+            pose_goal.pose.position.y = target_pose[1]
+            pose_goal.pose.position.z = target_pose[2]
+            if len(target_pose) == 6:
+                q = quaternion_from_euler(target_pose[3], target_pose[4], target_pose[5])
+                pose_goal.pose.orientation.x = q[0]
+                pose_goal.pose.orientation.y = q[1]
+                pose_goal.pose.orientation.z = q[2]
+                pose_goal.pose.orientation.w = q[3]
+            elif len(target_pose) == 7:
+                q = np.array(target_pose[3:7])
+                q /= np.linalg.norm(q)
+                pose_goal.pose.orientation.x = q[0]
+                pose_goal.pose.orientation.y = q[1]
+                pose_goal.pose.orientation.z = q[2]
+                pose_goal.pose.orientation.w = q[3]
         planning_component = self.get_moveit_planning_component(group_name)
         planning_component.set_start_state_to_current_state()
         planning_component.set_goal_state(pose_stamped_msg=pose_goal, pose_link=ee_link_name)

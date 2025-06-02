@@ -2,7 +2,7 @@ from moveit_configs_utils import MoveItConfigsBuilder
 from launch import LaunchDescription
 from launch.actions import IncludeLaunchDescription
 from launch.conditions import IfCondition
-from launch.launch_description_sources import PythonLaunchDescriptionSource
+from launch.launch_description_sources import PythonLaunchDescriptionSource, AnyLaunchDescriptionSource
 from launch.substitutions import LaunchConfiguration
 from moveit_configs_utils.launch_utils import DeclareBooleanLaunchArg, DeclareLaunchArgument
 
@@ -18,13 +18,13 @@ def generate_launch_description():
     ld.add_action(DeclareBooleanLaunchArg("enable_left_arm", default_value=True))
     ld.add_action(DeclareBooleanLaunchArg("enable_right_arm", default_value=True))
 
-    # ld.add_action(
-    #     Node(
-    #         package="victor_python",
-    #         executable="victor_command_gui.py",
-    #         condition=IfCondition(LaunchConfiguration("victor_command_gui")),
-    #     )
-    # )
+    ld.add_action(
+        Node(
+            package="victor_python",
+            executable="victor_command_gui.py",
+            condition=IfCondition(LaunchConfiguration("victor_command_gui")),
+        )
+    )
 
     # ld.add_action(
     #     Node(
@@ -61,23 +61,15 @@ def generate_launch_description():
             namespace="victor",
         )
     )
-    # ld.add_action(
-    #     Node(
-    #         package="arm_robots",
-    #         executable="camera_pose_publisher.py",
-    #         name="camera_pose_publisher",
-    #         output="screen",
-    #         namespace="victor",
-    #     )
-    # )
-
-    # ld.add_action(
-    #     Node(
-    #         package="victor_python",
-    #         executable="arm_wrench_republisher.py",
-    #         namespace="victor",
-    #     )
-    # )
+    ld.add_action(
+        Node(
+            package="arm_robots",
+            executable="camera_pose_publisher.py",
+            name="camera_pose_publisher",
+            output="screen",
+            namespace="victor",
+        )
+    )
 
     # Given the published joint states, publish tf for the robot links
     ld.add_action(
@@ -147,4 +139,20 @@ def generate_launch_description():
         )
     )
 
+    ld.add_action(
+        IncludeLaunchDescription(
+            AnyLaunchDescriptionSource(
+                # str("/home/zixuanh/ros2_ws/src/lightweight_vicon_bridge/launch/vicon_bridge.launch"),
+                str("/home/houhd/ros2_ws/src/lightweight_vicon_bridge/launch/vicon_bridge.launch"),
+            )
+        )
+    )
+
+    # ld.add_action(
+    #     Node(
+    #         package="arm_zivid",
+    #         executable="arm_zivid_ros_node.py",
+    #         name="zivid_publisher",
+    #     )
+    # )
     return ld

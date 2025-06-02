@@ -74,6 +74,7 @@ from moveit_msgs.msg import (
 core.on_error = lambda *args: None
 
 ROBOTIQ_OPEN = 0.0
+ROBOTIQ_NUT_GRASP = 0.37
 ROBOTIQ_CLOSED = 1.0
 # This must match what the IIWA_LCM_BRIDGE checks for
 CARTESIAN_CMD_BASE_FRAME = "base"
@@ -133,6 +134,10 @@ class Side:
         # TODO: implementing blocking grasping
         self.gripper_command.publish(get_gripper_closed_fraction_msg(ROBOTIQ_OPEN, scissor_position))
 
+    def grasp_nut_gripper(self, scissor_position=0.0):
+        # TODO: implementing blocking grasping
+        self.gripper_command.publish(get_gripper_closed_fraction_msg(ROBOTIQ_NUT_GRASP, scissor_position))
+
     def close_gripper(self, scissor_position=0.5):
         # TODO: implementing blocking grasping
         self.gripper_command.publish(get_gripper_closed_fraction_msg(ROBOTIQ_CLOSED, scissor_position))
@@ -158,19 +163,52 @@ class Side:
         return names, commanded_positions
 
     def get_estimated_external_force(self):
-        status: MotionStatus = self.motion_status.get()
+        # 1) grab the raw wrench in the palm frame
+        status = self.motion_status.get()
         wr = status.estimated_external_wrench
-        T_base_to_palm = self.tf_wrapper.get_transform(
+        f_palm = np.array([wr.x, wr.y, wr.z])
+        tau_palm = np.array([wr.c, wr.b, wr.a])
+
+        # 2) get the palm→tool adjoint transform
+        T_tool2palm = self.tf_wrapper.get_transform(
+            "victor_left_tool0",
+            f"victor_{self.arm_name}_sunrise_palm_surface"
+        )
+        M_tool2palm = build_mat_from_transform(T_tool2palm)  # 4×4 homogeneous
+
+        # 3) extract rotation R and translation p
+        R = M_tool2palm[:3, :3]
+        p = M_tool2palm[:3, 3]
+
+        f_tool = R @ f_palm
+        tau_tool = R @ tau_palm + np.cross(p, f_tool)
+
+        T_base2tool = self.tf_wrapper.get_transform(
             "victor_root",
-            f"victor_{self.arm_name}_sunrise_palm_surface")
-        force = np.array([wr.x, wr.y, wr.z, 1])
-        mat_base_to_palm = build_mat_from_transform(T_base_to_palm)
-        mat_base_to_palm[:, 3] = 0
-        force_T = mat_base_to_palm @ force
-        return force_T[:3]
+            "victor_left_tool0"
+        )
+        M_base2tool = build_mat_from_transform(T_base2tool)  # 4×4 homogeneous
+        R = M_base2tool[:3, :3]
+        p = M_base2tool[:3, 3]
+        f_tool_world = R @ f_tool
+        tau_tool_world = R @ tau_tool
+        return np.hstack((f_tool_world, tau_tool_world))
+
+        # status: MotionStatus = self.motion_status.get()
+        # wr = status.estimated_external_wrench
+        # T_base_to_palm = self.tf_wrapper.get_transform(
+        #     "victor_root",
+        #     f"victor_{self.arm_name}_sunrise_palm_surface")
+        # force = np.array([wr.x, wr.y, wr.z, 1])
+        # mat_base_to_palm = build_mat_from_transform(T_base_to_palm)
+        # mat_base_to_palm[:, 3] = 0
+        # force_T = mat_base_to_palm @ force
+        # return force_T
 
     def get_names_and_measured_joints(self):
-        status: MotionStatus = self.motion_status.get()
+        status: MotionStatus = self.motion_status.get(block_until_data=False)
+        if status is None:
+            return [], []
         measured_positions = jvq_to_list(status.measured_joint_position)
         names = [f"victor_{self.arm_name}_joint_{i}" for i in range(1, 8)]
         return names, measured_positions
@@ -312,9 +350,10 @@ class Side:
             res = self.list_controllers_client.call(req)
         elif mode == "async":
             future = self.list_controllers_client.call_async(req)
-            rate = self.node.create_rate(1000)
-            while not future.done():
-                rate.sleep()
+            # rate = self.node.create_rate(1000)
+            # while not future.done():
+            #     rate.sleep()
+            rclpy.spin_until_future_complete(self.node, future)
             res = future.result()
         controllers = res.controller
         controllers = [controller for controller in controllers if "broadcaster" not in controller.name]
@@ -337,9 +376,10 @@ class Side:
         req = GetParameters.Request()
         req.names = ["control_mode"]
         future = srv_client.call_async(req)
-        rate = self.node.create_rate(100)
-        while not future.done():
-            rate.sleep()
+        # rate = self.node.create_rate(100)
+        # while not future.done():
+        #     rate.sleep()
+        rclpy.spin_until_future_complete(self.node, future)
         res = future.result()
         control_mode = res.values[0].string_value
 
@@ -490,10 +530,37 @@ class Victor:
             req.activate_controllers = [f"left_arm_{control_mode}"]
 
         future = self.switch_controller_client.call_async(req)
-        rate = self.node.create_rate(10)
-        while not future.done():
-            rate.sleep()
-        # rclpy.spin_until_future_complete(self.node, future)
+        # rate = self.node.create_rate(10)
+        # while not future.done():
+        #     rate.sleep()
+        rclpy.spin_until_future_complete(self.node, future)
+        res = future.result()
+        if not res.ok:
+            print(f"Failed to switch controllers: {res.ok}")
+        else:
+            self.get_and_update_active_controller_names()    
+
+        return res
+    
+    def set_right_controller(self, control_mode: str):
+        assert control_mode in ["position_controller", "impedance_controller",
+                                "joint_position_trajectory_controller", "joint_impedance_trajectory_controller",
+                                "cartesian_controller",
+                                ]
+        right_active_controllers = self.right.get_active_controller_names()
+        active_controllers = list(set(right_active_controllers))
+        req = SwitchController.Request()
+        req.deactivate_controllers = [controller for controller in active_controllers if controller not in control_mode]
+        if control_mode in ["joint_position_trajectory_controller", "joint_impedance_trajectory_controller"]:
+            req.activate_controllers = [control_mode]
+        else:
+            req.activate_controllers = [f"right_arm_{control_mode}"]
+
+        future = self.switch_controller_client.call_async(req)
+        # rate = self.node.create_rate(10)
+        # while not future.done():
+        #     rate.sleep()
+        rclpy.spin_until_future_complete(self.node, future)
         res = future.result()
         if not res.ok:
             print(f"Failed to switch controllers: {res.ok}")
@@ -519,10 +586,10 @@ class Victor:
 
         # res = self.switch_controller_client.call(req)
         future = self.switch_controller_client.call_async(req)
-        rate = self.node.create_rate(10)
-        while not future.done():
-            rate.sleep()
-        # rclpy.spin_until_future_complete(self.node, future)
+        # rate = self.node.create_rate(10)
+        # while not future.done():
+        #     rate.sleep()
+        rclpy.spin_until_future_complete(self.node, future)
         res = future.result()
         if not res.ok:
             print(f"Failed to switch controllers: {res.ok}")
@@ -562,7 +629,7 @@ class Victor:
             self.node.get_logger().warn("Robot is still not moving after {} seconds".format(timeout))
         return move
 
-    def wait_until_motion_done(self, timeout=15):
+    def wait_until_motion_done(self, use_left=True, use_right=True, timeout=15):
         prev_joint_pos = self.get_joint_pos_dict()
         steady = False
         start_time = time.time()
@@ -1181,9 +1248,10 @@ class Victor:
             return None
 
         # 10ms sleep
-        rate = self.node.create_rate(10)
-        while not future.done():
-            rate.sleep()
+        # rate = self.node.create_rate(10)
+        # while not future.done():
+        #     rate.sleep()
+        rclpy.spin_until_future_complete(self.node, future, timeout_sec=wait_for_server_timeout_sec)
 
         return self.get_compute_ik_result(future)
 
@@ -1319,9 +1387,10 @@ class Victor:
             return None
 
         # 100ms sleep
-        rate = self.node.create_rate(10)
-        while not future.done():
-            rate.sleep()
+        # rate = self.node.create_rate(10)
+        # while not future.done():
+        #     rate.sleep()
+        rclpy.spin_until_future_complete(self.node, future, timeout_sec=10.0)
 
         return self.get_trajectory(
             future,
