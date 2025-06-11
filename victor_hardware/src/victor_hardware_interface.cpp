@@ -14,7 +14,7 @@ CallbackReturn VictorHardwareInterface::on_init(const hardware_interface::Hardwa
     return CallbackReturn::ERROR;
   }
   enable_left_arm_ = true;
-  enable_right_arm_ = false;
+  enable_right_arm_ = true;
   RCLCPP_INFO(logger, "enable_left_arm_: %d", enable_left_arm_);
   RCLCPP_INFO(logger, "enable_right_arm_: %d", enable_right_arm_);
   RCLCPP_INFO(logger, "Number of joints: %zu", info_.joints.size());

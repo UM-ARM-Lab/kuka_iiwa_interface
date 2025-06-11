@@ -74,7 +74,6 @@ from moveit_msgs.msg import (
 core.on_error = lambda *args: None
 
 ROBOTIQ_OPEN = 0.0
-ROBOTIQ_NUT_GRASP = 0.37
 ROBOTIQ_CLOSED = 1.0
 # This must match what the IIWA_LCM_BRIDGE checks for
 CARTESIAN_CMD_BASE_FRAME = "base"
@@ -134,9 +133,10 @@ class Side:
         # TODO: implementing blocking grasping
         self.gripper_command.publish(get_gripper_closed_fraction_msg(ROBOTIQ_OPEN, scissor_position))
 
-    def grasp_nut_gripper(self, scissor_position=0.0):
-        # TODO: implementing blocking grasping
-        self.gripper_command.publish(get_gripper_closed_fraction_msg(ROBOTIQ_NUT_GRASP, scissor_position))
+    def set_gripper_position(self, closed_fraction, scissor_position):
+        assert (0.0 <= closed_fraction <= 1.0), "closed_fraction must be between 0.0 and 1.0"
+        assert (0.0 <= scissor_position <= 1.0), "scissor_position must be between 0.0 and 1.0"
+        self.gripper_command.publish(get_gripper_closed_fraction_msg(closed_fraction, scissor_position))
 
     def close_gripper(self, scissor_position=0.5):
         # TODO: implementing blocking grasping
