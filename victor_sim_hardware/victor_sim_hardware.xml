@@ -1,0 +1,7 @@
+<library path="victor_sim_hardware">
+  <class name="victor_sim_hardware/VictorSimHardwareInterface" type="victor_sim_hardware::VictorSimHardwareInterface" base_class_type="hardware_interface::SystemInterface">
+    <description>
+      Simulated hardware interface for Victor robot providing grouped command interfaces for dual-arm manipulation
+    </description>
+  </class>
+</library>

@@ -1,29 +1,36 @@
 from moveit_configs_utils import MoveItConfigsBuilder
 from launch import LaunchDescription
 from launch.actions import IncludeLaunchDescription
-from launch.conditions import IfCondition
+from launch.conditions import IfCondition, UnlessCondition
 from launch.launch_description_sources import PythonLaunchDescriptionSource, AnyLaunchDescriptionSource
-from launch.substitutions import LaunchConfiguration
+from launch.substitutions import LaunchConfiguration, PythonExpression
 from moveit_configs_utils.launch_utils import DeclareBooleanLaunchArg, DeclareLaunchArgument
 
 from launch_ros.actions import Node
 
-
 def generate_launch_description():
-    moveit_config = MoveItConfigsBuilder("victor", package_name="victor_moveit_config").to_moveit_configs()
-
+    
     ld = LaunchDescription()
     ld.add_action(DeclareBooleanLaunchArg("use_rviz", default_value=False))
     ld.add_action(DeclareBooleanLaunchArg("victor_command_gui", default_value=False))
-    ld.add_action(DeclareBooleanLaunchArg("enable_left_arm", default_value=True))
+    ld.add_action(DeclareBooleanLaunchArg("use_simulator", default_value=False))
+    ld.add_action(DeclareBooleanLaunchArg("enable_left_arm", default_value=False))
     ld.add_action(DeclareBooleanLaunchArg("enable_right_arm", default_value=True))
+
+    # Build moveit config with fake hardware parameter
+    moveit_config = (
+        MoveItConfigsBuilder("victor", package_name="victor_moveit_config")
+        .robot_description(file_path="config/victor.urdf.xacro", 
+                          mappings={"fake_hardware": LaunchConfiguration("use_simulator")})
+        .to_moveit_configs()
+    )
 
     ld.add_action(
         Node(
             package="victor_python",
             executable="victor_command_gui.py",
             condition=IfCondition(LaunchConfiguration("victor_command_gui")),
-        )
+        ),
     )
 
     # ld.add_action(
@@ -68,7 +75,7 @@ def generate_launch_description():
             name="camera_pose_publisher",
             output="screen",
             namespace="victor",
-        )
+        ),
     )
 
     # Given the published joint states, publish tf for the robot links
@@ -87,7 +94,7 @@ def generate_launch_description():
             condition=IfCondition(LaunchConfiguration("use_rviz")),
         )
     )
-
+    
     ld.add_action(
         Node(
             package="controller_manager",
@@ -95,6 +102,11 @@ def generate_launch_description():
             parameters=[
                 moveit_config.robot_description,
                 str(moveit_config.package_path / "config/ros2_controllers.yaml"),
+                # PythonExpression([
+                #     "'", str(moveit_config.package_path / "config/ros2_controllers_sim.yaml"), "' if '",
+                #     LaunchConfiguration("use_simulator"), "' == 'true' else '",
+                #     str(moveit_config.package_path / "config/ros2_controllers.yaml"), "'"
+                # ]),
             ],
             output="screen",
         )
@@ -107,7 +119,6 @@ def generate_launch_description():
         )
     )
 
-    # Spawncontrollers
     ld.add_action(
         IncludeLaunchDescription(
             PythonLaunchDescriptionSource(
@@ -120,7 +131,7 @@ def generate_launch_description():
         IncludeLaunchDescription(
             PythonLaunchDescriptionSource(
                 str(moveit_config.package_path / "launch/spawn_controllers.launch.py"),
-            )
+            ),
         )
     )
 
@@ -139,14 +150,15 @@ def generate_launch_description():
         )
     )
 
-    ld.add_action(
-        IncludeLaunchDescription(
-            AnyLaunchDescriptionSource(
-                # str("/home/zixuanh/ros2_ws/src/lightweight_vicon_bridge/launch/vicon_bridge.launch"),
-                str("/home/houhd/ros2_ws/src/lightweight_vicon_bridge/launch/vicon_bridge.launch"),
-            )
-        )
-    )
+    # ld.add_action(
+    #     IncludeLaunchDescription(
+    #         AnyLaunchDescriptionSource(
+    #             # str("/home/zixuanh/ros2_ws/src/lightweight_vicon_bridge/launch/vicon_bridge.launch"),
+    #             str("/home/houhd/ros2_ws/src/lightweight_vicon_bridge/launch/vicon_bridge.launch"),
+    #         ),
+    #         condition=UnlessCondition(LaunchConfiguration("use_simulator")),
+    #     )
+    # )
 
     # ld.add_action(
     #     Node(

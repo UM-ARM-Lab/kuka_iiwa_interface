@@ -1,6 +1,8 @@
 <?xml version="1.0"?>
 <robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="victor">
     <xacro:arg name="initial_positions_file" default="initial_positions.yaml" />
+    <xacro:arg name="fake_hardware" default="false" />
+
 
     <!-- Import victor urdf file -->
     <xacro:include filename="$(find victor_description)/urdf/victor.urdf.xacro" />
@@ -9,6 +11,6 @@
     <xacro:include filename="victor.ros2_control.xacro" />
 
 
-    <xacro:victor_ros2_control name="VictorSystem" fake_hardware="false" initial_positions_file="$(arg initial_positions_file)"/>
+    <xacro:victor_ros2_control name="VictorSystem" fake_hardware="$(arg fake_hardware)" initial_positions_file="$(arg initial_positions_file)"/>
 
 </robot>

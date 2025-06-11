@@ -1,0 +1,276 @@
+# This config file is used by ros2_control with victor_sim_hardware
+# Uses standard ROS2 controllers compatible with the simulated hardware interface
+controller_manager:
+  ros__parameters:
+    update_rate: 1000  # Hz
+
+    # Standard ROS2 controllers for simulation
+    joint_trajectory_controller:
+      type: joint_trajectory_controller/JointTrajectoryController
+
+    left_arm_controller:
+      type: joint_trajectory_controller/JointTrajectoryController
+
+    right_arm_controller:
+      type: joint_trajectory_controller/JointTrajectoryController
+
+    left_arm_position_controller:
+      type: position_controllers/JointGroupPositionController
+
+    right_arm_position_controller:
+      type: position_controllers/JointGroupPositionController
+
+    joint_state_broadcaster:
+      type: joint_state_broadcaster/JointStateBroadcaster
+
+    left_force_torque_broadcaster:
+      type: force_torque_sensor_broadcaster/ForceTorqueSensorBroadcaster
+
+    right_force_torque_broadcaster:
+      type: force_torque_sensor_broadcaster/ForceTorqueSensorBroadcaster
+
+
+# Combined joint trajectory controller for both arms (MoveIt compatible)
+joint_trajectory_controller:
+  ros__parameters:
+    joints:
+      - victor_left_arm_joint_1
+      - victor_left_arm_joint_2
+      - victor_left_arm_joint_3
+      - victor_left_arm_joint_4
+      - victor_left_arm_joint_5
+      - victor_left_arm_joint_6
+      - victor_left_arm_joint_7
+      - victor_right_arm_joint_1
+      - victor_right_arm_joint_2
+      - victor_right_arm_joint_3
+      - victor_right_arm_joint_4
+      - victor_right_arm_joint_5
+      - victor_right_arm_joint_6
+      - victor_right_arm_joint_7
+    command_interfaces:
+      - position
+    state_interfaces:
+      - position
+      - velocity
+    allow_partial_joints_goal: true
+    open_loop_control: true
+    allow_integration_in_goal_trajectories: true
+    constraints:
+      stopped_velocity_tolerance: 0.01
+      goal_time: 0.6
+      victor_left_arm_joint_1:
+        trajectory: 0.1
+        goal: 0.1
+      victor_left_arm_joint_2:
+        trajectory: 0.1
+        goal: 0.1
+      victor_left_arm_joint_3:
+        trajectory: 0.1
+        goal: 0.1
+      victor_left_arm_joint_4:
+        trajectory: 0.1
+        goal: 0.1
+      victor_left_arm_joint_5:
+        trajectory: 0.1
+        goal: 0.1
+      victor_left_arm_joint_6:
+        trajectory: 0.1
+        goal: 0.1
+      victor_left_arm_joint_7:
+        trajectory: 0.1
+        goal: 0.1
+      victor_right_arm_joint_1:
+        trajectory: 0.1
+        goal: 0.1
+      victor_right_arm_joint_2:
+        trajectory: 0.1
+        goal: 0.1
+      victor_right_arm_joint_3:
+        trajectory: 0.1
+        goal: 0.1
+      victor_right_arm_joint_4:
+        trajectory: 0.1
+        goal: 0.1
+      victor_right_arm_joint_5:
+        trajectory: 0.1
+        goal: 0.1
+      victor_right_arm_joint_6:
+        trajectory: 0.1
+        goal: 0.1
+      victor_right_arm_joint_7:
+        trajectory: 0.1
+        goal: 0.1
+
+# Left arm trajectory controller (for independent left arm control)
+left_arm_controller:
+  ros__parameters:
+    joints:
+      - victor_left_arm_joint_1
+      - victor_left_arm_joint_2
+      - victor_left_arm_joint_3
+      - victor_left_arm_joint_4
+      - victor_left_arm_joint_5
+      - victor_left_arm_joint_6
+      - victor_left_arm_joint_7
+    command_interfaces:
+      - position
+    state_interfaces:
+      - position
+      - velocity
+    allow_partial_joints_goal: true
+    open_loop_control: true
+    allow_integration_in_goal_trajectories: true
+    constraints:
+      stopped_velocity_tolerance: 0.01
+      goal_time: 0.6
+      victor_left_arm_joint_1:
+        trajectory: 0.1
+        goal: 0.1
+      victor_left_arm_joint_2:
+        trajectory: 0.1
+        goal: 0.1
+      victor_left_arm_joint_3:
+        trajectory: 0.1
+        goal: 0.1
+      victor_left_arm_joint_4:
+        trajectory: 0.1
+        goal: 0.1
+      victor_left_arm_joint_5:
+        trajectory: 0.1
+        goal: 0.1
+      victor_left_arm_joint_6:
+        trajectory: 0.1
+        goal: 0.1
+      victor_left_arm_joint_7:
+        trajectory: 0.1
+        goal: 0.1
+
+# Right arm trajectory controller (for independent right arm control)
+right_arm_controller:
+  ros__parameters:
+    joints:
+      - victor_right_arm_joint_1
+      - victor_right_arm_joint_2
+      - victor_right_arm_joint_3
+      - victor_right_arm_joint_4
+      - victor_right_arm_joint_5
+      - victor_right_arm_joint_6
+      - victor_right_arm_joint_7
+    command_interfaces:
+      - position
+    state_interfaces:
+      - position
+      - velocity
+    allow_partial_joints_goal: true
+    open_loop_control: true
+    allow_integration_in_goal_trajectories: true
+    constraints:
+      stopped_velocity_tolerance: 0.01
+      goal_time: 0.6
+      victor_right_arm_joint_1:
+        trajectory: 0.1
+        goal: 0.1
+      victor_right_arm_joint_2:
+        trajectory: 0.1
+        goal: 0.1
+      victor_right_arm_joint_3:
+        trajectory: 0.1
+        goal: 0.1
+      victor_right_arm_joint_4:
+        trajectory: 0.1
+        goal: 0.1
+      victor_right_arm_joint_5:
+        trajectory: 0.1
+        goal: 0.1
+      victor_right_arm_joint_6:
+        trajectory: 0.1
+        goal: 0.1
+      victor_right_arm_joint_7:
+        trajectory: 0.1
+        goal: 0.1
+
+# Left arm position controller (for direct position control)
+left_arm_position_controller:
+  ros__parameters:
+    joints:
+      - victor_left_arm_joint_1
+      - victor_left_arm_joint_2
+      - victor_left_arm_joint_3
+      - victor_left_arm_joint_4
+      - victor_left_arm_joint_5
+      - victor_left_arm_joint_6
+      - victor_left_arm_joint_7
+    interface_name: position
+
+# Right arm position controller (for direct position control)
+right_arm_position_controller:
+  ros__parameters:
+    joints:
+      - victor_right_arm_joint_1
+      - victor_right_arm_joint_2
+      - victor_right_arm_joint_3
+      - victor_right_arm_joint_4
+      - victor_right_arm_joint_5
+      - victor_right_arm_joint_6
+      - victor_right_arm_joint_7
+    interface_name: position
+
+# Joint state broadcaster (publishes /joint_states)
+joint_state_broadcaster:
+  ros__parameters:
+    joints:
+      - victor_left_arm_joint_1
+      - victor_left_arm_joint_2
+      - victor_left_arm_joint_3
+      - victor_left_arm_joint_4
+      - victor_left_arm_joint_5
+      - victor_left_arm_joint_6
+      - victor_left_arm_joint_7
+      - victor_right_arm_joint_1
+      - victor_right_arm_joint_2
+      - victor_right_arm_joint_3
+      - victor_right_arm_joint_4
+      - victor_right_arm_joint_5
+      - victor_right_arm_joint_6
+      - victor_right_arm_joint_7
+      # Gripper joints
+      - victor_left_finger_a_joint_1
+      - victor_left_finger_a_joint_2
+      - victor_left_finger_a_joint_3
+      - victor_left_finger_b_joint_1
+      - victor_left_finger_b_joint_2
+      - victor_left_finger_b_joint_3
+      - victor_left_finger_c_joint_1
+      - victor_left_finger_c_joint_2
+      - victor_left_finger_c_joint_3
+      - victor_left_palm_finger_b_joint
+      - victor_left_palm_finger_c_joint
+      - victor_right_finger_a_joint_1
+      - victor_right_finger_a_joint_2
+      - victor_right_finger_a_joint_3
+      - victor_right_finger_b_joint_1
+      - victor_right_finger_b_joint_2
+      - victor_right_finger_b_joint_3
+      - victor_right_finger_c_joint_1
+      - victor_right_finger_c_joint_2
+      - victor_right_finger_c_joint_3
+      - victor_right_palm_finger_b_joint
+      - victor_right_palm_finger_c_joint
+    interfaces:
+      - position
+      - velocity
+      - effort
+
+# Force-torque sensor broadcasters
+left_force_torque_broadcaster:
+  ros__parameters:
+    frame_id: victor_left_sunrise_palm_surface
+    sensor_name: left_force_torque_sensor
+    topic_name: /victor/left_arm/force_torque_state
+
+right_force_torque_broadcaster:
+  ros__parameters:
+    frame_id: victor_right_sunrise_palm_surface
+    sensor_name: right_force_torque_sensor
+    topic_name: /victor/right_arm/force_torque_state
