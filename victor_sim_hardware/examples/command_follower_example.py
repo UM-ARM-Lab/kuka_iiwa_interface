@@ -28,34 +28,34 @@ class CommandFollowerExample:
     
     def __init__(self):
         # Create the victor simulator API
-        self.simulator = create_victor_simulator()
+        self.api = create_victor_simulator()
         
         # Initialize joint positions to 1.0 radian for all joints
         self.left_joint_positions = [0.5] * 7
         self.right_joint_positions = [0.5] * 7
         
         # Set initial joint positions
-        self.simulator.left_arm.set_joint_positions(self.left_joint_positions)
-        self.simulator.left_arm.set_joint_velocities([0.0] * 7)
-        self.simulator.left_arm.set_joint_efforts([0.0] * 7)
-        self.simulator.left_arm.set_external_torques([0.0] * 7)
+        self.api.left_arm.set_joint_positions(self.left_joint_positions)
+        self.api.left_arm.set_joint_velocities([0.0] * 7)
+        self.api.left_arm.set_joint_efforts([0.0] * 7)
+        self.api.left_arm.set_external_torques([0.0] * 7)
         
-        self.simulator.right_arm.set_joint_positions(self.right_joint_positions)
-        self.simulator.right_arm.set_joint_velocities([0.0] * 7)
-        self.simulator.right_arm.set_joint_efforts([0.0] * 7)
-        self.simulator.right_arm.set_external_torques([0.0] * 7)
+        self.api.right_arm.set_joint_positions(self.right_joint_positions)
+        self.api.right_arm.set_joint_velocities([0.0] * 7)
+        self.api.right_arm.set_joint_efforts([0.0] * 7)
+        self.api.right_arm.set_external_torques([0.0] * 7)
         
         # Set up motion command callbacks
-        self.simulator.left_arm.set_motion_command_callback(self._left_motion_callback)
-        self.simulator.right_arm.set_motion_command_callback(self._right_motion_callback)
+        self.api.left_arm.set_motion_command_callback(self._left_motion_callback)
+        self.api.right_arm.set_motion_command_callback(self._right_motion_callback)
         
         # Set up gripper command callbacks
-        self.simulator.left_arm.set_gripper_command_callback(self._left_gripper_callback)
-        self.simulator.right_arm.set_gripper_command_callback(self._right_gripper_callback)
+        self.api.left_arm.set_gripper_command_callback(self._left_gripper_callback)
+        self.api.right_arm.set_gripper_command_callback(self._right_gripper_callback)
         
         # Initial cartesian poses
-        self.simulator.left_arm.set_cartesian_pose([0.5, 0.2, 0.3], [0, 0, 0, 1])
-        self.simulator.right_arm.set_cartesian_pose([0.5, -0.2, 0.3], [0, 0, 0, 1])
+        self.api.left_arm.set_cartesian_pose([0.5, 0.2, 0.3], [0, 0, 0, 1])
+        self.api.right_arm.set_cartesian_pose([0.5, -0.2, 0.3], [0, 0, 0, 1])
         
         print("Command follower initialized - all joints set to 1.0 radian")
         print(f"Left arm joints: {self.left_joint_positions}")
@@ -92,12 +92,12 @@ class CommandFollowerExample:
     def publish_state(self):
         """Publish current robot state."""
         # Publish motion status for both arms
-        self.simulator.left_arm.publish_motion_status()
-        self.simulator.right_arm.publish_motion_status()
+        self.api.left_arm.publish_motion_status()
+        self.api.right_arm.publish_motion_status()
         
         # Publish gripper status for both arms
-        self.simulator.left_arm.publish_gripper_status()
-        self.simulator.right_arm.publish_gripper_status()
+        self.api.left_arm.publish_gripper_status()
+        self.api.right_arm.publish_gripper_status()
     
     def run(self):
         """Main command following loop."""
@@ -113,15 +113,15 @@ class CommandFollowerExample:
                 start_time = time.time()
                 
                 # Always update simulator with current internal state
-                self.simulator.left_arm.set_joint_positions(self.left_joint_positions)
-                self.simulator.left_arm.set_joint_velocities([0.0] * 7)
-                self.simulator.left_arm.set_joint_efforts([0.0] * 7)
-                self.simulator.left_arm.set_external_torques([0.0] * 7)
+                self.api.left_arm.set_joint_positions(self.left_joint_positions)
+                self.api.left_arm.set_joint_velocities([0.0] * 7)
+                self.api.left_arm.set_joint_efforts([0.0] * 7)
+                self.api.left_arm.set_external_torques([0.0] * 7)
                 
-                self.simulator.right_arm.set_joint_positions(self.right_joint_positions)
-                self.simulator.right_arm.set_joint_velocities([0.0] * 7)
-                self.simulator.right_arm.set_joint_efforts([0.0] * 7)
-                self.simulator.right_arm.set_external_torques([0.0] * 7)
+                self.api.right_arm.set_joint_positions(self.right_joint_positions)
+                self.api.right_arm.set_joint_velocities([0.0] * 7)
+                self.api.right_arm.set_joint_efforts([0.0] * 7)
+                self.api.right_arm.set_external_torques([0.0] * 7)
                 
                 # Publish current state
                 self.publish_state()
@@ -135,7 +135,7 @@ class CommandFollowerExample:
             print("\nShutting down command follower...")
         
         finally:
-            self.simulator.stop()
+            self.api.stop()
             rclpy.shutdown()
 
 

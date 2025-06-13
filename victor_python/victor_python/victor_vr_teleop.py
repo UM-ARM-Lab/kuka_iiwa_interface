@@ -487,7 +487,7 @@ class SideTeleop:
             joint_positions = robot_state.get_joint_group_positions(self.side.arm_name)
             return joint_positions
         else:
-            print("IK failed!")
+            self.node.get_logger().info("IK failed!")
             return None
 
     def get_current_commanded_tool(self, frame):
