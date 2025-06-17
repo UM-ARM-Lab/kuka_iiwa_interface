@@ -25,6 +25,7 @@ Topic Structure:
 import rclpy
 from rclpy.node import Node
 from rclpy.callback_groups import ReentrantCallbackGroup
+from rclpy.executors import MultiThreadedExecutor
 import threading
 import time
 from typing import Dict, List, Optional, Callable
@@ -68,12 +69,10 @@ class VictorSimulatorAPI(Node):
         self.left_arm = ArmAPI(self, "left")
         self.right_arm = ArmAPI(self, "right")
         
-        # Simple spinning mechanism without separate executor
-        self._spin_thread = None
+        # Use MultiThreadedExecutor instead of simple spinning
+        self._executor = None
+        self._executor_thread = None
         self._running = False
-        
-        # Automatically start spinning
-        self.start()
         
         self.get_logger().info("Victor Simulator API initialized")
     
@@ -93,20 +92,26 @@ class VictorSimulatorAPI(Node):
             return
         
         self._running = True
-        # Use rclpy.spin_once in a thread for simple callback processing
-        self._spin_thread = threading.Thread(target=self._spin_loop, daemon=True)
-        self._spin_thread.start()
+        
+        # Create a dedicated executor for this node
+        self._executor = MultiThreadedExecutor(num_threads=2)
+        self._executor.add_node(self)
+        
+        # Start executor in a separate thread
+        self._executor_thread = threading.Thread(target=self._executor_run, daemon=True)
+        self._executor_thread.start()
+        
         self.get_logger().info("Victor Simulator API started")
     
-    def _spin_loop(self):
-        """Simple spin loop that processes callbacks."""
-        while self._running and rclpy.ok():
-            try:
-                rclpy.spin_once(self, timeout_sec=0.1)
-            except Exception as e:
-                if self._running:  # Only log if we're still supposed to be running
-                    self.get_logger().error(f"Error in spin loop: {e}")
-                break
+    def _executor_run(self):
+        """Run the executor in a separate thread."""
+        try:
+            while self._running and rclpy.ok():
+                # Spin with timeout to allow for clean shutdown
+                self._executor.spin_once(timeout_sec=0.1)
+        except Exception as e:
+            if self._running:  # Only log if we're still supposed to be running
+                self.get_logger().error(f"Error in executor thread: {e}")
     
     def stop(self):
         """Stop the API and cleanup resources."""
@@ -114,8 +119,13 @@ class VictorSimulatorAPI(Node):
             return
             
         self._running = False
-        if self._spin_thread:
-            self._spin_thread.join()
+        
+        if self._executor:
+            self._executor.shutdown()
+            
+        if self._executor_thread and self._executor_thread.is_alive():
+            self._executor_thread.join(timeout=5.0)
+            
         self.get_logger().info("Victor Simulator API stopped")
     
     def get_left_arm(self) -> 'ArmAPI':
@@ -156,9 +166,11 @@ class ArmAPI:
         self._motion_command_callback: Optional[Callable] = None
         self._gripper_command_callback: Optional[Callable] = None
         
-        # Latest received commands
+        # Latest received commands - initialize as numpy arrays
         self._latest_motion_command = None
+        self._updated_motion_command = False
         self._latest_gripper_command = None
+        self._updated_gripper_command = False
         
         self._setup_publishers()
         self._setup_subscribers()
@@ -248,19 +260,39 @@ class ArmAPI:
     
     def _motion_command_sim_callback(self, msg: MotionStatus):
         """Handle motion command from hardware interface."""
-        self._latest_motion_command = msg
-        if self._motion_command_callback:
-            # Convert commanded joint position to numpy array
-            commanded_joints = self._extract_joint_positions_from_motion_status(msg)
-            self._motion_command_callback(commanded_joints)
-    
+        # Extract joint positions as numpy array FIRST
+        joint_positions = self._extract_joint_positions_from_motion_status(msg)
+        
+        # Then store the numpy array and set the flag
+        self._updated_motion_command = True
+        self._latest_motion_command = joint_positions
+        
     def _gripper_command_ros_callback(self, msg: Robotiq3FingerCommand):
-        """Handle gripper command from controllers."""
-        self._latest_gripper_command = msg
-        if self._gripper_command_callback:
-            # Convert gripper command to numpy array [finger_a, finger_b, finger_c, scissor]
-            gripper_positions = self._extract_gripper_positions_from_command(msg)
-            self._gripper_command_callback(gripper_positions)
+        """Handle gripper command from controllers with constraint enforcement and 0.8->1.0 mapping."""
+        # Extract original finger positions (0-1 range from ROS)
+        finger_a = msg.finger_a_command.position
+        finger_b = msg.finger_b_command.position
+        finger_c = msg.finger_c_command.position
+        scissor_input = max(0.0, min(msg.scissor_command.position, 1.0))
+
+        print("Received gripper command:", finger_a, finger_b, finger_c, scissor_input)
+        
+        # Scale scissor from 0-1 input to -0.15 to 0.15 output
+        # 0.0 -> -0.15, 0.5 -> 0.0, 1.0 -> 0.15
+        scissor_scaled = -0.15 + (scissor_input * 0.3)  # 0->-0.15, 0.5->0.0, 1->0.15
+        
+        # Check finger combination constraints using ORIGINAL commands (0.5 threshold)
+        ab_sum_orig = finger_a + finger_b
+        ac_sum_orig = finger_a + finger_c
+        finger_constraint_active = (ab_sum_orig > 0.6) or (ac_sum_orig > 0.6)
+        
+        if finger_constraint_active and scissor_scaled > 0.0:
+            # When fingers are constrained, scissor must be <= 0
+            scissor_scaled = 0.0
+        
+        # Store the processed command
+        self._updated_gripper_command = True
+        self._latest_gripper_command = np.array([finger_a, finger_b, finger_c, scissor_scaled])
     
     def _extract_joint_positions_from_motion_status(self, msg: MotionStatus) -> np.ndarray:
         """Extract commanded joint positions from MotionStatus message as numpy array."""
@@ -278,32 +310,22 @@ class ArmAPI:
             msg.finger_c_command.position,
             msg.scissor_command.position
         ])
-
-    def set_motion_command_callback(self, callback: Callable[[np.ndarray], None]):
-        """
-        Set callback function to handle motion commands from controllers.
-        
-        Args:
-            callback: Function that takes a numpy array of 7 joint positions (radians)
-        """
-        self._motion_command_callback = callback
     
-    def set_gripper_command_callback(self, callback: Callable[[np.ndarray], None]):
-        """
-        Set callback function to handle gripper commands from controllers.
-        
-        Args:
-            callback: Function that takes a numpy array of 4 positions [finger_a, finger_b, finger_c, scissor]
-        """
-        self._gripper_command_callback = callback
+    def get_latest_motion_command(self) -> Optional[np.ndarray]:
+        """Get the latest motion command received from controllers as numpy array of joint positions."""
+        if self._updated_motion_command and self._latest_motion_command is not None:
+            self._updated_motion_command = False
+            # Verify it's a numpy array before returning
+            return self._latest_motion_command.copy()
+        return None
     
-    def get_latest_motion_command(self) -> Optional[MotionStatus]:
-        """Get the latest motion command received from controllers."""
-        return self._latest_motion_command
-    
-    def get_latest_gripper_command(self) -> Optional[Robotiq3FingerCommand]:
+    def get_latest_gripper_command(self) -> Optional[np.ndarray]:
         """Get the latest gripper command received from controllers."""
-        return self._latest_gripper_command
+        if self._updated_gripper_command:
+            self._updated_gripper_command = False
+            # Return a copy to avoid external modification
+            return self._latest_gripper_command.copy()
+        return None
     
     def set_joint_positions(self, positions: List[float]):
         """
@@ -363,13 +385,13 @@ class ArmAPI:
     
     def set_gripper_positions(self, finger_a: float, finger_b: float, finger_c: float, scissor: float):
         """
-        Set gripper finger positions.
+        Set gripper finger positions with reverse mapping.
         
         Args:
-            finger_a: Finger A position (0.0 to 1.0)
-            finger_b: Finger B position (0.0 to 1.0) 
-            finger_c: Finger C position (0.0 to 1.0)
-            scissor: Scissor position (-1.0 to 1.0)
+            finger_a: Finger A position (0.0 to 1.0) - will be reverse mapped for status
+            finger_b: Finger B position (0.0 to 1.0) - will be reverse mapped for status
+            finger_c: Finger C position (0.0 to 1.0) - will be reverse mapped for status
+            scissor: Scissor position (-0.15 to 0.15)
         """
         self._gripper_status.finger_a_status.position = finger_a
         self._gripper_status.finger_b_status.position = finger_b
@@ -393,59 +415,45 @@ class ArmAPI:
         Publish the current motion status to both standard victor API and simulator bridge.
         This should be called regularly (e.g., at 1000 Hz) to update the hardware interface.
         """
-        # Create motion status message
-        msg = MotionStatus()
-        msg.header = Header()
-        msg.header.stamp = self.node.get_clock().now().to_msg()
-        msg.header.frame_id = f"victor_{self.side}_arm_world_frame_kuka"
-        
-        # Set joint values
-        msg.measured_joint_position = self._create_joint_value_quantity(self._joint_positions)
-        msg.measured_joint_velocity = self._create_joint_value_quantity(self._joint_velocities)
-        msg.measured_joint_torque = self._create_joint_value_quantity(self._joint_efforts)
-        msg.estimated_external_torque = self._create_joint_value_quantity(self._external_torques)
-        
-        # Set cartesian pose
-        msg.measured_cartesian_pose = self._cartesian_pose
-        
-        # Set commanded values (copy from measured for simulation)
-        msg.commanded_joint_position = msg.measured_joint_position
-        msg.commanded_cartesian_pose = msg.measured_cartesian_pose
-        
-        # Publish to both topics
-        self.motion_status_pub.publish(msg)
-        self.sim_motion_status_pub.publish(msg)
+        try:
+            # Create motion status message
+            msg = MotionStatus()
+            msg.header = Header()
+            msg.header.stamp = self.node.get_clock().now().to_msg()
+            msg.header.frame_id = f"victor_{self.side}_arm_world_frame_kuka"
+            
+            # Set joint values
+            msg.measured_joint_position = self._create_joint_value_quantity(self._joint_positions)
+            msg.measured_joint_velocity = self._create_joint_value_quantity(self._joint_velocities)
+            msg.measured_joint_torque = self._create_joint_value_quantity(self._joint_efforts)
+            msg.estimated_external_torque = self._create_joint_value_quantity(self._external_torques)
+            
+            # Set cartesian pose
+            msg.measured_cartesian_pose = self._cartesian_pose
+            
+            # Set commanded values (copy from measured for simulation)
+            msg.commanded_joint_position = msg.measured_joint_position
+            msg.commanded_cartesian_pose = msg.measured_cartesian_pose
+            
+            # Publish to both topics
+            self.motion_status_pub.publish(msg)
+            self.sim_motion_status_pub.publish(msg)
+        except Exception as e:
+            self.node.get_logger().error(f"Error publishing motion status: {e}")
     
     def publish_gripper_status(self):
         """
         Publish the current gripper status to both standard victor API and simulator bridge.
         """
-        # Update header timestamp
-        self._gripper_status.header.stamp = self.node.get_clock().now().to_msg()
-        
-        # Publish to both topics
-        self.gripper_status_pub.publish(self._gripper_status)
-        self.sim_gripper_status_pub.publish(self._gripper_status)
-    
-    def get_joint_positions(self) -> np.ndarray:
-        """Get current joint positions."""
-        return self._joint_positions.copy()
-    
-    def get_joint_velocities(self) -> np.ndarray:
-        """Get current joint velocities."""
-        return self._joint_velocities.copy()
-    
-    def get_joint_efforts(self) -> np.ndarray:
-        """Get current joint efforts."""
-        return self._joint_efforts.copy()
-    
-    def get_external_torques(self) -> np.ndarray:
-        """Get current external torques."""
-        return self._external_torques.copy()
-    
-    def get_cartesian_pose(self) -> Pose:
-        """Get current cartesian pose."""
-        return self._cartesian_pose
+        try:
+            # Update header timestamp
+            self._gripper_status.header.stamp = self.node.get_clock().now().to_msg()
+            
+            # Publish to both topics
+            self.gripper_status_pub.publish(self._gripper_status)
+            self.sim_gripper_status_pub.publish(self._gripper_status)
+        except Exception as e:
+            self.node.get_logger().error(f"Error publishing gripper status: {e}")
 
 
 def create_victor_simulator() -> VictorSimulatorAPI:
@@ -455,11 +463,11 @@ def create_victor_simulator() -> VictorSimulatorAPI:
     Returns:
         VictorSimulatorAPI: Initialized simulator API
     """
-    # Only initialize rclpy if it's not already initialized
+    # Initialize rclpy if not already initialized
     if not rclpy.ok():
         rclpy.init()
     
-    simulator = VictorSimulatorAPI()
+    simulator = VictorSimulatorAPI(auto_init_rclpy=False)
     simulator.start()
     return simulator
 
@@ -470,16 +478,13 @@ if __name__ == "__main__":
     simulator = create_victor_simulator()
     
     try:
-        # Set up motion command callbacks
-        def left_motion_callback(msg):
-            print(f"Left arm motion command received: {msg.commanded_joint_position}")
+        # # Set up motion command callbacks
+        # def left_motion_callback(msg):
+        #     print(f"Left arm motion command received: {msg.commanded_joint_position}")
         
-        def right_motion_callback(msg):
-            print(f"Right arm motion command received: {msg.commanded_joint_position}")
-        
-        simulator.left_arm.set_motion_command_callback(left_motion_callback)
-        simulator.right_arm.set_motion_command_callback(right_motion_callback)
-        
+        # def right_motion_callback(msg):
+        #     print(f"Right arm motion command received: {msg.commanded_joint_position}")
+
         # Simulate robot state updates
         rate_hz = 100  # Update at 100 Hz
         while rclpy.ok():
@@ -505,5 +510,7 @@ if __name__ == "__main__":
     except KeyboardInterrupt:
         print("Shutting down...")
     finally:
+        simulator.stop()
+        rclpy.shutdown()
         simulator.stop()
         rclpy.shutdown()
