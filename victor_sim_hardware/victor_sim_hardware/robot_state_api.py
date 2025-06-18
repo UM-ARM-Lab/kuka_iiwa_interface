@@ -5,9 +5,9 @@ Victor Robot State API for Simulator
 This module provides a Python API for simulator scripts to communicate with the
 victor_sim_hardware interface over ROS topics. It replicates the structure of the
 real robot setup and provides function APIs for simulators to:
-- Read motion commands (as JointValueQuantity) from controllers
+- Read motion commands from controllers
 - Write robot states (MotionStatus) to the hardware interface
-- Handle gripper commands (Robotiq3FingerCommand) and status (Robotiq3FingerStatus)
+- Handle gripper commands and status
 
 Topic Structure:
 - Standard victor API topics (for controllers):
@@ -16,10 +16,10 @@ Topic Structure:
   - /victor/{side}_arm/gripper_status (published by this API)
 
 - Simulator bridge topics (for hardware interface communication):
-  - /victor_sim_bridge/{side}/motion_command (subscribed by this API) - JointValueQuantity
-  - /victor_sim_bridge/{side}/motion_status (published by this API) - MotionStatus
-  - /victor_sim_bridge/{side}/gripper_command (published by this API) - Robotiq3FingerCommand
-  - /victor_sim_bridge/{side}/gripper_status (subscribed by this API) - Robotiq3FingerStatus
+  - /victor_sim_bridge/{side}/motion_command (subscribed by this API)
+  - /victor_sim_bridge/{side}/motion_status (published by this API)
+  - /victor_sim_bridge/{side}/gripper_command (published by this API)
+  - /victor_sim_bridge/{side}/gripper_status (subscribed by this API)
 """
 
 import rclpy
@@ -37,7 +37,6 @@ from victor_hardware_interfaces.msg import (
     JointValueQuantity,
     Robotiq3FingerCommand,
     Robotiq3FingerStatus,
-    Robotiq3FingerActuatorCommand,
     Robotiq3FingerActuatorStatus,
     Robotiq3FingerObjectStatus
 )
@@ -166,7 +165,7 @@ class ArmAPI:
         self._motion_command_callback: Optional[Callable] = None
         self._gripper_command_callback: Optional[Callable] = None
         
-        # Latest received commands - initialize as numpy arrays
+        # Latest received commands
         self._latest_motion_command = None
         self._updated_motion_command = False
         self._latest_gripper_command = None
@@ -222,7 +221,7 @@ class ArmAPI:
         
         # Simulator bridge subscribers (from hardware interface)
         self.sim_motion_command_sub = self.node.create_subscription(
-            JointValueQuantity,
+            MotionStatus,
             f'/victor_sim_bridge/{self.side}/motion_command',
             self._motion_command_sim_callback,
             10,
@@ -258,67 +257,42 @@ class ArmAPI:
         self._gripper_status.gripper_motion_status = Robotiq3FingerStatus.GRIPPER_STOPPED_UNKNOWN
         self._gripper_status.gripper_fault_status = Robotiq3FingerStatus.NO_FAULTS
     
-    def _motion_command_sim_callback(self, msg: JointValueQuantity):
-        """Handle joint value command from hardware interface."""
-        # Extract joint positions as numpy array directly from JointValueQuantity
-        joint_positions = self._extract_joint_positions_from_joint_value_quantity(msg)
-        
-        # Store the numpy array and set the flag
+    def _motion_command_sim_callback(self, msg: MotionStatus):
+        """Handle motion command from hardware interface."""
         self._updated_motion_command = True
-        self._latest_motion_command = joint_positions
-        
+        self._latest_motion_command = self._extract_joint_positions_from_motion_status(msg)
+    
     def _gripper_command_ros_callback(self, msg: Robotiq3FingerCommand):
-        """Handle gripper command from controllers with constraint enforcement and 0.8->1.0 mapping."""
-        # Extract original finger positions (0-1 range from ROS)
-        finger_a = msg.finger_a_command.position
-        finger_b = msg.finger_b_command.position
-        finger_c = msg.finger_c_command.position
-        scissor_input = max(0.0, min(msg.scissor_command.position, 1.0))
-
-        print("Received gripper command:", finger_a, finger_b, finger_c, scissor_input)
-        
-        # Scale scissor from 0-1 input to -0.15 to 0.15 output
-        # 0.0 -> -0.15, 0.5 -> 0.0, 1.0 -> 0.15
-        scissor_scaled = -0.15 + (scissor_input * 0.3)  # 0->-0.15, 0.5->0.0, 1->0.15
-        
-        # Check finger combination constraints using ORIGINAL commands (0.5 threshold)
-        ab_sum_orig = finger_a + finger_b
-        ac_sum_orig = finger_a + finger_c
-        finger_constraint_active = (ab_sum_orig > 0.6) or (ac_sum_orig > 0.6)
-        
-        if finger_constraint_active and scissor_scaled > 0.0:
-            # When fingers are constrained, scissor must be <= 0
-            scissor_scaled = 0.0
-        
-        # Store the processed command
+        """Handle gripper command from controllers."""
         self._updated_gripper_command = True
-        self._latest_gripper_command = np.array([finger_a, finger_b, finger_c, scissor_scaled])
+        self._latest_gripper_command = self._extract_gripper_positions_from_command(msg)
     
-    def _extract_joint_positions_from_joint_value_quantity(self, msg: JointValueQuantity) -> np.ndarray:
-        """Extract joint positions from JointValueQuantity message as numpy array."""
-        return np.array([
-            msg.joint_1, msg.joint_2, msg.joint_3, msg.joint_4,
-            msg.joint_5, msg.joint_6, msg.joint_7
-        ])
+    def _extract_joint_positions_from_motion_status(self, msg: MotionStatus) -> List:
+        """Extract commanded joint positions from MotionStatus message as numpy array."""
+        jvq = msg.commanded_joint_position
+        return [
+            jvq.joint_1, jvq.joint_2, jvq.joint_3, jvq.joint_4,
+            jvq.joint_5, jvq.joint_6, jvq.joint_7
+        ]
     
-    def _extract_gripper_positions_from_command(self, msg: Robotiq3FingerCommand) -> np.ndarray:
+    def _extract_gripper_positions_from_command(self, msg: Robotiq3FingerCommand) -> List:
         """Extract gripper finger positions from command as numpy array [a, b, c, scissor]."""
-        return np.array([
+        return [
             msg.finger_a_command.position,
             msg.finger_b_command.position, 
             msg.finger_c_command.position,
             msg.scissor_command.position
-        ])
-    
-    def get_latest_motion_command(self) -> Optional[np.ndarray]:
-        """Get the latest motion command received from controllers as numpy array of joint positions."""
+        ]
+
+    def get_latest_motion_command(self) -> List|None:
+        """Get the latest motion command received from controllers."""
         if self._updated_motion_command and self._latest_motion_command is not None:
             self._updated_motion_command = False
-            # Verify it's a numpy array before returning
+            # Return a copy to avoid external modification
             return self._latest_motion_command.copy()
         return None
     
-    def get_latest_gripper_command(self) -> Optional[np.ndarray]:
+    def get_latest_gripper_command(self) -> List|None:
         """Get the latest gripper command received from controllers."""
         if self._updated_gripper_command and self._latest_gripper_command is not None:
             self._updated_gripper_command = False
@@ -326,133 +300,96 @@ class ArmAPI:
             return self._latest_gripper_command.copy()
         return None
     
-    def set_joint_positions(self, positions: List[float]):
-        """
-        Set the current joint positions.
-        
-        Args:
-            positions: List of 7 joint positions in radians
-        """
-        if len(positions) != 7:
-            raise ValueError("Expected 7 joint positions")
-        self._joint_positions = np.array(positions)
+    def _create_joint_value_quantity(self, values: List) -> JointValueQuantity:
+        """Create a JointValueQuantity message from numpy array."""
+        jvq = JointValueQuantity()
+        for i in range(7):
+            setattr(jvq, f'joint_{i+1}', float(values[i]))
+        return jvq
     
-    def set_joint_velocities(self, velocities: List[float]):
-        """
-        Set the current joint velocities.
+    def set_arm_state(self,
+        positions: List|None = None,
+        velocities: List|None = None,
+        efforts: List|None = None,
+        external_torques: List|None = None,
+        cartesian_pose: List|None = None
+    ):
+        # If no update, return
+        if (
+            positions is None and \
+            velocities is None and \
+            efforts is None and \
+            external_torques is None and \
+            cartesian_pose is None
+        ):
+            return
         
-        Args:
-            velocities: List of 7 joint velocities in rad/s
-        """
-        if len(velocities) != 7:
-            raise ValueError("Expected 7 joint velocities")
-        self._joint_velocities = np.array(velocities)
-    
-    def set_joint_efforts(self, efforts: List[float]):
-        """
-        Set the current joint efforts.
+        # Set the new values
+        for arr, quant in zip(
+            [positions, velocities, efforts, external_torques],
+            ["_joint_positions", "_joint_velocities", "_joint_efforts", "_external_torques"]
+        ):
+            if arr is None: continue
+            assert len(arr) == 7, "Expected array of shape (7,)"
+            setattr(self, quant, arr)
+        if cartesian_pose is not None:
+            self._cartesian_pose.position = Point(
+                x=float(cartesian_pose[0]), 
+                y=float(cartesian_pose[1]), 
+                z=float(cartesian_pose[2])
+            )
+            self._cartesian_pose.orientation = Quaternion(
+                x=float(cartesian_pose[0]), 
+                y=float(cartesian_pose[1]),                                                         
+                z=float(cartesian_pose[2]), 
+                w=float(cartesian_pose[3])
+            )
+
+        # Create motion status message
+        msg = MotionStatus()
+        msg.header = Header()
+        msg.header.stamp = self.node.get_clock().now().to_msg()
+        msg.header.frame_id = f"victor_{self.side}_arm_world_frame_kuka"
         
-        Args:
-            efforts: List of 7 joint efforts in Nm
-        """
-        if len(efforts) != 7:
-            raise ValueError("Expected 7 joint efforts")
-        self._joint_efforts = np.array(efforts)
-    
-    def set_external_torques(self, torques: List[float]):
-        """
-        Set the current external torques.
+        # Set joint values
+        msg.measured_joint_position = self._create_joint_value_quantity(self._joint_positions)
+        msg.measured_joint_velocity = self._create_joint_value_quantity(self._joint_velocities)
+        msg.measured_joint_torque = self._create_joint_value_quantity(self._joint_efforts)
+        msg.estimated_external_torque = self._create_joint_value_quantity(self._external_torques)
+        # Set cartesian pose
+        msg.measured_cartesian_pose = self._cartesian_pose
         
-        Args:
-            torques: List of 7 external torques in Nm
-        """
-        if len(torques) != 7:
-            raise ValueError("Expected 7 external torques")
-        self._external_torques = np.array(torques)
-    
-    def set_cartesian_pose(self, position: List[float], orientation: List[float]):
-        """
-        Set the current cartesian pose.
+        # Set commanded values (copy from measured for simulation)
+        msg.commanded_joint_position = msg.measured_joint_position
+        msg.commanded_cartesian_pose = msg.measured_cartesian_pose
         
-        Args:
-            position: [x, y, z] in meters
-            orientation: [x, y, z, w] quaternion
+        # Publish to both topics
+        self.motion_status_pub.publish(msg)
+        self.sim_motion_status_pub.publish(msg)
+
+
+    def set_gripper_positions(self,
+        finger_a: float,
+        finger_b: float,
+        finger_c: float,
+        scissor: float
+    ):
         """
-        self._cartesian_pose.position = Point(x=float(position[0]), y=float(position[1]), z=float(position[2]))
-        self._cartesian_pose.orientation = Quaternion(x=float(orientation[0]), y=float(orientation[1]), 
-                                                     z=float(orientation[2]), w=float(orientation[3]))
-    
-    def set_gripper_positions(self, finger_a: float, finger_b: float, finger_c: float, scissor: float):
+        Set gripper finger positions.
         """
-        Set gripper finger positions with reverse mapping.
-        
-        Args:
-            finger_a: Finger A position (0.0 to 1.0) - will be reverse mapped for status
-            finger_b: Finger B position (0.0 to 1.0) - will be reverse mapped for status
-            finger_c: Finger C position (0.0 to 1.0) - will be reverse mapped for status
-            scissor: Scissor position (-0.15 to 0.15)
-        """
+        for val in [finger_a, finger_b, finger_c, scissor]:
+            assert isinstance(val, float)
         self._gripper_status.finger_a_status.position = finger_a
         self._gripper_status.finger_b_status.position = finger_b
         self._gripper_status.finger_c_status.position = finger_c
         self._gripper_status.scissor_status.position = scissor
-    
-    def _create_joint_value_quantity(self, values: np.ndarray) -> JointValueQuantity:
-        """Create a JointValueQuantity message from numpy array."""
-        jvq = JointValueQuantity()
-        jvq.joint_1 = float(values[0])
-        jvq.joint_2 = float(values[1])
-        jvq.joint_3 = float(values[2])
-        jvq.joint_4 = float(values[3])
-        jvq.joint_5 = float(values[4])
-        jvq.joint_6 = float(values[5])
-        jvq.joint_7 = float(values[6])
-        return jvq
-    
-    def publish_motion_status(self):
-        """
-        Publish the current motion status to both standard victor API and simulator bridge.
-        This should be called regularly (e.g., at 1000 Hz) to update the hardware interface.
-        """
-        try:
-            # Create motion status message
-            msg = MotionStatus()
-            msg.header = Header()
-            msg.header.stamp = self.node.get_clock().now().to_msg()
-            msg.header.frame_id = f"victor_{self.side}_arm_world_frame_kuka"
-            
-            # Set joint values
-            msg.measured_joint_position = self._create_joint_value_quantity(self._joint_positions)
-            msg.measured_joint_velocity = self._create_joint_value_quantity(self._joint_velocities)
-            msg.measured_joint_torque = self._create_joint_value_quantity(self._joint_efforts)
-            msg.estimated_external_torque = self._create_joint_value_quantity(self._external_torques)
-            
-            # Set cartesian pose
-            msg.measured_cartesian_pose = self._cartesian_pose
-            
-            # Set commanded values (copy from measured for simulation)
-            msg.commanded_joint_position = msg.measured_joint_position
-            msg.commanded_cartesian_pose = msg.measured_cartesian_pose
-            
-            # Publish to both topics
-            self.motion_status_pub.publish(msg)
-            self.sim_motion_status_pub.publish(msg)
-        except Exception as e:
-            self.node.get_logger().error(f"Error publishing motion status: {e}")
-    
-    def publish_gripper_status(self):
-        """
-        Publish the current gripper status to both standard victor API and simulator bridge.
-        """
-        try:
-            # Update header timestamp
-            self._gripper_status.header.stamp = self.node.get_clock().now().to_msg()
-            
-            # Publish to both topics
-            self.gripper_status_pub.publish(self._gripper_status)
-            self.sim_gripper_status_pub.publish(self._gripper_status)
-        except Exception as e:
-            self.node.get_logger().error(f"Error publishing gripper status: {e}")
+
+        # Update header timestamp
+        self._gripper_status.header.stamp = self.node.get_clock().now().to_msg()
+        
+        # Publish to both topics
+        self.gripper_status_pub.publish(self._gripper_status)
+        self.sim_gripper_status_pub.publish(self._gripper_status)
 
 
 def create_victor_simulator() -> VictorSimulatorAPI:
@@ -462,54 +399,7 @@ def create_victor_simulator() -> VictorSimulatorAPI:
     Returns:
         VictorSimulatorAPI: Initialized simulator API
     """
-    # Initialize rclpy if not already initialized
-    if not rclpy.ok():
-        rclpy.init()
-    
+    # Check if rclpy is already initialized, don't reinitialize
     simulator = VictorSimulatorAPI(auto_init_rclpy=False)
     simulator.start()
     return simulator
-
-
-# Example usage and helper functions
-if __name__ == "__main__":
-    # Example of how to use the API
-    simulator = create_victor_simulator()
-    
-    try:
-        # # Set up motion command callbacks
-        # def left_motion_callback(msg):
-        #     print(f"Left arm motion command received: {msg.commanded_joint_position}")
-        
-        # def right_motion_callback(msg):
-        #     print(f"Right arm motion command received: {msg.commanded_joint_position}")
-
-        # Simulate robot state updates
-        rate_hz = 100  # Update at 100 Hz
-        while rclpy.ok():
-            # Update robot state (this would come from your physics simulation)
-            current_time = time.time()
-            
-            # Example: simple sinusoidal motion
-            positions = [0.1 * np.sin(current_time + i) for i in range(7)]
-            
-            # Update both arms
-            for arm in [simulator.left_arm, simulator.right_arm]:
-                arm.set_joint_positions(positions)
-                arm.set_joint_velocities([0.0] * 7)  # Zero velocity for this example
-                arm.set_joint_efforts([0.0] * 7)     # Zero effort for this example
-                arm.set_external_torques([0.0] * 7)  # Zero external torques
-                
-                # Publish current state
-                arm.publish_motion_status()
-                arm.publish_gripper_status()
-            
-            time.sleep(1.0 / rate_hz)
-            
-    except KeyboardInterrupt:
-        print("Shutting down...")
-    finally:
-        simulator.stop()
-        rclpy.shutdown()
-        simulator.stop()
-        rclpy.shutdown()
