@@ -12,6 +12,7 @@
 #include <victor_sim_hardware/sim_control_mode_client.hpp>
 #include <victor_hardware_interfaces/msg/control_mode_parameters.hpp>
 #include <victor_hardware_interfaces/msg/motion_status.hpp>
+#include <victor_hardware_interfaces/msg/joint_value_quantity.hpp>
 #include <victor_hardware_interfaces/msg/robotiq3_finger_command.hpp>
 #include <victor_hardware_interfaces/msg/robotiq3_finger_status.hpp>
 #include <geometry_msgs/msg/pose.hpp>
@@ -84,7 +85,7 @@ class Side {
   std::shared_ptr<SimControlModeClient> control_mode_client_;
 
   // Simulator bridge communication (new for simulator)
-  rclcpp::Publisher<msg::MotionStatus>::SharedPtr sim_motion_command_pub_;
+  rclcpp::Publisher<msg::JointValueQuantity>::SharedPtr sim_motion_command_pub_;
   rclcpp::Publisher<msg::Robotiq3FingerCommand>::SharedPtr sim_gripper_command_pub_;
   rclcpp::Subscription<msg::MotionStatus>::SharedPtr sim_motion_status_sub_;
   rclcpp::Subscription<msg::Robotiq3FingerStatus>::SharedPtr sim_gripper_status_sub_;
@@ -107,7 +108,7 @@ class Side {
   
   void reset_motion_cmd_to_current_measured();
   bool validateMotionCommand() const;
-  msg::MotionStatus createMotionCommandMessage() const;
+  // msg::MotionStatus createMotionCommandMessage() const;
   
   // Helper functions for accessing joint fields
   double* getJointPositionRef(size_t index);

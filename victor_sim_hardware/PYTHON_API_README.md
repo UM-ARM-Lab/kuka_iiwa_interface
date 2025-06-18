@@ -19,12 +19,14 @@ The system uses a dual-topic approach:
 - `/victor/right_arm/gripper_status` - Gripper status published to controllers
 
 ### Simulator Bridge Topics (for hardware interface communication)
-- `/victor_sim_bridge/left/motion_command` - Motion commands from hardware interface
-- `/victor_sim_bridge/right/motion_command` - Motion commands from hardware interface
-- `/victor_sim_bridge/left/motion_status` - Robot state to hardware interface
-- `/victor_sim_bridge/right/motion_status` - Robot state to hardware interface
-- `/victor_sim_bridge/left/gripper_status` - Gripper status to hardware interface
-- `/victor_sim_bridge/right/gripper_status` - Gripper status to hardware interface
+- `/victor_sim_bridge/left/motion_command` - Joint position commands from hardware interface (JointValueQuantity)
+- `/victor_sim_bridge/right/motion_command` - Joint position commands from hardware interface (JointValueQuantity)
+- `/victor_sim_bridge/left/motion_status` - Robot state to hardware interface (MotionStatus)
+- `/victor_sim_bridge/right/motion_status` - Robot state to hardware interface (MotionStatus)
+- `/victor_sim_bridge/left/gripper_command` - Gripper commands to hardware interface (Robotiq3FingerCommand)
+- `/victor_sim_bridge/right/gripper_command` - Gripper commands to hardware interface (Robotiq3FingerCommand)
+- `/victor_sim_bridge/left/gripper_status` - Gripper status to hardware interface (Robotiq3FingerStatus)
+- `/victor_sim_bridge/right/gripper_status` - Gripper status to hardware interface (Robotiq3FingerStatus)
 
 ## Python API Usage
 
@@ -42,33 +44,33 @@ left_arm = simulator.get_left_arm()
 right_arm = simulator.get_right_arm()
 ```
 
-### Setting Up Command Callbacks
+### Reading Commands (Polling Method - Recommended)
 
 ```python
-def motion_command_callback(msg):
-    """Handle motion commands from controllers."""
-    # Extract commanded joint positions
-    cmd_pos = msg.commanded_joint_position
-    joint_targets = [
-        cmd_pos.joint_1, cmd_pos.joint_2, cmd_pos.joint_3, cmd_pos.joint_4,
-        cmd_pos.joint_5, cmd_pos.joint_6, cmd_pos.joint_7
-    ]
-    
-    # Use these targets in your physics simulation
-    print(f"New joint targets: {joint_targets}")
+import time
+import numpy as np
 
-def gripper_command_callback(msg):
-    """Handle gripper commands from controllers."""
-    finger_a_pos = msg.finger_a_command.position
-    finger_b_pos = msg.finger_b_command.position
-    finger_c_pos = msg.finger_c_command.position
-    scissor_pos = msg.scissor_command.position
+# Main simulation loop
+while rclpy.ok():
+    # Poll for latest commands from controllers
+    left_motion_cmd = left_arm.get_latest_motion_command()
+    if left_motion_cmd is not None:
+        # left_motion_cmd is a numpy array of 7 joint positions
+        print(f"Left arm command: {left_motion_cmd}")
+        # Use these joint targets in your physics simulation
+        
+    left_gripper_cmd = left_arm.get_latest_gripper_command()
+    if left_gripper_cmd is not None:
+        # left_gripper_cmd is a numpy array [finger_a, finger_b, finger_c, scissor]
+        print(f"Left gripper command: {left_gripper_cmd}")
+        
+    # Update your physics simulation here...
+    # Then update robot state and publish
     
-    print(f"Gripper command: A={finger_a_pos}, B={finger_b_pos}, C={finger_c_pos}, Scissor={scissor_pos}")
-
-# Register callbacks
-left_arm.set_motion_command_callback(motion_command_callback)
-left_arm.set_gripper_command_callback(gripper_command_callback)
+    left_arm.publish_motion_status()
+    left_arm.publish_gripper_status()
+    
+    time.sleep(0.001)  # 1000 Hz
 ```
 
 ### Updating Robot State

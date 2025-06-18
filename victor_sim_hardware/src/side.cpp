@@ -128,7 +128,7 @@ CallbackReturn Side::on_init(std::shared_ptr<rclcpp::Node> const& node) {
 
   // Simulator bridge communication (NEW - for Python simulator)
   auto const sim_ns = "/victor_sim_bridge/" + side_name_ + "/";
-  sim_motion_command_pub_ = node->create_publisher<msg::MotionStatus>(sim_ns + "motion_command", 1);
+  sim_motion_command_pub_ = node->create_publisher<msg::JointValueQuantity>(sim_ns + "motion_command", 1);
   sim_gripper_command_pub_ = node->create_publisher<msg::Robotiq3FingerCommand>(sim_ns + "gripper_command", 1);
   
   sim_motion_status_sub_ = node->create_subscription<msg::MotionStatus>(
@@ -217,8 +217,15 @@ hardware_interface::return_type Side::send_motion_command() {
     return hardware_interface::return_type::OK;
   }
 
-  // Create motion command message from current command values
-  auto motion_cmd = createMotionCommandMessage();
+  // Create simplified joint command message with just joint positions
+  msg::JointValueQuantity joint_cmd;
+  joint_cmd.joint_1 = motion_cmd_.commanded_joint_position.joint_1;
+  joint_cmd.joint_2 = motion_cmd_.commanded_joint_position.joint_2;
+  joint_cmd.joint_3 = motion_cmd_.commanded_joint_position.joint_3;
+  joint_cmd.joint_4 = motion_cmd_.commanded_joint_position.joint_4;
+  joint_cmd.joint_5 = motion_cmd_.commanded_joint_position.joint_5;
+  joint_cmd.joint_6 = motion_cmd_.commanded_joint_position.joint_6;
+  joint_cmd.joint_7 = motion_cmd_.commanded_joint_position.joint_7;
   
   // Validate the command
   if (!validateMotionCommand()) {
@@ -226,8 +233,8 @@ hardware_interface::return_type Side::send_motion_command() {
     return hardware_interface::return_type::ERROR;
   }
 
-  // Send to simulator via ROS
-  sim_motion_command_pub_->publish(motion_cmd);
+  // Send simplified command to simulator via ROS
+  sim_motion_command_pub_->publish(joint_cmd);
 
   return hardware_interface::return_type::OK;
 }
@@ -286,18 +293,18 @@ bool Side::validateMotionCommand() const {
   return true;
 }
 
-msg::MotionStatus Side::createMotionCommandMessage() const {
-  msg::MotionStatus cmd = motion_cmd_;
+// msg::MotionStatus Side::createMotionCommandMessage() const {
+//   msg::MotionStatus cmd = motion_cmd_;
   
-  // Set header
-  cmd.header.stamp = rclcpp::Clock().now();
-  cmd.header.frame_id = side_name_ + "_arm";
+//   // Set header
+//   cmd.header.stamp = rclcpp::Clock().now();
+//   cmd.header.frame_id = side_name_ + "_arm";
   
-  // Set control mode
-  cmd.active_control_mode.mode = latest_control_mode_;
+//   // Set control mode
+//   cmd.active_control_mode.mode = latest_control_mode_;
   
-  return cmd;
-}
+//   return cmd;
+// }
 
 // Helper functions to get references to joint values
 double* Side::getJointPositionRef(size_t index) {

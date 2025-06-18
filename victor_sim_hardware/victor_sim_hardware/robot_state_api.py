@@ -5,9 +5,9 @@ Victor Robot State API for Simulator
 This module provides a Python API for simulator scripts to communicate with the
 victor_sim_hardware interface over ROS topics. It replicates the structure of the
 real robot setup and provides function APIs for simulators to:
-- Read motion commands from controllers
+- Read motion commands (as JointValueQuantity) from controllers
 - Write robot states (MotionStatus) to the hardware interface
-- Handle gripper commands and status
+- Handle gripper commands (Robotiq3FingerCommand) and status (Robotiq3FingerStatus)
 
 Topic Structure:
 - Standard victor API topics (for controllers):
@@ -16,10 +16,10 @@ Topic Structure:
   - /victor/{side}_arm/gripper_status (published by this API)
 
 - Simulator bridge topics (for hardware interface communication):
-  - /victor_sim_bridge/{side}/motion_command (subscribed by this API)
-  - /victor_sim_bridge/{side}/motion_status (published by this API)
-  - /victor_sim_bridge/{side}/gripper_command (published by this API)
-  - /victor_sim_bridge/{side}/gripper_status (subscribed by this API)
+  - /victor_sim_bridge/{side}/motion_command (subscribed by this API) - JointValueQuantity
+  - /victor_sim_bridge/{side}/motion_status (published by this API) - MotionStatus
+  - /victor_sim_bridge/{side}/gripper_command (published by this API) - Robotiq3FingerCommand
+  - /victor_sim_bridge/{side}/gripper_status (subscribed by this API) - Robotiq3FingerStatus
 """
 
 import rclpy
@@ -222,7 +222,7 @@ class ArmAPI:
         
         # Simulator bridge subscribers (from hardware interface)
         self.sim_motion_command_sub = self.node.create_subscription(
-            MotionStatus,
+            JointValueQuantity,
             f'/victor_sim_bridge/{self.side}/motion_command',
             self._motion_command_sim_callback,
             10,
@@ -258,12 +258,12 @@ class ArmAPI:
         self._gripper_status.gripper_motion_status = Robotiq3FingerStatus.GRIPPER_STOPPED_UNKNOWN
         self._gripper_status.gripper_fault_status = Robotiq3FingerStatus.NO_FAULTS
     
-    def _motion_command_sim_callback(self, msg: MotionStatus):
-        """Handle motion command from hardware interface."""
-        # Extract joint positions as numpy array FIRST
-        joint_positions = self._extract_joint_positions_from_motion_status(msg)
+    def _motion_command_sim_callback(self, msg: JointValueQuantity):
+        """Handle joint value command from hardware interface."""
+        # Extract joint positions as numpy array directly from JointValueQuantity
+        joint_positions = self._extract_joint_positions_from_joint_value_quantity(msg)
         
-        # Then store the numpy array and set the flag
+        # Store the numpy array and set the flag
         self._updated_motion_command = True
         self._latest_motion_command = joint_positions
         
@@ -294,12 +294,11 @@ class ArmAPI:
         self._updated_gripper_command = True
         self._latest_gripper_command = np.array([finger_a, finger_b, finger_c, scissor_scaled])
     
-    def _extract_joint_positions_from_motion_status(self, msg: MotionStatus) -> np.ndarray:
-        """Extract commanded joint positions from MotionStatus message as numpy array."""
-        jvq = msg.commanded_joint_position
+    def _extract_joint_positions_from_joint_value_quantity(self, msg: JointValueQuantity) -> np.ndarray:
+        """Extract joint positions from JointValueQuantity message as numpy array."""
         return np.array([
-            jvq.joint_1, jvq.joint_2, jvq.joint_3, jvq.joint_4,
-            jvq.joint_5, jvq.joint_6, jvq.joint_7
+            msg.joint_1, msg.joint_2, msg.joint_3, msg.joint_4,
+            msg.joint_5, msg.joint_6, msg.joint_7
         ])
     
     def _extract_gripper_positions_from_command(self, msg: Robotiq3FingerCommand) -> np.ndarray:
@@ -321,7 +320,7 @@ class ArmAPI:
     
     def get_latest_gripper_command(self) -> Optional[np.ndarray]:
         """Get the latest gripper command received from controllers."""
-        if self._updated_gripper_command:
+        if self._updated_gripper_command and self._latest_gripper_command is not None:
             self._updated_gripper_command = False
             # Return a copy to avoid external modification
             return self._latest_gripper_command.copy()
