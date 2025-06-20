@@ -178,20 +178,6 @@ class ArmAPI:
     
     def _setup_publishers(self):
         """Setup ROS publishers for this arm."""
-        # Standard victor API publishers (for controllers)
-        self.motion_status_pub = self.node.create_publisher(
-            MotionStatus,
-            f'/victor/{self.side}_arm/motion_status',
-            10,
-            callback_group=self.node.callback_group
-        )
-        
-        self.gripper_status_pub = self.node.create_publisher(
-            Robotiq3FingerStatus,
-            f'/victor/{self.side}_arm/gripper_status',
-            10,
-            callback_group=self.node.callback_group
-        )
         
         # Simulator bridge publishers (to hardware interface)
         self.sim_motion_status_pub = self.node.create_publisher(
@@ -221,7 +207,7 @@ class ArmAPI:
         
         # Simulator bridge subscribers (from hardware interface)
         self.sim_motion_command_sub = self.node.create_subscription(
-            MotionStatus,
+            JointValueQuantity,
             f'/victor_sim_bridge/{self.side}/motion_command',
             self._motion_command_sim_callback,
             10,
@@ -257,22 +243,21 @@ class ArmAPI:
         self._gripper_status.gripper_motion_status = Robotiq3FingerStatus.GRIPPER_STOPPED_UNKNOWN
         self._gripper_status.gripper_fault_status = Robotiq3FingerStatus.NO_FAULTS
     
-    def _motion_command_sim_callback(self, msg: MotionStatus):
+    def _motion_command_sim_callback(self, msg: JointValueQuantity):
         """Handle motion command from hardware interface."""
         self._updated_motion_command = True
-        self._latest_motion_command = self._extract_joint_positions_from_motion_status(msg)
+        self._latest_motion_command = self._extract_joint_positions_from_joint_value_quantity(msg)
     
     def _gripper_command_ros_callback(self, msg: Robotiq3FingerCommand):
         """Handle gripper command from controllers."""
         self._updated_gripper_command = True
         self._latest_gripper_command = self._extract_gripper_positions_from_command(msg)
     
-    def _extract_joint_positions_from_motion_status(self, msg: MotionStatus) -> List:
-        """Extract commanded joint positions from MotionStatus message as numpy array."""
-        jvq = msg.commanded_joint_position
+    def _extract_joint_positions_from_joint_value_quantity(self, msg: JointValueQuantity) -> List:
+        """Extract joint positions from JointValueQuantity message as list."""
         return [
-            jvq.joint_1, jvq.joint_2, jvq.joint_3, jvq.joint_4,
-            jvq.joint_5, jvq.joint_6, jvq.joint_7
+            msg.joint_1, msg.joint_2, msg.joint_3, msg.joint_4,
+            msg.joint_5, msg.joint_6, msg.joint_7
         ]
     
     def _extract_gripper_positions_from_command(self, msg: Robotiq3FingerCommand) -> List:
@@ -364,7 +349,6 @@ class ArmAPI:
         msg.commanded_cartesian_pose = msg.measured_cartesian_pose
         
         # Publish to both topics
-        self.motion_status_pub.publish(msg)
         self.sim_motion_status_pub.publish(msg)
 
 
@@ -388,7 +372,6 @@ class ArmAPI:
         self._gripper_status.header.stamp = self.node.get_clock().now().to_msg()
         
         # Publish to both topics
-        self.gripper_status_pub.publish(self._gripper_status)
         self.sim_gripper_status_pub.publish(self._gripper_status)
 
 
@@ -402,4 +385,5 @@ def create_victor_simulator() -> VictorSimulatorAPI:
     # Check if rclpy is already initialized, don't reinitialize
     simulator = VictorSimulatorAPI(auto_init_rclpy=False)
     simulator.start()
+    return simulator
     return simulator

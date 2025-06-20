@@ -1,5 +1,8 @@
 import copy
+from os import wait
 import threading
+
+from requests import get
 
 from rclpy.action import ActionClient
 from shape_msgs.msg import Mesh, MeshTriangle
@@ -343,18 +346,24 @@ class Side:
             self.active_controller_name = None
         return controllers
 
-    def get_all_controllers(self, mode="async") -> List[ControllerState]:
+    def get_all_controllers(self, mode="sync") -> List[ControllerState]:
+        # Call the list controllers ROS service
+        future = self.get_all_controllers_async()
+        if mode == "async":
+            return future
+        rate = self.node.create_rate(100)
+        while not future.done():
+            rate.sleep()
+        return self.get_all_controllers_async_callback(future)
+    
+    def get_all_controllers_async(self) -> List[ControllerState]:
         # Call the list controllers ROS service
         req = ListControllers.Request()
-        if mode == "sync":
-            res = self.list_controllers_client.call(req)
-        elif mode == "async":
-            future = self.list_controllers_client.call_async(req)
-            # rate = self.node.create_rate(1000)
-            # while not future.done():
-            #     rate.sleep()
-            rclpy.spin_until_future_complete(self.node, future)
-            res = future.result()
+        future = self.list_controllers_client.call_async(req)
+        return future
+    
+    def get_all_controllers_async_callback(self, future: Future):
+        res = future.result()
         controllers = res.controller
         controllers = [controller for controller in controllers if "broadcaster" not in controller.name]
         return controllers
@@ -363,6 +372,14 @@ class Side:
         return any([self.name in interface for interface in controller.claimed_interfaces])
 
     def get_control_mode_for_controller(self, controller_name: str) -> str:
+        # get the ROS param "control_mode" on the given controller's node
+        future = self.get_control_mode_for_controller_async(controller_name)
+        rate = self.node.create_rate(100)
+        while not future.done():
+            rate.sleep()
+        return self.get_control_mode_for_controller_async_callback(future)
+    
+    def get_control_mode_for_controller_async(self, controller_name: str) -> Future:
         # get the ROS param "control_mode" on the given controller's node
         if controller_name not in self.get_get_parameters_client:
             srv_client = self.node.create_client(GetParameters, f"{controller_name}/get_parameters")
@@ -376,13 +393,11 @@ class Side:
         req = GetParameters.Request()
         req.names = ["control_mode"]
         future = srv_client.call_async(req)
-        # rate = self.node.create_rate(100)
-        # while not future.done():
-        #     rate.sleep()
-        rclpy.spin_until_future_complete(self.node, future)
+        return future
+    
+    def get_control_mode_for_controller_async_callback(self, future: Future) -> str:
         res = future.result()
         control_mode = res.values[0].string_value
-
         return control_mode
 
 
@@ -515,88 +530,134 @@ class Victor:
     def get_link_pose(self, link_name: str, base_frame: str = "victor_root") -> Transform:
         return self.tf_wrapper.get_transform(base_frame, link_name)
 
-    def set_left_controller(self, control_mode: str):
+    # 
+    def set_controller_async(self, control_mode: str, side='both') -> Future:
         assert control_mode in ["position_controller", "impedance_controller",
                                 "joint_position_trajectory_controller", "joint_impedance_trajectory_controller",
                                 "cartesian_controller",
                                 ]
-        left_active_controllers = self.left.get_active_controller_names()
-        active_controllers = list(set(left_active_controllers))
+        sides = ['left', 'right'] if side == 'both' else [side]
+        all_active_controllers = [getattr(self, s).get_active_controller_names() for s in sides]
+        active_controllers = list(set(sum(all_active_controllers, [])))
         req = SwitchController.Request()
         req.deactivate_controllers = [controller for controller in active_controllers if controller not in control_mode]
         if control_mode in ["joint_position_trajectory_controller", "joint_impedance_trajectory_controller"]:
             req.activate_controllers = [control_mode]
         else:
-            req.activate_controllers = [f"left_arm_{control_mode}"]
-
+            req.activate_controllers = [f"{s}_arm_{control_mode}" for s in sides]
         future = self.switch_controller_client.call_async(req)
-        # rate = self.node.create_rate(10)
-        # while not future.done():
-        #     rate.sleep()
-        rclpy.spin_until_future_complete(self.node, future)
+        return future
+    
+    def set_controller_async_callback(self, future: Future):
         res = future.result()
         if not res.ok:
             print(f"Failed to switch controllers: {res.ok}")
         else:
             self.get_and_update_active_controller_names()    
-
         return res
     
+    def set_left_controller(self, control_mode: str):
+        future = self.set_controller_async(control_mode, side='left')
+        rate = self.node.create_rate(10)
+        while not future.done():
+            rate.sleep()
+        return self.set_controller_async_callback(future)
+    
     def set_right_controller(self, control_mode: str):
-        assert control_mode in ["position_controller", "impedance_controller",
-                                "joint_position_trajectory_controller", "joint_impedance_trajectory_controller",
-                                "cartesian_controller",
-                                ]
-        right_active_controllers = self.right.get_active_controller_names()
-        active_controllers = list(set(right_active_controllers))
-        req = SwitchController.Request()
-        req.deactivate_controllers = [controller for controller in active_controllers if controller not in control_mode]
-        if control_mode in ["joint_position_trajectory_controller", "joint_impedance_trajectory_controller"]:
-            req.activate_controllers = [control_mode]
-        else:
-            req.activate_controllers = [f"right_arm_{control_mode}"]
-
-        future = self.switch_controller_client.call_async(req)
-        # rate = self.node.create_rate(10)
-        # while not future.done():
-        #     rate.sleep()
-        rclpy.spin_until_future_complete(self.node, future)
-        res = future.result()
-        if not res.ok:
-            print(f"Failed to switch controllers: {res.ok}")
-        else:
-            self.get_and_update_active_controller_names()    
-
-        return res
-
+        future = self.set_controller_async(control_mode, side='right')
+        rate = self.node.create_rate(10)
+        while not future.done():
+            rate.sleep()
+        return self.set_controller_async_callback(future)
+    
     def set_controller(self, control_mode: str):
-        assert control_mode in ["position_controller", "impedance_controller",
-                                "joint_position_trajectory_controller", "joint_impedance_trajectory_controller",
-                                "cartesian_controller",
-                                ]
-        left_active_controllers = self.left.get_active_controller_names()
-        right_active_controllers = self.right.get_active_controller_names()
-        active_controllers = list(set(left_active_controllers + right_active_controllers))
-        req = SwitchController.Request()
-        req.deactivate_controllers = [controller for controller in active_controllers if controller not in control_mode]
-        if control_mode in ["joint_position_trajectory_controller", "joint_impedance_trajectory_controller"]:
-            req.activate_controllers = [control_mode]
-        else:
-            req.activate_controllers = [f"{side}_arm_{control_mode}" for side in ["left", "right"]]
+        future = self.set_controller_async(control_mode, side='both')
+        rate = self.node.create_rate(10)
+        while not future.done():
+            rate.sleep()
+        return self.set_controller_async_callback(future)
+    
+    # def set_left_controller(self, control_mode: str):
+    #     assert control_mode in ["position_controller", "impedance_controller",
+    #                             "joint_position_trajectory_controller", "joint_impedance_trajectory_controller",
+    #                             "cartesian_controller",
+    #                             ]
+    #     left_active_controllers = self.left.get_active_controller_names()
+    #     active_controllers = list(set(left_active_controllers))
+    #     req = SwitchController.Request()
+    #     req.deactivate_controllers = [controller for controller in active_controllers if controller not in control_mode]
+    #     if control_mode in ["joint_position_trajectory_controller", "joint_impedance_trajectory_controller"]:
+    #         req.activate_controllers = [control_mode]
+    #     else:
+    #         req.activate_controllers = [f"left_arm_{control_mode}"]
 
-        # res = self.switch_controller_client.call(req)
-        future = self.switch_controller_client.call_async(req)
-        # rate = self.node.create_rate(10)
-        # while not future.done():
-        #     rate.sleep()
-        rclpy.spin_until_future_complete(self.node, future)
-        res = future.result()
-        if not res.ok:
-            print(f"Failed to switch controllers: {res.ok}")
-        else:
-            self.get_and_update_active_controller_names()
+    #     future = self.switch_controller_client.call_async(req)
+    #     rate = self.node.create_rate(10)
+    #     while not future.done():
+    #         rate.sleep()
+    #     # rclpy.spin_until_future_complete(self.node, future)
+    #     res = future.result()
+    #     if not res.ok:
+    #         print(f"Failed to switch controllers: {res.ok}")
+    #     else:
+    #         self.get_and_update_active_controller_names()    
+    #     return res
+    
+    # def set_right_controller(self, control_mode: str):
+    #     assert control_mode in ["position_controller", "impedance_controller",
+    #                             "joint_position_trajectory_controller", "joint_impedance_trajectory_controller",
+    #                             "cartesian_controller",
+    #                             ]
+    #     right_active_controllers = self.right.get_active_controller_names()
+    #     active_controllers = list(set(right_active_controllers))
+    #     req = SwitchController.Request()
+    #     req.deactivate_controllers = [controller for controller in active_controllers if controller not in control_mode]
+    #     if control_mode in ["joint_position_trajectory_controller", "joint_impedance_trajectory_controller"]:
+    #         req.activate_controllers = [control_mode]
+    #     else:
+    #         req.activate_controllers = [f"right_arm_{control_mode}"]
 
-        return res
+    #     future = self.switch_controller_client.call_async(req)
+    #     rate = self.node.create_rate(10)
+    #     while not future.done():
+    #         rate.sleep()
+    #     # rclpy.spin_until_future_complete(self.node, future)
+    #     res = future.result()
+    #     if not res.ok:
+    #         print(f"Failed to switch controllers: {res.ok}")
+    #     else:
+    #         self.get_and_update_active_controller_names()    
+
+    #     return res
+
+    # def set_controller(self, control_mode: str):
+    #     assert control_mode in ["position_controller", "impedance_controller",
+    #                             "joint_position_trajectory_controller", "joint_impedance_trajectory_controller",
+    #                             "cartesian_controller",
+    #                             ]
+    #     left_active_controllers = self.left.get_active_controller_names()
+    #     right_active_controllers = self.right.get_active_controller_names()
+    #     active_controllers = list(set(left_active_controllers + right_active_controllers))
+    #     req = SwitchController.Request()
+    #     req.deactivate_controllers = [controller for controller in active_controllers if controller not in control_mode]
+    #     if control_mode in ["joint_position_trajectory_controller", "joint_impedance_trajectory_controller"]:
+    #         req.activate_controllers = [control_mode]
+    #     else:
+    #         req.activate_controllers = [f"{side}_arm_{control_mode}" for side in ["left", "right"]]
+
+    #     # res = self.switch_controller_client.call(req)
+    #     future = self.switch_controller_client.call_async(req)
+    #     rate = self.node.create_rate(10)
+    #     while not future.done():
+    #         rate.sleep()
+    #     # rclpy.spin_until_future_complete(self.node, future)
+    #     res = future.result()
+    #     if not res.ok:
+    #         print(f"Failed to switch controllers: {res.ok}")
+    #     else:
+    #         self.get_and_update_active_controller_names()
+
+    #     return res
 
     def get_and_update_active_controller_names(self):
         left_controller_name = self.left.get_active_controller_names()
@@ -1248,10 +1309,10 @@ class Victor:
             return None
 
         # 10ms sleep
-        # rate = self.node.create_rate(10)
-        # while not future.done():
-        #     rate.sleep()
-        rclpy.spin_until_future_complete(self.node, future, timeout_sec=wait_for_server_timeout_sec)
+        rate = self.node.create_rate(10)
+        while not future.done():
+            rate.sleep()
+        # rclpy.spin_until_future_complete(self.node, future, timeout_sec=wait_for_server_timeout_sec)
 
         return self.get_compute_ik_result(future)
 
@@ -1387,10 +1448,10 @@ class Victor:
             return None
 
         # 100ms sleep
-        # rate = self.node.create_rate(10)
-        # while not future.done():
-        #     rate.sleep()
-        rclpy.spin_until_future_complete(self.node, future, timeout_sec=10.0)
+        rate = self.node.create_rate(10)
+        while not future.done():
+            rate.sleep()
+        # rclpy.spin_until_future_complete(self.node, future, timeout_sec=10.0)
 
         return self.get_trajectory(
             future,

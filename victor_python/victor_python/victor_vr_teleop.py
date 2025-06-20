@@ -37,7 +37,6 @@ from sensor_msgs.msg import JointState
 from tf2_ros import TransformBroadcaster
 from victor_hardware_interfaces.msg import MotionStatus, ControlMode, Robotiq3FingerStatus
 from victor_python.victor import Victor, Side
-from victor_python.victor_utils import get_control_mode_params
 from victor_python.victor_utils import get_gripper_closed_fraction_msg, jvq_to_list
 from vr_ros2_bridge_msgs.msg import ControllersInfo, ControllerInfo
 
@@ -479,10 +478,7 @@ class SideTeleop:
                 break
             else:
                 break
-
-        # ik_t1 = perf_counter()
-        # print(f"IK took {ik_t1 - ik_t0:.3f} seconds")
-
+            
         if success:
             joint_positions = robot_state.get_joint_group_positions(self.side.arm_name)
             return joint_positions
@@ -552,13 +548,25 @@ class VictorTeleopNode(Node):
         # self.motion_target = motion
         self.target_controller = target_controller
 
+        # Cache values
+        self.init_left_joints = init_left_joints
+        self.init_right_joints = init_right_joints
+        self.position_sensitivity = position_sensitivity
+        self.orientation_sensitivity = orientation_sensitivity
+        self.use_filter = use_filter
+        self.split_pos_rot = split_pos_rot
+        self.trackpad_wrist_rot = trackpad_wrist_rot
+        self.init_gripper_state = init_gripper_state
+        self.ctrl_mode = ctrl_mode
+
+    def _runtime_init(self):
         # Move to predefined position
-        if init_left_joints is not None and self.use_left:
+        if self.init_left_joints is not None and self.use_left:
             res = self.victor.set_left_controller("joint_impedance_trajectory_controller")
-            self.victor.plan_to_joint_config(init_left_joints, "left_arm")
-        if init_right_joints is not None and self.use_right:
+            self.victor.plan_to_joint_config(self.init_left_joints, "left_arm")
+        if self.init_right_joints is not None and self.use_right:
             res = self.victor.set_right_controller("joint_impedance_trajectory_controller")
-            self.victor.plan_to_joint_config(init_right_joints, "right_arm")
+            self.victor.plan_to_joint_config(self.init_right_joints, "right_arm")
 
         # Setup 
         if self.use_left:
@@ -567,26 +575,26 @@ class VictorTeleopNode(Node):
                 self.victor.set_left_controller(self.target_controller)
             self.left = SideTeleop(self, self.victor.left, self.moveitpy, self.tf_broadcaster,
                                     controller_usability_rotation=transforms3d.euler.euler2mat(*left_usability_rotation),
-                                    position_sensitivity=position_sensitivity,
-                                    orientation_sensitivity=orientation_sensitivity,
-                                    split_pos_rot=split_pos_rot,
-                                    trackpad_wrist_rot=trackpad_wrist_rot,
-                                    use_filter=use_filter,
-                                    init_gripper_state=init_gripper_state,
-                                    ctrl_mode=ctrl_mode)
+                                    position_sensitivity=self.position_sensitivity,
+                                    orientation_sensitivity=self.orientation_sensitivity,
+                                    split_pos_rot=self.split_pos_rot,
+                                    trackpad_wrist_rot=self.trackpad_wrist_rot,
+                                    use_filter=self.use_filter,
+                                    init_gripper_state=self.init_gripper_state,
+                                    ctrl_mode=self.ctrl_mode)
         if self.use_right:
             activ_ctrl = list(set(self.victor.right.get_active_controller_names()))
             if f"right_arm_{self.target_controller}" not in activ_ctrl:
                 self.victor.set_right_controller(self.target_controller)
             self.right = SideTeleop(self, self.victor.right, self.moveitpy, self.tf_broadcaster,
                                     controller_usability_rotation=transforms3d.euler.euler2mat(*right_usability_rotation),
-                                    position_sensitivity=position_sensitivity,
-                                    orientation_sensitivity=orientation_sensitivity,
-                                    split_pos_rot=split_pos_rot,
-                                    trackpad_wrist_rot=trackpad_wrist_rot,
-                                    use_filter=use_filter,
-                                    init_gripper_state=init_gripper_state,
-                                    ctrl_mode=ctrl_mode)
+                                    position_sensitivity=self.position_sensitivity,
+                                    orientation_sensitivity=self.orientation_sensitivity,
+                                    split_pos_rot=self.split_pos_rot,
+                                    trackpad_wrist_rot=self.trackpad_wrist_rot,
+                                    use_filter=self.use_filter,
+                                    init_gripper_state=self.init_gripper_state,
+                                    ctrl_mode=self.ctrl_mode)
 
         # on controllers info depends on left
         self.vr_sub = self.create_subscription(ControllersInfo, "vr_controller_info", self.on_controllers_info, 10)
@@ -603,26 +611,6 @@ class VictorTeleopNode(Node):
         self.right_controller_onstart_pose = None
         self.left_arm_onstart_pose = None
         self.right_arm_onstart_pose = None
-
-        # Moved to above
-        # self.set_control_modes_async()
-        
-    # def set_control_modes_async(self):
-    #     thread = Thread(target=self.set_control_modes)
-    #     thread.start()
-
-    # def set_control_modes(self):
-    #     # Call switch_controllers
-    #     self.victor.deactivate_all_controllers()
-    #     self.victor.activate_controllers(['left_arm_impedance_controller', 'right_arm_impedance_controller'])
-
-    #     # Update ros params for that controller
-    #     req.new_control_mode = get_control_mode_params(ControlMode.JOINT_IMPEDANCE, vel=1.0, accel=0.1)
-
-    #     if self.use_left:
-    #         self.victor.left.set_control_mode_client.call(req)
-    #     if self.use_right:
-    #         self.victor.right.set_control_mode_client.call(req)
 
     def on_controllers_info(self, msg: ControllersInfo):
         if len(msg.controllers_info) == 0:
