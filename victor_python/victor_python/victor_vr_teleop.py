@@ -35,10 +35,13 @@ from moveit_configs_utils import MoveItConfigsBuilder
 from rclpy.node import Node
 from sensor_msgs.msg import JointState
 from tf2_ros import TransformBroadcaster
-from victor_hardware_interfaces.msg import MotionStatus, ControlMode, Robotiq3FingerStatus
+from victor_hardware_interfaces.msg import MotionStatus, Robotiq3FingerStatus
 from victor_python.victor import Victor, Side
-from victor_python.victor_utils import get_gripper_closed_fraction_msg, jvq_to_list
+from victor_python.victor_utils import jvq_to_list
 from vr_ros2_bridge_msgs.msg import ControllersInfo, ControllerInfo
+from std_msgs.msg import Bool
+
+from victor_python.victor_vr_teleop_profiles import VictorTeleopProfile, teleop_profile_dict
 
 VR_FRAME_NAME = "vr"
 
@@ -99,30 +102,95 @@ def controller_info_to_tf(node: Node, controller_info: ControllerInfo):
     tf.transform.rotation = pose_msg.orientation
     return tf
 
+def rotation_matrix_gripper_joint(x):
+    """
+    Returns a 4x4 homogeneous transformation matrix representing a rotation 
+    around the local z-axis by angle x (in radians).
+    """
+    cos_x = np.cos(x)
+    sin_x = np.sin(x)
+    return np.array([
+        [cos_x, -sin_x, 0, 0],
+        [sin_x,  cos_x, 0, 0],
+        [0,      0,     1, 0],
+        [0,      0,     0, 1]
+    ])
 
-def do_nothing_fn(*args, **kwargs):
+def _Rx(theta):
+    c, s = np.cos(theta), np.sin(theta)
+    return np.array([[1, 0,  0],
+                        [0, c, -s],
+                        [0, s,  c]])
+
+def _Ry(theta):
+    c, s = np.cos(theta), np.sin(theta)
+    return np.array([[ c, 0, s],
+                        [ 0, 1, 0],
+                        [-s, 0, c]])
+
+def _Rz(theta):
+    c, s = np.cos(theta), np.sin(theta)
+    return np.array([[c, -s, 0],
+                        [s,  c, 0],
+                        [0,  0, 1]])
+
+def rotation_matrix_held_tool_joint(center_offset: np.ndarray, rate: np.ndarray):
     """
-    A placeholder function that does nothing.
-    This is used to bind buttons to no action.
+    Parameters
+    ----------
+    droll, dpitch, dyaw : float
+        Small-angle increments (rad) that already include Δt.
+
+    Returns
+    -------
+    T : (4,4) ndarray
+        Homogeneous transform that realises the requested rotation
+        about `self.wrench_center_in_tool`.
     """
-    pass
+    # 1. Compose rotation for this Δt  (ZYX intrinsic convention).
+    droll, dpitch, dyaw = rate.tolist()
+    R = (_Rz(dyaw) @ _Ry(dpitch) @ _Rx(droll))
+
+    # 2. Express rotation about an arbitrary point p:
+    p = center_offset.reshape(3, 1)
+    t = (np.eye(3) - R) @ p       # == p - R p
+
+    # 3. Pack into a 4×4 homogeneous matrix.
+    T = np.eye(4)
+    T[:3, :3] = R
+    T[:3,  3] = t.ravel()
+    return T
+
+class ProcessFn:
+    def __init__(self,
+        name,
+        fn,
+        when_gripped=False
+    ):
+        """
+        A process function that can be registered to the teleop class.
+        It will be called with the controller_info as argument.
+        
+        Args:
+            name: Name of the process function, used for debugging.
+            fn: The function to call.
+            always: If True, the function will be called every time process_input is called.
+        """
+        self.name = name
+        self.fn = fn
+        self.when_gripped = when_gripped
+    
+    def __call__(self, *args, **kwargs):
+        return self.fn(*args, **kwargs)
 
 class SideTeleop:
     def __init__(self, 
             node: Node, 
             side: Side, 
+            victor: Victor,
             moveitpy: MoveItPy, 
             tf_broadcaster: TransformBroadcaster,
-            controller_usability_rotation=np.eye(3),
-            position_sensitivity=1.0,
-            orientation_sensitivity=1.0,
-            split_pos_rot=False,
-            trackpad_wrist_rot=False,
-            trackpad_click_angle=np.deg2rad(30.0),  # 15° per click
-            trackpad_click_deadzone=0.5,            # region threshold
-            use_filter=True,
-            init_gripper_state=0,                   # Initial gripper state index
-            ctrl_mode="natural",              # 'natural' or 'trackpad_rot'
+            ctrl_profile: VictorTeleopProfile
         ):
         """
 
@@ -136,89 +204,135 @@ class SideTeleop:
         """
         self.node = node
         self.side = side
+        self.side_name = side.arm_name.split('_')[0]  # e.g., 'left' or 'right'
+        self.victor = victor
         self.moveitpy = moveitpy
         self.robot_model: RobotModel = self.moveitpy.get_robot_model()
         self.tf_broadcaster = tf_broadcaster
-        self.controller_usability_rotation = controller_usability_rotation
-        # self.gripper_open = True
-
-        # Keypoints for gripper control
-        self.scissor_position = 1.0
-        self.finger_kpts = [0.0, 0.37, 0.51, 1.0]
-        self.scissor_position_kpt = [0.5, 1.0, 1.0, 0.5]
-        self.curr_gripper_position = 0
-
-        self.last_send_open_fraction = 0.0
-        self.gripper_in_motion = None
-
-        self.controller_in_vr0 = np.eye(4)
-        self.tool_in_base0 = np.eye(4)
-        self.wrist_in_base0 = np.eye(4)
-
         self.base_frame = self.robot_model.model_frame
         self.jmg: JointModelGroup = self.robot_model.get_joint_model_group(self.side.arm_name)
-
-        # Set both frames, to make it easier to configure modes
-        assert ctrl_mode in ['natural', 'trackpad_rot'], f"Invalid control mode: {ctrl_mode}"
-        self.ctrl_mode = ctrl_mode
-        # if self.ctrl_mode == 'trackpad_rot':
-        #     self.tool_frame = [n for n in self.jmg.link_model_names if 'link' in n][-1]
-        # elif self.ctrl_mode == 'natural':
-        #     self.tool_frame = self.jmg.eef_name
-
         self.tool_frame = self.jmg.eef_name
 
-        # Filtering motion
-        self.use_filter = use_filter
-        self.filter_pub = self.node.create_publisher(JointState, 'filtered_joint_states', 10)
-        self.filter = BatchOnlineFilter(numtaps=20, cutoff=0.1)
+        # Processor functions
+        self.get_joint_fn = ProcessFn(
+            "default_get_joint_positions",
+            self.get_joint_positions,
+        )
+        self.process_fns = {
+            "send_pose_cmd": ProcessFn("send_pose_cmd", self.send_pose_cmd, when_gripped=True),
+        }
 
-        # Set controller
+        # Parse control profile
+        self._init_controller(ctrl_profile)
+        self._init_vr(ctrl_profile)
+        self._init_gripper(ctrl_profile)
+        self._init_trackpad(ctrl_profile)
+        # self._init_trackpad_rot(ctrl_profile)
+        # self._init_correction_maneuver_fn(ctrl_profile)
+
+    def _init_controller(self, ctrl_profile):
+        # Then set the controller to the target controller
+        activ_ctrl = list(set(self.victor.left.get_active_controller_names()))
+        if f"{self.side_name}_{ctrl_profile.target_controller}" not in activ_ctrl:
+            ctrl_setter = getattr(self.victor, f'set_{self.side_name}_controller')
+            ctrl_setter(ctrl_profile.target_controller)
+        # Get controller
         active_controller_names = self.side.get_active_controller_names()
         if len(active_controller_names) != 1:
             raise ValueError(f"Expected exactly one active controller, got {active_controller_names}")
         active_controller_name = active_controller_names[0]
         self.joint_cmd_pub = self.side.get_joint_cmd_pub(active_controller_name)
 
+    def _init_vr(self, ctrl_profile):
+        # Controller Orientation setup
+        self.controller_in_vr0 = np.eye(4)
+        self.tool_in_base0 = np.eye(4)
+        self.usability_rotation = np.array(
+            ctrl_profile.usability_rotation.get(self.side.arm_name, [0.0, 0.0, 0.0])
+        )
+
         # Sensitivity setup
-        self.position_sensitivity = position_sensitivity  # e.g., 1.0
-        self.orientation_sensitivity = orientation_sensitivity  # e.g., 1.0
-        self.split_pos_rot = split_pos_rot  # If True, position and rotation are controlled separately through trigger button
+        self.position_sensitivity = ctrl_profile.position_sensitivity  # e.g., 1.0
+        self.orientation_sensitivity = ctrl_profile.orientation_sensitivity  # e.g., 1.0
 
-        # Set controller button mapping processors
-        self.process_fns = {"send_pose_cmd": self.send_pose_cmd,}
-        self.all_time_process_fns = {}
+        # Filtering motion
+        self.use_filter = ctrl_profile.use_filter
+        self.filter_pub = self.node.create_publisher(JointState, 'filtered_joint_states', 10)
+        self.filter = BatchOnlineFilter(numtaps=20, cutoff=0.1)
 
-        # Configure binding functions for buttons
-        # if not split_pos_rot:
-        #     self.all_time_process_fns['trigger_button_gripper_position'] = self.set_gripper_position
-        
-        # Trackpad button to toggle gripper
-        # how much to turn per left/right click
-        self.trackpad_click_angle = trackpad_click_angle
-        # if |x| or |y| < deadzone we ignore it for region tests
-        self.trackpad_click_deadzone = trackpad_click_deadzone
-        # for edge-detection of a new click press
-        self._prev_trackpad_click = False
-
-        # Trackpad up down for gripper open/close
+    def _init_gripper(self, ctrl_profile):
+        # Gripper setup
+        self.gripper_in_motion = None
+        # Keypoints for gripper control
+        self.gripper_keypoints = ctrl_profile.gripper_keypoints
+        self._max_gripper_idx = len(self.gripper_keypoints) - 1
+        self.gripper_state_idx = ctrl_profile.init_gripper_state
+        # For now, only identical value for finger a,b,c are supported
+        self.side.set_gripper_position(self.gripper_keypoints[self.gripper_state_idx][0],
+                                       scissor_position=self.gripper_keypoints[self.gripper_state_idx][-1])
         self.toggle_gripper_dt = 0.25  # seconds
         self.last_toggled_gripper = perf_counter()
-        self.all_time_process_fns['trackpad_updown_gripper'] = self.toggle_gripper_up_down
-        self.gripper_state_idx = init_gripper_state
-        self.side.set_gripper_position(self.finger_kpts[self.gripper_state_idx],
-                                       scissor_position=self.scissor_position_kpt[self.gripper_state_idx])
-        # self.side.open_gripper(scissor_position=self.side.gripper_open_fraction)
+        self.process_fns['trackpad_updown_gripper'] = ProcessFn(
+            "trackpad_updown_gripper",
+            self.toggle_gripper_up_down,
+            when_gripped=False
+        )
+    
+    def _init_trackpad(self, ctrl_profile):
+        """
+        Initialize trackpad settings.
+        """
+        # if |x| or |y| < deadzone we ignore it for region tests
+        self.trackpad_click_deadzone = 0.4
 
-        if not self.split_pos_rot:
-            # Offset to the held tool rotation center from the gripper joint
-            # self.held_tool_pos_offset = np.array([0.0, 0.119126, 0.1397])
-            self.held_tool_pos_offset = np.array([0.0, 0.36, -0.1016])
-            # self.held_tool_rotation_rate = np.array([0.05, 0.0, 0.0])
-            self.held_tool_rotation_rate = np.array([0.0, 0.0, 0.15])
-        
-        # Configure trackpad rotating palm
-        self.trackpad_rot_rate = 0.2   # How much to rotate (Rad) per second in trackpad
+    def _init_trackpad_rot(self, ctrl_profile):
+        self.trackpad_for_wrist_rot = getattr(ctrl_profile, 'trackpad_for_wrist_rot', False)
+        if self.trackpad_for_wrist_rot:
+            # Configure trackpad rotating palm
+            self.trackpad_rot_rate = ctrl_profile.trackpad_rot_rate  # How much to rotate (Rad) per second in trackpad
+            self.trackpad_rot_rate = 0.2   # How much to rotate (Rad) per second in trackpad
+            # Register function
+            self.get_joint_fn = ProcessFn(
+                "get_joint_positions_with_trackpad_rot",
+                self.get_joint_fn_with_trackpad_rot,
+            )
+
+    def get_joint_fn_with_trackpad_rot(self, controller_info: ControllerInfo):
+        self.last_joint_t = getattr(self, 'last_joint_t', perf_counter())
+        dt = perf_counter() - self.last_joint_t
+        self.last_joint_t = perf_counter()
+        # If trackpad is touched, rotate the gripper relative to goal joint positions
+        if self.is_trackpad_leftclick(controller_info):
+            delta_rot = rotation_matrix_gripper_joint(dt * self.trackpad_rot_rate)
+            self.controller_in_vr0 = self.controller_in_vr0 @ delta_rot
+        elif self.is_trackpad_rightclick(controller_info):
+            delta_rot = rotation_matrix_gripper_joint(dt * -self.trackpad_rot_rate)
+            self.controller_in_vr0 = self.controller_in_vr0 @ delta_rot
+        return self.get_joint_positions(controller_info)
+
+    def _init_correction_maneuver_fn(self, ctrl_profile):
+        self.indicate_corrective_maneuver = getattr(ctrl_profile, "corrective_maneuver", False)
+        if self.indicate_corrective_maneuver:
+            # Start ROS node of name "/vr_controller_info/corrective_maneuver" with boolean.
+            # Create a processing function that if menu button is held, send 1, otherwise 0
+            # Register function to self.process_fns
+            self.corrective_maneuver_pub = self.node.create_publisher(
+                Bool, 
+                f"corrective_maneuver_{self.side.arm_name}", 
+                10
+            )
+            def corrective_maneuver_fn(controller_info: ControllerInfo):
+                """
+                If the menu button is pressed, send a corrective maneuver signal.
+                """
+                self.corrective_maneuver_pub.publish(
+                    Bool(data=controller_info.menu_button)
+                )
+            self.process_fns['corrective_maneuver'] = ProcessFn(
+                "corrective_maneuver",
+                corrective_maneuver_fn,
+                when_gripped=False
+            )
 
     def on_start_recording(self, controller_info: ControllerInfo):
         controller_in_vr0 = self.get_controller_in_vr(controller_info)
@@ -238,95 +352,20 @@ class SideTeleop:
         tool_in_base0_msg.child_frame_id = f"tool_{self.side.arm_name}_in_base0"
         self.tf_broadcaster.sendTransform(tool_in_base0_msg)
 
-        # Add recording trackpad axis
-        self.trackpad_axis_angle = None
-        self.trackpad_history = []
-
         controller_in_vr0_msg.child_frame_id = f"controller_{self.side.arm_name}_in_vr0"
         self.tf_broadcaster.sendTransform(controller_in_vr0_msg)
 
-        self.last_sent_pose = perf_counter()
-
     def on_stop_recording(self):
-        self.trackpad_history = []
         pass
-
-
-    def rotation_matrix_gripper_joint(self, x):
-        """
-        Returns a 4x4 homogeneous transformation matrix representing a rotation 
-        around the local z-axis by angle x (in radians).
-        """
-        cos_x = np.cos(x)
-        sin_x = np.sin(x)
-        return np.array([
-            [cos_x, -sin_x, 0, 0],
-            [sin_x,  cos_x, 0, 0],
-            [0,      0,     1, 0],
-            [0,      0,     0, 1]
-        ])
-    
-    @staticmethod
-    def _Rx(theta):
-        c, s = np.cos(theta), np.sin(theta)
-        return np.array([[1, 0,  0],
-                         [0, c, -s],
-                         [0, s,  c]])
-
-    @staticmethod
-    def _Ry(theta):
-        c, s = np.cos(theta), np.sin(theta)
-        return np.array([[ c, 0, s],
-                         [ 0, 1, 0],
-                         [-s, 0, c]])
-
-    @staticmethod
-    def _Rz(theta):
-        c, s = np.cos(theta), np.sin(theta)
-        return np.array([[c, -s, 0],
-                         [s,  c, 0],
-                         [0,  0, 1]])
-
-    def rotation_matrix_held_tool_joint(self, rate: np.ndarray):
-        """
-        Parameters
-        ----------
-        droll, dpitch, dyaw : float
-            Small-angle increments (rad) that already include Δt.
-
-        Returns
-        -------
-        T : (4,4) ndarray
-            Homogeneous transform that realises the requested rotation
-            about `self.wrench_center_in_tool`.
-        """
-        # 1. Compose rotation for this Δt  (ZYX intrinsic convention).
-        droll, dpitch, dyaw = rate.tolist()
-        R = (self._Rz(dyaw)           # yaw about Z
-             @ self._Ry(dpitch)       # pitch about Y
-             @ self._Rx(droll))       # roll about X
-
-        # 2. Express rotation about an arbitrary point p:
-        p = self.held_tool_pos_offset.reshape(3, 1)
-        t = (np.eye(3) - R) @ p       # == p - R p
-
-        # 3. Pack into a 4×4 homogeneous matrix.
-        T = np.eye(4)
-        T[:3, :3] = R
-        T[:3,  3] = t.ravel()
-        return T
-
     
     def process_input(self, controller_info: ControllerInfo):
         """
         Process controller input
         """
         # if session is on
-        if controller_info.grip_button:
-            for fn_name, fn in self.process_fns.items():
+        for fn_name, fn in self.process_fns.items():
+            if not fn.when_gripped or controller_info.grip_button:
                 fn(controller_info)
-        for fn_name, fn in self.all_time_process_fns.items():
-            fn(controller_info)
 
     def is_trackpad_leftclick(self, controller_info: ControllerInfo):
         return (
@@ -348,30 +387,12 @@ class SideTeleop:
             controller_info.trackpad_axis_y < -self.trackpad_click_deadzone \
             and controller_info.trackpad_button
         )
+    
+    def get_joint_positions(self, controller_info: ControllerInfo):
+        return self.get_target_in_base(controller_info)
 
     def send_pose_cmd(self, controller_info: ControllerInfo):
-        # Deal with rotation
-        dt = perf_counter() - self.last_sent_pose
-        self.last_sent_pose = perf_counter()
-
-        # Process custom rotation macros
-
-        # If trackpad is touched, rotate the gripper relative to goal joint positions
-        if self.is_trackpad_leftclick(controller_info) and self.ctrl_mode == 'trackpad_rot':
-            # If both trackpad and trigger button pressed, rotate along tool
-            if controller_info.trigger_button and not self.split_pos_rot:
-                delta_rot = self.rotation_matrix_held_tool_joint(dt*self.held_tool_rotation_rate)
-            else:
-                delta_rot = self.rotation_matrix_gripper_joint(dt * self.trackpad_rot_rate)
-            self.controller_in_vr0 = self.controller_in_vr0 @ delta_rot
-        elif self.is_trackpad_rightclick(controller_info) and self.ctrl_mode == 'trackpad_rot':
-            if controller_info.trigger_button and not self.split_pos_rot:
-                delta_rot = self.rotation_matrix_held_tool_joint(dt*-self.held_tool_rotation_rate)
-            else:
-                delta_rot = self.rotation_matrix_gripper_joint(dt * -self.trackpad_rot_rate)
-            self.controller_in_vr0 = self.controller_in_vr0 @ delta_rot
-
-        joint_positions = self.get_target_in_base(controller_info)
+        joint_positions = self.get_joint_fn(controller_info)
         if joint_positions is None:
             return {'joint_positions': joint_positions}
 
@@ -383,24 +404,12 @@ class SideTeleop:
                                     range(len(joint_positions_filtered))]
             joint_state_msg.position = joint_positions_filtered.squeeze().tolist()
             self.filter_pub.publish(joint_state_msg)
-        
-        joint_positions = joint_positions_filtered if self.use_filter else joint_positions
+            joint_positions = joint_positions_filtered
+
         joint_positions = np.clip(joint_positions, self.side.lower, self.side.upper)
         self.side.send_joint_cmd(joint_positions)
 
-        return {'joint_positions': joint_positions,}
-
-    def set_gripper_position(self, controller_info: ControllerInfo):
-        """
-        Set the open fraction of the gripper.
-        """
-        open_fraction = controller_info.trigger_axis
-        if abs(open_fraction - self.last_send_open_fraction) > 0.05:
-            # FIXME: make scissor controllable?
-            self.side.gripper_command.publish(
-                get_gripper_closed_fraction_msg(open_fraction, scissor_position=self.scissor_position))
-            self.last_send_open_fraction = open_fraction
-        return open_fraction
+        return {'joint_positions': joint_positions}
     
     def toggle_gripper_up_down(self, controller_info: ControllerInfo):
         if self.gripper_in_motion:
@@ -410,28 +419,20 @@ class SideTeleop:
             return
         # Toggle with trackpad up/down clicks
         if self.is_trackpad_downclick(controller_info) \
-            and self.gripper_state_idx < len(self.finger_kpts) - 1:
+            and self.gripper_state_idx < self._max_gripper_idx - 1:
             self.gripper_state_idx += 1
-            self.side.set_gripper_position(self.finger_kpts[self.gripper_state_idx],
-                                           scissor_position=self.scissor_position_kpt[self.gripper_state_idx])
-            # self.gripper_open = not self.gripper_open
+            self.side.set_gripper_position(self.gripper_keypoints[self.gripper_state_idx][0],
+                        scissor_position=self.gripper_keypoints[self.gripper_state_idx][-1])
         elif self.is_trackpad_upclick(controller_info) \
             and self.gripper_state_idx > 0:
             self.gripper_state_idx -= 1
-            self.side.set_gripper_position(self.finger_kpts[self.gripper_state_idx],    
-                                           scissor_position=self.scissor_position_kpt[self.gripper_state_idx])
+            self.side.set_gripper_position(self.gripper_keypoints[self.gripper_state_idx][0],
+                        scissor_position=self.gripper_keypoints[self.gripper_state_idx][-1])
         self.last_toggled_gripper = perf_counter()
 
     def get_target_in_base(self, controller_info: ControllerInfo) -> TransformStamped:
         current_controller_in_vr = self.get_controller_in_vr(controller_info)
         delta_in_controller = np_tf_inv(self.controller_in_vr0) @ current_controller_in_vr
-
-        if self.split_pos_rot:
-            # if trigger button pressed, control orientation only, else control position only
-            if controller_info.trigger_button:          # Only orientation control
-                delta_in_controller[:3, 3] = 0.0  # Set position to zero
-            else:                           # Only position control 
-                delta_in_controller[:3, :3] = np.eye(3, dtype=delta_in_controller.dtype)  # Set rotation to identity
 
         # Add sensitivity
         delta_in_controller[:3, 3] *= self.position_sensitivity
@@ -448,6 +449,9 @@ class SideTeleop:
         current_state, _ = self.get_current_commanded_tool(self.tool_frame)     # frame does not matter here
 
         target_in_base = self.tool_in_base0 @ delta_in_controller
+
+        print(delta_in_controller)
+        print("TIB", target_in_base)
 
         current_controller_in_vr_msg = TransformStamped()
         current_controller_in_vr_msg.transform = mat_to_transform(current_controller_in_vr)
@@ -500,7 +504,7 @@ class SideTeleop:
         controller_in_vr = transform_to_mat(controller_in_vr_msg.transform)
 
         usability_transform = np.eye(4)
-        usability_transform[:3, :3] = self.controller_usability_rotation
+        usability_transform[:3, :3] = self.usability_rotation
         controller_in_vr_usable = controller_in_vr @ usability_transform
 
         return controller_in_vr_usable
@@ -511,22 +515,7 @@ class SideTeleop:
 
 
 class VictorTeleopNode(Node):
-    def __init__(self,
-            use_left=True,
-            use_right=True,
-            left_usability_rotation=[0.0,0.0,0.0],
-            right_usability_rotation=[0.0,0.0,0.0],
-            # motion='relative',
-            position_sensitivity=1.0,
-            orientation_sensitivity=1.0,
-            use_filter=True,
-            split_pos_rot=False,
-            trackpad_wrist_rot=False,
-            init_left_joints=None,
-            init_right_joints=None,
-            init_gripper_state=0,
-            ctrl_mode="natural",  # 'natural' or 'trackpad_rot'
-            target_controller="impedance_controller"):
+    def __init__(self, ctrl_profile: VictorTeleopProfile):
         super().__init__("victor_vr_teleop")
 
         self.victor = Victor(self)
@@ -540,79 +529,58 @@ class VictorTeleopNode(Node):
         config_dict = builder.to_moveit_configs().to_dict()
 
         self.moveitpy = MoveItPy(node_name="victor_vr_teleop_moveitpy", config_dict=config_dict)
-        # self.latest_action_dict = None
         self.tf_broadcaster = TransformBroadcaster(self)
 
-        self.use_left = use_left
-        self.use_right = use_right
-        # self.motion_target = motion
-        self.target_controller = target_controller
-
-        # Cache values
-        self.init_left_joints = init_left_joints
-        self.init_right_joints = init_right_joints
-        self.position_sensitivity = position_sensitivity
-        self.orientation_sensitivity = orientation_sensitivity
-        self.use_filter = use_filter
-        self.split_pos_rot = split_pos_rot
-        self.trackpad_wrist_rot = trackpad_wrist_rot
-        self.init_gripper_state = init_gripper_state
-        self.ctrl_mode = ctrl_mode
-
-    def _runtime_init(self):
-        # Move to predefined position
-        if self.init_left_joints is not None and self.use_left:
-            res = self.victor.set_left_controller("joint_impedance_trajectory_controller")
-            self.victor.plan_to_joint_config(self.init_left_joints, "left_arm")
-        if self.init_right_joints is not None and self.use_right:
-            res = self.victor.set_right_controller("joint_impedance_trajectory_controller")
-            self.victor.plan_to_joint_config(self.init_right_joints, "right_arm")
-
-        # Setup 
-        if self.use_left:
-            activ_ctrl = list(set(self.victor.left.get_active_controller_names()))
-            if f"left_arm_{self.target_controller}" not in activ_ctrl:
-                self.victor.set_left_controller(self.target_controller)
-            self.left = SideTeleop(self, self.victor.left, self.moveitpy, self.tf_broadcaster,
-                                    controller_usability_rotation=transforms3d.euler.euler2mat(*left_usability_rotation),
-                                    position_sensitivity=self.position_sensitivity,
-                                    orientation_sensitivity=self.orientation_sensitivity,
-                                    split_pos_rot=self.split_pos_rot,
-                                    trackpad_wrist_rot=self.trackpad_wrist_rot,
-                                    use_filter=self.use_filter,
-                                    init_gripper_state=self.init_gripper_state,
-                                    ctrl_mode=self.ctrl_mode)
-        if self.use_right:
-            activ_ctrl = list(set(self.victor.right.get_active_controller_names()))
-            if f"right_arm_{self.target_controller}" not in activ_ctrl:
-                self.victor.set_right_controller(self.target_controller)
-            self.right = SideTeleop(self, self.victor.right, self.moveitpy, self.tf_broadcaster,
-                                    controller_usability_rotation=transforms3d.euler.euler2mat(*right_usability_rotation),
-                                    position_sensitivity=self.position_sensitivity,
-                                    orientation_sensitivity=self.orientation_sensitivity,
-                                    split_pos_rot=self.split_pos_rot,
-                                    trackpad_wrist_rot=self.trackpad_wrist_rot,
-                                    use_filter=self.use_filter,
-                                    init_gripper_state=self.init_gripper_state,
-                                    ctrl_mode=self.ctrl_mode)
+        # Parse profile
+        self.ctrl_profile = ctrl_profile
 
         # on controllers info depends on left
         self.vr_sub = self.create_subscription(ControllersInfo, "vr_controller_info", self.on_controllers_info, 10)
-
         self.has_started = False
         self.is_recording = False
-        self.is_done = False
-
         self.rcv_dts = []
         self.last_rcv_t = perf_counter()
 
-        # Variables for absolute motion mode
-        self.left_controller_onstart_pose = None
-        self.right_controller_onstart_pose = None
-        self.left_arm_onstart_pose = None
-        self.right_arm_onstart_pose = None
+        # Runtime initialization
+        self._initialized = False
+
+    def _runtime_init(self):
+        # Left Gripper
+        self.use_left = self.ctrl_profile.use_left
+        self.use_right = self.ctrl_profile.use_right
+
+        for side, use in zip(['left', 'right'], [self.use_left, self.use_right]):
+            if not use:
+                continue
+            init_joints = self.ctrl_profile.init_joints.get(side, None)
+            if not init_joints:
+                return
+            # Plan to initial joint configuration
+            ctrl_setter = getattr(self.victor, f'set_{side}_controller')
+            res = ctrl_setter("joint_impedance_trajectory_controller")
+            self.victor.plan_to_joint_config(init_joints, f"{side}_arm")
+
+        # Then instantiate, so controller will not be overwritten by joint_trajectory
+        for side, use in zip(['left', 'right'], [self.use_left, self.use_right]):
+            if not use:
+                setattr(self, side, None)
+                continue
+            side_obj = SideTeleop(self, getattr(self.victor, side),
+                self.victor,
+                self.moveitpy,
+                self.tf_broadcaster,
+                self.ctrl_profile
+            )
+            setattr(self, side, side_obj)
+
+        self._initialized = True
+        print("ready!")
 
     def on_controllers_info(self, msg: ControllersInfo):
+        if not self._initialized:
+            self._runtime_init()
+            return
+        
         if len(msg.controllers_info) == 0:
             return
 
@@ -622,8 +590,7 @@ class VictorTeleopNode(Node):
             self.right.update()
 
         any_grip_button = any([controller_info.grip_button for controller_info in msg.controllers_info])
-        # print("Grip Button Pressed:", any_grip_button)
-        any_menu_button = any([controller_info.menu_button for controller_info in msg.controllers_info])
+        # any_menu_button = any([controller_info.menu_button for controller_info in msg.controllers_info])
 
         # viz controllers in rviz
         vr_to_root = TransformStamped()
@@ -661,10 +628,6 @@ class VictorTeleopNode(Node):
                 elif 'right' in controller_info.controller_name and self.use_right:
                     self.right.on_stop_recording()
 
-        if self.has_started and any_menu_button:
-            self.is_done = True
-            self.on_done()
-
         controller_info: ControllerInfo
         for controller_info in msg.controllers_info:
             if 'left' in controller_info.controller_name and self.use_left:
@@ -683,153 +646,28 @@ class VictorTeleopNode(Node):
 
         self.last_rcv_t = now
 
-    def on_done(self):
-        self.victor.left.open_gripper()
-        self.victor.right.open_gripper()
-
-        raise SystemExit("Done!")
-
-
 def main():
-
     np.seterr(all='raise')
     np.set_printoptions(precision=3, suppress=True)
-
     rclpy.init()
 
     # --- parse command‐line arguments ---
     parser = argparse.ArgumentParser(description="Launch Victor teleop with options")
     parser.add_argument(
-        '--arms',
-        choices=['left', 'right', 'both'],
-        default='both',
-        help="Which arm(s) to control"
-    )
-    parser.add_argument(
-        '--position_sensitivity',
-        type=float,
-        default=1.0,
-        help="Scaling factor for positional motion"
-    )
-    parser.add_argument(
-        '--orientation_sensitivity',
-        type=float,
-        default=1.0,
-        help="Scaling factor for rotational motion"
-    )
-    parser.add_argument(
-        '--target_controller',
-        type=str,
-        default="impedance_controller",
-        choices=["impedance_controller", "position_controller"],
-        help="Name of the target controller to switch to"
-    )
-    parser.add_argument(
-        '--use_filter',
-        action='store_true',
-        help="Enable filtering of controller inputs"
-    )
-    parser.add_argument(
-        '--split_pos_rot',
-        action='store_true',
-        help="Split position and rotation control through trigger button"
-    )
-    parser.add_argument(
-        '--trackpad_wrist_rot',
-        action='store_true',
-        help="Use trackpad to rotate the wrist of the arm instead of rotating controller"
-    )
-    parser.add_argument(
-        '--init_joints',
-        action='store_true',
-        help="Initialize the arm to a predefined joint configuration defined in the script"
-    )
-    parser.add_argument(
-        '--init_gripper_state',
-        type=int,
-        default=0,
-        help="Initialize the gripper to predefined state configured in Side class"
-    )
-    parser.add_argument(
-        '--ctrl_mode',
-        default='natural',
-        choices=['natural', 'trackpad_rot'],
-        help="Control mode for the arm, either 'natural' or 'trackpad_rot'. "
+        '--profile',
+        choices=teleop_profile_dict.keys(),
+        default=list(teleop_profile_dict.keys())[0],
+        help="Profile for VR control"
     )
     args = parser.parse_args()
-
-    # --- translate args.arms into boolean flags ---
-    use_left = args.arms in ('left', 'both')
-    use_right = args.arms in ('right', 'both')
-
-    # roll, pitch, yaw
-    # roll = pi is setting gripper face down
-    usability_rotation = [np.pi, 0.0, 0.0]
-
-    # Engine on Crater configuration
-    # init_left_joints = [-0.63023839,
-    #     1.1021754,
-    #     -0.7190757,
-    #     1.423316,
-    #     -0.4328417,
-    #     -0.91821772,
-    #     -2.6
-    # ]
-    # Engine on mount configuration
-    init_left_joints = [
-        1.1847989247915828,
-        -0.46831252260769395,
-        -0.9837651464937674,
-        -1.6244355817879254,
-        0.4139760770596477,
-        1.0696352634055712,
-        1.287291193753409
-    ]
-
-    # Engine on Crater configuration
-    # init_right_joints = [
-    #     0.6092781913562261,
-    #     1.108405883333034,
-    #     0.3733802278333334,
-    #     1.3890371957842383,
-    #     0.8443950751167238,
-    #     -1.0637165864373954,
-    #     1.9409640643569282
-    # ]
-    # Engine on mount configuration
-    init_right_joints = [1.706375053909089,
-        0.5047621455575189,
-        -1.6661934509388395,
-        -1.0337042757247657,
-        -0.41568294934346726,
-        1.4536155554562367,
-        0.4079876871561164
-    ]
-
-
-    # --- instantiate your node with the chosen options ---
-    node = VictorTeleopNode(
-        use_left=use_left,
-        use_right=use_right,
-        left_usability_rotation=usability_rotation,
-        right_usability_rotation=usability_rotation,
-        position_sensitivity=args.position_sensitivity,
-        orientation_sensitivity=args.orientation_sensitivity,
-        use_filter=args.use_filter,
-        split_pos_rot=args.split_pos_rot,
-        trackpad_wrist_rot=args.trackpad_wrist_rot,
-        init_left_joints=init_left_joints if args.init_joints else None,
-        init_right_joints=init_right_joints if args.init_joints else None,
-        init_gripper_state=args.init_gripper_state,
-        ctrl_mode=args.ctrl_mode,
-        target_controller=args.target_controller
-    )
+    # Control profile
+    ctrl_profile_class = teleop_profile_dict.get(args.profile, None)
+    if ctrl_profile_class is None:
+        raise ValueError(f"Profile {args.profile} not found in teleop profiles.")
+    node = VictorTeleopNode(ctrl_profile=ctrl_profile_class())
 
     executor = rclpy.executors.MultiThreadedExecutor()
     executor.add_node(node)
-
-    print("ready!")
-
     try:
         executor.spin()
     except SystemExit:

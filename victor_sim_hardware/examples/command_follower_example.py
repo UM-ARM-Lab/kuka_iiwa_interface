@@ -19,8 +19,6 @@ Usage:
 
 import time
 import argparse
-from turtle import right
-
 import rclpy
 from victor_sim_hardware.robot_state_api import create_victor_simulator
 
@@ -34,6 +32,10 @@ class CommandFollowerExample:
     """
     
     def __init__(self, enable_arm_following: bool = False, enable_finger_following: bool = False):
+        # Initialize rclpy first
+        if not rclpy.ok():
+            rclpy.init()
+        
         # Create the victor simulator API
         self.api = create_victor_simulator()
         
@@ -50,23 +52,25 @@ class CommandFollowerExample:
         self.right_gripper_positions = [0.0, 0.0, 0.0, 0.0]
         
         # Set initial joint positions
-        self.api.left_arm.set_joint_positions(self.left_joint_positions)
-        self.api.left_arm.set_joint_velocities([0.0] * 7)
-        self.api.left_arm.set_joint_efforts([0.0] * 7)
-        self.api.left_arm.set_external_torques([0.0] * 7)
+        self.api.left_arm.set_arm_state(
+            positions=self.left_joint_positions,
+            velocities=[0.0] * 7,
+            efforts=[0.0] * 7,
+            external_torques=[0.0] * 7,
+            cartesian_pose=[0.5, 0.2, 0.3, 0, 0, 0, 1]
+        )
         
-        self.api.right_arm.set_joint_positions(self.right_joint_positions)
-        self.api.right_arm.set_joint_velocities([0.0] * 7)
-        self.api.right_arm.set_joint_efforts([0.0] * 7)
-        self.api.right_arm.set_external_torques([0.0] * 7)
+        self.api.right_arm.set_arm_state(
+            positions=self.right_joint_positions,
+            velocities=[0.0] * 7,
+            efforts=[0.0] * 7,
+            external_torques=[0.0] * 7,
+            cartesian_pose=[0.5, -0.2, 0.3, 0, 0, 0, 1]
+        )
         
         # Set initial gripper positions
         self.api.left_arm.set_gripper_positions(*self.left_gripper_positions)
         self.api.right_arm.set_gripper_positions(*self.right_gripper_positions)
-        
-        # Initial cartesian poses
-        self.api.left_arm.set_cartesian_pose([0.5, 0.2, 0.3], [0, 0, 0, 1])
-        self.api.right_arm.set_cartesian_pose([0.5, -0.2, 0.3], [0, 0, 0, 1])
         
         print("Command follower initialized - all joints set to 0.5 radian")
         print(f"Arm following: {'ENABLED' if self.enable_arm_following else 'DISABLED'}")
@@ -82,40 +86,44 @@ class CommandFollowerExample:
         if self.enable_arm_following:
             left_motion_cmd = self.api.left_arm.get_latest_motion_command()
             if left_motion_cmd is not None:
-                self.left_joint_positions = left_motion_cmd.tolist()
+                self.left_joint_positions = left_motion_cmd
 
             right_motion_cmd = self.api.right_arm.get_latest_motion_command()
             if right_motion_cmd is not None:
-                self.right_joint_positions = right_motion_cmd.tolist()
+                self.right_joint_positions = right_motion_cmd
                 
         # Poll for gripper commands if finger following is enabled
         if self.enable_finger_following:
             left_gripper_cmd = self.api.left_arm.get_latest_gripper_command()
             if left_gripper_cmd is not None:
                 # Update left gripper positions
-                left_gripper_cmd[:3] *= 1.5
-                self.left_gripper_positions = left_gripper_cmd.tolist()
+                left_gripper_cmd[:3] = [x * 1.5 for x in left_gripper_cmd[:3]]
+                self.left_gripper_positions = left_gripper_cmd
                 # print("Got left gripper:", self.left_gripper_positions)
                 
             right_gripper_cmd = self.api.right_arm.get_latest_gripper_command()
             if right_gripper_cmd is not None:
                 # Update right gripper positions
-                right_gripper_cmd[:3] *= 1.5
-                self.right_gripper_positions = right_gripper_cmd.tolist()
+                right_gripper_cmd[:3] = [x * 1.5 for x in right_gripper_cmd[:3]]
+                self.right_gripper_positions = right_gripper_cmd
                 # print("Got right gripper:", self.right_gripper_positions)
     
     def update_robot_state(self):
         """Update robot state with current positions."""
         # Update joint positions
-        self.api.left_arm.set_joint_positions(self.left_joint_positions)
-        self.api.left_arm.set_joint_velocities([0.0] * 7)
-        self.api.left_arm.set_joint_efforts([0.0] * 7)
-        self.api.left_arm.set_external_torques([0.0] * 7)
+        self.api.left_arm.set_arm_state(
+            positions=self.left_joint_positions,
+            velocities=[0.0] * 7,
+            efforts=[0.0] * 7,
+            external_torques=[0.0] * 7
+        )
         
-        self.api.right_arm.set_joint_positions(self.right_joint_positions)
-        self.api.right_arm.set_joint_velocities([0.0] * 7)
-        self.api.right_arm.set_joint_efforts([0.0] * 7)
-        self.api.right_arm.set_external_torques([0.0] * 7)
+        self.api.right_arm.set_arm_state(
+            positions=self.right_joint_positions,
+            velocities=[0.0] * 7,
+            efforts=[0.0] * 7,
+            external_torques=[0.0] * 7
+        )
         
         # Update gripper positions
         self.api.left_arm.set_gripper_positions(*self.left_gripper_positions)
@@ -123,13 +131,8 @@ class CommandFollowerExample:
     
     def publish_state(self):
         """Publish current robot state."""
-        # Publish motion status for both arms
-        self.api.left_arm.publish_motion_status()
-        self.api.right_arm.publish_motion_status()
-        
-        # Publish gripper status for both arms
-        self.api.left_arm.publish_gripper_status()
-        self.api.right_arm.publish_gripper_status()
+        # State is automatically published by set_arm_state and set_gripper_positions
+        pass
     
     def run(self):
         """Main command following loop."""

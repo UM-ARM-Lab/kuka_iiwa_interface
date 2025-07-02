@@ -34,6 +34,10 @@ class SimpleJointCommandGenerator:
     """
     
     def __init__(self, enable_body_motion: bool = False, enable_finger_motion: bool = False):
+        # Initialize rclpy first
+        if not rclpy.ok():
+            rclpy.init()
+        
         # Create the victor simulator API
         self.simulator = create_victor_simulator()
         
@@ -143,29 +147,25 @@ class SimpleJointCommandGenerator:
         finger_a, finger_b, finger_c, scissor = self.generate_gripper_commands()
         
         # Set joint positions for both arms
-        self.simulator.left_arm.set_joint_positions(joint_positions)
-        self.simulator.left_arm.set_joint_velocities([0.0] * 7)  # Zero velocities
-        self.simulator.left_arm.set_joint_efforts([0.0] * 7)  # Zero efforts
-        self.simulator.left_arm.set_external_torques([0.0] * 7)  # No external torques
+        self.simulator.left_arm.set_arm_state(
+            positions=joint_positions,
+            velocities=[0.0] * 7,
+            efforts=[0.0] * 7,
+            external_torques=[0.0] * 7,
+            cartesian_pose=[0.5, 0.2, 0.3, 0, 0, 0, 1]
+        )
         
-        self.simulator.right_arm.set_joint_positions(joint_positions)
-        self.simulator.right_arm.set_joint_velocities([0.0] * 7)
-        self.simulator.right_arm.set_joint_efforts([0.0] * 7)
-        self.simulator.right_arm.set_external_torques([0.0] * 7)
+        self.simulator.right_arm.set_arm_state(
+            positions=joint_positions,
+            velocities=[0.0] * 7,
+            efforts=[0.0] * 7,
+            external_torques=[0.0] * 7,
+            cartesian_pose=[0.5, -0.2, 0.3, 0, 0, 0, 1]
+        )
         
         # Set gripper positions for both arms
         self.simulator.left_arm.set_gripper_positions(finger_a, finger_b, finger_c, scissor)
         self.simulator.right_arm.set_gripper_positions(finger_a, finger_b, finger_c, scissor)
-        
-        # Set simple cartesian poses
-        self.simulator.left_arm.set_cartesian_pose([0.5, 0.2, 0.3], [0, 0, 0, 1])
-        self.simulator.right_arm.set_cartesian_pose([0.5, -0.2, 0.3], [0, 0, 0, 1])
-        
-        # Publish state to ROS
-        self.simulator.left_arm.publish_motion_status()
-        self.simulator.right_arm.publish_motion_status()
-        self.simulator.left_arm.publish_gripper_status()
-        self.simulator.right_arm.publish_gripper_status()
         
         # Update simulation time
         self.sim_time += self.dt

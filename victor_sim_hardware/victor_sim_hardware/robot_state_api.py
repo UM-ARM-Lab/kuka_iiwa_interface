@@ -77,14 +77,12 @@ class VictorSimulatorAPI(Node):
     
     def __del__(self):
         """Destructor to ensure graceful shutdown."""
-        try:
-            self.stop()
-            if self._rclpy_initialized_by_us and rclpy.ok():
-                rclpy.shutdown()
-        except Exception:
-            # Don't raise exceptions in destructor
-            pass
-    
+        self.destroy_node()
+        self.stop()
+        print("Victor Simulator API destroyed in del")
+        if self._rclpy_initialized_by_us and rclpy.ok():
+            rclpy.shutdown()
+
     def start(self):
         """Start the API and begin processing ROS callbacks."""
         if self._running:
@@ -126,6 +124,7 @@ class VictorSimulatorAPI(Node):
             self._executor_thread.join(timeout=5.0)
             
         self.get_logger().info("Victor Simulator API stopped")
+        print("Victor Simulator API stopped in stop")
     
     def get_left_arm(self) -> 'ArmAPI':
         """Get the left arm API."""
@@ -324,10 +323,10 @@ class ArmAPI:
                 z=float(cartesian_pose[2])
             )
             self._cartesian_pose.orientation = Quaternion(
-                x=float(cartesian_pose[0]), 
-                y=float(cartesian_pose[1]),                                                         
-                z=float(cartesian_pose[2]), 
-                w=float(cartesian_pose[3])
+                x=float(cartesian_pose[3]), 
+                y=float(cartesian_pose[4]),                                                         
+                z=float(cartesian_pose[5]), 
+                w=float(cartesian_pose[6])
             )
 
         # Create motion status message
@@ -375,7 +374,7 @@ class ArmAPI:
         self.sim_gripper_status_pub.publish(self._gripper_status)
 
 
-def create_victor_simulator() -> VictorSimulatorAPI:
+def create_victor_simulator(auto_init_rclpy=False) -> VictorSimulatorAPI:
     """
     Factory function to create and initialize a Victor simulator API.
     
@@ -383,7 +382,6 @@ def create_victor_simulator() -> VictorSimulatorAPI:
         VictorSimulatorAPI: Initialized simulator API
     """
     # Check if rclpy is already initialized, don't reinitialize
-    simulator = VictorSimulatorAPI(auto_init_rclpy=False)
+    simulator = VictorSimulatorAPI(auto_init_rclpy=auto_init_rclpy)
     simulator.start()
-    return simulator
     return simulator
