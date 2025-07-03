@@ -27,7 +27,7 @@ from rclpy.node import Node
 from rclpy.callback_groups import ReentrantCallbackGroup
 from rclpy.executors import MultiThreadedExecutor
 import threading
-import time
+from queue import Queue
 from typing import Dict, List, Optional, Callable
 import numpy as np
 
@@ -35,6 +35,7 @@ import numpy as np
 from victor_hardware_interfaces.msg import (
     MotionStatus,
     JointValueQuantity,
+    CartesianValueQuantity,
     Robotiq3FingerCommand,
     Robotiq3FingerStatus,
     Robotiq3FingerActuatorStatus,
@@ -75,14 +76,6 @@ class VictorSimulatorAPI(Node):
         
         self.get_logger().info("Victor Simulator API initialized")
     
-    def __del__(self):
-        """Destructor to ensure graceful shutdown."""
-        self.destroy_node()
-        self.stop()
-        print("Victor Simulator API destroyed in del")
-        if self._rclpy_initialized_by_us and rclpy.ok():
-            rclpy.shutdown()
-
     def start(self):
         """Start the API and begin processing ROS callbacks."""
         if self._running:
@@ -114,18 +107,15 @@ class VictorSimulatorAPI(Node):
         """Stop the API and cleanup resources."""
         if not self._running:
             return
-            
         self._running = False
-        
         if self._executor:
             self._executor.shutdown()
-            
         if self._executor_thread and self._executor_thread.is_alive():
             self._executor_thread.join(timeout=5.0)
-            
+        if self._rclpy_initialized_by_us and rclpy.ok():
+            rclpy.shutdown()
         self.get_logger().info("Victor Simulator API stopped")
-        print("Victor Simulator API stopped in stop")
-    
+
     def get_left_arm(self) -> 'ArmAPI':
         """Get the left arm API."""
         return self.left_arm
@@ -153,7 +143,7 @@ class ArmAPI:
         self._joint_positions = np.zeros(7)
         self._joint_velocities = np.zeros(7)
         self._joint_efforts = np.zeros(7)
-        self._external_torques = np.zeros(7)
+        self._external_wrench = np.zeros(7)
         self._cartesian_pose = Pose()
         
         # Gripper state
@@ -291,11 +281,21 @@ class ArmAPI:
             setattr(jvq, f'joint_{i+1}', float(values[i]))
         return jvq
     
+    def _create_cartesian_value_quantity(self, values: list) -> CartesianValueQuantity:
+        """Create a CartesianValueQuantity message from position and orientation lists."""
+        cvq = CartesianValueQuantity()
+        for prop, value in zip(
+            ['x', 'y', 'z', 'a', 'b', 'c'],
+            values
+        ):
+            setattr(cvq, prop, float(value))
+        return cvq
+    
     def set_arm_state(self,
         positions: List|None = None,
         velocities: List|None = None,
         efforts: List|None = None,
-        external_torques: List|None = None,
+        external_wrench: List|None = None,
         cartesian_pose: List|None = None
     ):
         # If no update, return
@@ -303,18 +303,25 @@ class ArmAPI:
             positions is None and \
             velocities is None and \
             efforts is None and \
-            external_torques is None and \
+            external_wrench is None and \
             cartesian_pose is None
         ):
             return
         
         # Set the new values
         for arr, quant in zip(
-            [positions, velocities, efforts, external_torques],
-            ["_joint_positions", "_joint_velocities", "_joint_efforts", "_external_torques"]
+            [positions, velocities, efforts],
+            ["_joint_positions", "_joint_velocities", "_joint_efforts"]
         ):
             if arr is None: continue
             assert len(arr) == 7, "Expected array of shape (7,)"
+            setattr(self, quant, arr)
+        for arr, quant in zip(
+            [external_wrench],
+            ["_external_wrench"]
+        ):
+            if arr is None: continue
+            assert len(arr) == 6, "Expected array of shape (6,)"
             setattr(self, quant, arr)
         if cartesian_pose is not None:
             self._cartesian_pose.position = Point(
@@ -339,7 +346,7 @@ class ArmAPI:
         msg.measured_joint_position = self._create_joint_value_quantity(self._joint_positions)
         msg.measured_joint_velocity = self._create_joint_value_quantity(self._joint_velocities)
         msg.measured_joint_torque = self._create_joint_value_quantity(self._joint_efforts)
-        msg.estimated_external_torque = self._create_joint_value_quantity(self._external_torques)
+        msg.estimated_external_wrench = self._create_cartesian_value_quantity(self._external_wrench)
         # Set cartesian pose
         msg.measured_cartesian_pose = self._cartesian_pose
         
@@ -374,6 +381,7 @@ class ArmAPI:
         self.sim_gripper_status_pub.publish(self._gripper_status)
 
 
+API_QUEUE = Queue()
 def create_victor_simulator(auto_init_rclpy=False) -> VictorSimulatorAPI:
     """
     Factory function to create and initialize a Victor simulator API.
@@ -381,7 +389,17 @@ def create_victor_simulator(auto_init_rclpy=False) -> VictorSimulatorAPI:
     Returns:
         VictorSimulatorAPI: Initialized simulator API
     """
+    # Check if a node is already running, if so, destroy it and print warning
+    while API_QUEUE.qsize() > 0:
+        existing_simulator = API_QUEUE.get()
+        if existing_simulator is None:
+            continue
+        existing_simulator.stop()
+        existing_simulator.destroy_node()
+        print("Warning: Existing VictorSimulatorAPI node destroyed to create a new one.")
+
     # Check if rclpy is already initialized, don't reinitialize
     simulator = VictorSimulatorAPI(auto_init_rclpy=auto_init_rclpy)
     simulator.start()
+    API_QUEUE.put(simulator)
     return simulator

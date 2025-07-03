@@ -16,9 +16,14 @@ Usage:
 from copy import deepcopy
 from time import perf_counter
 import argparse
+import time
+import threading
+from concurrent.futures import ThreadPoolExecutor
 
 import numpy as np
 import transforms3d
+from queue import Queue
+from threading import Lock
 from scipy.spatial.transform import Rotation as R
 
 import rclpy
@@ -183,7 +188,62 @@ class ProcessFn:
     def __call__(self, *args, **kwargs):
         return self.fn(*args, **kwargs)
 
-class SideTeleop:
+class BaseVRTracker:
+    def __init__(
+        self, node: Node, 
+        tf_broadcaster: TransformBroadcaster,
+        side_name: str, 
+        ctrl_profile: VictorTeleopProfile
+    ):
+        self.node = node
+        self.side_name = side_name
+
+        # Initialize tracker
+        self._init_vr_tracker(ctrl_profile)
+
+    def _init_vr_tracker(self, ctrl_profile):
+        """Initialize fundamental VR parameters"""
+        # Controller Orientation setup
+        self.controller_in_vr0 = np.eye(4)
+        self.tool_in_base0 = np.eye(4)
+        self.usability_rotation = transforms3d.euler.euler2mat(
+            *ctrl_profile.usability_rotation.get(self.side_name, [0.0, 0.0, 0.0])
+        )
+
+        # Sensitivity setup
+        self.position_sensitivity = ctrl_profile.position_sensitivity  # e.g., 1.0
+        self.orientation_sensitivity = ctrl_profile.orientation_sensitivity  # e.g., 1.0
+
+        # Filtering motion
+        self.use_filter = ctrl_profile.use_filter
+        self.filter_pub = self.node.create_publisher(JointState, 'filtered_joint_states', 10)
+        self.filter = BatchOnlineFilter(numtaps=20, cutoff=0.1)
+
+    def get_controller_in_vr(self, controller_info):
+        controller_in_vr_msg = controller_info_to_tf(self.node, controller_info)
+        controller_in_vr = transform_to_mat(controller_in_vr_msg.transform)
+
+        usability_transform = np.eye(4)
+        usability_transform[:3, :3] = self.usability_rotation
+        controller_in_vr_usable = controller_in_vr @ usability_transform
+
+        return controller_in_vr_usable
+
+    def on_start_recording(self, controller_info: ControllerInfo):
+        controller_in_vr0 = self.get_controller_in_vr(controller_info)
+        self.controller_in_vr0 = controller_in_vr0
+
+        controller_in_vr0_msg = TransformStamped()
+        controller_in_vr0_msg.transform = mat_to_transform(controller_in_vr0)
+        controller_in_vr0_msg.header.frame_id = VR_FRAME_NAME
+        controller_in_vr0_msg.child_frame_id = f"{self.side_name}_in_vr0"
+        self.tf_broadcaster.sendTransform(controller_in_vr0_msg)
+
+    def on_stop_recording(self):
+        pass
+
+class SideTeleop(BaseVRTracker):
+    """Teleop one side of Victor"""
     def __init__(self, 
             node: Node, 
             side: Side, 
@@ -202,13 +262,12 @@ class SideTeleop:
             controller_usability_rotation: Offset to the VR controller, to make the orientation more unintuitive.
 
         """
-        self.node = node
+        super().__init__(node, tf_broadcaster, side.arm_name, ctrl_profile)
         self.side = side
         self.side_name = side.arm_name.split('_')[0]  # e.g., 'left' or 'right'
         self.victor = victor
         self.moveitpy = moveitpy
         self.robot_model: RobotModel = self.moveitpy.get_robot_model()
-        self.tf_broadcaster = tf_broadcaster
         self.base_frame = self.robot_model.model_frame
         self.jmg: JointModelGroup = self.robot_model.get_joint_model_group(self.side.arm_name)
         self.tool_frame = self.jmg.eef_name
@@ -219,18 +278,40 @@ class SideTeleop:
             self.get_joint_positions,
         )
         self.process_fns = {
-            "send_pose_cmd": ProcessFn("send_pose_cmd", self.send_pose_cmd, when_gripped=True),
+            "queue_pose_cmd": ProcessFn("queue_pose_cmd", self.queue_pose_cmd, when_gripped=True),
         }
 
         # Parse control profile
-        self._init_controller(ctrl_profile)
-        self._init_vr(ctrl_profile)
         self._init_gripper(ctrl_profile)
+        self._init_robot_controller(ctrl_profile)
+        self._init_processing_queue(ctrl_profile)
         self._init_trackpad(ctrl_profile)
-        # self._init_trackpad_rot(ctrl_profile)
-        # self._init_correction_maneuver_fn(ctrl_profile)
+        self._init_trackpad_rot(ctrl_profile)
+        self._init_correction_maneuver_fn(ctrl_profile)
 
-    def _init_controller(self, ctrl_profile):
+    # ---------------------------
+    # Core functionalities initializers
+    # ---------------------------
+    def _init_gripper(self, ctrl_profile):
+        # Gripper setup
+        self.gripper_in_motion = None
+        # Keypoints for gripper control
+        self.gripper_keypoints = ctrl_profile.gripper_keypoints
+        self._max_gripper_idx = len(self.gripper_keypoints)-1
+        self.gripper_state_idx = ctrl_profile.init_gripper_state
+        # For now, only identical value for finger a,b,c are supported
+        self.side.set_gripper_position(self.gripper_keypoints[self.gripper_state_idx][0],
+                                       scissor_position=self.gripper_keypoints[self.gripper_state_idx][-1])
+        self.toggle_gripper_dt = 0.25  # seconds
+        self.last_toggled_gripper = perf_counter()
+        self.process_fns['trackpad_updown_gripper'] = ProcessFn(
+            "trackpad_updown_gripper",
+            self.toggle_gripper_up_down,
+            when_gripped=False
+        )
+
+    def _init_robot_controller(self, ctrl_profile):
+        """Initialize controllers for robot arms"""
         # Then set the controller to the target controller
         activ_ctrl = list(set(self.victor.left.get_active_controller_names()))
         if f"{self.side_name}_{ctrl_profile.target_controller}" not in activ_ctrl:
@@ -243,41 +324,23 @@ class SideTeleop:
         active_controller_name = active_controller_names[0]
         self.joint_cmd_pub = self.side.get_joint_cmd_pub(active_controller_name)
 
-    def _init_vr(self, ctrl_profile):
-        # Controller Orientation setup
-        self.controller_in_vr0 = np.eye(4)
-        self.tool_in_base0 = np.eye(4)
-        self.usability_rotation = np.array(
-            ctrl_profile.usability_rotation.get(self.side.arm_name, [0.0, 0.0, 0.0])
-        )
+    def _init_processing_queue(self, ctrl_profile):
+        """
+        Initialize processing queue for the controller.
+        This is used to process the input from the controller.
+        """
+        self.controller_info_queue = Queue()
+        self.commanded_joints_queue = Queue()
+        
+        # Threading setup for asynchronous processing
+        self.max_ctrl_delay = getattr(ctrl_profile, 'max_ctrl_delay', 0.1)  # seconds
+        self.worker_pool = ThreadPoolExecutor(max_workers=2, thread_name_prefix=f"{self.side_name}_ik_worker")
+        self.command_thread = None
+        self.shutdown_event = threading.Event()
 
-        # Sensitivity setup
-        self.position_sensitivity = ctrl_profile.position_sensitivity  # e.g., 1.0
-        self.orientation_sensitivity = ctrl_profile.orientation_sensitivity  # e.g., 1.0
-
-        # Filtering motion
-        self.use_filter = ctrl_profile.use_filter
-        self.filter_pub = self.node.create_publisher(JointState, 'filtered_joint_states', 10)
-        self.filter = BatchOnlineFilter(numtaps=20, cutoff=0.1)
-
-    def _init_gripper(self, ctrl_profile):
-        # Gripper setup
-        self.gripper_in_motion = None
-        # Keypoints for gripper control
-        self.gripper_keypoints = ctrl_profile.gripper_keypoints
-        self._max_gripper_idx = len(self.gripper_keypoints) - 1
-        self.gripper_state_idx = ctrl_profile.init_gripper_state
-        # For now, only identical value for finger a,b,c are supported
-        self.side.set_gripper_position(self.gripper_keypoints[self.gripper_state_idx][0],
-                                       scissor_position=self.gripper_keypoints[self.gripper_state_idx][-1])
-        self.toggle_gripper_dt = 0.25  # seconds
-        self.last_toggled_gripper = perf_counter()
-        self.process_fns['trackpad_updown_gripper'] = ProcessFn(
-            "trackpad_updown_gripper",
-            self.toggle_gripper_up_down,
-            when_gripped=False
-        )
-    
+    # ---------------------------
+    # Additioal functionalities initializers
+    # ---------------------------
     def _init_trackpad(self, ctrl_profile):
         """
         Initialize trackpad settings.
@@ -297,7 +360,151 @@ class SideTeleop:
                 self.get_joint_fn_with_trackpad_rot,
             )
 
+    def _init_correction_maneuver_fn(self, ctrl_profile):
+        self.indicate_corrective_maneuver = getattr(ctrl_profile, "corrective_maneuver", False)
+        if not self.indicate_corrective_maneuver:
+            return 
+        # Start ROS node of name "/vr_controller_info/corrective_maneuver" with boolean.
+        # Create a processing function that if menu button is held, send 1, otherwise 0
+        # Register function to self.process_fns
+        self.corrective_maneuver_pub = self.node.create_publisher(
+            Bool, 
+            f"corrective_maneuver_{self.side.arm_name}", 
+            10
+        )
+        def corrective_maneuver_fn(controller_info: ControllerInfo):
+            """
+            If the menu button is pressed, send a corrective maneuver signal.
+            """
+            self.corrective_maneuver_pub.publish(
+                Bool(data=controller_info.menu_button)
+            )
+        self.process_fns['corrective_maneuver'] = ProcessFn(
+            "corrective_maneuver",
+            corrective_maneuver_fn,
+            when_gripped=False
+        )
+
+    # ---------------------------
+    # Asynchronous processing methods
+    # ---------------------------
+    def start_async_processing(self):
+        """Start the worker threads for asynchronous pose processing"""
+        if self.command_thread is None or not self.command_thread.is_alive():
+            self.shutdown_event.clear()
+            self.command_thread = threading.Thread(
+                target=self._command_publisher_loop,
+                name=f"{self.side_name}_command_publisher",
+                daemon=True
+            )
+            self.command_thread.start()
+    
+    def stop_async_processing(self):
+        """Stop the worker threads and clean up resources"""
+        self.shutdown_event.set()
+        if self.command_thread and self.command_thread.is_alive():
+            self.command_thread.join(timeout=1.0)
+        if hasattr(self, 'worker_pool'):
+            self.worker_pool.shutdown(wait=False)
+    
+    def _process_controller_to_joints(self, time_in, controller_info):
+        """Worker function to process controller info to joint positions asynchronously"""
+        try:
+            joint_positions = self.get_joint_fn(controller_info)
+            if joint_positions is not None:
+                self.commanded_joints_queue.put((time_in, joint_positions))
+        except Exception as e:
+            self.node.get_logger().error(f"Error in joint computation: {e}")
+    
+    def _command_publisher_loop(self):
+        """Main loop for publishing joint commands to the robot"""
+        while not self.shutdown_event.is_set():
+            try:
+                time.sleep(0.005)  # 200Hz
+                if self.commanded_joints_queue.qsize() == 0:
+                    continue
+
+                time_in, joint_positions = self.commanded_joints_queue.get()
+                if perf_counter() - time_in > self.max_ctrl_delay:
+                    continue
+                if joint_positions is None:
+                    continue
+
+                # Use filtered positions for smoother control
+                if self.use_filter:
+                    joint_positions_filtered = self.filter.update(joint_positions)
+                    joint_state_msg = JointState()
+                    joint_state_msg.name = [f"victor_{self.side.arm_name}_joint_{i}" for i in
+                                            range(len(joint_positions_filtered))]
+                    joint_state_msg.position = joint_positions_filtered.squeeze().tolist()
+                    self.filter_pub.publish(joint_state_msg)
+                    joint_positions = joint_positions_filtered
+
+                joint_positions = np.clip(joint_positions, self.side.lower, self.side.upper)
+                self.side.send_joint_cmd(joint_positions)
+            except Exception as e:
+                self.node.get_logger().error(f"Error in command publisher: {e}")
+
+    def _compute_target_joints_from_pose(self, controller_pose):
+        """Compute target joint positions from controller pose"""
+        # Transform controller pose to base frame and compute IK
+        delta_in_controller = np_tf_inv(self.controller_in_vr0) @ controller_pose
+        
+        # Add sensitivity
+        delta_in_controller[:3, 3] *= self.position_sensitivity
+        rotation_mat = delta_in_controller[:3, :3]
+        rotation = R.from_matrix(rotation_mat)
+        # Convert to axis-angle and scale the angle
+        axis, angle = rotation.as_rotvec(), np.linalg.norm(rotation.as_rotvec())
+        if angle > 1e-6:
+            scaled_angle = angle * self.orientation_sensitivity
+            new_rotvec = axis / angle * scaled_angle
+            new_rotation_mat = R.from_rotvec(new_rotvec).as_matrix()
+            delta_in_controller[:3, :3] = new_rotation_mat
+
+        current_state, _ = self.get_current_commanded_tool(self.tool_frame)
+        target_in_base = self.tool_in_base0 @ delta_in_controller
+
+        # Solve IK
+        pose_goal = Pose()
+        pose_goal.position.x = target_in_base[0, 3]
+        pose_goal.position.y = target_in_base[1, 3]
+        pose_goal.position.z = target_in_base[2, 3]
+        
+        # Convert rotation matrix to quaternion
+        rotation_quat = R.from_matrix(target_in_base[:3, :3]).as_quat()
+        pose_goal.orientation.x = rotation_quat[0]
+        pose_goal.orientation.y = rotation_quat[1]
+        pose_goal.orientation.z = rotation_quat[2]
+        pose_goal.orientation.w = rotation_quat[3]
+
+        robot_state = deepcopy(current_state)
+        success = robot_state.set_from_ik(self.side.arm_name, pose_goal, self.tool_frame)
+        
+        if success:
+            joint_positions = robot_state.get_joint_group_positions(self.side.arm_name)
+            return np.array(joint_positions)
+        else:
+            return None
+
+    def __del__(self):
+        """Destructor to ensure proper cleanup of threads"""
+        if hasattr(self, 'stop_async_processing'):
+            self.stop_async_processing()
+
+    # ---------------------------
+    # Custom Joint Getting Functions (with support for macros)
+    # ---------------------------
+    def get_joint_positions(self, controller_info: ControllerInfo):
+        """
+        Get joint positions from controller info. This is the method called by async processing.
+        Can be overridden by custom implementations that handle button macros.
+        """
+        controller_pose = self.get_controller_in_vr(controller_info)
+        return self._compute_target_joints_from_pose(controller_pose)
+    
     def get_joint_fn_with_trackpad_rot(self, controller_info: ControllerInfo):
+        """Get joint positions with trackpad rotation functionality"""
         self.last_joint_t = getattr(self, 'last_joint_t', perf_counter())
         dt = perf_counter() - self.last_joint_t
         self.last_joint_t = perf_counter()
@@ -310,54 +517,9 @@ class SideTeleop:
             self.controller_in_vr0 = self.controller_in_vr0 @ delta_rot
         return self.get_joint_positions(controller_info)
 
-    def _init_correction_maneuver_fn(self, ctrl_profile):
-        self.indicate_corrective_maneuver = getattr(ctrl_profile, "corrective_maneuver", False)
-        if self.indicate_corrective_maneuver:
-            # Start ROS node of name "/vr_controller_info/corrective_maneuver" with boolean.
-            # Create a processing function that if menu button is held, send 1, otherwise 0
-            # Register function to self.process_fns
-            self.corrective_maneuver_pub = self.node.create_publisher(
-                Bool, 
-                f"corrective_maneuver_{self.side.arm_name}", 
-                10
-            )
-            def corrective_maneuver_fn(controller_info: ControllerInfo):
-                """
-                If the menu button is pressed, send a corrective maneuver signal.
-                """
-                self.corrective_maneuver_pub.publish(
-                    Bool(data=controller_info.menu_button)
-                )
-            self.process_fns['corrective_maneuver'] = ProcessFn(
-                "corrective_maneuver",
-                corrective_maneuver_fn,
-                when_gripped=False
-            )
-
-    def on_start_recording(self, controller_info: ControllerInfo):
-        controller_in_vr0 = self.get_controller_in_vr(controller_info)
-        self.controller_in_vr0 = controller_in_vr0
-
-        controller_in_vr0_msg = TransformStamped()
-        controller_in_vr0_msg.transform = mat_to_transform(controller_in_vr0)
-        controller_in_vr0_msg.header.frame_id = VR_FRAME_NAME
-        controller_in_vr0_msg.child_frame_id = f"controller_{self.side.arm_name}_in_vr0"
-        self.tf_broadcaster.sendTransform(controller_in_vr0_msg)
-
-        _, self.tool_in_base0 = self.get_current_commanded_tool(self.tool_frame)
-
-        tool_in_base0_msg = TransformStamped()
-        tool_in_base0_msg.transform = mat_to_transform(self.tool_in_base0)
-        tool_in_base0_msg.header.frame_id = self.base_frame
-        tool_in_base0_msg.child_frame_id = f"tool_{self.side.arm_name}_in_base0"
-        self.tf_broadcaster.sendTransform(tool_in_base0_msg)
-
-        controller_in_vr0_msg.child_frame_id = f"controller_{self.side.arm_name}_in_vr0"
-        self.tf_broadcaster.sendTransform(controller_in_vr0_msg)
-
-    def on_stop_recording(self):
-        pass
-    
+    # ---------------------------
+    # Global Processing Functions
+    # ---------------------------
     def process_input(self, controller_info: ControllerInfo):
         """
         Process controller input
@@ -366,7 +528,18 @@ class SideTeleop:
         for fn_name, fn in self.process_fns.items():
             if not fn.when_gripped or controller_info.grip_button:
                 fn(controller_info)
+        
+        # Submit controller info processing to worker pool when gripped
+        if controller_info.grip_button and not self.controller_info_queue.empty():
+            try:
+                time_in, queued_controller_info = self.controller_info_queue.get_nowait()
+                self.worker_pool.submit(self._process_controller_to_joints, time_in, queued_controller_info)
+            except:
+                pass  # Queue was empty, continue
 
+    # ---------------------------
+    # Button Mapping functions
+    # ---------------------------
     def is_trackpad_leftclick(self, controller_info: ControllerInfo):
         return (
             controller_info.trackpad_axis_x < -self.trackpad_click_deadzone \
@@ -387,30 +560,7 @@ class SideTeleop:
             controller_info.trackpad_axis_y < -self.trackpad_click_deadzone \
             and controller_info.trackpad_button
         )
-    
-    def get_joint_positions(self, controller_info: ControllerInfo):
-        return self.get_target_in_base(controller_info)
 
-    def send_pose_cmd(self, controller_info: ControllerInfo):
-        joint_positions = self.get_joint_fn(controller_info)
-        if joint_positions is None:
-            return {'joint_positions': joint_positions}
-
-        # Use filtered positions for smoother control
-        if self.use_filter:
-            joint_positions_filtered = self.filter.update(joint_positions)
-            joint_state_msg = JointState()
-            joint_state_msg.name = [f"victor_{self.side.arm_name}_joint_{i}" for i in
-                                    range(len(joint_positions_filtered))]
-            joint_state_msg.position = joint_positions_filtered.squeeze().tolist()
-            self.filter_pub.publish(joint_state_msg)
-            joint_positions = joint_positions_filtered
-
-        joint_positions = np.clip(joint_positions, self.side.lower, self.side.upper)
-        self.side.send_joint_cmd(joint_positions)
-
-        return {'joint_positions': joint_positions}
-    
     def toggle_gripper_up_down(self, controller_info: ControllerInfo):
         if self.gripper_in_motion:
             return
@@ -418,77 +568,57 @@ class SideTeleop:
         if perf_counter() - self.last_toggled_gripper < self.toggle_gripper_dt:
             return
         # Toggle with trackpad up/down clicks
-        if self.is_trackpad_downclick(controller_info) \
-            and self.gripper_state_idx < self._max_gripper_idx - 1:
+        if self.is_trackpad_downclick(controller_info):
+            if self.gripper_state_idx >= self._max_gripper_idx:
+                print("Gripper is already at the maximum state, cannot toggle down.")
+                return
             self.gripper_state_idx += 1
             self.side.set_gripper_position(self.gripper_keypoints[self.gripper_state_idx][0],
                         scissor_position=self.gripper_keypoints[self.gripper_state_idx][-1])
-        elif self.is_trackpad_upclick(controller_info) \
-            and self.gripper_state_idx > 0:
+        elif self.is_trackpad_upclick(controller_info):
+            if self.gripper_state_idx <= 0:
+                print("Gripper is already at the minimum state, cannot toggle up.")
+                return
             self.gripper_state_idx -= 1
             self.side.set_gripper_position(self.gripper_keypoints[self.gripper_state_idx][0],
                         scissor_position=self.gripper_keypoints[self.gripper_state_idx][-1])
         self.last_toggled_gripper = perf_counter()
 
-    def get_target_in_base(self, controller_info: ControllerInfo) -> TransformStamped:
-        current_controller_in_vr = self.get_controller_in_vr(controller_info)
-        delta_in_controller = np_tf_inv(self.controller_in_vr0) @ current_controller_in_vr
+    # ---------------------------
+    # Robot Pose related functions
+    # ---------------------------
+    def on_start_recording(self, controller_info: ControllerInfo):
+        controller_in_vr0 = self.get_controller_in_vr(controller_info)
+        self.controller_in_vr0 = controller_in_vr0
 
-        # Add sensitivity
-        delta_in_controller[:3, 3] *= self.position_sensitivity
-        rotation_mat = delta_in_controller[:3, :3]
-        rotation = R.from_matrix(rotation_mat)
-        # Convert to axis-angle and scale the angle
-        axis, angle = rotation.as_rotvec(), np.linalg.norm(rotation.as_rotvec())
-        if angle > 1e-6:
-            scaled_angle = angle * self.orientation_sensitivity  # e.g., 2.0
-            new_rotvec = axis / angle * scaled_angle
-            new_rotation_mat = R.from_rotvec(new_rotvec).as_matrix()
-            delta_in_controller[:3, :3] = new_rotation_mat
+        controller_in_vr0_msg = TransformStamped()
+        controller_in_vr0_msg.transform = mat_to_transform(controller_in_vr0)
+        controller_in_vr0_msg.header.frame_id = VR_FRAME_NAME
+        controller_in_vr0_msg.child_frame_id = f"controller_{self.side.arm_name}_in_vr0"
+        self.tf_broadcaster.sendTransform(controller_in_vr0_msg)
 
-        current_state, _ = self.get_current_commanded_tool(self.tool_frame)     # frame does not matter here
+        # Also broadcast tool related info
+        _, self.tool_in_base0 = self.get_current_commanded_tool(self.tool_frame)
 
-        target_in_base = self.tool_in_base0 @ delta_in_controller
+        tool_in_base0_msg = TransformStamped()
+        tool_in_base0_msg.transform = mat_to_transform(self.tool_in_base0)
+        tool_in_base0_msg.header.frame_id = self.base_frame
+        tool_in_base0_msg.child_frame_id = f"tool_{self.side.arm_name}_in_base0"
+        self.tf_broadcaster.sendTransform(tool_in_base0_msg)
 
-        print(delta_in_controller)
-        print("TIB", target_in_base)
+        controller_in_vr0_msg.child_frame_id = f"controller_{self.side.arm_name}_in_vr0"
+        self.tf_broadcaster.sendTransform(controller_in_vr0_msg)
+        
+        # Start asynchronous processing
+        self.start_async_processing()
 
-        current_controller_in_vr_msg = TransformStamped()
-        current_controller_in_vr_msg.transform = mat_to_transform(current_controller_in_vr)
-        current_controller_in_vr_msg.header.frame_id = VR_FRAME_NAME
-        current_controller_in_vr_msg.child_frame_id = f"controller_{self.side.arm_name}_in_vr"
-        self.tf_broadcaster.sendTransform(current_controller_in_vr_msg)
+    def on_stop_recording(self):
+        """Stop asynchronous processing when recording stops"""
+        self.stop_async_processing()
 
-        target_tool_in_base_msg = TransformStamped()
-        target_tool_in_base_msg.transform = mat_to_transform(target_in_base)
-        target_tool_in_base_msg.header.frame_id = self.base_frame
-        target_tool_in_base_msg.child_frame_id = f"target_{self.tool_frame}"
-        self.tf_broadcaster.sendTransform(target_tool_in_base_msg)
-
-        # Solve IK
-        pose_goal = Pose()
-        pose_goal.position.x = target_tool_in_base_msg.transform.translation.x
-        pose_goal.position.y = target_tool_in_base_msg.transform.translation.y
-        pose_goal.position.z = target_tool_in_base_msg.transform.translation.z
-        pose_goal.orientation = target_tool_in_base_msg.transform.rotation
-
-        # ik_t0 = perf_counter()
-        success = False
-        robot_state = deepcopy(current_state)
-        while True:
-            ok = robot_state.set_from_ik(self.side.arm_name, pose_goal, self.tool_frame)
-            if ok:
-                success = True
-                break
-            else:
-                break
-            
-        if success:
-            joint_positions = robot_state.get_joint_group_positions(self.side.arm_name)
-            return joint_positions
-        else:
-            self.node.get_logger().info("IK failed!")
-            return None
+    def queue_pose_cmd(self, controller_info: ControllerInfo):
+        """Queue up controller infos to be consumed"""
+        self.controller_info_queue.put((perf_counter(), controller_info))
 
     def get_current_commanded_tool(self, frame):
         current_state = RobotState(self.robot_model)
@@ -498,16 +628,6 @@ class SideTeleop:
         current_state.update()
         tool_in_base = current_state.get_global_link_transform(frame)
         return current_state, tool_in_base
-
-    def get_controller_in_vr(self, controller_info):
-        controller_in_vr_msg = controller_info_to_tf(self.node, controller_info)
-        controller_in_vr = transform_to_mat(controller_in_vr_msg.transform)
-
-        usability_transform = np.eye(4)
-        usability_transform[:3, :3] = self.usability_rotation
-        controller_in_vr_usable = controller_in_vr @ usability_transform
-
-        return controller_in_vr_usable
 
     def update(self):
         gripper_status: Robotiq3FingerStatus = self.side.gripper_status.get()
@@ -536,6 +656,15 @@ class VictorTeleopNode(Node):
 
         # on controllers info depends on left
         self.vr_sub = self.create_subscription(ControllersInfo, "vr_controller_info", self.on_controllers_info, 10)
+
+        self.use_head_tracker = self.ctrl_profile.use_head_tracker
+        if self.use_head_tracker:
+            self.head_tracker_pub = self.create_publisher(
+                TransformStamped, 
+                "victor_vr/head_tracker_in_vr", 
+                10
+            )
+
         self.has_started = False
         self.is_recording = False
         self.rcv_dts = []
@@ -548,6 +677,15 @@ class VictorTeleopNode(Node):
         # Left Gripper
         self.use_left = self.ctrl_profile.use_left
         self.use_right = self.ctrl_profile.use_right
+        self.use_head_tracker = self.ctrl_profile.use_head_tracker
+
+        if self.use_head_tracker:
+            self.head_tracker = BaseVRTracker(
+                self, 
+                self.tf_broadcaster, 
+                "head_tracker", 
+                self.ctrl_profile
+            )
 
         for side, use in zip(['left', 'right'], [self.use_left, self.use_right]):
             if not use:
@@ -611,30 +749,48 @@ class VictorTeleopNode(Node):
 
         # Start recording
         if not self.is_recording and any_grip_button:
-            self.is_recording = True
-            self.has_started = True
-            for controller_info in msg.controllers_info:
-                if 'left' in controller_info.controller_name and self.use_left:
-                    self.left.on_start_recording(controller_info)
-                elif 'right' in controller_info.controller_name and self.use_right:
-                    self.right.on_start_recording(controller_info)
-
-        # Stop recording
+            self.start_recording(msg)
         elif self.is_recording and not any_grip_button:
-            self.is_recording = False
-            for controller_info in msg.controllers_info:
-                if 'left' in controller_info.controller_name and self.use_left:
-                    self.left.on_stop_recording()
-                elif 'right' in controller_info.controller_name and self.use_right:
-                    self.right.on_stop_recording()
+            self.stop_recording(msg)
 
-        controller_info: ControllerInfo
+        # Process inputs for each controller
         for controller_info in msg.controllers_info:
             if 'left' in controller_info.controller_name and self.use_left:
                 self.left.process_input(controller_info)
             elif 'right' in controller_info.controller_name and self.use_right:
                 self.right.process_input(controller_info)
+        # Process keyboard signals for head tracker
+        if self.use_head_tracker:
+            self.head_tracker.process_input()
 
+        self.perf_record()
+
+    def start_recording(self, msg):
+        self.is_recording = True
+        self.has_started = True
+        self.tracker_recorded = False
+        for controller_info in msg.controllers_info:
+            if "tracker" in controller_info.controller_name \
+                and self.use_head_tracker and not self.tracker_recorded:
+                self.head_tracker.on_start_recording(controller_info)
+                self.tracker_recorded = True
+            if 'left' in controller_info.controller_name and self.use_left:
+                self.left.on_start_recording(controller_info)
+            elif 'right' in controller_info.controller_name and self.use_right:
+                self.right.on_start_recording(controller_info)
+
+    def stop_recording(self, msg):
+        self.is_recording = False
+        self.tracker_recorded = False
+        for controller_info in msg.controllers_info:
+            if "tracker" in controller_info.controller_name and self.use_head_tracker:
+                self.head_tracker.on_stop_recording()
+            if 'left' in controller_info.controller_name and self.use_left:
+                self.left.on_stop_recording()
+            elif 'right' in controller_info.controller_name and self.use_right:
+                self.right.on_stop_recording()
+
+    def perf_record(self):
         now = perf_counter()
         rcv_dt = self.last_rcv_t - now
         self.rcv_dts.append(rcv_dt)
@@ -643,7 +799,6 @@ class VictorTeleopNode(Node):
         mean_rcv_dt = np.mean(self.rcv_dts)
         if mean_rcv_dt > 0.038:
             print(f'slow!!! {mean_rcv_dt=:.3f}')
-
         self.last_rcv_t = now
 
 def main():

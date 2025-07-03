@@ -22,6 +22,7 @@ class VictorTeleopProfile:
     # Joint settings
     # If has init joints, put them in a list as use_arms list
     init_joints={}
+    max_ctrl_delay=0.5  # Maximum delay for controller commands in seconds
     
     # Usability rotation for the controllers
     # List corresponding to use_arms
@@ -37,6 +38,10 @@ class VictorTeleopProfile:
         [0.0, 0.0, 0.0, 0.0],       # fully open
     ]
     init_gripper_state=0
+
+    # Head tracker
+    # This can be useful for moving camera around a simulator
+    use_head_tracker = False
 
     def __init__(self):
         self.use_left = 'left' in self.use_arms
@@ -67,7 +72,7 @@ class VictorTeleopRealRobotProfile(VictorTeleopProfile):
     }
     usability_rotation = {
         "left":[np.pi, 0.0, np.pi/2],
-        "right": [np.pi, 0.0, -np.pi/2]
+        "right": [np.pi, 0.0, np.pi/2]
     }
     trackpad_for_wrist_rot = True
     trackpad_rot_rate = 0.2
@@ -86,10 +91,11 @@ class VictorTeleopSimProfile(VictorTeleopRealRobotProfile):
     gripper_keypoints = [
         [0.0, 0.0, 0.0, 0.5],
         [0.33, 0.33, 0.33, 1.0],
-        [0.42, 0.42, 0.42, 1.0],
+        [0.40, 0.40, 0.40, 1.0],
         [1.0, 1.0, 1.0, 0.5],
     ]
     init_gripper_state=0
+    use_head_tracker = True
 
 # Scan this entire file and register profile classes that are subclasses of VictorTeleopProfile
 for name, obj in list(globals().items()):
