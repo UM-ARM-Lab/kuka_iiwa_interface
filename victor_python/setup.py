@@ -28,6 +28,8 @@ setup(
             'robotiq_grippers_joystick_node.py = victor_python.robotiq_grippers_joystick_node:main',
             'arm_wrench_republisher.py = victor_python.arm_wrench_republisher:main',
             'mock_victor_ros.py = victor_python.mock_victor_ros:main',
+            'victor_vr_teleop_endpoint = victor_python.victor_vr_teleop_endpoint:main',
+            'teleop_endpoint = victor_python.victor_vr_teleop_endpoint:main',  # Alias for convenience
         ],
     },
 )

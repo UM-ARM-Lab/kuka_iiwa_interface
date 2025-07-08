@@ -39,10 +39,12 @@ class VictorTeleopProfile:
     ]
     init_gripper_state=0
 
-    # Head tracker
+    # Viewport tracker
     # This can be useful for moving camera around a simulator
-    use_head_tracker = False
-
+    use_viewport_tracker = False
+    viewport_position_sensitivity = 1.0
+    viewport_orientation_sensitivity = 1.0
+    
     def __init__(self):
         self.use_left = 'left' in self.use_arms
         self.use_right = 'right' in self.use_arms
@@ -91,11 +93,21 @@ class VictorTeleopSimProfile(VictorTeleopRealRobotProfile):
     gripper_keypoints = [
         [0.0, 0.0, 0.0, 0.5],
         [0.33, 0.33, 0.33, 1.0],
-        [0.40, 0.40, 0.40, 1.0],
+        [0.38, 0.38, 0.38, 1.0],
         [1.0, 1.0, 1.0, 0.5],
     ]
+    usability_rotation = {
+        "left":[np.pi, 0.0, np.pi/2],
+        "right": [np.pi, 0.0, np.pi/2],
+        # "viewport":[np.pi/2, 0.0, np.pi/2],
+        "viewport":[2.973773, -0.169581, 0.0]
+    }
     init_gripper_state=0
-    use_head_tracker = True
+    use_viewport_tracker = True
+
+    # Viewport tracker settings for simulation
+    viewport_position_sensitivity = 2.0
+    viewport_orientation_sensitivity = 1.0
 
 # Scan this entire file and register profile classes that are subclasses of VictorTeleopProfile
 for name, obj in list(globals().items()):
