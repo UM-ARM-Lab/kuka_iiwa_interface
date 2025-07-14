@@ -41,7 +41,7 @@ class VictorTeleopProfile:
 
     # Viewport tracker
     # This can be useful for moving camera around a simulator
-    use_viewport_tracker = False
+    viewport_tracker = None         # None, "head" or "tracker" to use the viewport tracker
     viewport_position_sensitivity = 1.0
     viewport_orientation_sensitivity = 1.0
     
@@ -69,7 +69,8 @@ class VictorTeleopRealRobotProfile(VictorTeleopProfile):
             -1.0337042757247657,
             -0.41568294934346726,
             1.4536155554562367,
-            0.4079876871561164
+            # 0.4079876871561164
+            -2.4
         ]
     }
     usability_rotation = {
@@ -88,26 +89,33 @@ class VictorTeleopRealRobotProfile(VictorTeleopProfile):
     ]
     init_gripper_state=0
 
-class VictorTeleopSimProfile(VictorTeleopRealRobotProfile):
+class VictorTeleopSimTrackerProfile(VictorTeleopRealRobotProfile):
     # Gripper
     gripper_keypoints = [
         [0.0, 0.0, 0.0, 0.5],
-        [0.33, 0.33, 0.33, 1.0],
-        [0.38, 0.38, 0.38, 1.0],
-        [1.0, 1.0, 1.0, 0.5],
+        [0.31, 0.31, 0.31, 1.0],
+        [0.37, 0.37, 0.37, 1.0],
+        # [1.0, 1.0, 1.0, 0.5],
     ]
     usability_rotation = {
         "left":[np.pi, 0.0, np.pi/2],
         "right": [np.pi, 0.0, np.pi/2],
-        # "viewport":[np.pi/2, 0.0, np.pi/2],
-        "viewport":[2.973773, -0.169581, 0.0]
+        "viewport":[np.pi/2, 0.0, np.pi/2],     # Tracker
     }
     init_gripper_state=0
-    use_viewport_tracker = True
+    viewport_tracker = "tracker"   # "headset" or "tracker" to use the viewport tracker
 
     # Viewport tracker settings for simulation
     viewport_position_sensitivity = 2.0
     viewport_orientation_sensitivity = 1.0
+
+class VictorTeleopSimHeadsetProfile(VictorTeleopSimTrackerProfile):
+    usability_rotation = {
+        "left":[np.pi, 0.0, np.pi/2],
+        "right": [np.pi, 0.0, np.pi/2],
+        "viewport":[2.973773, -0.169581, 0.0]     # Headset
+    }
+    viewport_tracker = "headset"   # "headset" or "tracker" to use the viewport tracker
 
 # Scan this entire file and register profile classes that are subclasses of VictorTeleopProfile
 for name, obj in list(globals().items()):

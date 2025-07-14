@@ -22,7 +22,7 @@ import math
 import numpy as np
 import rclpy
 import argparse
-from victor_sim_hardware.robot_state_api import create_victor_simulator
+from utils.ros_ws.src.kuka_iiwa_interface.victor_sim_hardware.victor_sim_hardware.robot_state_api_new import create_victor_simulator
 
 
 class SimpleJointCommandGenerator:

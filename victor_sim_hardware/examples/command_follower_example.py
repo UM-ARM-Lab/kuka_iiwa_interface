@@ -20,7 +20,7 @@ Usage:
 import time
 import argparse
 import rclpy
-from victor_sim_hardware.robot_state_api import create_victor_simulator
+from utils.ros_ws.src.kuka_iiwa_interface.victor_sim_hardware.victor_sim_hardware.robot_state_api_new import create_victor_simulator
 
 
 class CommandFollowerExample:

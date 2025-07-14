@@ -11,7 +11,7 @@ setup(
     data_files=[
         ('share/ament_index/resource_index/packages', [join('resource', package_name)]),
         (join('share/', package_name), ['package.xml']),
-        (join('share', package_name, 'launch'), glob(join('launch', '*.launch.xml'))),
+        (join('share', package_name, 'launch'), glob(join('launch', '*.launch.xml')) + glob(join('launch', '*.py'))),
     ],
     install_requires=['setuptools'],
     zip_safe=True,
@@ -28,8 +28,7 @@ setup(
             'robotiq_grippers_joystick_node.py = victor_python.robotiq_grippers_joystick_node:main',
             'arm_wrench_republisher.py = victor_python.arm_wrench_republisher:main',
             'mock_victor_ros.py = victor_python.mock_victor_ros:main',
-            'victor_vr_teleop_endpoint = victor_python.victor_vr_teleop_endpoint:main',
-            'teleop_endpoint = victor_python.victor_vr_teleop_endpoint:main',  # Alias for convenience
+            'launch_teleop = victor_python.launch_teleop:main',  # Alias for convenience
         ],
     },
 )

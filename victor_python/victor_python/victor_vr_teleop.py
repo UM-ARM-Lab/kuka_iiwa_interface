@@ -412,8 +412,6 @@ class ViewportTracker(BaseVRTracker):
         initial_viewport_transform[:3, :3] = R.from_quat(initial_quat).as_matrix()
         
         # Apply relative transform to initial viewport pose
-        # Use inverse of delta to make viewport move in same direction as head
-        ### TESTING
         target_viewport_transform = initial_viewport_transform @ delta_tracker
         
         # Apply filter to position
@@ -804,8 +802,6 @@ class VictorTeleopNode(Node):
         # on controllers info depends on left
         self.vr_sub = self.create_subscription(ControllersInfo, "vr_controller_info", self.on_controllers_info, 10)
 
-        self.use_viewport_tracker = self.ctrl_profile.use_viewport_tracker
-
         self.has_started = False
         self.is_recording = False
         self.rcv_dts = []
@@ -823,9 +819,9 @@ class VictorTeleopNode(Node):
         # Left Gripper
         self.use_left = self.ctrl_profile.use_left
         self.use_right = self.ctrl_profile.use_right
-        self.use_viewport_tracker = self.ctrl_profile.use_viewport_tracker
+        self.viewport_tracker_name = self.ctrl_profile.viewport_tracker
 
-        if self.use_viewport_tracker:
+        if self.viewport_tracker_name is not None:
             self.viewport_tracker = ViewportTracker(
                 self, 
                 self.tf_broadcaster, 
@@ -916,8 +912,14 @@ class VictorTeleopNode(Node):
                 self.right.process_input(controller_info)
         
         for tracker_info in msg.trackers_info:
-            if "Head" in tracker_info.tracker_name \
-                and self.use_viewport_tracker:
+            if "headset".startswith(self.viewport_tracker_name) \
+                and "Head" in tracker_info.tracker_name \
+                and self.viewport_tracker is not None:
+                self.viewport_tracker.process_input(tracker_info) 
+                break
+            if "tracker".startswith(self.viewport_tracker_name) \
+                and "Tracker" in tracker_info.tracker_name \
+                and self.viewport_tracker is not None:
                 self.viewport_tracker.process_input(tracker_info)
                 break
 
