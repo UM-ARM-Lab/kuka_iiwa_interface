@@ -11,7 +11,7 @@ def generate_launch_description():
         [
             # 1. Start rossim (MoveIt demo with RViz and simulator)
             ExecuteProcess(
-                cmd=['ros2', 'launch', 'victor_moveit_config', 'demo.launch.py', 'use_rviz:=true', 'use_simulator:=true'],
+                cmd=['ros2', 'launch', 'victor_moveit_config', 'demo.launch.py', 'use_rviz:=true', 'use_simulator:=false'],
                 output='screen'
             ),
             

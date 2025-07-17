@@ -4,15 +4,21 @@ from launch.actions import ExecuteProcess, TimerAction, DeclareLaunchArgument
 from launch.substitutions import LaunchConfiguration
 import os
 
+from launch import LaunchDescription
+from launch.actions import DeclareLaunchArgument
+from launch.substitutions import LaunchConfiguration
+
+import os
+
 
 def generate_launch_description():
     # Get ROS_IP from environment or use default
     ros_ip = os.environ.get('ROS_IP', '0.0.0.0')
-    
+
     # Declare launch arguments
     profile_arg = DeclareLaunchArgument(
         'profile',
-        default_value='VictorTeleopSimCapTrackerProfile',
+        default_value='VictorTeleopRealRobotProfile',
         description='Profile for VR control'
     )
     
@@ -23,10 +29,14 @@ def generate_launch_description():
             
             # 1. Start rossim (MoveIt demo with RViz and simulator)
             ExecuteProcess(
-                cmd=['ros2', 'launch', 'victor_moveit_config', 'demo.launch.py', 'use_rviz:=true', 'use_simulator:=true'],
+                cmd=[
+                    'ros2', 'launch', 'victor_python', 'launch_engine_real_right.py', 
+                    'use_rviz:=true', 
+                    'use_simulator:=false',
+                ],
                 output='screen'
             ),
-            
+        
             # 2. Start ros-unity teleop endpoint (starts immediately)
             Node(
                 package="ros_tcp_endpoint",

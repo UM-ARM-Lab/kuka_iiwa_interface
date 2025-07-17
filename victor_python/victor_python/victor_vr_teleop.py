@@ -821,7 +821,7 @@ class VictorTeleopNode(Node):
         self.use_right = self.ctrl_profile.use_right
         self.viewport_tracker_name = self.ctrl_profile.viewport_tracker
 
-        if self.viewport_tracker_name is not None:
+        if self.viewport_tracker_name is not "None":
             self.viewport_tracker = ViewportTracker(
                 self, 
                 self.tf_broadcaster, 

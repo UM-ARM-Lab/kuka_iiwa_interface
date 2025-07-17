@@ -88,13 +88,39 @@ class VictorTeleopRealRobotProfile(VictorTeleopProfile):
         [1.0, 1.0, 1.0, 0.5],
     ]
     init_gripper_state=0
+    viewport_tracker = "None"   # "headset" or "tracker" to use the viewport tracker
+    # Viewport tracker settings for simulation
+    viewport_position_sensitivity = 2.0
+    viewport_orientation_sensitivity = 1.0
+
+class VictorTeleopRealCapProfile(VictorTeleopRealRobotProfile):
+    init_joints = {
+        "left": [
+            1.6022122533307945,
+            -0.9978108494251933,
+            -0.7075040305616351,
+            -1.8461418367034075,
+            -0.5849508065575095,
+            0.8936085770212594,
+            1.5204164680326602,
+        ], 
+        "right": [
+            1.706375053909089,
+            0.5047621455575189,
+            -1.6661934509388395,
+            -1.0337042757247657,
+            -0.41568294934346726,
+            1.4536155554562367,
+            1.221
+        ]
+    }
 
 class VictorTeleopSimTrackerProfile(VictorTeleopRealRobotProfile):
     # Gripper
     gripper_keypoints = [
         [0.0, 0.0, 0.0, 0.5],
         [0.31, 0.31, 0.31, 1.0],
-        [0.37, 0.37, 0.37, 1.0],
+        [0.38, 0.38, 0.38, 1.0],
         # [1.0, 1.0, 1.0, 0.5],
     ]
     usability_rotation = {

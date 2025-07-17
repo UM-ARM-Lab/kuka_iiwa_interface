@@ -1,10 +1,11 @@
+import launch
 from moveit_configs_utils import MoveItConfigsBuilder
 from launch import LaunchDescription
 from launch.actions import IncludeLaunchDescription
-from launch.conditions import IfCondition, UnlessCondition
-from launch.launch_description_sources import PythonLaunchDescriptionSource, AnyLaunchDescriptionSource
-from launch.substitutions import LaunchConfiguration, PythonExpression
-from moveit_configs_utils.launch_utils import DeclareBooleanLaunchArg, DeclareLaunchArgument
+from launch.conditions import IfCondition
+from launch.launch_description_sources import PythonLaunchDescriptionSource
+from launch.substitutions import LaunchConfiguration
+from moveit_configs_utils.launch_utils import DeclareBooleanLaunchArg
 
 from launch_ros.actions import Node
 
@@ -33,31 +34,31 @@ def generate_launch_description():
         ),
     )
 
-    # ld.add_action(
-    #     Node(
-    #         package="joy",
-    #         executable="joy_node",
-    #         name="xbox_joystick",
-    #         namespace="victor",
-    #         output="screen",
-    #     )
-    # )
+    ld.add_action(
+        Node(
+            package="joy",
+            executable="joy_node",
+            name="xbox_joystick",
+            namespace="victor",
+            output="screen",
+        )
+    )
 
-    # ld.add_action(
-    #     Node(
-    #         package="victor_python",
-    #         executable="robotiq_grippers_joystick_node.py",
-    #         name="robotiq_grippers_joystick_node",
-    #         output="screen",
-    #         namespace="victor",
-    #         parameters=[
-    #             {
-    #                 "enable_finger_open_close_control": True,
-    #                 "enable_scissor_open_close_control": True,
-    #             }
-    #         ]
-    #     )
-    # )
+    ld.add_action(
+        Node(
+            package="victor_python",
+            executable="robotiq_grippers_joystick_node.py",
+            name="robotiq_grippers_joystick_node",
+            output="screen",
+            namespace="victor",
+            parameters=[
+                {
+                    "enable_finger_open_close_control": True,
+                    "enable_scissor_open_close_control": True,
+                }
+            ]
+        )
+    )
 
     ld.add_action(
         Node(
@@ -67,15 +68,6 @@ def generate_launch_description():
             output="screen",
             namespace="victor",
         )
-    )
-    ld.add_action(
-        Node(
-            package="arm_robots",
-            executable="camera_pose_publisher.py",
-            name="camera_pose_publisher",
-            output="screen",
-            namespace="victor",
-        ),
     )
 
     # Given the published joint states, publish tf for the robot links
@@ -102,11 +94,6 @@ def generate_launch_description():
             parameters=[
                 moveit_config.robot_description,
                 str(moveit_config.package_path / "config/ros2_controllers.yaml"),
-                # PythonExpression([
-                #     "'", str(moveit_config.package_path / "config/ros2_controllers_sim.yaml"), "' if '",
-                #     LaunchConfiguration("use_simulator"), "' == 'true' else '",
-                #     str(moveit_config.package_path / "config/ros2_controllers.yaml"), "'"
-                # ]),
             ],
             output="screen",
         )
@@ -153,10 +140,12 @@ def generate_launch_description():
     # ld.add_action(
     #     IncludeLaunchDescription(
     #         AnyLaunchDescriptionSource(
-    #             # str("/home/zixuanh/ros2_ws/src/lightweight_vicon_bridge/launch/vicon_bridge.launch"),
-    #             str("/home/houhd/ros2_ws/src/lightweight_vicon_bridge/launch/vicon_bridge.launch"),
+    #             str(os.path.join(
+    #                 get_package_share_directory("lightweight_vicon_bridge"),
+    #                 "launch/vicon_bridge.launch"
+    #             ))
     #         ),
-    #         condition=UnlessCondition(LaunchConfiguration("use_simulator")),
+    #         condition=IfCondition(NotSubstitution(LaunchConfiguration("use_simulator"))),
     #     )
     # )
 
@@ -165,6 +154,7 @@ def generate_launch_description():
     #         package="arm_zivid",
     #         executable="arm_zivid_ros_node.py",
     #         name="zivid_publisher",
+    #         condition=IfCondition(LaunchConfiguration("use_zivid"))
     #     )
     # )
     return ld
