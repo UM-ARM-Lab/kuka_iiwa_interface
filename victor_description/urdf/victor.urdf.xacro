@@ -63,12 +63,12 @@
 
     <!-- arm to gripper adapter -->
     <xacro:include filename="$(find victor_description)/urdf/iiwa7_to_robotiq_adapter.xacro"/>
-    <xacro:iia7_to_robotiq_adapter parent="$(arg robot_name)_left_arm_flange" prefix="$(arg robot_name)_left">
+    <xacro:iiwa7_to_robotiq_adapter parent="$(arg robot_name)_left_arm_flange" prefix="$(arg robot_name)_left">
         <origin xyz="0 0 -0.01" rpy="0 0 0"/>
-    </xacro:iia7_to_robotiq_adapter>
-    <xacro:iia7_to_robotiq_adapter parent="$(arg robot_name)_right_arm_flange" prefix="$(arg robot_name)_right">
+    </xacro:iiwa7_to_robotiq_adapter>
+    <xacro:iiwa7_to_robotiq_adapter parent="$(arg robot_name)_right_arm_flange" prefix="$(arg robot_name)_right">
         <origin xyz="0 0 -0.01" rpy="0 0 0"/>
-    </xacro:iia7_to_robotiq_adapter>
+    </xacro:iiwa7_to_robotiq_adapter>
 
     <!-- Robotiq grippers -->
     <xacro:if value="${gripper == 'robotiq'}">

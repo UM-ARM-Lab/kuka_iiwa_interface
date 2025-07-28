@@ -1,0 +1,78 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+
+    <xacro:macro name="iiwa7_to_robotiq_adapter_quickfix" params="parent prefix *origin">
+        <!--joint between {parent} and quickfix female-->
+        <joint name="${parent}_${prefix}_quickfix_female_joint" type="fixed">
+            <xacro:insert_block name="origin"/>
+            <parent link="${parent}"/>
+            <child link="${prefix}_quickfix_female"/>
+        </joint>
+        
+        <link name="${prefix}_quickfix_female">
+            <visual>
+                <origin xyz="0 0 0" rpy="0 0 0"/>
+                <geometry>
+                    <mesh filename="package://victor_description/meshes/robotiq_3finger/millibar_adapter_female.stl"/>
+                </geometry>
+                <material name="LightGrey"/>
+            </visual>
+            <collision>
+                <origin xyz="0 0 0" rpy="0 0 0"/>
+                <geometry>
+                    <mesh filename="package://victor_description/meshes/robotiq_3finger/millibar_adapter_female.stl"/>
+                </geometry>
+                <material name="LightGrey"/>
+            </collision>
+        </link>
+
+        <!--joint between quickfix female and quickfix male-->
+        <joint name="${prefix}_quickfix_connection_joint" type="fixed">
+            <parent link="${prefix}_quickfix_female"/>
+            <child link="${prefix}_quickfix_male"/>
+            <origin xyz="0 0 0.018" rpy="0 0 0"/>
+        </joint>
+        
+        <link name="${prefix}_quickfix_male">
+            <visual>
+                <origin xyz="0 0 0" rpy="0 0 0"/>
+                <geometry>
+                    <mesh filename="package://victor_description/meshes/robotiq_3finger/millibar_adapter_male.stl"/>
+                </geometry>
+                <material name="LightGrey"/>
+            </visual>
+            <collision>
+                <origin xyz="0 0 0" rpy="0 0 0"/>
+                <geometry>
+                    <mesh filename="package://victor_description/meshes/robotiq_3finger/millibar_adapter_male.stl"/>
+                </geometry>
+                <material name="LightGrey"/>
+            </collision>
+        </link>
+
+        <!--joint between quickfix male and gripper mounting bracket-->
+        <joint name="${prefix}_quickfix_to_adapter_joint" type="fixed">
+            <parent link="${prefix}_quickfix_male"/>
+            <child link="${prefix}_gripper_mounting_bracket"/>
+            <origin xyz="0 0 0.012" rpy="0 0 0"/>
+        </joint>
+        
+        <link name="${prefix}_gripper_mounting_bracket">
+            <visual>
+                <origin xyz="0 0 0" rpy="0 0 0"/>
+                <geometry>
+                    <mesh filename="package://victor_description/meshes/robotiq_3finger/kuka_to_palm_connectors_visual.stl"/>
+                </geometry>
+                <material name="LightGrey"/>
+            </visual>
+            <collision>
+                <origin xyz="0 0 0" rpy="0 0 0"/>
+                <geometry>
+                    <mesh filename="package://victor_description/meshes/robotiq_3finger/kuka_to_palm_connectors_collision.stl"/>
+                </geometry>
+                <material name="LightGrey"/>
+            </collision>
+        </link>
+    </xacro:macro>
+
+</robot>

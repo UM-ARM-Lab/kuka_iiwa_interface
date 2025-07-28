@@ -18,7 +18,7 @@ def generate_launch_description():
     # Declare launch arguments
     profile_arg = DeclareLaunchArgument(
         'profile',
-        default_value='VictorTeleopRealRobotProfile',
+        default_value='VictorTeleopRealCapProfile',
         description='Profile for VR control'
     )
     

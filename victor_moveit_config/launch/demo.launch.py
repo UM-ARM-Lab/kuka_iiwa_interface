@@ -1,4 +1,3 @@
-import launch
 from moveit_configs_utils import MoveItConfigsBuilder
 from launch import LaunchDescription
 from launch.actions import IncludeLaunchDescription

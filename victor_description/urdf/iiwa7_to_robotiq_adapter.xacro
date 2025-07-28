@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <robot xmlns:xacro="http://www.ros.org/wiki/xacro">
 
-    <xacro:macro name="iia7_to_robotiq_adapter" params="parent prefix *origin">
+    <xacro:macro name="iiwa7_to_robotiq_adapter" params="parent prefix *origin">
         <!--joint between {parent} and link_0-->
         <joint name="${parent}_${prefix}_joint" type="fixed">
             <xacro:insert_block name="origin"/>

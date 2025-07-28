@@ -2,15 +2,11 @@ from launch import LaunchDescription
 from launch_ros.actions import Node
 from launch.actions import ExecuteProcess, DeclareLaunchArgument, IncludeLaunchDescription
 from launch.launch_description_sources import AnyLaunchDescriptionSource
-
-
-import os
-
-import os
-from ament_index_python.packages import get_package_share_directory
+from launch.substitutions import LaunchConfiguration
 
 import numpy as np
-
+import os
+from ament_index_python.packages import get_package_share_directory
 
 def generate_launch_description():
     # Get ROS_IP from environment or use default
@@ -38,11 +34,18 @@ def generate_launch_description():
         default_value='VictorTeleopRealRobotProfile',
         description='Profile for VR control'
     )
+
+    use_sim_arg = DeclareLaunchArgument(
+        'use_simulator',
+        default_value='false',
+        description='Use simulator or real robot'
+    )
     
     return LaunchDescription(
         [
             # Declare arguments
             profile_arg,
+            use_sim_arg,
 
             # 1. Start publishing camera pose and mocap transformations, 
             # For some reason this needs to be before the main ROS stack goes online. 
@@ -78,7 +81,7 @@ def generate_launch_description():
                 cmd=[
                     'ros2', 'launch', 'victor_moveit_config', 'demo.launch.py', 
                     'use_rviz:=true', 
-                    'use_simulator:=false',
+                    ['use_simulator:=', LaunchConfiguration('use_simulator')],
                 ],
                 output='screen'
             ),
