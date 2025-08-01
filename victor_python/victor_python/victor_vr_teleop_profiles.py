@@ -120,7 +120,7 @@ class VictorTeleopSimTrackerProfile(VictorTeleopRealRobotProfile):
     gripper_keypoints = [
         [0.0, 0.0, 0.0, 0.5],
         [0.31, 0.31, 0.31, 1.0],
-        [0.37, 0.37, 0.37, 1.0],
+        [0.38, 0.38, 0.38, 1.0],
         # [1.0, 1.0, 1.0, 0.5],
     ]
     usability_rotation = {

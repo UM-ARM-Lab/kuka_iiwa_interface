@@ -856,6 +856,7 @@ class VictorTeleopNode(Node):
         print("ready!")
 
     def on_controllers_info(self, msg: ControllersInfo):
+        st = perf_counter()
         if not self._initialized:
             self._runtime_init()
             return
@@ -867,6 +868,9 @@ class VictorTeleopNode(Node):
             self.left.update()
         if self.use_right:
             self.right.update()
+
+        self._update_time = perf_counter() - st
+        st = perf_counter()
         
         any_grip_button = any([controller_info.grip_button for controller_info in msg.controllers_info])
         # any_menu_button = any([controller_info.menu_button for controller_info in msg.controllers_info])
@@ -898,11 +902,17 @@ class VictorTeleopNode(Node):
         for tracker_info in msg.trackers_info:
             self.tf_broadcaster.sendTransform(tracker_info_to_tf(self, tracker_info))
 
+        self._tf_time = perf_counter() - st
+        st = perf_counter()
+
         # Start recording
         if not self.is_recording and any_grip_button:
             self.start_recording(msg)
         elif self.is_recording and not any_grip_button:
             self.stop_recording(msg)
+
+        self._start_recording_time = perf_counter() - st
+        st = perf_counter()
             
         # Process inputs for each controller AND TRACKER
         for controller_info in msg.controllers_info:
@@ -910,7 +920,10 @@ class VictorTeleopNode(Node):
                 self.left.process_input(controller_info)
             elif 'right' in controller_info.controller_name and self.use_right:
                 self.right.process_input(controller_info)
-        
+
+        self._controller_time = perf_counter() - st
+        st = perf_counter()
+
         for tracker_info in msg.trackers_info:
             if "headset".startswith(self.viewport_tracker_name) \
                 and "Head" in tracker_info.tracker_name \
@@ -922,6 +935,8 @@ class VictorTeleopNode(Node):
                 and self.viewport_tracker is not None:
                 self.viewport_tracker.process_input(tracker_info)
                 break
+        
+        self._headset_time = perf_counter() - st
 
         self.perf_record()
         
@@ -957,6 +972,14 @@ class VictorTeleopNode(Node):
         # print(f"mean_rcv_dt: {mean_rcv_dt:.3f} seconds, rcv_dt: {rcv_dt:.3f} seconds")
         if mean_rcv_dt > 0.05:
             self.get_logger().warn(f'slow!!! {mean_rcv_dt=:.3f}')
+            self.get_logger().warn("\n".join([
+                f'- current rcv_dt: {rcv_dt:.3f}',
+                f'- last update time: {self._update_time:.3f}',
+                f'- tf time: {self._tf_time:.3f}',
+                f'- start recording time: {self._start_recording_time:.3f}',
+                f'- controller time: {self._controller_time:.3f}',
+                f'- headset time: {self._headset_time:.3f}'
+            ]))
         self.last_rcv_t = now
 
 def main():

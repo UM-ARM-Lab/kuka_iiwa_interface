@@ -40,7 +40,7 @@ def generate_launch_description():
 
         # 2. Start policy server after 10 second delay
         TimerAction(
-            period=10.0,
+            period=15.0,
             actions=[
                 ExecuteProcess(
                     cmd=['python3', 'src/kuka_iiwa_interface/victor_python/victor_python/victor_policy_server.py'],
