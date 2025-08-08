@@ -78,7 +78,7 @@ class VictorTeleopRealRobotProfile(VictorTeleopProfile):
         "right": [np.pi, 0.0, np.pi/2]
     }
     trackpad_for_wrist_rot = True
-    trackpad_rot_rate = 0.2
+    trackpad_rot_rate = 0.4
 
     # Gripper
     gripper_keypoints = [
