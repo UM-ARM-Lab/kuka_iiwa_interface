@@ -14,21 +14,22 @@ from rclpy.qos import QoSProfile, QoSReliabilityPolicy, QoSHistoryPolicy
 from threading import Lock
 import json
 import time
-import argparse
-from typing import Dict, Any, Callable, Optional, Union, List
+from typing import Dict, Any, Optional, Union, List
 import numpy as np
 import torch
 
 from std_msgs.msg import String
 from geometry_msgs.msg import TransformStamped
 from victor_hardware_interfaces.msg import (
-    MotionStatus, 
-    Robotiq3FingerCommand, 
+    MotionStatus,
+    Robotiq3FingerCommand,
     Robotiq3FingerStatus,
     JointValueQuantity,
     Robotiq3FingerActuatorCommand
 )
 
+from victor_hardware_interfaces_np import *
+import ros2_numpy
 
 class VictorArmPolicyClient:
     """Client for controlling a single arm through the policy bridge."""
@@ -65,6 +66,11 @@ class VictorArmPolicyClient:
         
         # Controller status tracking - simplified, no events
         self.current_controller = None
+        
+        # Command caching - store last sent commands
+        self.last_joint_cmd = None
+        self.last_gripper_cmd = None
+        self.last_cartesian_cmd = None
         
         # Setup publishers and subscribers (no callback groups)
         self._setup_publishers()
@@ -123,6 +129,9 @@ class VictorArmPolicyClient:
             self.high_freq_qos
         )
     
+    # -------------------------------------
+    # Controller
+    # -------------------------------------
     def controller_state_callback(self, msg: String):
         """Handle controller state updates - only store data."""
         with self.status_lock:
@@ -130,38 +139,115 @@ class VictorArmPolicyClient:
             self.current_controller = msg.data
             self.node.get_logger().debug(f"{self.side} controller state updated to: {self.current_controller}")
     
+    def get_current_controller(self) -> Optional[str]:
+        """Get the currently active controller for this arm."""
+        with self.status_lock:
+            return self.current_controller
+    
+    # -------------------------------------
+    # Motion Status
+    # -------------------------------------
     def motion_status_callback(self, msg: MotionStatus):
         """Handle motion status updates - only store data."""
         with self.status_lock:
             self.latest_motion_status = msg
     
-    def gripper_status_callback(self, msg: Robotiq3FingerStatus):
-        """Handle gripper status updates - only store data."""
+    def _get_motion_status(self) -> Optional[MotionStatus]:
+        """Get latest motion status."""
         with self.status_lock:
-            self.latest_gripper_status = msg
+            return self.latest_motion_status
     
-    def _convert_to_list(self, data: Union[List[float], np.ndarray, torch.Tensor], 
-                        expected_dim: int, data_name: str) -> List[float]:
-        """Convert input data to list with dimension validation."""
-        if isinstance(data, torch.Tensor):
-            if data.shape != (expected_dim,):
-                raise ValueError(f"Expected {data_name} tensor shape ({expected_dim},), got {data.shape}")
-            return data.tolist()
-        elif isinstance(data, np.ndarray):
-            data_list = data.tolist()
-        else:
-            data_list = list(data)
-        
-        if len(data_list) != expected_dim:
-            raise ValueError(f"Expected {expected_dim} {data_name}, got {len(data_list)}")
-        
-        return data_list
+    # -------------------------------------
+    # Joint Position
+    # -------------------------------------
+    def get_joint_positions(self) -> Optional[np.ndarray]:
+        """Get current joint positions as numpy array."""
+        status = self._get_motion_status()
+        if status is None:
+            return None
+        return ros2_numpy.numpify(status.measured_joint_position)
+
+    def get_joint_velocities(self) -> Optional[np.ndarray]:
+        """Get current joint velocities as numpy array."""
+        status = self._get_motion_status()
+        if status is None:
+            return None
+        return ros2_numpy.numpify(status.measured_joint_velocity)
     
-    def send_cartesian_command(self, pose: Union[List[float], np.ndarray, torch.Tensor, TransformStamped]):
+    def get_joint_torques(self) -> Optional[np.ndarray]:
+        """Get current joint torques as numpy array."""
+        status = self._get_motion_status()
+        if status is None:
+            return None
+        return ros2_numpy.numpify(status.measured_joint_torque)
+    
+    def get_external_torques(self) -> Optional[np.ndarray]:
+        """Get estimated external torques as numpy array."""
+        status = self._get_motion_status()
+        if status is None:
+            return None
+        
+        return ros2_numpy.numpify(status.estimated_external_torque)
+    
+    def get_joint_cmd(self) -> Optional[np.ndarray]:
+        """Get last sent joint command as numpy array.
+        
+        Returns:
+            Last sent joint positions as 7-element numpy array, or None if no command was sent yet
+        """
+        return self.last_joint_cmd
+
+    def set_joint_cmd(self, joint_positions: np.ndarray):
+        """Set joint command for this arm.
+
+        Args:
+            joint_positions: 7-element numpy array of joint positions
+        """
+        # Check current controller mode
+        current_controller = self.get_current_controller()
+        if not (current_controller and ("position" in current_controller or "impedance" in current_controller)):
+            raise ValueError(f"Joint commands only allowed in position_controller or impedance_controller modes, "
+                           f"current mode: {current_controller}")
+        
+        # Validate input is numpy array with correct shape
+        if not isinstance(joint_positions, np.ndarray):
+            raise ValueError(f"joint_positions must be numpy.ndarray, got {type(joint_positions)}")
+        
+        if joint_positions.shape != (self.arm_cmd_dim,):
+            raise ValueError(f"Expected joint positions shape ({self.arm_cmd_dim},), got {joint_positions.shape}")
+        
+        # Cache the command
+        self.last_joint_cmd = joint_positions.copy()
+        
+        # Use ros2_numpy conversion
+        msg = ros2_numpy.msgify(JointValueQuantity, joint_positions.astype(np.float64))
+        self.joint_cmd_pub.publish(msg)
+
+    # -------------------------------------
+    # Cartesian Position
+    # -------------------------------------
+    def get_cartesian_pose(self) -> Optional[np.ndarray]:
+        """Get current cartesian pose as numpy array [x, y, z, a, b, c]."""
+        status = self._get_motion_status()
+        if status is None:
+            return None
+        
+        return ros2_numpy.numpify(status.measured_cartesian_pose)
+    
+    def get_cartesian_cmd(self) -> Optional[np.ndarray]:
+        """Get last sent cartesian command as numpy array.
+        
+        Returns:
+            Last sent cartesian pose as 7-element numpy array [x, y, z, qx, qy, qz, qw], 
+            or None if no command was sent yet
+        """
+        return self.last_cartesian_cmd
+    
+    def set_cartesian_cmd(self, pose: Union[np.ndarray, TransformStamped]):
         """Send Cartesian pose command for this arm.
         
         Args:
-            pose: 7-element array/tensor [x, y, z, qx, qy, qz, qw] or geometry_msgs/TransformStamped
+            pose: 7-element numpy array [x, y, z, qx, qy, qz, qw] or geometry_msgs/TransformStamped
         """
         # Check current controller mode
         current_controller = self.get_current_controller()
@@ -170,46 +256,38 @@ class VictorArmPolicyClient:
                            f"current mode: {current_controller}")
         
         if isinstance(pose, TransformStamped):
+            # Extract pose array from TransformStamped for caching
+            cached_pose = np.array([
+                pose.transform.translation.x,
+                pose.transform.translation.y, 
+                pose.transform.translation.z,
+                pose.transform.rotation.x,
+                pose.transform.rotation.y,
+                pose.transform.rotation.z,
+                pose.transform.rotation.w
+            ])
+            self.last_cartesian_cmd = cached_pose
             msg = pose
-        else:
-            # Convert input to TransformStamped
-            pose_list = self._convert_to_list(pose, 7, "cartesian pose")
+        elif isinstance(pose, np.ndarray):
+            if pose.shape != (7,):
+                raise ValueError(f"Expected pose shape (7,), got {pose.shape}")
             
-            msg = TransformStamped()
+            # Cache the command
+            self.last_cartesian_cmd = pose.copy()
+            
+            # Use ros2_numpy conversion with proper headers
+            msg = ros2_numpy.msgify(TransformStamped, pose.astype(np.float64))
             msg.header.stamp = self.node.get_clock().now().to_msg()
             msg.header.frame_id = f'victor_{self.side}_arm_cartesian_cmd'
             msg.child_frame_id = f'victor_{self.side}_arm_sunrise_palm_surface'
-            msg.transform.translation.x = float(pose_list[0])
-            msg.transform.translation.y = float(pose_list[1])
-            msg.transform.translation.z = float(pose_list[2])
-            msg.transform.rotation.x = float(pose_list[3])
-            msg.transform.rotation.y = float(pose_list[4])
-            msg.transform.rotation.z = float(pose_list[5])
-            msg.transform.rotation.w = float(pose_list[6])
+        else:
+            raise ValueError(f"pose must be numpy.ndarray or TransformStamped, got {type(pose)}")
         
         self.cartesian_cmd_pub.publish(msg)
     
-    def send_joint_command(self, joint_positions: Union[List[float], np.ndarray, torch.Tensor]):
-        """Send joint command for this arm."""
-        # Check current controller mode
-        current_controller = self.get_current_controller()
-        if not (current_controller and ("position" in current_controller or "impedance" in current_controller)):
-            raise ValueError(f"Joint commands only allowed in position_controller or impedance_controller modes, "
-                           f"current mode: {current_controller}")
-        
-        positions = self._convert_to_list(joint_positions, self.arm_cmd_dim, "joint positions")
-        
-        msg = JointValueQuantity()
-        msg.joint_1 = float(positions[0])
-        msg.joint_2 = float(positions[1])
-        msg.joint_3 = float(positions[2])
-        msg.joint_4 = float(positions[3])
-        msg.joint_5 = float(positions[4])
-        msg.joint_6 = float(positions[5])
-        msg.joint_7 = float(positions[6])
-        
-        self.joint_cmd_pub.publish(msg)
-    
+    # -------------------------------------
+    # Gripper Status
+    # -------------------------------------
     def _create_actuator_cmd(self, position: float, speed: float = 255.0, force: float = 255.0) -> Robotiq3FingerActuatorCommand:
         """Create a gripper actuator command with position, speed, and force."""
         cmd = Robotiq3FingerActuatorCommand()
@@ -218,89 +296,73 @@ class VictorArmPolicyClient:
         cmd.force = max(0.0, min(255.0, float(force)))  # Force as float, range 0.0-255.0
         return cmd
     
-    def send_gripper_command(self, gripper_positions: Union[List[float], np.ndarray, torch.Tensor]):
-        """Send gripper command for this arm.
-        
-        Args:
-            gripper_positions: 4-element array/tensor [finger_a, finger_b, finger_c, scissor]
-        """
-        positions = self._convert_to_list(gripper_positions, self.gripper_cmd_dim, "gripper positions")
-        
-        # Create actuator commands with default speed and force
-        def create_actuator_cmd(position: float) -> Robotiq3FingerActuatorCommand:
-            cmd = Robotiq3FingerActuatorCommand()
-            cmd.position = max(0.0, min(1.0, float(position)))
-            cmd.speed = 255.0  # Default speed as float
-            cmd.force = 255.0  # Default force as float
-            return cmd
-        
-        msg = Robotiq3FingerCommand()
-        msg.finger_a_command = create_actuator_cmd(positions[0])
-        msg.finger_b_command = create_actuator_cmd(positions[1])
-        msg.finger_c_command = create_actuator_cmd(positions[2])
-        msg.scissor_command = create_actuator_cmd(positions[3])
-        msg.header.stamp = self.node.get_clock().now().to_msg()
-        
-        self.gripper_cmd_pub.publish(msg)
-    
-    def get_current_controller(self) -> Optional[str]:
-        """Get the currently active controller for this arm."""
+    def gripper_status_callback(self, msg: Robotiq3FingerStatus):
+        """Handle gripper status updates - only store data."""
         with self.status_lock:
-            return self.current_controller
-    
-    def get_motion_status(self) -> Optional[MotionStatus]:
-        """Get latest motion status."""
-        with self.status_lock:
-            return self.latest_motion_status
+            self.latest_gripper_status = msg
     
     def get_gripper_status(self) -> Optional[Robotiq3FingerStatus]:
         """Get latest gripper status."""
         with self.status_lock:
             return self.latest_gripper_status
     
-    def get_joint_positions(self) -> Optional[torch.Tensor]:
-        """Get current joint positions as torch tensor."""
-        status = self.get_motion_status()
+    def get_gripper_positions(self) -> Optional[np.ndarray]:
+        """Get current gripper positions as numpy array [finger_a, finger_b, finger_c, scissor]."""
+        status = self.get_gripper_status()
         if status is None:
             return None
         
-        jvq = status.measured_joint_position
-        positions = [jvq.joint_1, jvq.joint_2, jvq.joint_3, jvq.joint_4,
-                    jvq.joint_5, jvq.joint_6, jvq.joint_7]
-        return torch.tensor(positions, dtype=torch.float32, device=self.device)
+        # Extract positions from each finger actuator status
+        positions = np.array([
+            status.finger_a_status.position,
+            status.finger_b_status.position, 
+            status.finger_c_status.position,
+            status.scissor_status.position
+        ])
+        return positions
     
-    def get_joint_velocities(self) -> Optional[torch.Tensor]:
-        """Get current joint velocities as torch tensor."""
-        status = self.get_motion_status()
-        if status is None:
-            return None
+    def get_gripper_cmd(self) -> Optional[np.ndarray]:
+        """Get last sent gripper command as numpy array.
         
-        jvq = status.measured_joint_velocity
-        velocities = [jvq.joint_1, jvq.joint_2, jvq.joint_3, jvq.joint_4,
-                     jvq.joint_5, jvq.joint_6, jvq.joint_7]
-        return torch.tensor(velocities, dtype=torch.float32, device=self.device)
-    
-    def get_joint_torques(self) -> Optional[torch.Tensor]:
-        """Get current joint torques as torch tensor."""
-        status = self.get_motion_status()
-        if status is None:
-            return None
+        Returns:
+            Last sent gripper positions as 4-element numpy array [finger_a, finger_b, finger_c, scissor], 
+            or None if no command was sent yet
+        """
+        return self.last_gripper_cmd
         
-        jvq = status.measured_joint_torque
-        torques = [jvq.joint_1, jvq.joint_2, jvq.joint_3, jvq.joint_4,
-                  jvq.joint_5, jvq.joint_6, jvq.joint_7]
-        return torch.tensor(torques, dtype=torch.float32, device=self.device)
-    
-    def get_external_torques(self) -> Optional[torch.Tensor]:
-        """Get estimated external torques as torch tensor."""
-        status = self.get_motion_status()
-        if status is None:
-            return None
+    def set_gripper_cmd(self, gripper_positions: Union[List[float], np.ndarray, torch.Tensor]):
+        """Send gripper command for this arm.
         
-        jvq = status.estimated_external_torque
-        ext_torques = [jvq.joint_1, jvq.joint_2, jvq.joint_3, jvq.joint_4,
-                      jvq.joint_5, jvq.joint_6, jvq.joint_7]
-        return torch.tensor(ext_torques, dtype=torch.float32, device=self.device)
+        Args:
+            gripper_positions: 4-element numpy array [finger_a, finger_b, finger_c, scissor]
+        """
+        # Validate input is numpy array with correct shape
+        if not isinstance(gripper_positions, np.ndarray):
+            raise ValueError(f"gripper_positions must be numpy.ndarray, got {type(gripper_positions)}")
+        
+        if gripper_positions.shape != (self.gripper_cmd_dim,):
+            raise ValueError(f"Expected gripper positions shape ({self.gripper_cmd_dim},), got {gripper_positions.shape}")
+        
+        # Clamp positions to valid range [0, 1]
+        positions_array = np.clip(gripper_positions, 0.0, 1.0)
+        
+        # Cache the command
+        self.last_gripper_cmd = positions_array.copy()
+        
+        # Create individual actuator commands with default speed and force
+        finger_a_array = np.array([positions_array[0], 255.0, 255.0])  # [position, speed, force]
+        finger_b_array = np.array([positions_array[1], 255.0, 255.0])
+        finger_c_array = np.array([positions_array[2], 255.0, 255.0])
+        scissor_array = np.array([positions_array[3], 255.0, 255.0])
+        
+        # Create the full gripper command array: [finger_a, finger_b, finger_c, scissor] each with [pos, speed, force]
+        full_command_array = np.concatenate([finger_a_array, finger_b_array, finger_c_array, scissor_array])
+        
+        # Use ros2_numpy conversion
+        msg = ros2_numpy.msgify(Robotiq3FingerCommand, full_command_array)
+        msg.header.stamp = self.node.get_clock().now().to_msg()
+        
+        self.gripper_cmd_pub.publish(msg)
 
 class VictorPolicyClient(Node):
     """
@@ -344,7 +406,6 @@ class VictorPolicyClient(Node):
         
         if enable_left:
             self.left = VictorArmPolicyClient(self, 'left', device=self.device)
-            
         if enable_right:
             self.right = VictorArmPolicyClient(self, 'right', device=self.device)
         
@@ -417,11 +478,9 @@ class VictorPolicyClient(Node):
         while time.time() - start_time < timeout:
             # Check if we received any status message
             if self.last_status_time > initial_time:
-                self.get_logger().info("Received status from server!")
+                # self.get_logger().info("Received status from server!")
                 return True
-            
             time.sleep(0.1)  # Simple polling
-            
         return False
     
     # Public API Methods - Main node responsibilities only
@@ -532,7 +591,8 @@ def main(args=None):
         import threading
         
         # Use MultiThreadedExecutor but client is single-threaded internally
-        executor = rclpy.executors.MultiThreadedExecutor()
+        from rclpy.executors import MultiThreadedExecutor
+        executor = MultiThreadedExecutor()
         executor.add_node(client)
         
         # Start spinning in a separate thread

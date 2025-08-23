@@ -11,6 +11,7 @@ def generate_launch_description():
 
     # Declare launch argument
     use_simulator = LaunchConfiguration('use_simulator', default='true')
+    use_rviz = LaunchConfiguration('use_rviz', default='true')
 
     return LaunchDescription([
         # Declare use_simulator argument
@@ -24,7 +25,7 @@ def generate_launch_description():
         ExecuteProcess(
             cmd=[
                 'ros2', 'launch', 'victor_moveit_config', 'demo.launch.py',
-                'use_rviz:=true',
+                ['use_rviz:=', use_rviz],
                 ['use_simulator:=', use_simulator]
             ],
             output='screen'
