@@ -73,11 +73,11 @@ class VictorArmPolicyHandler:
         
         # Controller state tracking
         self.current_controller = None
-        self.last_controller_poll_time = time.perf_counter()
+        # self.last_controller_poll_time = time.perf_counter()
         
         # Setup subscribers and publishers
         self._setup_subscribers()
-        self._setup_publishers()
+        # self._setup_publishers()
         
         self.node.get_logger().info(f"VictorArmPolicyHandler for {side} arm initialized")
     
@@ -97,6 +97,14 @@ class VictorArmPolicyHandler:
             JointValueQuantity,
             f'/victor_policy_bridge/{self.side}/joint_command',
             self._process_joint_command,
+            self.high_freq_qos,
+            callback_group=self.exclusive_callback_group
+        )
+
+        self.jvq_ik_sub = self.node.create_subscription(
+            TransformStamped,
+            f'/victor_policy_bridge/{self.side}/pose_ik_command',
+            self._process_pose_ik_command,
             self.high_freq_qos,
             callback_group=self.exclusive_callback_group
         )
@@ -122,19 +130,19 @@ class VictorArmPolicyHandler:
     def _setup_publishers(self):
         """Setup status publishers for this arm."""
         
-        # Motion status publisher
-        self.motion_status_pub = self.node.create_publisher(
-            MotionStatus,
-            f'/victor_policy_bridge/{self.side}/motion_status',
-            self.high_freq_qos
-        )
+    #     # Motion status publisher
+    #     self.motion_status_pub = self.node.create_publisher(
+    #         MotionStatus,
+    #         f'/victor_policy_bridge/{self.side}/motion_status',
+    #         self.high_freq_qos
+    #     )
         
-        # Gripper status publisher
-        self.gripper_status_pub = self.node.create_publisher(
-            Robotiq3FingerStatus,
-            f'/victor_policy_bridge/{self.side}/gripper_status',
-            self.high_freq_qos
-        )
+    #     # Gripper status publisher
+    #     self.gripper_status_pub = self.node.create_publisher(
+    #         Robotiq3FingerStatus,
+    #         f'/victor_policy_bridge/{self.side}/gripper_status',
+    #         self.high_freq_qos
+    #     )
 
         # Controller state publisher
         self.controller_state_pub = self.node.create_publisher(
@@ -143,10 +151,10 @@ class VictorArmPolicyHandler:
             self.high_freq_qos
         )
 
-        self.status_timer = self.node.create_timer(
-            0.01,  # 100Hz - fast enough to track any policy speed
-            self.publish_status
-        )
+        # self.status_timer = self.node.create_timer(
+        #     0.01,  # 100Hz - fast enough to track any policy speed
+        #     self._publish_controller_state
+        # )
 
     # --------------------------------------
     # Command processing methods
@@ -166,8 +174,21 @@ class VictorArmPolicyHandler:
             msg.joint_1, msg.joint_2, msg.joint_3, msg.joint_4,
             msg.joint_5, msg.joint_6, msg.joint_7
         ]
+        self.node.get_logger().info(f"Received JP {joint_positions}")
         with self.arm_ctrl_lock:
             self.victor_side.send_joint_cmd(joint_positions)
+
+    def _process_pose_ik_command(self, msg: TransformStamped):
+        if not self._initialized or self.arm_busy:
+            return
+        if not self._controller_supports("joint"):
+            self.node.get_logger().error(
+                f"Joint IK commands only allowed in joint_controller mode, "
+                f"current mode: {self.current_controller} for {self.side} arm"
+            )
+            return
+        with self.arm_ctrl_lock:
+            self.victor_instance.move_to_pose(self.side+"_arm", msg)
     
     def _process_cartesian_command(self, msg: TransformStamped):
         """Process Cartesian pose command."""
@@ -214,42 +235,42 @@ class VictorArmPolicyHandler:
     # --------------------------------------
     # State Publishing methods
     # --------------------------------------
-    def _publish_controller_state(self):
+    def publish_controller_state(self):
         """Publish current controller state."""
         controller_msg = String()
         controller_msg.data = self.current_controller if self.current_controller is not None else ""
         self.controller_state_pub.publish(controller_msg)
     
-    def _publish_motion_status(self):
-        """Publish current motion status for this arm."""
-        motion_status = self.victor_side.get_motion_status()
-        if motion_status is not None:
-            self.motion_status_pub.publish(motion_status)
-            self.latest_motion_status = motion_status
+    # def _publish_motion_status(self):
+    #     """Publish current motion status for this arm."""
+    #     motion_status = self.victor_side.get_motion_status()
+    #     if motion_status is not None:
+    #         self.motion_status_pub.publish(motion_status)
+    #         self.latest_motion_status = motion_status
         
-    def _publish_gripper_status(self):
-        gripper_status = self.victor_side.get_gripper_status()
-        if gripper_status is not None:
-            self.gripper_status_pub.publish(gripper_status)
-            self.latest_gripper_status = gripper_status
+    # def _publish_gripper_status(self):
+    #     gripper_status = self.victor_side.get_gripper_status()
+    #     if gripper_status is not None:
+    #         self.gripper_status_pub.publish(gripper_status)
+    #         self.latest_gripper_status = gripper_status
     
-    def publish_status(self):
-        """Publish current status for this arm - called from main timer."""
-        # Try publishing
-        try:
-            self._publish_controller_state()
-            self._publish_motion_status()
-            self._publish_gripper_status()
-        except Exception as e:
-            self.node.get_logger().error(f"Critical error in get_motion_status for {self.side}: {e}")
-            import traceback
-            self.node.get_logger().error(f"Full traceback: {traceback.format_exc()}")
+    # def publish_status(self):
+    #     """Publish current status for this arm - called from main timer."""
+    #     # Try publishing
+    #     try:
+    #         self._publish_controller_state()
+    #         self._publish_motion_status()
+    #         self._publish_gripper_status()
+    #     except Exception as e:
+    #         self.node.get_logger().error(f"Critical error in get_motion_status for {self.side}: {e}")
+    #         import traceback
+    #         self.node.get_logger().error(f"Full traceback: {traceback.format_exc()}")
 
-        # Add debug counter to verify timer is running
-        if hasattr(self, 'status_last_time'):
-            elapsed = time.perf_counter() - self.status_last_time
-            # print(f"{self.side} publish time: {elapsed:.4f} seconds")
-        self.status_last_time = time.perf_counter()
+    #     # Add debug counter to verify timer is running
+    #     if hasattr(self, 'status_last_time'):
+    #         elapsed = time.perf_counter() - self.status_last_time
+    #         # print(f"{self.side} publish time: {elapsed:.4f} seconds")
+    #     self.status_last_time = time.perf_counter()
 
     
 class VictorPolicyServer(Node):
@@ -289,7 +310,7 @@ class VictorPolicyServer(Node):
 
         # Initialize Victor without executor
         self.victor = Victor(
-            self, 
+            self,
             enable_moveit=False,
         )
         
@@ -322,7 +343,7 @@ class VictorPolicyServer(Node):
         if left_enabled:
             # No callback group - single threaded
             self.left_handler = VictorArmPolicyHandler(
-                self, 'left', self.victor.left, 
+                self, 'left', self.victor.left,
                 victor_instance=self.victor
             )
             self.get_logger().info(f"Left arm handler enabled")
@@ -349,14 +370,14 @@ class VictorPolicyServer(Node):
             self.right_handler._runtime_init(controller_info["right"][0])
         
         self._initialized = True
-        self.get_logger().info(f"VictorPolicyServer initialized")
+        self.get_logger().info("VictorPolicyServer initialized")
 
     def status_loop_callback(self):
         """Main processing loop - handles commands and publishes status at 100Hz."""
         if not self._initialized:
             self._runtime_init()
 
-        # Step 3: Publish combined status as JSON
+        # Publish combined status as JSON
         combined_status = {
             'timestamp': time.perf_counter(),
             'left_enabled': self.left_handler is not None,
@@ -366,14 +387,15 @@ class VictorPolicyServer(Node):
         status_msg.data = json.dumps(combined_status)
         self.combined_status_pub.publish(status_msg)
 
+        # Publish individual controller states
+        if self.left_handler:
+            self.left_handler.publish_controller_state()
+        if self.right_handler:
+            self.right_handler.publish_controller_state()
+
         # Deal with controller switches
         self._complete_controller_switch()
-
-        # Add debug counter to verify timer is running
-        if hasattr(self, 'status_last_time'):
-            elapsed = time.perf_counter() - self.status_last_time
-            # print(f"Status loop elapsed time: {elapsed:.4f} seconds")
-        self.status_last_time = time.perf_counter()
+        # self.status_last_time = time.perf_counter()
 
     def _process_controller_switch(self, msg: String):
         """Process controller switch commands using centralized switching."""
@@ -505,7 +527,7 @@ def create_victor_policy_server_node(**kwargs):
     return server
 
 
-def main(args=None):
+def main(*args ,**kwargs):
     """
     Main function that creates a VictorPolicyServer node for launch file integration.
     Returns the server node for external executor management.
@@ -573,7 +595,6 @@ if __name__ == '__main__':
                 executor.shutdown()
             except Exception as e:
                 print(f"Executor shutdown error: {e}")
-
         try:
             rclpy.shutdown()
         except Exception as e:

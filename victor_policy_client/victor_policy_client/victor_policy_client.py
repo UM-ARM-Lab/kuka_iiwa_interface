@@ -27,6 +27,8 @@ from victor_hardware_interfaces.msg import (
     JointValueQuantity,
     Robotiq3FingerActuatorCommand
 )
+from tf2_ros import Buffer, TransformListener, LookupException, ConnectivityException, ExtrapolationException
+
 
 from victor_hardware_interfaces_np import *
 import ros2_numpy
@@ -34,7 +36,11 @@ import ros2_numpy
 class VictorArmPolicyClient:
     """Client for controlling a single arm through the policy bridge."""
     
-    def __init__(self, node: Node, side: str, device: Union[str, torch.device] = 'cpu'):
+    def __init__(self,
+        node: Node,
+        side: str,
+        device: Union[str, torch.device] = 'cpu'
+    ):
         self.node = node
         self.side = side
         
@@ -69,8 +75,12 @@ class VictorArmPolicyClient:
         
         # Command caching - store last sent commands
         self.last_joint_cmd = None
+        self.last_pose_ik_cmd = None
         self.last_gripper_cmd = None
         self.last_cartesian_cmd = None
+        
+        # Latest tool pose cache: numpy array [x,y,z,qx,qy,qz,qw]
+        self.latest_tool_pose = None
         
         # Setup publishers and subscribers (no callback groups)
         self._setup_publishers()
@@ -87,11 +97,11 @@ class VictorArmPolicyClient:
             f'/victor_policy_bridge/{self.side}/joint_command',
             self.high_freq_qos
         )
-        
-        # Gripper commands
-        self.gripper_cmd_pub = self.node.create_publisher(
-            Robotiq3FingerCommand,
-            f'/victor_policy_bridge/{self.side}/gripper_command',
+
+        # Cartesian pose ik commands (using joint controllers with moveit-ik)
+        self.pose_ik_cmd_pub = self.node.create_publisher(
+            TransformStamped,
+            f'/victor_policy_bridge/{self.side}/pose_ik_command',
             self.high_freq_qos
         )
         
@@ -101,14 +111,21 @@ class VictorArmPolicyClient:
             f'/victor_policy_bridge/{self.side}/cartesian_command',
             self.high_freq_qos
         )
-    
+
+        # Gripper commands
+        self.gripper_cmd_pub = self.node.create_publisher(
+            Robotiq3FingerCommand,
+            f'/victor_policy_bridge/{self.side}/gripper_command',
+            self.high_freq_qos
+        )
+
     def _setup_subscribers(self):
         """Setup status subscribers for this arm."""
         
         # Motion status subscriber - no callback group
         self.motion_status_sub = self.node.create_subscription(
             MotionStatus,
-            f'/victor_policy_bridge/{self.side}/motion_status',
+            f'/victor/{self.side}_arm/motion_status',
             self.motion_status_callback,
             self.high_freq_qos
         )
@@ -116,7 +133,7 @@ class VictorArmPolicyClient:
         # Gripper status subscriber - no callback group
         self.gripper_status_sub = self.node.create_subscription(
             Robotiq3FingerStatus,
-            f'/victor_policy_bridge/{self.side}/gripper_status',
+            f'/victor/{self.side}_arm/gripper_status',
             self.gripper_status_callback,
             self.high_freq_qos
         )
@@ -128,6 +145,10 @@ class VictorArmPolicyClient:
             self.controller_state_callback,
             self.high_freq_qos
         )
+
+        # Setup TF listener
+        self.tf_buffer = Buffer()
+        self.tf_listener = TransformListener(self.tf_buffer, self)
     
     # -------------------------------------
     # Controller
@@ -224,6 +245,61 @@ class VictorArmPolicyClient:
         self.joint_cmd_pub.publish(msg)
 
     # -------------------------------------
+    # Pose IK mode
+    # -------------------------------------
+    def get_tool_pose(self) -> Optional[np.ndarray]:
+        """Get current tool pose as numpy array [x, y, z, qx, qy, qz, qw]."""
+        try:
+            # timeout = rclpy.duration.Duration(seconds=1.0)
+            transform = self.tf_buffer.lookup_transform(
+                "world",  # parent
+                f"victor_{self.side}_tool0",  # child
+                rclpy.time.Time()  # "latest available"
+            )
+        except (LookupException, ConnectivityException, ExtrapolationException) as ex:
+            self.node.get_logger().warn(f'Could not transform world -> victor_{self.side}_tool0: {ex}')
+            return None
+        # Return as numpy
+        return ros2_numpy.numpify(transform)
+
+    def get_pose_ik_cmd(self) -> Optional[np.ndarray]:
+        """Get last sent joint command as numpy array.
+        
+        Returns:
+            Last sent joint positions as 7-element numpy array, or None if no command was sent yet
+        """
+        return self.last_pose_ik_cmd
+
+    def set_pose_ik_cmd(self, pose_ik_cmd: np.ndarray):
+        """Set joint command for this arm.
+
+        Args:
+            joint_positions: 7-element numpy array of joint positions
+        """
+        # Check current controller mode
+        current_controller = self.get_current_controller()
+        if not (current_controller and ("position" in current_controller or "impedance" in current_controller)):
+            raise ValueError(f"Joint commands only allowed in position_controller or impedance_controller modes, "
+                           f"current mode: {current_controller}")
+        
+        # Validate input is numpy array with correct shape
+        assert isinstance(pose_ik_cmd, np.ndarray), \
+            f"joint_positions must be numpy.ndarray, got {type(pose_ik_cmd)}"
+        # Validate shape
+        assert pose_ik_cmd.shape == (7,), \
+            f"Expected joint positions shape (7,), got {pose_ik_cmd.shape}"
+
+        # Cache the command
+        self.last_pose_ik_cmd = pose_ik_cmd.copy()
+        
+        # Use ros2_numpy conversion
+        msg = ros2_numpy.msgify(TransformStamped, pose_ik_cmd.astype(np.float64))
+        msg.header.stamp = self.node.get_clock().now().to_msg()
+        msg.header.frame_id = f'victor_{self.side}_arm_pose_ik_command'
+
+        self.pose_ik_cmd_pub.publish(msg)
+
+    # -------------------------------------
     # Cartesian Position
     # -------------------------------------
     def get_cartesian_pose(self) -> Optional[np.ndarray]:
@@ -243,7 +319,7 @@ class VictorArmPolicyClient:
         """
         return self.last_cartesian_cmd
     
-    def set_cartesian_cmd(self, pose: Union[np.ndarray, TransformStamped]):
+    def set_cartesian_cmd(self, pose_cmd: np.ndarray):
         """Send Cartesian pose command for this arm.
         
         Args:
@@ -254,35 +330,17 @@ class VictorArmPolicyClient:
         if not (current_controller and "cartesian" in current_controller):
             raise ValueError(f"Cartesian commands only allowed in cartesian_controller mode, "
                            f"current mode: {current_controller}")
-        
-        if isinstance(pose, TransformStamped):
-            # Extract pose array from TransformStamped for caching
-            cached_pose = np.array([
-                pose.transform.translation.x,
-                pose.transform.translation.y, 
-                pose.transform.translation.z,
-                pose.transform.rotation.x,
-                pose.transform.rotation.y,
-                pose.transform.rotation.z,
-                pose.transform.rotation.w
-            ])
-            self.last_cartesian_cmd = cached_pose
-            msg = pose
-        elif isinstance(pose, np.ndarray):
-            if pose.shape != (7,):
-                raise ValueError(f"Expected pose shape (7,), got {pose.shape}")
-            
-            # Cache the command
-            self.last_cartesian_cmd = pose.copy()
-            
-            # Use ros2_numpy conversion with proper headers
-            msg = ros2_numpy.msgify(TransformStamped, pose.astype(np.float64))
-            msg.header.stamp = self.node.get_clock().now().to_msg()
-            msg.header.frame_id = f'victor_{self.side}_arm_cartesian_cmd'
-            msg.child_frame_id = f'victor_{self.side}_arm_sunrise_palm_surface'
-        else:
-            raise ValueError(f"pose must be numpy.ndarray or TransformStamped, got {type(pose)}")
-        
+
+        assert pose_cmd.shape == (7,), f"Expected pose shape (7,), got {pose_cmd.shape}"
+
+        # Cache the command
+        self.last_cartesian_cmd = pose_cmd.copy()
+
+        # Use ros2_numpy conversion with proper headers
+        msg = ros2_numpy.msgify(TransformStamped, pose_cmd.astype(np.float64))
+        msg.header.stamp = self.node.get_clock().now().to_msg()
+        msg.header.frame_id = f'victor_{self.side}_arm_cartesian_cmd'
+
         self.cartesian_cmd_pub.publish(msg)
     
     # -------------------------------------
@@ -345,17 +403,18 @@ class VictorArmPolicyClient:
         
         # Clamp positions to valid range [0, 1]
         positions_array = np.clip(gripper_positions, 0.0, 1.0)
-        
+
         # Cache the command
         self.last_gripper_cmd = positions_array.copy()
-        
+
         # Create individual actuator commands with default speed and force
         finger_a_array = np.array([positions_array[0], 255.0, 255.0])  # [position, speed, force]
         finger_b_array = np.array([positions_array[1], 255.0, 255.0])
         finger_c_array = np.array([positions_array[2], 255.0, 255.0])
         scissor_array = np.array([positions_array[3], 255.0, 255.0])
-        
-        # Create the full gripper command array: [finger_a, finger_b, finger_c, scissor] each with [pos, speed, force]
+
+        # Create the full gripper command array:
+        # [finger_a, finger_b, finger_c, scissor] each with [pos, speed, force]
         full_command_array = np.concatenate([finger_a_array, finger_b_array, finger_c_array, scissor_array])
         
         # Use ros2_numpy conversion
@@ -377,9 +436,12 @@ class VictorPolicyClient(Node):
     - Convenient API for policy execution
     """
     
-    def __init__(self, node_name: str = 'victor_policy_client', 
-                 enable_left: bool = True, enable_right: bool = True,
-                 device: Union[str, torch.device] = 'cpu'):
+    def __init__(self,
+        node_name: str = 'victor_policy_client',
+        enable_left: bool = True,
+        enable_right: bool = True,
+        device: Union[str, torch.device] = 'cpu'
+    ):
         super().__init__(node_name)
         
         # Device configuration
@@ -440,8 +502,7 @@ class VictorPolicyClient(Node):
             self.get_logger().debug(f"Received combined status message: {msg.data[:100]}...")
             # Only store the data, don't do any processing
             self.latest_combined_status = json.loads(msg.data)
-            self.last_status_time = time.time()
-            
+            self.last_status_time = time.perf_counter()
         except json.JSONDecodeError as e:
             self.get_logger().error(f"Failed to parse combined status JSON: {e}")
             self.get_logger().error(f"Raw message data: {msg.data[:200]}...")  # Log first 200 chars
@@ -458,24 +519,17 @@ class VictorPolicyClient(Node):
                 '/victor_policy_bridge/combined_status' in topic_name 
                 for topic_name, _ in topic_names_and_types
             )
-            
-            if combined_status_available:
-                self.get_logger().debug("Server topics detected")
-                return True
-            else:
-                self.get_logger().debug("Server topics not found")
-                return False
-                
+            return combined_status_available
         except Exception as e:
             self.get_logger().error(f"Error checking server availability: {e}")
             return False
     
     def wait_for_status(self, timeout: float = 10.0) -> bool:
         """Wait for any status message from server (simple UDP-like check)."""
-        start_time = time.time()
+        start_time = time.perf_counter()
         initial_time = self.last_status_time
         
-        while time.time() - start_time < timeout:
+        while time.perf_counter() - start_time < timeout:
             # Check if we received any status message
             if self.last_status_time > initial_time:
                 # self.get_logger().info("Received status from server!")
@@ -493,13 +547,13 @@ class VictorPolicyClient(Node):
         """Check if we have recent status from server."""
         if self.last_status_time == 0.0:
             return False
-        return (time.time() - self.last_status_time) < max_age_seconds
+        return (time.perf_counter() - self.last_status_time) < max_age_seconds
     
     def get_status_age(self) -> float:
         """Get age of last status message in seconds."""
         if self.last_status_time == 0.0:
             return float('inf')
-        return time.time() - self.last_status_time
+        return time.perf_counter() - self.last_status_time
     
     def set_controller(self, side: str, controller_type: str, timeout: float = 10.0) -> bool:
         """Set controller for specified side(s) using centralized switching.
@@ -539,8 +593,8 @@ class VictorPolicyClient(Node):
         self.controller_switch_pub.publish(msg)
         
         # Wait for controller switch to complete
-        start_time = time.time()
-        while time.time() - start_time < timeout:
+        start_time = time.perf_counter()
+        while time.perf_counter() - start_time < timeout:
             if self._check_current_controllers(side, controller_type):
                 self.get_logger().info(f"Controller successfully switched to: {controller_type} for {side}")
                 return True
@@ -566,7 +620,6 @@ class VictorPolicyClient(Node):
             return False
         current_controller = arm_client.get_current_controller()
         return current_controller == expected_controller
-    
     
 def main(args=None):
     """
