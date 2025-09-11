@@ -9,7 +9,7 @@ def generate_launch_description():
     moveit_config = MoveItConfigsBuilder("victor", package_name="victor_moveit_config").to_moveit_configs()
 
     ld = LaunchDescription()
-    ld.add_action(DeclareLaunchArgument("publish_frequency", default_value="15.0"))
+    ld.add_action(DeclareLaunchArgument("publish_frequency", default_value="30.0"))
 
     # Given the published joint states, publish tf for the robot links and the robot description
     rsp_node = Node(

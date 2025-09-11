@@ -433,10 +433,10 @@ class Victor:
         # Subscribe to robot description so that we can get the joints and joint limits
         # This callback will only be called once at the beginning.
         # To get the parsed URDF, either pass in a user callback or use `victor.urdf`.
-        # self.description_callback_group = None  # MutuallyExclusiveCallbackGroup()
-        # qos = QoSProfile(depth=1, durability=QoSDurabilityPolicy.TRANSIENT_LOCAL)
-        # self.sub = node.create_subscription(String, 'robot_description', self.robot_description_callback, qos,
-        #                                     callback_group=self.description_callback_group)
+        self.description_callback_group = MutuallyExclusiveCallbackGroup()
+        qos = QoSProfile(depth=1, durability=QoSDurabilityPolicy.TRANSIENT_LOCAL)
+        self.sub = node.create_subscription(String, 'robot_description', self.robot_description_callback, qos,
+                                            callback_group=self.description_callback_group)
 
         self._reentrant_callback_group = ReentrantCallbackGroup()
         # Create a service for getting the planning scene
@@ -672,7 +672,7 @@ class Victor:
             self.planning_components[group_name] = self.moveitpy.get_planning_component(group_name)
         return self.planning_components[group_name]
 
-    def wait_until_motion_start(self, timeout=3):
+    def wait_until_motion_start(self, timeout=0.1):
         prev_joint_pos = self.get_joint_pos_dict()
         move = False
         start_time = time.time()
@@ -810,6 +810,7 @@ class Victor:
             side = self.right
         else:
             raise ValueError(f"Unknown group_name {group_name}")
+        t1 = time.time()
         current_state = RobotState(self.local_ik_robot_model)
         motion_status: MotionStatus = side.motion_status.get()
         current_cmd_positions = jvq_to_list(motion_status.commanded_joint_position)
@@ -819,13 +820,16 @@ class Victor:
         robot_state = copy.deepcopy(current_state)
         pose_goal = convert_to_pose_msg(self.node, target_pose, frame_id=self.base_link).pose
         ok = robot_state.set_from_ik(side.arm_name, pose_goal, side.tool_frame)
+        t2 = time.time()
+        self.node.get_logger().info(f"IK computation time: {t2 - t1:.4f} seconds")
         if ok:
             joint_angles = robot_state.get_joint_group_positions(side.arm_name)
+            self.node.get_logger().info(f"IK solution (deg): {np.array(joint_angles)}")
             res = side.send_joint_cmd(joint_angles)
-            self.wait_until_motion_start()
-            self.wait_until_motion_done()
+            # self.wait_until_motion_start()
+            # self.wait_until_motion_done()
         else:
-            print("IK failed")
+            self.node.get_logger().info("IK failed")
         return ok
 
     @property

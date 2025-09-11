@@ -364,8 +364,17 @@ class ViewportTracker(BaseVRTracker):
         
     def process_input(self, tracker_info: TrackerInfo):
         """Process head tracker input and publish viewport commands - continuous tracking"""
+        # Rate limit viewport updates to reduce computational load
+        now = perf_counter()
+        if not hasattr(self, '_last_viewport_update_time'):
+            self._last_viewport_update_time = 0.0
+        
+        # Throttle viewport updates to ~20Hz instead of 90Hz
+        if now - self._last_viewport_update_time < 0.05:  # ~20Hz
+            return
+        self._last_viewport_update_time = now
+        
         # Capture initial tracker pose on first call
-        st = perf_counter()
         if not self.tracker_initial_captured:
             self.tracker_initial_pose = self.get_tracker_in_vr(tracker_info)
             self.tracker_initial_captured = True
@@ -623,17 +632,31 @@ class SideTeleop(BaseVRTracker):
         pose_goal.position.z = target_tool_in_base_msg.transform.translation.z
         pose_goal.orientation = target_tool_in_base_msg.transform.rotation
 
-        robot_state = deepcopy(current_state)
-        max_retries = 3
+        # Optimize: reuse robot_state instead of deepcopy every time
+        if not hasattr(self, '_ik_robot_state'):
+            self._ik_robot_state = RobotState(self.robot_model)
+        robot_state = self._ik_robot_state
+        
+        # Update robot state with current joint positions from current_state
+        robot_state.set_joint_group_positions(self.side.arm_name, 
+                                            current_state.get_joint_group_positions(self.side.arm_name))
+        robot_state.update()
+        
+        max_retries = 1
         for i in range(max_retries):
+            t1 = time.perf_counter()
             success = robot_state.set_from_ik(self.side.arm_name, pose_goal, self.tool_frame)
+            t2 = time.perf_counter()
+            # Only log IK timing if it's slow (reduce log spam)
+            if t2 - t1 > 0.01:  # Only log if IK takes more than 10ms
+                self.node.get_logger().debug(f"{i}-th IK took {t2 - t1:.4f} seconds")
             if not success:
                 continue
             q = np.asarray(robot_state.get_joint_group_positions(self.side.arm_name),
                     dtype=float)
             if np.all(np.isfinite(q)):
                 return q          # <-- guaranteed no NaN/Inf
-        self.node.get_logger().info("IK failed!")
+        self.node.get_logger().debug("IK failed!")
         return None
     # ---------------------------
     # Custom Joint Getting Functions (with support for macros)
@@ -748,6 +771,16 @@ class SideTeleop(BaseVRTracker):
         pass
 
     def send_pose_cmd(self, controller_info: ControllerInfo):
+        # Limit pose command frequency to reduce computational load
+        now = perf_counter()
+        if not hasattr(self, '_last_pose_cmd_time'):
+            self._last_pose_cmd_time = 0.0
+
+        # Throttle pose commands to ~50Hz instead of 90Hz
+        # if now - self._last_pose_cmd_time < 0.02:  # ~50Hz
+        #     return
+        self._last_pose_cmd_time = now
+        
         joint_positions = self.get_joint_fn(controller_info)
 
         if joint_positions is None:
@@ -834,6 +867,19 @@ class VictorTeleopNode(Node):
             init_joints = self.ctrl_profile.init_joints.get(side, None)
             if not init_joints:
                 return
+            
+            # Open gripper a little bit first
+            side_inst = getattr(self.victor, side)
+            gripper_status = side_inst.get_gripper_status()
+            # side.set_gripper_position(
+            #     gripper_status.finger_a_status.position-0.03,
+            #     gripper_status.scissor_status.position
+            # )
+            side_inst.set_gripper_position(
+                0.3,
+                0.5
+            )
+
             # Plan to initial joint configuration
             ctrl_setter = getattr(self.victor, f'set_{side}_controller')
             res = ctrl_setter("joint_impedance_trajectory_controller")
@@ -875,32 +921,33 @@ class VictorTeleopNode(Node):
         any_grip_button = any([controller_info.grip_button for controller_info in msg.controllers_info])
         # any_menu_button = any([controller_info.menu_button for controller_info in msg.controllers_info])
 
-        # viz controllers in rviz - only send TF if needed
+        # viz controllers in rviz - only send TF at reduced rate (10Hz instead of 90Hz)
         if hasattr(self, '_tf_counter'):
             self._tf_counter += 1
         else:
             self._tf_counter = 0
-            
-        # viz controllers in rviz
-        vr_to_root = TransformStamped()
-        vr_to_root.header.stamp = self.get_clock().now().to_msg()
-        vr_to_root.header.frame_id = "victor_root"
-        vr_to_root.child_frame_id = VR_FRAME_NAME
-        vr_to_root.transform.translation.x = 1.5
-        vr_to_root.transform.translation.z = 1.5
-        q_wxyz = transforms3d.euler.euler2quat(0, 0, np.pi)
-        vr_to_root.transform.rotation.w = q_wxyz[0]
-        vr_to_root.transform.rotation.x = q_wxyz[1]
-        vr_to_root.transform.rotation.y = q_wxyz[2]
-        vr_to_root.transform.rotation.z = q_wxyz[3]
+        # Only publish TF transforms every 3rd callback (reduces from 90Hz to ~30Hz)
+        if self._tf_counter % 3 == 0:
+            # viz controllers in rviz
+            vr_to_root = TransformStamped()
+            vr_to_root.header.stamp = self.get_clock().now().to_msg()
+            vr_to_root.header.frame_id = "victor_root"
+            vr_to_root.child_frame_id = VR_FRAME_NAME
+            vr_to_root.transform.translation.x = 1.5
+            vr_to_root.transform.translation.z = 1.5
+            q_wxyz = transforms3d.euler.euler2quat(0, 0, np.pi)
+            vr_to_root.transform.rotation.w = q_wxyz[0]
+            vr_to_root.transform.rotation.x = q_wxyz[1]
+            vr_to_root.transform.rotation.y = q_wxyz[2]
+            vr_to_root.transform.rotation.z = q_wxyz[3]
 
-        self.tf_broadcaster.sendTransform(vr_to_root)
-        for controller_info in msg.controllers_info:
-            self.tf_broadcaster.sendTransform(controller_info_to_tf(self, controller_info))
+            self.tf_broadcaster.sendTransform(vr_to_root)
+            for controller_info in msg.controllers_info:
+                self.tf_broadcaster.sendTransform(controller_info_to_tf(self, controller_info))
 
-        # Publish tracker TF transforms
-        for tracker_info in msg.trackers_info:
-            self.tf_broadcaster.sendTransform(tracker_info_to_tf(self, tracker_info))
+            # Publish tracker TF transforms
+            for tracker_info in msg.trackers_info:
+                self.tf_broadcaster.sendTransform(tracker_info_to_tf(self, tracker_info))
 
         self._tf_time = perf_counter() - st
         st = perf_counter()
@@ -966,20 +1013,27 @@ class VictorTeleopNode(Node):
         now = perf_counter()
         rcv_dt = now - self.last_rcv_t
         self.rcv_dts.append(rcv_dt)
+        # Keep performance history bounded to prevent memory growth
         if len(self.rcv_dts) > 100:
             self.rcv_dts.pop(0)
-        mean_rcv_dt = np.mean(self.rcv_dts)
-        # print(f"mean_rcv_dt: {mean_rcv_dt:.3f} seconds, rcv_dt: {rcv_dt:.3f} seconds")
-        if mean_rcv_dt > 0.05:
-            self.get_logger().warn(f'slow!!! {mean_rcv_dt=:.3f}')
-            self.get_logger().warn("\n".join([
-                f'- current rcv_dt: {rcv_dt:.3f}',
-                f'- last update time: {self._update_time:.3f}',
-                f'- tf time: {self._tf_time:.3f}',
-                f'- start recording time: {self._start_recording_time:.3f}',
-                f'- controller time: {self._controller_time:.3f}',
-                f'- headset time: {self._headset_time:.3f}'
-            ]))
+        
+        # Only compute mean and log warnings every 50 calls to reduce overhead
+        if not hasattr(self, '_perf_call_count'):
+            self._perf_call_count = 0
+        self._perf_call_count += 1
+        
+        if self._perf_call_count % 50 == 0:  # Check performance every 50 calls
+            mean_rcv_dt = np.mean(self.rcv_dts)
+            if mean_rcv_dt > 0.05:
+                self.get_logger().warn(f'slow!!! {mean_rcv_dt=:.3f}')
+                self.get_logger().warn("\n".join([
+                    f'- current rcv_dt: {rcv_dt:.3f}',
+                    f'- last update time: {getattr(self, "_update_time", 0.0):.3f}',
+                    f'- tf time: {getattr(self, "_tf_time", 0.0):.3f}',
+                    f'- start recording time: {getattr(self, "_start_recording_time", 0.0):.3f}',
+                    f'- controller time: {getattr(self, "_controller_time", 0.0):.3f}',
+                    f'- headset time: {getattr(self, "_headset_time", 0.0):.3f}'
+                ]))
         self.last_rcv_t = now
 
 def main():
