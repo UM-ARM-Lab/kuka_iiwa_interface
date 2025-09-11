@@ -117,7 +117,7 @@ public class LCMRobotInterface extends RoboticsAPIApplication implements LCMSubs
         //Set valid data on initialization
         joint_path_execution_params_ = new joint_path_execution_parameters();
         joint_path_execution_params_.joint_relative_acceleration = 0.1;
-        joint_path_execution_params_.joint_relative_velocity = 0.1;
+        joint_path_execution_params_.joint_relative_velocity = 0.05;
         joint_path_execution_params_.override_joint_acceleration = 0.0;
         
         //Populate with valid data, even though this data is never used for control

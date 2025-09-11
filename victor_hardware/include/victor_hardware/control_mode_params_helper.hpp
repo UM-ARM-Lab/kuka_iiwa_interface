@@ -139,6 +139,9 @@ class ControlModeParamsHelper {
       if (param.get_name() == "kuka.joint_relative_velocity") {
         kuka_mode_params_.joint_path_execution_params.joint_relative_velocity = param.as_double();
       }
+      if (param.get_name() == "kuka.joint_relative_acceleration") {
+        kuka_mode_params_.joint_path_execution_params.joint_relative_acceleration = param.as_double();
+      }
       if (param.get_name() == "kuka.stiffness.joint_1") {
         kuka_mode_params_.joint_impedance_params.joint_stiffness.joint_1 = param.as_double();
       }
