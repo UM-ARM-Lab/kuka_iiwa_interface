@@ -10,7 +10,7 @@ class Stiffness(Enum):
     SOFT = auto()
 
 
-def get_control_mode_params(control_mode: ControlMode, stiffness=Stiffness.MEDIUM, vel=0.1, accel=0.1):
+def get_control_mode_params(control_mode: ControlMode, stiffness=Stiffness.MEDIUM, vel=0.05, accel=0.1):
     if control_mode == ControlMode.JOINT_POSITION:
         return get_joint_position_params(vel, accel)
     elif control_mode == ControlMode.JOINT_IMPEDANCE:

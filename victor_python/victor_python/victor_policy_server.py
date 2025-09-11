@@ -19,13 +19,16 @@ import time
 import argparse
 from queue import Queue
 from std_msgs.msg import String
-from geometry_msgs.msg import TransformStamped
+from geometry_msgs.msg import Pose, TransformStamped
 from victor_hardware_interfaces.msg import (
     MotionStatus, 
     Robotiq3FingerCommand, 
     Robotiq3FingerStatus,
     JointValueQuantity
 )
+from tf2_ros import Buffer, TransformListener
+from arm_utilities.tf2wrapper import TF2Wrapper
+
 from victor_python.victor import Victor
 
 
@@ -77,7 +80,7 @@ class VictorArmPolicyHandler:
         
         # Setup subscribers and publishers
         self._setup_subscribers()
-        # self._setup_publishers()
+        self._setup_publishers()
         
         self.node.get_logger().info(f"VictorArmPolicyHandler for {side} arm initialized")
     
@@ -102,7 +105,7 @@ class VictorArmPolicyHandler:
         )
 
         self.jvq_ik_sub = self.node.create_subscription(
-            TransformStamped,
+            Pose,
             f'/victor_policy_bridge/{self.side}/pose_ik_command',
             self._process_pose_ik_command,
             self.high_freq_qos,
@@ -136,13 +139,14 @@ class VictorArmPolicyHandler:
     #         f'/victor_policy_bridge/{self.side}/motion_status',
     #         self.high_freq_qos
     #     )
-        
-    #     # Gripper status publisher
-    #     self.gripper_status_pub = self.node.create_publisher(
-    #         Robotiq3FingerStatus,
-    #         f'/victor_policy_bridge/{self.side}/gripper_status',
-    #         self.high_freq_qos
-    #     )
+
+        # Tool pose publisher
+        self.tool_pose_pub = self.node.create_publisher(
+            TransformStamped,
+            f'/victor_policy_bridge/{self.side}/tool_pose',
+            self.high_freq_qos
+        )
+        self.tf_wrapper = TF2Wrapper(self.node)
 
         # Controller state publisher
         self.controller_state_pub = self.node.create_publisher(
@@ -151,10 +155,10 @@ class VictorArmPolicyHandler:
             self.high_freq_qos
         )
 
-        # self.status_timer = self.node.create_timer(
-        #     0.01,  # 100Hz - fast enough to track any policy speed
-        #     self._publish_controller_state
-        # )
+        self.status_timer = self.node.create_timer(
+            0.01,  # 100Hz - fast enough to track any policy speed
+            self._publish_tool_pose
+        )
 
     # --------------------------------------
     # Command processing methods
@@ -178,7 +182,7 @@ class VictorArmPolicyHandler:
         with self.arm_ctrl_lock:
             self.victor_side.send_joint_cmd(joint_positions)
 
-    def _process_pose_ik_command(self, msg: TransformStamped):
+    def _process_pose_ik_command(self, msg: Pose):
         if not self._initialized or self.arm_busy:
             return
         if not self._controller_supports("joint"):
@@ -187,6 +191,7 @@ class VictorArmPolicyHandler:
                 f"current mode: {self.current_controller} for {self.side} arm"
             )
             return
+        self.node.get_logger().info(f"Received Pose IK command type={type(msg)}")
         with self.arm_ctrl_lock:
             self.victor_instance.move_to_pose(self.side+"_arm", msg)
     
@@ -240,7 +245,17 @@ class VictorArmPolicyHandler:
         controller_msg = String()
         controller_msg.data = self.current_controller if self.current_controller is not None else ""
         self.controller_state_pub.publish(controller_msg)
-    
+
+    def _publish_tool_pose(self):
+        # timeout = rclpy.duration.Duration(seconds=1.0)
+        transform = self.tf_wrapper.get_transform("victor_root", f"victor_{self.side}_tool0")
+        transform_stamped = TransformStamped()
+        transform_stamped.header.stamp = self.node.get_clock().now().to_msg()
+        transform_stamped.header.frame_id = "victor_root"
+        transform_stamped.child_frame_id = f"victor_{self.side}_tool0"
+        transform_stamped.transform = transform
+        self.tool_pose_pub.publish(transform_stamped)
+
     # def _publish_motion_status(self):
     #     """Publish current motion status for this arm."""
     #     motion_status = self.victor_side.get_motion_status()
@@ -309,10 +324,7 @@ class VictorPolicyServer(Node):
         self._initialized = False
 
         # Initialize Victor without executor
-        self.victor = Victor(
-            self,
-            enable_moveit=False,
-        )
+        self.victor = Victor(self)
         
         # Status publishing timer - no callback group, single threaded
         self.status_timer = self.create_timer(

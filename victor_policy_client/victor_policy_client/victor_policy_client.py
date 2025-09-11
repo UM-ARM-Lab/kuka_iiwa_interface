@@ -19,7 +19,7 @@ import numpy as np
 import torch
 
 from std_msgs.msg import String
-from geometry_msgs.msg import TransformStamped
+from geometry_msgs.msg import TransformStamped, Pose
 from victor_hardware_interfaces.msg import (
     MotionStatus,
     Robotiq3FingerCommand,
@@ -100,7 +100,7 @@ class VictorArmPolicyClient:
 
         # Cartesian pose ik commands (using joint controllers with moveit-ik)
         self.pose_ik_cmd_pub = self.node.create_publisher(
-            TransformStamped,
+            Pose,
             f'/victor_policy_bridge/{self.side}/pose_ik_command',
             self.high_freq_qos
         )
@@ -293,7 +293,7 @@ class VictorArmPolicyClient:
         self.last_pose_ik_cmd = pose_ik_cmd.copy()
         
         # Use ros2_numpy conversion
-        msg = ros2_numpy.msgify(TransformStamped, pose_ik_cmd.astype(np.float64))
+        msg = ros2_numpy.msgify(Pose, pose_ik_cmd.astype(np.float64))
         msg.header.stamp = self.node.get_clock().now().to_msg()
         msg.header.frame_id = f'victor_{self.side}_arm_pose_ik_command'
 

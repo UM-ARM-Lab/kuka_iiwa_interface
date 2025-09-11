@@ -33,7 +33,17 @@ def generate_launch_description():
 
         # 3. Start arm_zivid_ros_node.py immediately (only when not using simulator)
         ExecuteProcess(
-            cmd=['python3', 'src/arm_zivid/arm_zivid/arm_zivid_ros_node.py'],
+            cmd=[
+                'python3', 'src/arm_zivid/arm_zivid/arm_zivid_ros_node.py',
+                # '--settings_yml', os.path.join(ros_ws_path, 'config', 'zivid2_11Hz_Engine_2D3D_Final.yml')
+                # "--task", "collect",
+                '--settings_yml', os.path.join(ros_ws_path, 'config', 'zivid2_20Hz_Engine_2D3D_Final_downsample.yml'),
+                # '--settings_yml', os.path.join(ros_ws_path, 'config', 'zivid2_20Hz_Engine_3D_Final_very_bad_downsample.yml')
+                # '--settings_yml', os.path.join(ros_ws_path, 'config', 'zivid2_20Hz_Engine_3D_Final_very_bad_downsample_v3.yml')
+                # "-r", "~/datasets/robotool_runs", 
+                # "-n", "$(date +%Y%m%d_%H%M%S)", 
+                # "--pub_pc",
+            ],
             output='screen',
             cwd=ros_ws_path,
             condition=IfCondition(NotSubstitution(use_simulator))

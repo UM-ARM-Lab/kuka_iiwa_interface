@@ -905,7 +905,7 @@ class VictorLeft:
         # joint_positions = dict(zip(left_names + right_names, left_measured_positions + right_measured_positions))
         joint_positions = dict(zip(left_names , left_measured_positions ))
         return joint_positions
-
+    
     def __init_compute_ik(self):
         # Service client for IK
         self.__compute_ik_client = self.node.create_client(
